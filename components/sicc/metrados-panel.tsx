@@ -32,17 +32,15 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { EstadoModuloBadge } from "@/components/sicc/estado-modulo-badge"
 import { KpiCard } from "@/components/sicc/kpi-card"
+import { useSiccData } from "@/components/sicc/sicc-data-provider"
 import { presupuestoData } from "@/data/presupuesto"
-import { ENTRADAS_METRADO_DEMO } from "@/lib/sicc/demo-metrados"
-import { OBRA_DEMO } from "@/lib/sicc/demo-obra"
 import { formatearCantidad, formatearFechaCorta, formatearUsd } from "@/lib/sicc/format"
 import {
   calcularAvanceFisicoGlobal,
-  calcularResumenRubros,
   rubrosConAvance,
   rubrosSobreEjecucion,
 } from "@/lib/sicc/metrados"
-import type { EntradaMetrado, EstadoAvanceRubro } from "@/lib/sicc/types"
+import type { EstadoAvanceRubro } from "@/lib/sicc/types"
 import { cn } from "@/lib/utils"
 
 const FRENTES = [
@@ -66,10 +64,6 @@ const ESTADO_ESTILOS: Record<EstadoAvanceRubro, string> = {
   en_ejecucion: "border-sky-500/30 bg-sky-500/10 text-sky-800 dark:text-sky-300",
   completado: "border-emerald-500/30 bg-emerald-500/10 text-emerald-800 dark:text-emerald-300",
   sobre_ejecucion: "border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-300",
-}
-
-function crearId(): string {
-  return `met-${Date.now().toString(36)}`
 }
 
 function BarraAvance({ porcentaje, estado }: { porcentaje: number; estado: EstadoAvanceRubro }) {
@@ -96,7 +90,8 @@ function BarraAvance({ porcentaje, estado }: { porcentaje: number; estado: Estad
 }
 
 export function MetradosPanel() {
-  const [entradas, setEntradas] = useState<EntradaMetrado[]>(ENTRADAS_METRADO_DEMO)
+  const { obra, metrados, agregarMetrado: registrarMetrado, resumenesMetrados } =
+    useSiccData()
   const [busqueda, setBusqueda] = useState("")
   const [filtroEstado, setFiltroEstado] = useState<EstadoAvanceRubro | "todos">("todos")
   const [fecha, setFecha] = useState(new Date().toISOString().slice(0, 10))
@@ -105,10 +100,7 @@ export function MetradosPanel() {
   const [frente, setFrente] = useState<string>(FRENTES[0])
   const [observaciones, setObservaciones] = useState("")
 
-  const resumenes = useMemo(
-    () => calcularResumenRubros(presupuestoData, entradas),
-    [entradas]
-  )
+  const resumenes = resumenesMetrados
 
   const avanceGlobal = useMemo(() => calcularAvanceFisicoGlobal(resumenes), [resumenes])
 
@@ -126,30 +118,27 @@ export function MetradosPanel() {
   }, [resumenes, busqueda, filtroEstado])
 
   const entradasRecientes = useMemo(
-    () => [...entradas].sort((a, b) => b.fecha.localeCompare(a.fecha)).slice(0, 6),
-    [entradas]
+    () => [...metrados].sort((a, b) => b.fecha.localeCompare(a.fecha)).slice(0, 6),
+    [metrados]
   )
 
   const rubroSeleccionado = presupuestoData.find((r) => String(r.id) === rubroId)
 
-  function agregarMetrado(event: React.FormEvent<HTMLFormElement>) {
+  function onSubmitMetrado(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!rubroId || !cantidad) return
 
     const cantidadNum = Number(cantidad)
     if (cantidadNum <= 0) return
 
-    const nuevaEntrada: EntradaMetrado = {
-      id: crearId(),
+    registrarMetrado({
       rubroId: Number(rubroId),
       fecha,
       cantidad: cantidadNum,
       frente,
       observaciones: observaciones.trim() || undefined,
-      registradoPor: OBRA_DEMO.residente,
-    }
-
-    setEntradas((prev) => [...prev, nuevaEntrada])
+      registradoPor: obra.residente,
+    })
     setCantidad("")
     setObservaciones("")
   }
@@ -191,7 +180,7 @@ export function MetradosPanel() {
         <KpiCard
           kpi={{
             etiqueta: "Registros de metrado",
-            valor: String(entradas.length),
+            valor: String(metrados.length),
             detalle: "Entradas diarias en el periodo",
             tendencia: "positiva",
           }}
@@ -215,7 +204,7 @@ export function MetradosPanel() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form className="space-y-4" onSubmit={agregarMetrado}>
+            <form className="space-y-4" onSubmit={onSubmitMetrado}>
               <div className="space-y-2">
                 <Label htmlFor="met-fecha">Fecha</Label>
                 <Input
@@ -308,7 +297,7 @@ export function MetradosPanel() {
                   Avance por rubro
                 </CardTitle>
                 <CardDescription>
-                  Comparativo ejecutado vs. contratado — {OBRA_DEMO.numeroContrato}
+                  Comparativo ejecutado vs. contratado — {obra.numeroContrato}
                 </CardDescription>
               </div>
               <div className="flex w-full flex-col gap-2 sm:w-auto sm:min-w-[20rem]">

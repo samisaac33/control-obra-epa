@@ -6,6 +6,7 @@ import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/s
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { Separator } from "@/components/ui/separator"
 import { SiccSidebar } from "@/components/sicc/sicc-sidebar"
+import { SiccDataProvider } from "@/components/sicc/sicc-data-provider"
 import { MODULOS_SICC, SICC_BASE } from "@/lib/sicc/modules"
 import type { ModuloId } from "@/lib/sicc/types"
 
@@ -22,7 +23,8 @@ export function SiccShell({ children }: { children: React.ReactNode }) {
 
   return (
     <TooltipProvider>
-      <SidebarProvider>
+      <SiccDataProvider>
+        <SidebarProvider>
         <SiccSidebar moduloActivo={moduloActivo} />
         <SidebarInset className="bg-[oklch(0.985_0.004_250)]">
           <header className="flex h-14 shrink-0 items-center gap-2 border-b border-foreground/10 bg-card/80 px-4 backdrop-blur-sm">
@@ -37,7 +39,8 @@ export function SiccShell({ children }: { children: React.ReactNode }) {
           </header>
           <div className="flex flex-1 flex-col p-4 md:p-6 lg:p-8">{children}</div>
         </SidebarInset>
-      </SidebarProvider>
+        </SidebarProvider>
+      </SiccDataProvider>
     </TooltipProvider>
   )
 }

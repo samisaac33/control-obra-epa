@@ -30,22 +30,16 @@ import {
 import { CurvaSChart } from "@/components/sicc/curva-s-chart"
 import { EstadoModuloBadge } from "@/components/sicc/estado-modulo-badge"
 import { KpiCard } from "@/components/sicc/kpi-card"
+import { useSiccData } from "@/components/sicc/sicc-data-provider"
 import { presupuestoData } from "@/data/presupuesto"
-import { ENTRADAS_METRADO_DEMO } from "@/lib/sicc/demo-metrados"
-import { OBRA_DEMO } from "@/lib/sicc/demo-obra"
 import { formatearCantidad, formatearUsd } from "@/lib/sicc/format"
-import { calcularResumenRubros } from "@/lib/sicc/metrados"
 import {
-  calcularCurvaS,
   calcularDesviacionesRubro,
-  calcularResumenPresupuesto,
   FACTOR_PE_DEMO,
   rubrosConDesviacionSignificativa,
 } from "@/lib/sicc/presupuesto-sicc"
 import type { EstadoAvanceRubro } from "@/lib/sicc/types"
 import { cn } from "@/lib/utils"
-
-const FECHA_REFERENCIA = "2026-02-12"
 
 const ESTADO_ETIQUETAS: Record<EstadoAvanceRubro, string> = {
   sin_inicio: "Sin inicio",
@@ -55,36 +49,12 @@ const ESTADO_ETIQUETAS: Record<EstadoAvanceRubro, string> = {
 }
 
 export function PresupuestoPanel() {
+  const { obra, resumenesMetrados, resumenPresupuesto, curvaS } = useSiccData()
   const [busqueda, setBusqueda] = useState("")
   const [vistaTabla, setVistaTabla] = useState<"desviaciones" | "rubros">("desviaciones")
 
-  const resumenes = useMemo(
-    () => calcularResumenRubros(presupuestoData, ENTRADAS_METRADO_DEMO),
-    []
-  )
-
-  const resumen = useMemo(
-    () =>
-      calcularResumenPresupuesto(
-        presupuestoData,
-        ENTRADAS_METRADO_DEMO,
-        OBRA_DEMO.fechaInicio,
-        OBRA_DEMO.plazoDias,
-        FECHA_REFERENCIA
-      ),
-    []
-  )
-
-  const curvaS = useMemo(
-    () =>
-      calcularCurvaS(
-        presupuestoData,
-        ENTRADAS_METRADO_DEMO,
-        OBRA_DEMO.fechaInicio,
-        OBRA_DEMO.plazoDias
-      ),
-    []
-  )
+  const resumenes = resumenesMetrados
+  const resumen = resumenPresupuesto
 
   const desviaciones = useMemo(
     () => calcularDesviacionesRubro(resumenes, resumen.avanceProgramado),
@@ -132,7 +102,7 @@ export function PresupuestoPanel() {
           kpi={{
             etiqueta: "Monto contractual",
             valor: formatearUsd(resumen.montoContrato),
-            detalle: `${presupuestoData.length} rubros · ${OBRA_DEMO.numeroContrato}`,
+            detalle: `${presupuestoData.length} rubros · ${obra.numeroContrato}`,
             tendencia: "neutral",
           }}
         />
@@ -368,10 +338,10 @@ export function PresupuestoPanel() {
       </Card>
 
       <p className="text-xs text-muted-foreground">
-        Los montos ejecutados se calculan a partir de los metrados demo del módulo{" "}
-        <strong className="font-medium text-foreground">Metrados</strong>. En una
-        siguiente iteración ambos módulos compartirán la misma fuente de datos en
-        tiempo real.
+        Los montos ejecutados se calculan en tiempo real desde los metrados compartidos
+        del SICC. Registre un metrado en el módulo{" "}
+        <strong className="font-medium text-foreground">Metrados</strong> y vuelva aquí
+        para ver la curva S y las desviaciones actualizadas.
       </p>
     </div>
   )

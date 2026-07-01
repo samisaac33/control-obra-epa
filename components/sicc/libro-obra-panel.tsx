@@ -15,17 +15,12 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { EstadoModuloBadge } from "@/components/sicc/estado-modulo-badge"
-import { ENTRADAS_LIBRO_DEMO, OBRA_DEMO } from "@/lib/sicc/demo-obra"
+import { useSiccData } from "@/components/sicc/sicc-data-provider"
 import { formatearFechaCorta } from "@/lib/sicc/format"
 import { generarTextoLibroObra } from "@/lib/sicc/libro-obra"
-import type { EntradaLibroObra } from "@/lib/sicc/types"
-
-function crearId(): string {
-  return `lo-${Date.now().toString(36)}`
-}
 
 export function LibroObraPanel() {
-  const [entradas, setEntradas] = useState<EntradaLibroObra[]>(ENTRADAS_LIBRO_DEMO)
+  const { obra, libroObra, agregarLibroObra: registrarLibroObra } = useSiccData()
   const [fecha, setFecha] = useState(new Date().toISOString().slice(0, 10))
   const [clima, setClima] = useState("Soleado")
   const [temperatura, setTemperatura] = useState("")
@@ -37,17 +32,16 @@ export function LibroObraPanel() {
   const [observaciones, setObservaciones] = useState("")
 
   const textoGenerado = useMemo(
-    () => generarTextoLibroObra(OBRA_DEMO, entradas),
-    [entradas]
+    () => generarTextoLibroObra(obra, libroObra),
+    [obra, libroObra]
   )
 
-  function agregarEntrada(event: React.FormEvent<HTMLFormElement>) {
+  function onSubmitEntrada(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
     if (!actividades.trim()) return
 
-    const nuevaEntrada: EntradaLibroObra = {
-      id: crearId(),
+    registrarLibroObra({
       fecha,
       clima,
       temperatura: temperatura || undefined,
@@ -57,10 +51,8 @@ export function LibroObraPanel() {
       equipos: equipos.trim() || undefined,
       incidencias: incidencias.trim() || undefined,
       observaciones: observaciones.trim() || undefined,
-      residente: OBRA_DEMO.residente,
-    }
-
-    setEntradas((prev) => [...prev, nuevaEntrada])
+      residente: obra.residente,
+    })
     setActividades("")
     setMateriales("")
     setEquipos("")
@@ -77,7 +69,7 @@ export function LibroObraPanel() {
       <html lang="es">
         <head>
           <meta charset="utf-8" />
-          <title>Libro de obra — ${OBRA_DEMO.nombre}</title>
+          <title>Libro de obra — ${obra.nombre}</title>
           <style>
             body { font-family: ui-monospace, monospace; font-size: 12px; line-height: 1.5; padding: 2rem; white-space: pre-wrap; }
           </style>
@@ -116,11 +108,11 @@ export function LibroObraPanel() {
           <CardHeader>
             <CardTitle className="text-base">Nuevo parte diario</CardTitle>
             <CardDescription>
-              Los datos ingresados alimentan el libro de obra de {OBRA_DEMO.nombre}.
+              Los datos ingresados alimentan el libro de obra de {obra.nombre}.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form className="space-y-4" onSubmit={agregarEntrada}>
+            <form className="space-y-4" onSubmit={onSubmitEntrada}>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="fecha">Fecha</Label>
@@ -230,12 +222,12 @@ export function LibroObraPanel() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
                 <BookOpen className="size-4" />
-                Registros ({entradas.length})
+                Registros ({libroObra.length})
               </CardTitle>
               <CardDescription>Historial de partes diarios de la obra</CardDescription>
             </CardHeader>
             <CardContent className="max-h-56 space-y-2 overflow-auto">
-              {[...entradas]
+              {[...libroObra]
                 .sort((a, b) => b.fecha.localeCompare(a.fecha))
                 .map((entrada, index) => (
                   <div
@@ -248,7 +240,7 @@ export function LibroObraPanel() {
                     </p>
                     <p className="mt-1 line-clamp-2 text-sm">{entrada.actividades}</p>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      Registro #{entradas.length - index}
+                      Registro #{libroObra.length - index}
                     </p>
                   </div>
                 ))}

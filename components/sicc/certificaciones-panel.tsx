@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { ClipboardCheck, FileText, Printer } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
@@ -30,14 +30,12 @@ import {
 } from "@/components/ui/table"
 import { EstadoModuloBadge } from "@/components/sicc/estado-modulo-badge"
 import { KpiCard } from "@/components/sicc/kpi-card"
+import { useSiccData } from "@/components/sicc/sicc-data-provider"
 import { presupuestoData } from "@/data/presupuesto"
 import {
   calcularResumenCertificacion,
   generarTextoCertificacion,
-  obtenerPeriodosDesdeMetrados,
 } from "@/lib/sicc/certificaciones"
-import { ENTRADAS_METRADO_DEMO } from "@/lib/sicc/demo-metrados"
-import { OBRA_DEMO } from "@/lib/sicc/demo-obra"
 import { formatearCantidad, formatearUsd } from "@/lib/sicc/format"
 import type { EstadoCertificacion } from "@/lib/sicc/types"
 import { cn } from "@/lib/utils"
@@ -61,30 +59,31 @@ const ESTADO_CERT: Record<
 }
 
 export function CertificacionesPanel() {
-  const periodos = useMemo(
-    () => obtenerPeriodosDesdeMetrados(ENTRADAS_METRADO_DEMO, OBRA_DEMO.fechaInicio),
-    []
-  )
+  const { obra, metrados, periodosCertificacion } = useSiccData()
 
   const [periodoId, setPeriodoId] = useState(
-    periodos[periodos.length - 1]?.id ?? "2026-02"
+    periodosCertificacion[periodosCertificacion.length - 1]?.id ?? "2026-02"
   )
 
-  const periodoActivo = periodos.find((p) => p.id === periodoId) ?? periodos[0]
+  useEffect(() => {
+    const existe = periodosCertificacion.some((p) => p.id === periodoId)
+    if (!existe && periodosCertificacion.length > 0) {
+      setPeriodoId(periodosCertificacion[periodosCertificacion.length - 1].id)
+    }
+  }, [periodosCertificacion, periodoId])
+
+  const periodoActivo =
+    periodosCertificacion.find((p) => p.id === periodoId) ?? periodosCertificacion[0]
 
   const resumen = useMemo(() => {
     if (!periodoActivo) return null
-    return calcularResumenCertificacion(
-      presupuestoData,
-      ENTRADAS_METRADO_DEMO,
-      periodoActivo
-    )
-  }, [periodoActivo])
+    return calcularResumenCertificacion(presupuestoData, metrados, periodoActivo)
+  }, [periodoActivo, metrados])
 
   const textoCertificacion = useMemo(() => {
     if (!resumen) return ""
-    return generarTextoCertificacion(OBRA_DEMO, resumen)
-  }, [resumen])
+    return generarTextoCertificacion(obra, resumen)
+  }, [resumen, obra])
 
   function imprimirCertificacion() {
     if (!resumen) return
@@ -96,7 +95,7 @@ export function CertificacionesPanel() {
       <html lang="es">
         <head>
           <meta charset="utf-8" />
-          <title>Certificación ${resumen.periodo.etiqueta} — ${OBRA_DEMO.nombre}</title>
+          <title>Certificación ${resumen.periodo.etiqueta} — ${obra.nombre}</title>
           <style>
             body { font-family: ui-monospace, monospace; font-size: 11px; line-height: 1.5; padding: 2rem; white-space: pre-wrap; }
           </style>
@@ -143,7 +142,7 @@ export function CertificacionesPanel() {
               <SelectValue placeholder="Periodo" />
             </SelectTrigger>
             <SelectContent>
-              {periodos.map((p) => (
+              {periodosCertificacion.map((p) => (
                 <SelectItem key={p.id} value={p.id}>
                   Cert. Nº {p.numero} — {p.etiqueta}
                 </SelectItem>
@@ -200,7 +199,7 @@ export function CertificacionesPanel() {
               Planilla de avance — {resumen.periodo.etiqueta}
             </CardTitle>
             <CardDescription>
-              Cantidades del periodo y acumulados por rubro · {OBRA_DEMO.numeroContrato}
+              Cantidades del periodo y acumulados por rubro · {obra.numeroContrato}
             </CardDescription>
           </CardHeader>
           <CardContent className="p-0">
@@ -289,10 +288,9 @@ export function CertificacionesPanel() {
       </div>
 
       <p className="text-xs text-muted-foreground">
-        Las cantidades se derivan de los metrados demo del módulo{" "}
-        <strong className="font-medium text-foreground">Metrados</strong>. La
-        certificación de enero está marcada como aprobada; febrero permanece en
-        borrador para revisión del residente.
+        Las cantidades se calculan en tiempo real desde los metrados compartidos. Al
+        registrar un metrado en un mes nuevo, aparecerá automáticamente un periodo de
+        certificación adicional.
       </p>
     </div>
   )

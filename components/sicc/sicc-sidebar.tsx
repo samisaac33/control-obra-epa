@@ -5,7 +5,6 @@ import {
   Calculator,
   ClipboardCheck,
   FileText,
-  HardHat,
   LayoutDashboard,
   LineChart,
   Package,
@@ -31,6 +30,7 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar"
 import { EstadoModuloBadge } from "@/components/sicc/estado-modulo-badge"
+import { SiccDatosSync } from "@/components/sicc/sicc-datos-sync"
 import { MODULOS_SICC, SICC_BASE } from "@/lib/sicc/modules"
 import type { ModuloId } from "@/lib/sicc/types"
 
@@ -127,15 +127,7 @@ export function SiccSidebar({ moduloActivo }: { moduloActivo?: ModuloId | "inici
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border">
-        <div className="rounded-lg border border-sidebar-border bg-sidebar-accent/40 px-3 py-2 text-xs text-muted-foreground">
-          <div className="flex items-center gap-2">
-            <HardHat className="size-3.5 shrink-0" />
-            <span>Entorno de desarrollo SICC</span>
-          </div>
-          <p className="mt-1 pl-5 leading-relaxed">
-            Separado del sistema en producción para visitantes y residente.
-          </p>
-        </div>
+        <SiccDatosSync />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
