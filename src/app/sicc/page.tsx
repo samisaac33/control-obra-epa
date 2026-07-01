@@ -45,10 +45,8 @@ export default function SiccDashboardPage() {
           </p>
           <p className="mt-3 text-sm text-muted-foreground">
             {ENTRADAS_LIBRO_DEMO.length} partes de obra registrados en demostración.
-            Los módulos activos de Fase 1 son{" "}
-            <strong className="font-medium text-foreground">Presupuesto</strong>,{" "}
-            <strong className="font-medium text-foreground">Metrados</strong> y{" "}
-            <strong className="font-medium text-foreground">Libro de obra</strong>.
+            Los módulos activos incluyen Fase 1 (Presupuesto, Metrados, Libro de obra) y{" "}
+            <strong className="font-medium text-foreground">Certificaciones</strong>.
           </p>
         </div>
       </section>

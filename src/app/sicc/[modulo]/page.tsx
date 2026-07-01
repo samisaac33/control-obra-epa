@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation"
 
+import { CertificacionesPanel } from "@/components/sicc/certificaciones-panel"
 import { LibroObraPanel } from "@/components/sicc/libro-obra-panel"
 import { MetradosPanel } from "@/components/sicc/metrados-panel"
 import { PresupuestoPanel } from "@/components/sicc/presupuesto-panel"
@@ -41,6 +42,14 @@ export default async function SiccModuloPage({
     return (
       <div className="mx-auto w-full max-w-7xl">
         <PresupuestoPanel />
+      </div>
+    )
+  }
+
+  if ((slug as ModuloId) === "certificaciones") {
+    return (
+      <div className="mx-auto w-full max-w-7xl">
+        <CertificacionesPanel />
       </div>
     )
   }

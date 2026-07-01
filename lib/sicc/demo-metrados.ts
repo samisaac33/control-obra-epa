@@ -3,6 +3,32 @@ import { OBRA_DEMO } from "@/lib/sicc/demo-obra"
 
 export const ENTRADAS_METRADO_DEMO: EntradaMetrado[] = [
   {
+    id: "met-jan-001",
+    rubroId: 1,
+    fecha: "2026-01-20",
+    cantidad: 2,
+    frente: "Cárcamo EB Severino",
+    observaciones: "Desmontaje parcial motores",
+    registradoPor: OBRA_DEMO.residente,
+  },
+  {
+    id: "met-jan-002",
+    rubroId: 5,
+    fecha: "2026-01-22",
+    cantidad: 18,
+    frente: "Cárcamo EB Severino",
+    observaciones: "Limpieza subacuática fase 1",
+    registradoPor: OBRA_DEMO.residente,
+  },
+  {
+    id: "met-jan-003",
+    rubroId: 8,
+    fecha: "2026-01-28",
+    cantidad: 30,
+    frente: "Acceso Poza Honda",
+    registradoPor: OBRA_DEMO.residente,
+  },
+  {
     id: "met-001",
     rubroId: 5,
     fecha: "2026-02-08",

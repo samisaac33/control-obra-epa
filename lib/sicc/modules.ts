@@ -55,7 +55,7 @@ export const MODULOS_SICC: ModuloSicc[] = [
       "Planillas de avance mensual y documentos para facturación al cliente.",
     href: `${SICC_BASE}/certificaciones`,
     fase: 2,
-    estado: "proximamente",
+    estado: "activo",
     funcionalidades: [
       "Certificación por periodo",
       "Acumulados por rubro",

@@ -118,3 +118,37 @@ export interface DesviacionRubro {
   desviacionUsd: number
   estado: EstadoAvanceRubro
 }
+
+export type EstadoCertificacion = "borrador" | "enviada" | "aprobada"
+
+export interface PeriodoCertificacion {
+  id: string
+  etiqueta: string
+  numero: number
+  estado: EstadoCertificacion
+}
+
+export interface LineaCertificacion {
+  rubroId: number
+  detalle: string
+  categoria: string
+  unidad: string
+  cantidadContratada: number
+  cantidadAnterior: number
+  cantidadPeriodo: number
+  cantidadAcumulada: number
+  precioUnitario: number
+  montoPeriodo: number
+  montoAcumulado: number
+  saldoCantidad: number
+}
+
+export interface ResumenCertificacion {
+  periodo: PeriodoCertificacion
+  lineas: LineaCertificacion[]
+  montoPeriodo: number
+  montoAcumulado: number
+  montoContrato: number
+  porcentajeAcumulado: number
+  rubrosConAvancePeriodo: number
+}
