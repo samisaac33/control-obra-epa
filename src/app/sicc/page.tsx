@@ -46,6 +46,7 @@ export default function SiccDashboardPage() {
           <p className="mt-3 text-sm text-muted-foreground">
             {ENTRADAS_LIBRO_DEMO.length} partes de obra registrados en demostración.
             El módulo activo actual es{" "}
+            <strong className="font-medium text-foreground">Metrados</strong> y{" "}
             <strong className="font-medium text-foreground">Libro de obra</strong>.
           </p>
         </div>

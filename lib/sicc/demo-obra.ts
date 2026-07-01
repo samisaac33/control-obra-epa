@@ -34,9 +34,9 @@ export const KPIS_OBRA_DEMO: KpiObra[] = [
     tendencia: "neutral",
   },
   {
-    etiqueta: "Partes de obra",
-    valor: "12",
-    detalle: "Entradas en libro de obra",
+    etiqueta: "Metrados registrados",
+    valor: "8",
+    detalle: "Entradas vinculadas a rubros",
     tendencia: "positiva",
   },
 ]

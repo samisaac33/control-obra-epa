@@ -25,7 +25,7 @@ export const MODULOS_SICC: ModuloSicc[] = [
       "Registro de cantidades ejecutadas en campo vinculadas a rubros del contrato.",
     href: `${SICC_BASE}/metrados`,
     fase: 1,
-    estado: "en_desarrollo",
+    estado: "activo",
     funcionalidades: [
       "Metrado diario por frente",
       "Avance acumulado por rubro",

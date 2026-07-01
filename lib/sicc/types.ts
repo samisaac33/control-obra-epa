@@ -60,3 +60,29 @@ export interface KpiObra {
   detalle?: string
   tendencia?: "positiva" | "negativa" | "neutral"
 }
+
+export interface EntradaMetrado {
+  id: string
+  rubroId: number
+  fecha: string
+  cantidad: number
+  frente: string
+  observaciones?: string
+  registradoPor: string
+}
+
+export type EstadoAvanceRubro = "sin_inicio" | "en_ejecucion" | "completado" | "sobre_ejecucion"
+
+export interface ResumenRubroMetrado {
+  rubroId: number
+  detalle: string
+  categoria: string
+  unidad: string
+  cantidadContratada: number
+  cantidadEjecutada: number
+  precioUnitario: number
+  avancePorcentaje: number
+  estado: EstadoAvanceRubro
+  subtotalContratado: number
+  subtotalEjecutado: number
+}
