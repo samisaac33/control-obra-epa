@@ -32,6 +32,7 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { EstadoModuloBadge } from "@/components/sicc/estado-modulo-badge"
 import { KpiCard } from "@/components/sicc/kpi-card"
+import { useSiccAuth } from "@/components/sicc/sicc-auth-provider"
 import { useSiccData } from "@/components/sicc/sicc-data-provider"
 import { presupuestoData } from "@/data/presupuesto"
 import { formatearCantidad, formatearFechaCorta, formatearUsd } from "@/lib/sicc/format"
@@ -90,6 +91,7 @@ function BarraAvance({ porcentaje, estado }: { porcentaje: number; estado: Estad
 }
 
 export function MetradosPanel() {
+  const { puedeEditar } = useSiccAuth()
   const { obra, metrados, agregarMetrado: registrarMetrado, resumenesMetrados } =
     useSiccData()
   const [busqueda, setBusqueda] = useState("")
@@ -201,10 +203,13 @@ export function MetradosPanel() {
           <CardHeader>
             <CardTitle className="text-base">Nuevo metrado</CardTitle>
             <CardDescription>
-              Cantidad ejecutada del día por rubro y frente de trabajo.
+              {puedeEditar
+                ? "Cantidad ejecutada del día por rubro y frente de trabajo."
+                : "Modo consulta: solo el residente de obra puede registrar metrados."}
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {puedeEditar ? (
             <form className="space-y-4" onSubmit={onSubmitMetrado}>
               <div className="space-y-2">
                 <Label htmlFor="met-fecha">Fecha</Label>
@@ -286,6 +291,13 @@ export function MetradosPanel() {
                 Registrar metrado
               </Button>
             </form>
+            ) : (
+              <p className="rounded-lg border border-dashed border-foreground/20 bg-muted/30 px-3 py-4 text-sm text-muted-foreground">
+                Como visitante o fiscalizador puede consultar el avance por rubro y los
+                metrados recientes. Los cambios se sincronizan en tiempo real desde el
+                residente de obra.
+              </p>
+            )}
           </CardContent>
         </Card>
 

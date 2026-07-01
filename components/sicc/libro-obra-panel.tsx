@@ -15,11 +15,13 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { EstadoModuloBadge } from "@/components/sicc/estado-modulo-badge"
+import { useSiccAuth } from "@/components/sicc/sicc-auth-provider"
 import { useSiccData } from "@/components/sicc/sicc-data-provider"
 import { formatearFechaCorta } from "@/lib/sicc/format"
 import { generarTextoLibroObra } from "@/lib/sicc/libro-obra"
 
 export function LibroObraPanel() {
+  const { puedeEditar } = useSiccAuth()
   const { obra, libroObra, agregarLibroObra: registrarLibroObra } = useSiccData()
   const [fecha, setFecha] = useState(new Date().toISOString().slice(0, 10))
   const [clima, setClima] = useState("Soleado")
@@ -109,10 +111,13 @@ export function LibroObraPanel() {
           <CardHeader>
             <CardTitle className="text-base">Nuevo parte diario</CardTitle>
             <CardDescription>
-              Los datos ingresados alimentan el libro de obra de {obra.nombre}.
+              {puedeEditar
+                ? `Los datos ingresados alimentan el libro de obra de ${obra.nombre}.`
+                : "Modo consulta: solo el residente registra partes diarios."}
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {puedeEditar ? (
             <form className="space-y-4" onSubmit={onSubmitEntrada}>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
@@ -215,6 +220,12 @@ export function LibroObraPanel() {
                 Agregar al libro de obra
               </Button>
             </form>
+            ) : (
+              <p className="rounded-lg border border-dashed border-foreground/20 bg-muted/30 px-3 py-4 text-sm text-muted-foreground">
+                Puede consultar e imprimir el libro de obra. El residente es quien registra
+                los partes diarios en campo.
+              </p>
+            )}
           </CardContent>
         </Card>
 

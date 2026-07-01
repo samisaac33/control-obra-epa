@@ -121,6 +121,16 @@ export interface DesviacionRubro {
 
 export type EstadoCertificacion = "borrador" | "enviada" | "aprobada"
 
+export type RolSicc = "residente" | "visitante" | "fiscalizador"
+
+export interface PerfilSicc {
+  id: string
+  obraId: string
+  rol: RolSicc
+  nombre: string
+  email: string
+}
+
 export interface PeriodoCertificacion {
   id: string
   etiqueta: string

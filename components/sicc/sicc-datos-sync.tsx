@@ -3,6 +3,7 @@
 import { Cloud, CloudOff, Database, Loader2, RotateCcw } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { useSiccAuth } from "@/components/sicc/sicc-auth-provider"
 import { useSiccData } from "@/components/sicc/sicc-data-provider"
 import { cn } from "@/lib/utils"
 
@@ -16,6 +17,7 @@ export function SiccDatosSync() {
     errorSync,
     reiniciarDatos,
   } = useSiccData()
+  const { perfil, puedeReiniciar, requiereAuth } = useSiccAuth()
 
   const enNube = fuenteDatos === "supabase"
 
@@ -39,9 +41,14 @@ export function SiccDatosSync() {
                 : "Local — este navegador"}
         </span>
       </div>
+      {requiereAuth && perfil ? (
+        <p className="mt-1 pl-5 text-foreground/80">
+          Sesión: <span className="font-medium">{perfil.nombre}</span>
+        </p>
+      ) : null}
       <p className="mt-1 pl-5 leading-relaxed">
         {metrados.length} metrados · {libroObra.length} partes compartidos
-        {enNube ? " entre residente, visitante y oficina." : " en localStorage."}
+        {enNube ? " entre usuarios." : " en localStorage."}
       </p>
       {errorSync ? (
         <p className={cn("mt-1 pl-5 text-amber-700 dark:text-amber-300")}>{errorSync}</p>
@@ -52,17 +59,19 @@ export function SiccDatosSync() {
           Configure Supabase en Vercel para sincronización multiusuario.
         </p>
       ) : null}
-      <Button
-        type="button"
-        variant="ghost"
-        size="sm"
-        className="mt-2 h-7 w-full justify-start px-2 text-xs text-muted-foreground"
-        disabled={sincronizando}
-        onClick={() => void reiniciarDatos()}
-      >
-        <RotateCcw className="size-3" />
-        Restaurar datos demo
-      </Button>
+      {puedeReiniciar ? (
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="mt-2 h-7 w-full justify-start px-2 text-xs text-muted-foreground"
+          disabled={sincronizando}
+          onClick={() => void reiniciarDatos()}
+        >
+          <RotateCcw className="size-3" />
+          Restaurar datos demo
+        </Button>
+      ) : null}
     </div>
   )
 }
