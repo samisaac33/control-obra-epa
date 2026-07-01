@@ -2,6 +2,7 @@ import type { SupabaseClient, User } from "@supabase/supabase-js"
 
 import { OBRA_DEMO } from "@/lib/sicc/demo-obra"
 import type { PerfilSicc, RolSicc } from "@/lib/sicc/types"
+import { ROLES_REGISTRO } from "@/lib/sicc/types"
 
 interface PerfilRow {
   id: string
@@ -45,6 +46,10 @@ export async function registrarUsuario(
     rol: RolSicc
   }
 ): Promise<{ user: User; perfil: PerfilSicc }> {
+  if (!ROLES_REGISTRO.includes(datos.rol)) {
+    throw new Error("Rol no permitido en el registro público")
+  }
+
   const { data: authData, error: authError } = await supabase.auth.signUp({
     email: datos.email,
     password: datos.password,
@@ -98,7 +103,11 @@ export function puedeEditarCampo(rol: RolSicc | null): boolean {
 }
 
 export function puedeReiniciarDemo(rol: RolSicc | null): boolean {
-  return rol === "residente"
+  return rol === "residente" || rol === "administrador"
+}
+
+export function puedeAdministrar(rol: RolSicc | null): boolean {
+  return rol === "administrador"
 }
 
 export function etiquetaRol(rol: RolSicc): string {
@@ -106,6 +115,7 @@ export function etiquetaRol(rol: RolSicc): string {
     residente: "Residente de obra",
     visitante: "Visitante",
     fiscalizador: "Fiscalizador",
+    administrador: "Administrador",
   }
   return etiquetas[rol]
 }

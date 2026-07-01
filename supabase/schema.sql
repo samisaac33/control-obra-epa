@@ -1,6 +1,6 @@
 -- SICC: esquema para datos compartidos en tiempo real
 -- Ejecutar en el SQL Editor de Supabase (Dashboard → SQL → New query)
--- Luego ejecutar también: supabase/schema-auth.sql (login y roles)
+-- Luego ejecutar también: supabase/schema-auth.sql y supabase/schema-admin.sql
 
 create table if not exists public.sicc_metrados (
   id text primary key,

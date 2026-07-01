@@ -121,7 +121,22 @@ export interface DesviacionRubro {
 
 export type EstadoCertificacion = "borrador" | "enviada" | "aprobada"
 
-export type RolSicc = "residente" | "visitante" | "fiscalizador"
+export type RolSicc =
+  | "residente"
+  | "visitante"
+  | "fiscalizador"
+  | "administrador"
+
+/** Roles que un usuario puede elegir al registrarse (no incluye administrador). */
+export const ROLES_REGISTRO: RolSicc[] = ["residente", "visitante", "fiscalizador"]
+
+/** Roles que un administrador puede asignar a otros usuarios. */
+export const ROLES_ASIGNABLES: RolSicc[] = [
+  "residente",
+  "visitante",
+  "fiscalizador",
+  "administrador",
+]
 
 export interface PerfilSicc {
   id: string

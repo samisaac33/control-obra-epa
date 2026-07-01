@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/select"
 import { useSiccAuth } from "@/components/sicc/sicc-auth-provider"
 import { etiquetaRol } from "@/lib/supabase/auth"
-import type { RolSicc } from "@/lib/sicc/types"
+import { ROLES_REGISTRO, type RolSicc } from "@/lib/sicc/types"
 
 type Modo = "login" | "registro"
 
@@ -124,11 +124,11 @@ export function SiccIngresoForm() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="residente">{etiquetaRol("residente")}</SelectItem>
-                      <SelectItem value="visitante">{etiquetaRol("visitante")}</SelectItem>
-                      <SelectItem value="fiscalizador">
-                        {etiquetaRol("fiscalizador")}
-                      </SelectItem>
+                      {ROLES_REGISTRO.map((r) => (
+                        <SelectItem key={r} value={r}>
+                          {etiquetaRol(r)}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-muted-foreground">

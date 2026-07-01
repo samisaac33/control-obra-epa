@@ -26,6 +26,9 @@ export function SiccShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const moduloActivo = moduloDesdeRuta(pathname)
   const esIngreso = pathname === RUTA_INGRESO || pathname === `${RUTA_INGRESO}/`
+  const esAdministracion =
+    pathname === `${SICC_BASE}/administracion` ||
+    pathname.startsWith(`${SICC_BASE}/administracion/`)
 
   return (
     <TooltipProvider>
@@ -36,7 +39,10 @@ export function SiccShell({ children }: { children: React.ReactNode }) {
           <SiccAuthGate>
             <SiccDataProvider>
               <SidebarProvider>
-                <SiccSidebar moduloActivo={moduloActivo} />
+                <SiccSidebar
+                  moduloActivo={moduloActivo}
+                  esAdministracion={esAdministracion}
+                />
                 <SidebarInset className="bg-[oklch(0.985_0.004_250)]">
                   <header className="flex h-14 shrink-0 items-center gap-2 border-b border-foreground/10 bg-card/80 px-4 backdrop-blur-sm">
                     <SidebarTrigger className="-ml-1" />

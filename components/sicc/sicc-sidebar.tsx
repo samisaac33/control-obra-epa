@@ -11,6 +11,7 @@ import {
   Ruler,
   ShieldCheck,
   Truck,
+  UserCog,
   Users,
   Wallet,
 } from "lucide-react"
@@ -29,6 +30,7 @@ import {
   SidebarRail,
   SidebarSeparator,
 } from "@/components/ui/sidebar"
+import { useSiccAuth } from "@/components/sicc/sicc-auth-provider"
 import { EstadoModuloBadge } from "@/components/sicc/estado-modulo-badge"
 import { SiccDatosSync } from "@/components/sicc/sicc-datos-sync"
 import { MODULOS_SICC, SICC_BASE } from "@/lib/sicc/modules"
@@ -49,7 +51,15 @@ const ICONOS: Record<ModuloId, React.ComponentType<{ className?: string }>> = {
   reportes: LayoutDashboard,
 }
 
-export function SiccSidebar({ moduloActivo }: { moduloActivo?: ModuloId | "inicio" }) {
+export function SiccSidebar({
+  moduloActivo,
+  esAdministracion = false,
+}: {
+  moduloActivo?: ModuloId | "inicio"
+  esAdministracion?: boolean
+}) {
+  const { puedeAdministrar } = useSiccAuth()
+
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
       <SidebarHeader className="border-b border-sidebar-border">
@@ -124,6 +134,31 @@ export function SiccSidebar({ moduloActivo }: { moduloActivo?: ModuloId | "inici
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {puedeAdministrar ? (
+          <>
+            <SidebarSeparator />
+            <SidebarGroup>
+              <SidebarGroupLabel>Sistema</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={esAdministracion}
+                      tooltip="Administración de usuarios"
+                    >
+                      <Link href={`${SICC_BASE}/administracion`}>
+                        <UserCog className="size-4" />
+                        <span>Administración</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </>
+        ) : null}
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border">

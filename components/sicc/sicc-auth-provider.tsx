@@ -15,6 +15,7 @@ import {
   cerrarSesion,
   iniciarSesion,
   puedeEditarCampo,
+  puedeAdministrar,
   puedeReiniciarDemo,
   registrarUsuario,
 } from "@/lib/supabase/auth"
@@ -41,6 +42,7 @@ interface SiccAuthContextValue {
   perfil: PerfilSicc | null
   puedeEditar: boolean
   puedeReiniciar: boolean
+  puedeAdministrar: boolean
   errorAuth: string | null
   login: (email: string, password: string) => Promise<void>
   register: (datos: {
@@ -169,6 +171,7 @@ export function SiccAuthProvider({ children }: { children: React.ReactNode }) {
       perfil,
       puedeEditar: puedeEditarCampo(rol),
       puedeReiniciar: puedeReiniciarDemo(rol),
+      puedeAdministrar: puedeAdministrar(rol),
       errorAuth,
       login,
       register,

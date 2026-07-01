@@ -1,7 +1,12 @@
 -- SICC: autenticación y roles (ejecutar DESPUÉS de schema.sql)
 -- Desactivar "Confirm email" en Auth → Providers → Email para acceso inmediato en demo.
 
-create type public.sicc_rol as enum ('residente', 'visitante', 'fiscalizador');
+create type public.sicc_rol as enum (
+  'residente',
+  'visitante',
+  'fiscalizador',
+  'administrador'
+);
 
 create table if not exists public.sicc_perfiles (
   id uuid primary key references auth.users (id) on delete cascade,
@@ -23,8 +28,11 @@ create policy "sicc_perfiles_insert" on public.sicc_perfiles
   for insert to authenticated with check (auth.uid() = id);
 
 drop policy if exists "sicc_perfiles_update" on public.sicc_perfiles;
-create policy "sicc_perfiles_update" on public.sicc_perfiles
-  for update to authenticated using (auth.uid() = id);
+drop policy if exists "sicc_perfiles_update_admin" on public.sicc_perfiles;
+create policy "sicc_perfiles_update_admin" on public.sicc_perfiles
+  for update to authenticated
+  using (public.sicc_rol_usuario() = 'administrador')
+  with check (public.sicc_rol_usuario() = 'administrador');
 
 -- Función auxiliar para políticas RLS
 create or replace function public.sicc_rol_usuario()

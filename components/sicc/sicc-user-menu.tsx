@@ -13,6 +13,7 @@ const ROL_ESTILOS = {
   residente: "border-emerald-500/30 bg-emerald-500/10 text-emerald-800 dark:text-emerald-300",
   visitante: "border-sky-500/30 bg-sky-500/10 text-sky-800 dark:text-sky-300",
   fiscalizador: "border-violet-500/30 bg-violet-500/10 text-violet-800 dark:text-violet-300",
+  administrador: "border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-300",
 } as const
 
 export function SiccUserMenu() {
