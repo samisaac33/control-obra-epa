@@ -8,7 +8,7 @@ import { ModuleCard, ObraResumenCard } from "@/components/sicc/module-card"
 import { SiccSidebarEstadoResumen } from "@/components/sicc/sicc-sidebar"
 
 export function SiccDashboardContent() {
-  const { obra, kpis, metrados, libroObra, montoContrato } = useSiccData()
+  const { obra, kpis, metrados, libroObra, montoContrato, fuenteDatos } = useSiccData()
   const modulosFase1 = MODULOS_SICC.filter((m) => m.fase === 1)
 
   return (
@@ -20,8 +20,10 @@ export function SiccDashboardContent() {
         </h1>
         <p className="max-w-3xl text-muted-foreground">
           Bienvenido al SICC — entorno separado del sistema en producción. Los datos
-          de metrados y libro de obra se comparten en tiempo real entre todos los
-          módulos activos.
+          de metrados y libro de obra se comparten
+          {fuenteDatos === "supabase"
+            ? " en la nube en tiempo real entre residente, visitante y oficina."
+            : " en este navegador (configure Supabase para multiusuario)."}
         </p>
       </section>
 
@@ -47,9 +49,9 @@ export function SiccDashboardContent() {
             {formatearUsd(montoContrato)}
           </p>
           <p className="mt-3 text-sm text-muted-foreground">
-            {metrados.length} metrados y {libroObra.length} partes de obra en la fuente
-            de datos compartida. Los cambios en un módulo se reflejan al instante en
-            Presupuesto y Certificaciones.
+            {metrados.length} metrados y {libroObra.length} partes en la fuente
+            {fuenteDatos === "supabase" ? " en Supabase" : " local"}. Los cambios se
+            reflejan al instante en Presupuesto y Certificaciones.
           </p>
         </div>
       </section>

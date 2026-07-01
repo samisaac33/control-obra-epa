@@ -131,16 +131,17 @@ export function MetradosPanel() {
     const cantidadNum = Number(cantidad)
     if (cantidadNum <= 0) return
 
-    registrarMetrado({
+    void registrarMetrado({
       rubroId: Number(rubroId),
       fecha,
       cantidad: cantidadNum,
       frente,
       observaciones: observaciones.trim() || undefined,
       registradoPor: obra.residente,
+    }).then(() => {
+      setCantidad("")
+      setObservaciones("")
     })
-    setCantidad("")
-    setObservaciones("")
   }
 
   return (

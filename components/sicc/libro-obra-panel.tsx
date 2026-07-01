@@ -41,7 +41,7 @@ export function LibroObraPanel() {
 
     if (!actividades.trim()) return
 
-    registrarLibroObra({
+    void registrarLibroObra({
       fecha,
       clima,
       temperatura: temperatura || undefined,
@@ -52,12 +52,13 @@ export function LibroObraPanel() {
       incidencias: incidencias.trim() || undefined,
       observaciones: observaciones.trim() || undefined,
       residente: obra.residente,
+    }).then(() => {
+      setActividades("")
+      setMateriales("")
+      setEquipos("")
+      setIncidencias("")
+      setObservaciones("")
     })
-    setActividades("")
-    setMateriales("")
-    setEquipos("")
-    setIncidencias("")
-    setObservaciones("")
   }
 
   function imprimirLibro() {

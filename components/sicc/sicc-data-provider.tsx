@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react"
 
@@ -18,14 +19,26 @@ import {
   calcularResumenRubros,
   montoTotalContrato,
 } from "@/lib/sicc/computed"
-import { calcularResumenPresupuesto } from "@/lib/sicc/presupuesto-sicc"
-import { calcularCurvaS } from "@/lib/sicc/presupuesto-sicc"
+import { calcularResumenPresupuesto, calcularCurvaS } from "@/lib/sicc/presupuesto-sicc"
 import { obtenerPeriodosDesdeMetrados } from "@/lib/sicc/certificaciones"
+import {
+  asegurarDatosIniciales,
+  cargarDatosObra,
+  insertarLibroObra,
+  insertarMetrado,
+  reiniciarDatosObra,
+  suscribirCambiosObra,
+} from "@/lib/sicc/supabase-repo"
 import {
   cargarDatosSicc,
   guardarDatosSicc,
   reiniciarDatosSicc,
 } from "@/lib/sicc/sicc-storage"
+import {
+  obtenerClienteSupabase,
+  supabaseConfigurado,
+  type FuenteDatosSicc,
+} from "@/lib/supabase/client"
 import type {
   EntradaLibroObra,
   EntradaMetrado,
@@ -42,9 +55,12 @@ interface SiccDataContextValue {
   metrados: EntradaMetrado[]
   libroObra: EntradaLibroObra[]
   listo: boolean
-  agregarMetrado: (entrada: Omit<EntradaMetrado, "id">) => void
-  agregarLibroObra: (entrada: Omit<EntradaLibroObra, "id">) => void
-  reiniciarDatos: () => void
+  fuenteDatos: FuenteDatosSicc
+  sincronizando: boolean
+  errorSync: string | null
+  agregarMetrado: (entrada: Omit<EntradaMetrado, "id">) => Promise<void>
+  agregarLibroObra: (entrada: Omit<EntradaLibroObra, "id">) => Promise<void>
+  reiniciarDatos: () => Promise<void>
   kpis: KpiObra[]
   resumenesMetrados: ResumenRubroMetrado[]
   resumenPresupuesto: ResumenPresupuesto
@@ -57,37 +73,177 @@ interface SiccDataContextValue {
 const SiccDataContext = createContext<SiccDataContextValue | null>(null)
 
 export function SiccDataProvider({ children }: { children: React.ReactNode }) {
+  const obraId = OBRA_DEMO.id
+  const usaSupabase = supabaseConfigurado()
+
   const [metrados, setMetrados] = useState<EntradaMetrado[]>(ENTRADAS_METRADO_DEMO)
   const [libroObra, setLibroObra] = useState<EntradaLibroObra[]>(ENTRADAS_LIBRO_DEMO)
   const [listo, setListo] = useState(false)
+  const [sincronizando, setSincronizando] = useState(false)
+  const [errorSync, setErrorSync] = useState<string | null>(null)
 
-  useEffect(() => {
-    const guardado = cargarDatosSicc()
-    if (guardado) {
-      setMetrados(guardado.metrados)
-      setLibroObra(guardado.libroObra)
+  const recargando = useRef(false)
+
+  const aplicarDatos = useCallback(
+    (datos: { metrados: EntradaMetrado[]; libroObra: EntradaLibroObra[] }) => {
+      setMetrados(datos.metrados)
+      setLibroObra(datos.libroObra)
+    },
+    []
+  )
+
+  const recargarDesdeSupabase = useCallback(async () => {
+    const supabase = obtenerClienteSupabase()
+    if (!supabase || recargando.current) return
+
+    recargando.current = true
+    try {
+      const datos = await cargarDatosObra(supabase, obraId)
+      aplicarDatos(datos)
+      setErrorSync(null)
+    } catch (err) {
+      setErrorSync(err instanceof Error ? err.message : "Error al sincronizar con Supabase")
+    } finally {
+      recargando.current = false
     }
-    setListo(true)
-  }, [])
+  }, [aplicarDatos, obraId])
 
   useEffect(() => {
-    if (!listo) return
+    let cancelado = false
+
+    async function iniciar() {
+      if (usaSupabase) {
+        const supabase = obtenerClienteSupabase()
+        if (!supabase) {
+          setListo(true)
+          return
+        }
+
+        setSincronizando(true)
+        try {
+          const datos = await asegurarDatosIniciales(supabase, obraId)
+          if (!cancelado) {
+            aplicarDatos(datos)
+            setErrorSync(null)
+          }
+        } catch (err) {
+          if (!cancelado) {
+            setErrorSync(
+              err instanceof Error ? err.message : "No se pudo conectar con Supabase"
+            )
+            const guardado = cargarDatosSicc()
+            if (guardado) aplicarDatos(guardado)
+          }
+        } finally {
+          if (!cancelado) {
+            setSincronizando(false)
+            setListo(true)
+          }
+        }
+        return
+      }
+
+      const guardado = cargarDatosSicc()
+      if (guardado && !cancelado) aplicarDatos(guardado)
+      if (!cancelado) setListo(true)
+    }
+
+    void iniciar()
+    return () => {
+      cancelado = true
+    }
+  }, [usaSupabase, aplicarDatos, obraId])
+
+  useEffect(() => {
+    if (!usaSupabase || !listo) return
+
+    const supabase = obtenerClienteSupabase()
+    if (!supabase) return
+
+    const desuscribir = suscribirCambiosObra(supabase, obraId, () => {
+      void recargarDesdeSupabase()
+    })
+
+    return desuscribir
+  }, [usaSupabase, listo, obraId, recargarDesdeSupabase])
+
+  useEffect(() => {
+    if (!listo || usaSupabase) return
     guardarDatosSicc({ metrados, libroObra })
-  }, [metrados, libroObra, listo])
+  }, [metrados, libroObra, listo, usaSupabase])
 
-  const agregarMetrado = useCallback((entrada: Omit<EntradaMetrado, "id">) => {
-    setMetrados((prev) => [...prev, { ...entrada, id: crearId("met") }])
-  }, [])
+  const agregarMetrado = useCallback(
+    async (entrada: Omit<EntradaMetrado, "id">) => {
+      const nuevo: EntradaMetrado = { ...entrada, id: crearId("met") }
 
-  const agregarLibroObra = useCallback((entrada: Omit<EntradaLibroObra, "id">) => {
-    setLibroObra((prev) => [...prev, { ...entrada, id: crearId("lo") }])
-  }, [])
+      if (usaSupabase) {
+        const supabase = obtenerClienteSupabase()
+        if (!supabase) return
+        setSincronizando(true)
+        try {
+          await insertarMetrado(supabase, obraId, nuevo)
+          await recargarDesdeSupabase()
+        } catch (err) {
+          setErrorSync(err instanceof Error ? err.message : "Error al guardar metrado")
+          throw err
+        } finally {
+          setSincronizando(false)
+        }
+        return
+      }
 
-  const reiniciarDatos = useCallback(() => {
+      setMetrados((prev) => [...prev, nuevo])
+    },
+    [usaSupabase, obraId, recargarDesdeSupabase]
+  )
+
+  const agregarLibroObra = useCallback(
+    async (entrada: Omit<EntradaLibroObra, "id">) => {
+      const nuevo: EntradaLibroObra = { ...entrada, id: crearId("lo") }
+
+      if (usaSupabase) {
+        const supabase = obtenerClienteSupabase()
+        if (!supabase) return
+        setSincronizando(true)
+        try {
+          await insertarLibroObra(supabase, obraId, nuevo)
+          await recargarDesdeSupabase()
+        } catch (err) {
+          setErrorSync(err instanceof Error ? err.message : "Error al guardar parte de obra")
+          throw err
+        } finally {
+          setSincronizando(false)
+        }
+        return
+      }
+
+      setLibroObra((prev) => [...prev, nuevo])
+    },
+    [usaSupabase, obraId, recargarDesdeSupabase]
+  )
+
+  const reiniciarDatos = useCallback(async () => {
+    if (usaSupabase) {
+      const supabase = obtenerClienteSupabase()
+      if (!supabase) return
+      setSincronizando(true)
+      try {
+        const datos = await reiniciarDatosObra(supabase, obraId)
+        aplicarDatos(datos)
+        setErrorSync(null)
+      } catch (err) {
+        setErrorSync(err instanceof Error ? err.message : "Error al reiniciar datos")
+        throw err
+      } finally {
+        setSincronizando(false)
+      }
+      return
+    }
+
     reiniciarDatosSicc()
     setMetrados(ENTRADAS_METRADO_DEMO)
     setLibroObra(ENTRADAS_LIBRO_DEMO)
-  }, [])
+  }, [usaSupabase, obraId, aplicarDatos])
 
   const fechaReferencia = useMemo(
     () => fechaReferenciaDesdeMetrados(metrados.map((m) => m.fecha), "2026-02-12"),
@@ -132,12 +288,17 @@ export function SiccDataProvider({ children }: { children: React.ReactNode }) {
     [metrados, libroObra]
   )
 
+  const fuenteDatos: FuenteDatosSicc = usaSupabase ? "supabase" : "local"
+
   const value = useMemo<SiccDataContextValue>(
     () => ({
       obra: OBRA_DEMO,
       metrados,
       libroObra,
       listo,
+      fuenteDatos,
+      sincronizando,
+      errorSync,
       agregarMetrado,
       agregarLibroObra,
       reiniciarDatos,
@@ -153,6 +314,9 @@ export function SiccDataProvider({ children }: { children: React.ReactNode }) {
       metrados,
       libroObra,
       listo,
+      fuenteDatos,
+      sincronizando,
+      errorSync,
       agregarMetrado,
       agregarLibroObra,
       reiniciarDatos,
