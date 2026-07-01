@@ -10,7 +10,7 @@ export const MODULOS_SICC: ModuloSicc[] = [
       "Rubros contractuales, presupuesto de ejecución, curva S y desviaciones por partida.",
     href: `${SICC_BASE}/presupuesto`,
     fase: 1,
-    estado: "en_desarrollo",
+    estado: "activo",
     funcionalidades: [
       "Desglose por rubro y categoría",
       "Presupuesto de ejecución (PE)",

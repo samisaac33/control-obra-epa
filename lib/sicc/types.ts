@@ -86,3 +86,35 @@ export interface ResumenRubroMetrado {
   subtotalContratado: number
   subtotalEjecutado: number
 }
+
+export interface PuntoCurvaS {
+  fecha: string
+  etiqueta: string
+  fisico: number
+  financiero: number
+  programado: number
+}
+
+export interface ResumenPresupuesto {
+  montoContrato: number
+  montoEjecutado: number
+  montoSaldo: number
+  presupuestoEjecucion: number
+  margenEstimado: number
+  avanceFisico: number
+  avanceFinanciero: number
+  avanceProgramado: number
+  desviacionFisicoFinanciero: number
+  desviacionVsProgramado: number
+}
+
+export interface DesviacionRubro {
+  rubroId: number
+  detalle: string
+  categoria: string
+  subtotalContratado: number
+  subtotalEjecutado: number
+  avancePorcentaje: number
+  desviacionUsd: number
+  estado: EstadoAvanceRubro
+}

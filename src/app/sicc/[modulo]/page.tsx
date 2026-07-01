@@ -2,6 +2,7 @@ import { notFound } from "next/navigation"
 
 import { LibroObraPanel } from "@/components/sicc/libro-obra-panel"
 import { MetradosPanel } from "@/components/sicc/metrados-panel"
+import { PresupuestoPanel } from "@/components/sicc/presupuesto-panel"
 import { ModulePlaceholder } from "@/components/sicc/module-placeholder"
 import { MODULOS_SICC } from "@/lib/sicc/modules"
 import type { ModuloId } from "@/lib/sicc/types"
@@ -32,6 +33,14 @@ export default async function SiccModuloPage({
     return (
       <div className="mx-auto w-full max-w-7xl">
         <MetradosPanel />
+      </div>
+    )
+  }
+
+  if ((slug as ModuloId) === "presupuesto") {
+    return (
+      <div className="mx-auto w-full max-w-7xl">
+        <PresupuestoPanel />
       </div>
     )
   }
