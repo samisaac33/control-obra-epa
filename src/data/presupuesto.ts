@@ -17,6 +17,37 @@ export function montoTotalContrato(rubros: Rubro[]): number {
   return rubros.reduce((sum, r) => sum + subtotalRubro(r), 0)
 }
 
+export type GrupoPresupuestoPorCategoria = {
+  categoria: string
+  rubros: Rubro[]
+  subtotal: number
+}
+
+/**
+ * Agrupa rubros por `categoria`, respetando el orden en que las categorías aparecen
+ * en el pliego (9 encabezados, 39 partidas).
+ */
+export function presupuestoAgrupadoPorCategoria(
+  rubros: Rubro[] = presupuestoData
+): GrupoPresupuestoPorCategoria[] {
+  const order: string[] = []
+  const seen = new Set<string>()
+  for (const r of rubros) {
+    if (!seen.has(r.categoria)) {
+      seen.add(r.categoria)
+      order.push(r.categoria)
+    }
+  }
+  return order.map((categoria) => {
+    const part = rubros.filter((r) => r.categoria === categoria)
+    return {
+      categoria,
+      rubros: part,
+      subtotal: montoTotalContrato(part),
+    }
+  })
+}
+
 const C = {
   REPARACION_SEVERINO: "REPARACION DE BOMBAS Y MOTORES DE LA EB SEVERINO",
   TABLAS_MADERA: "SUMINISTRO DE TABLAS Y PORTICOS DE MADERA",

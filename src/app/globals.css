@@ -128,3 +128,37 @@
     @apply font-sans;
   }
 }
+
+@media print {
+  aside,
+  header:not(#libro-obra-documento header) {
+    display: none !important;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  main {
+    overflow: visible !important;
+  }
+
+  .md\:pl-64 {
+    padding-left: 0 !important;
+  }
+
+  .libro-obra-toolbar {
+    display: none !important;
+  }
+
+  .libro-obra-dia {
+    break-inside: avoid-page;
+    page-break-inside: avoid;
+  }
+
+  .informe-estado-hito {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
