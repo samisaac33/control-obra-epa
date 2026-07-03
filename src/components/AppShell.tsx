@@ -10,10 +10,14 @@ type AppShellProps = {
 }
 
 const AUTH_ROUTES = ["/login"]
+const SICC_PREFIX = "/sicc"
 
 export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname()
-  const hideNavigation = AUTH_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`))
+  const hideNavigation =
+    AUTH_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`)) ||
+    pathname === SICC_PREFIX ||
+    pathname.startsWith(`${SICC_PREFIX}/`)
 
   if (hideNavigation) {
     return <>{children}</>
