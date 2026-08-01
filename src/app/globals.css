@@ -131,7 +131,7 @@
 
 @media print {
   aside,
-  header:not(#libro-obra-documento header) {
+  header:not(#libro-obra-documento header):not(#maquinaria-documento header) {
     display: none !important;
   }
 
@@ -148,8 +148,19 @@
     padding-left: 0 !important;
   }
 
-  .libro-obra-toolbar {
+  .libro-obra-toolbar,
+  .maquinaria-toolbar,
+  .maquinaria-dashboard {
     display: none !important;
+  }
+
+  .maquinaria-documento-preview {
+    margin-top: 0 !important;
+  }
+
+  #maquinaria-documento {
+    display: block !important;
+    visibility: visible !important;
   }
 
   .libro-obra-dia {
@@ -157,8 +168,31 @@
     page-break-inside: avoid;
   }
 
-  .informe-estado-hito {
+  .maquinaria-matriz-landscape:not(:first-of-type) {
+    break-before: page;
+    page-break-before: always;
+  }
+
+  .libro-obra-imagen {
+    width: 100% !important;
+    height: auto !important;
+    max-width: 100%;
+    object-fit: contain;
+    page-break-inside: avoid;
+  }
+
+  .informe-estado-hito,
+  .maquinaria-celda,
+  .maquinaria-accionista-chip {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+  }
+
+  @page maquinaria-landscape {
+    size: landscape;
+  }
+
+  .maquinaria-matriz-landscape {
+    page: maquinaria-landscape;
   }
 }

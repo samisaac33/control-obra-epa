@@ -55,7 +55,7 @@ export function InformeImagenComprimida({ src, alt, className }: InformeImagenCo
       ref={imgRef}
       src={displaySrc ?? undefined}
       alt={alt}
-      className={cn("libro-obra-imagen aspect-[4/3] w-full object-cover", className)}
+      className={cn("libro-obra-imagen block w-full h-auto max-w-full", className)}
       data-informe-imagen-lista={lista && displaySrc ? "true" : "false"}
       onLoad={() => setLista(true)}
       onError={() => setLista(true)}

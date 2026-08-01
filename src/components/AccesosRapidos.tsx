@@ -17,7 +17,7 @@ const enlaces = [
   {
     href: "/maquinaria",
     label: "Maquinaria y transporte",
-    descripcion: "Uso diario de equipos por accionista — 11 mayo a 26 junio 2026",
+    descripcion: "Uso diario de equipos por accionista — 11 mayo a 28 junio 2026",
     icon: Truck,
   },
   {

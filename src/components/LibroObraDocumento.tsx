@@ -74,14 +74,14 @@ function EvidenciaBloque({ grupo, indice }: { grupo: EvidenciaGrupo; indice: num
       {imagenes.length > 0 ? (
         <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 print:grid-cols-2">
           {imagenes.map((imagen) => (
-            <figure key={imagen.id} className="overflow-hidden rounded border border-neutral-300 bg-white">
+            <figure key={imagen.id} className="flex justify-center rounded border border-neutral-300 bg-white">
               {imagen.image_url ? (
                 <InformeImagenComprimida
                   src={imagen.image_url}
                   alt={representante.actividad_especifica ?? representante.sector}
                 />
               ) : (
-                <div className="flex aspect-[4/3] items-center justify-center bg-neutral-100 text-xs text-neutral-500">
+                <div className="flex min-h-[120px] w-full items-center justify-center bg-neutral-100 text-xs text-neutral-500">
                   Imagen no disponible
                 </div>
               )}

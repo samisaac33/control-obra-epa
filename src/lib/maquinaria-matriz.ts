@@ -44,6 +44,8 @@ const ORDEN_EQUIPOS = [
   "Volqueta",
   "Gallineta",
   "Payloader",
+  "Motoniveladora",
+  "Rodillo",
   "Excavadora brazo corto",
   "Viajes de arena",
   "Descarga de tubos de hormigón",
@@ -77,11 +79,11 @@ function diaSemanaCorto(fechaIso: string): string {
   return new Intl.DateTimeFormat("es-EC", { weekday: "narrow" }).format(fecha)
 }
 
-function construirFilas(): FilaMatriz[] {
+function construirFilas(dias: RegistroDia[]): FilaMatriz[] {
   const vistos = new Set<string>()
   const filas: FilaMatriz[] = []
 
-  for (const dia of REGISTRO_MAQUINARIA) {
+  for (const dia of dias) {
     for (const registro of dia.registros) {
       const id = claveFila(registro.equipo, registro.accionista)
       if (vistos.has(id)) continue
@@ -109,8 +111,8 @@ function construirFilas(): FilaMatriz[] {
   })
 }
 
-function mapaDiasRegistrados(): Map<string, RegistroDia> {
-  return new Map(REGISTRO_MAQUINARIA.map((dia) => [dia.fecha, dia]))
+function mapaDiasRegistrados(dias: RegistroDia[]): Map<string, RegistroDia> {
+  return new Map(dias.map((dia) => [dia.fecha, dia]))
 }
 
 function eventosDeColumna(dia: RegistroDia | undefined): string[] {
@@ -126,12 +128,18 @@ function eventosDeColumna(dia: RegistroDia | undefined): string[] {
   return eventos
 }
 
+export type RangoMatrizCalendario = {
+  inicio: string
+  fin: string
+}
+
 export function construirMatrizCalendario(
-  dias: RegistroDia[] = REGISTRO_MAQUINARIA
+  dias: RegistroDia[] = REGISTRO_MAQUINARIA,
+  rango: RangoMatrizCalendario = PERIODO_MAQUINARIA
 ): MatrizCalendario {
-  const mapaDias = mapaDiasRegistrados()
-  const fechas = generarRangoFechas(PERIODO_MAQUINARIA.inicio, PERIODO_MAQUINARIA.fin)
-  const filas = construirFilas()
+  const mapaDias = mapaDiasRegistrados(dias)
+  const fechas = generarRangoFechas(rango.inicio, rango.fin)
+  const filas = construirFilas(dias)
   const celdas = new Map<string, CeldaMatriz>()
 
   const columnas: ColumnaMatriz[] = fechas.map((fecha) => {

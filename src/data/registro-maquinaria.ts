@@ -24,8 +24,8 @@ export type RegistroDia = {
 
 export const PERIODO_MAQUINARIA = {
   inicio: "2026-05-11",
-  fin: "2026-06-26",
-  etiqueta: "11 mayo – 26 junio 2026",
+  fin: "2026-06-28",
+  etiqueta: "11 mayo – 28 junio 2026",
 } as const
 
 export const ACCIONISTA_META = {
@@ -482,6 +482,15 @@ export const REGISTRO_MAQUINARIA: RegistroDia[] = [
       { equipo: "Payloader", duracion: "dia_completo", accionista: "consorcio" },
       { equipo: "Excavadora brazo corto", duracion: "dia_completo", accionista: "consorcio" },
       { equipo: "Volqueta", duracion: "dia_completo", cantidad: 2, accionista: "consorcio" },
+    ],
+  },
+  {
+    fecha: "2026-06-28",
+    diaSemana: "Domingo",
+    trabajado: true,
+    registros: [
+      { equipo: "Motoniveladora", duracion: "dia_completo", accionista: "consorcio" },
+      { equipo: "Rodillo", duracion: "dia_completo", accionista: "consorcio" },
     ],
   },
 ]

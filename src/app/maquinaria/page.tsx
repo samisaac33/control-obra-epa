@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { KpiCard } from "@/src/components/KpiCard"
 import { MaquinariaAccionistaChip } from "@/src/components/MaquinariaRegistroBadge"
 import { MaquinariaCronologia } from "@/src/components/MaquinariaCronologia"
+import { MaquinariaExportClient } from "@/src/components/MaquinariaExportClient"
 import { MaquinariaMatrizCalendario } from "@/src/components/MaquinariaMatrizCalendario"
 import { MaquinariaResumenTabla } from "@/src/components/MaquinariaResumenTabla"
 import { ACCIONISTA_META, PERIODO_MAQUINARIA } from "@/src/data/registro-maquinaria"
@@ -11,10 +12,11 @@ import { formatearNumero, kpisMaquinaria } from "@/src/lib/maquinaria-resumen"
 
 export default function MaquinariaPage() {
   const kpis = kpisMaquinaria()
+  const generadoEn = new Date().toISOString()
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-[oklch(0.98_0.002_264)] text-foreground">
-      <header className="shrink-0 border-b border-foreground/10 bg-card/80 shadow-sm ring-1 ring-foreground/5 backdrop-blur-sm">
+      <header className="shrink-0 border-b border-foreground/10 bg-card/80 shadow-sm ring-1 ring-foreground/5 backdrop-blur-sm print:hidden">
         <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-5 sm:px-6 lg:px-8">
           <div className="flex min-w-0 items-start gap-3">
             <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg border border-foreground/10 bg-muted/80 text-foreground/80">
@@ -40,6 +42,14 @@ export default function MaquinariaPage() {
       </header>
 
       <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col space-y-6 px-4 py-6 sm:space-y-8 sm:px-6 sm:py-8 lg:px-8">
+        <section aria-labelledby="generar-documento-title">
+          <h2 id="generar-documento-title" className="sr-only">
+            Generar documento PDF
+          </h2>
+          <MaquinariaExportClient generadoEn={generadoEn} />
+        </section>
+
+        <div className="maquinaria-dashboard space-y-6 sm:space-y-8 print:hidden">
         <section aria-labelledby="kpis-maquinaria-title">
           <h2 id="kpis-maquinaria-title" className="mb-3 text-base font-semibold tracking-tight">
             Resumen del período
@@ -127,6 +137,7 @@ export default function MaquinariaPage() {
             </CardContent>
           </Card>
         </section>
+        </div>
       </main>
     </div>
   )
