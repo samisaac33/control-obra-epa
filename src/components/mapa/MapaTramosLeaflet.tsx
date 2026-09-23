@@ -5,7 +5,7 @@ import { CircleMarker, GeoJSON, MapContainer, Marker, TileLayer, useMap } from "
 import type { Layer, PathOptions } from "leaflet"
 import L from "leaflet"
 
-import type { CanalTramo } from "@/src/data/tramos/types"
+import type { CanalTramo, EstadoTramo } from "@/src/data/tramos/types"
 import { etiquetaEstadoTramo } from "@/src/data/tramos/types"
 import {
   segmentosVisualesTramo,
@@ -35,6 +35,7 @@ type FeatureProps = {
   tramo: CanalTramo
   id: string
   tipo?: "minitramo" | "pendiente" | "ejecutado"
+  estadoSegmento?: EstadoTramo
 }
 
 function AjustarBounds({ tramos }: { tramos: CanalTramo[] }) {
@@ -54,7 +55,8 @@ function registrarInteraccionTramo(
   tramo: CanalTramo,
   tipo: "minitramo" | "pendiente" | "ejecutado" | undefined,
   tramoSeleccionadoId: string | null,
-  onTramoClick: (tramo: CanalTramo) => void
+  onTramoClick: (tramo: CanalTramo) => void,
+  estadoSegmento?: EstadoTramo
 ) {
   layer.bindTooltip(
     `${tramo.codigo} · ${etiquetaEstadoTramo(tramo.estado)} · ${tramo.canal}`,
@@ -77,7 +79,7 @@ function registrarInteraccionTramo(
       const seleccionado = tramo.id === tramoSeleccionadoId
       const target = event.target as L.Path
       target.setStyle(
-        estiloSegmentoTramoEnMapa(tramo, tipo ?? "pendiente", seleccionado)
+        estiloSegmentoTramoEnMapa(tramo, tipo ?? "pendiente", seleccionado, false, estadoSegmento)
       )
     },
   })
@@ -105,6 +107,7 @@ function featureCollectionDesdeSegmentos(
         tramo: segmento.tramo,
         id: segmento.tramo.id,
         tipo: segmento.tipo,
+        estadoSegmento: segmento.estadoSegmento,
       } satisfies FeatureProps,
       geometry: segmento.geometria,
     })),
@@ -153,7 +156,7 @@ export function MapaTramosLeaflet({
 
   const layerKey = `${tramoSeleccionadoId ?? "none"}-${tramos
     .map((t) => `${t.id}:${t.metros_ejecutados}:${t.estado}`)
-    .join("|")}`
+    .join("|")}-${puntosAvance.map((p) => `${p.id}:${p.estado_minitramo ?? ""}`).join(",")}`
 
   return (
     <div className="overflow-hidden rounded-xl border border-foreground/10 ring-1 ring-foreground/5">
@@ -198,7 +201,9 @@ export function MapaTramosLeaflet({
             return estiloSegmentoTramoEnMapa(
               props?.tramo,
               props?.tipo ?? "pendiente",
-              seleccionado
+              seleccionado,
+              false,
+              props?.estadoSegmento
             )
           }}
           onEachFeature={(feature, layer) => {
@@ -209,7 +214,8 @@ export function MapaTramosLeaflet({
               props.tramo,
               props.tipo,
               tramoSeleccionadoId,
-              onTramoClick
+              onTramoClick,
+              props.estadoSegmento
             )
           }}
         />

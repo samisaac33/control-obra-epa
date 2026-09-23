@@ -1,6 +1,6 @@
 import type { PathOptions } from "leaflet"
 
-import type { CanalTramo } from "@/src/data/tramos/types"
+import type { CanalTramo, EstadoTramo } from "@/src/data/tramos/types"
 import { COLOR_MINITRAMO, colorEstadoTramo } from "@/src/data/tramos/types"
 
 export const ALTURA_MAPA_TRAMOS = "min(65vh, 560px)"
@@ -53,14 +53,15 @@ export function estiloSegmentoTramoEnMapa(
   tramo: CanalTramo | undefined,
   tipo: "minitramo" | "pendiente" | "ejecutado",
   seleccionado: boolean,
-  hover = false
+  hover = false,
+  estadoSegmento?: EstadoTramo
 ): PathOptions {
-  const estado = tramo?.estado ?? "pendiente"
-  const esMinitramoEjecutado =
-    estado === "en_ejecucion" && (tipo === "minitramo" || tipo === "ejecutado")
-
-  if (esMinitramoEjecutado) {
-    return estiloMinitramoEnMapa(seleccionado, hover)
+  if (tipo === "minitramo" || tipo === "ejecutado") {
+    const segEstado = estadoSegmento ?? "en_ejecucion"
+    if (segEstado === "en_ejecucion") {
+      return estiloMinitramoEnMapa(seleccionado, hover)
+    }
+    return estiloLineaTramo(colorEstadoTramo(segEstado), seleccionado, hover)
   }
   return estiloTramoPendienteEnMapa(tramo, seleccionado, hover)
 }
