@@ -1,5 +1,6 @@
 "use client"
 
+import { cn } from "@/lib/utils"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import type { CanalTramo } from "@/src/data/tramos/types"
 import { MarcarPuntoTramoBlock } from "@/src/components/mapa/MarcarPuntoTramoBlock"
@@ -10,6 +11,10 @@ import { tramoListoParaMarcar, tramoRequiereConfigurarOrigen } from "@/src/lib/t
 import { TramoEditorForm, type TramoFormValues } from "@/src/components/mapa/TramoEditorForm"
 import { TramoEvidenciaUploadBlock } from "@/src/components/mapa/TramoEvidenciaUploadBlock"
 import { TramoPuntosHistorial } from "@/src/components/mapa/TramoPuntosHistorial"
+import { TramoDetalleResumen } from "@/src/components/mapa/TramoDetalleResumen"
+import { TramoMaquinariaHistorialBlock } from "@/src/components/mapa/TramoMaquinariaHistorialBlock"
+import { tituloTramoMapa } from "@/src/lib/tramo-display"
+import { useEsViewportMovil } from "@/src/hooks/useEsViewportMovil"
 import type { PropuestaPuntoMinitramo, TramoPuntoAvance } from "@/src/lib/tramo-geometria"
 
 export type SolicitarConfirmacionAvanceOptions = {
@@ -70,6 +75,9 @@ export function TramoDetallePanel({
   onReiniciarOrigenTramo,
   reiniciandoOrigen = false,
 }: TramoDetallePanelProps) {
+  const esViewportMovil = useEsViewportMovil()
+  const visitanteBottomSheet = !isResident && esViewportMovil
+
   const puntosDelTramo = tramo
     ? puntosAvance.filter((p) => p.tramo_id === tramo.id && p.confirmado)
     : []
@@ -85,25 +93,65 @@ export function TramoDetallePanel({
         onOpenChange(nextOpen)
       }}
     >
-      <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-md">
-        <SheetHeader>
-          <SheetTitle>{tramo ? `Tramo ${tramo.codigo}` : "Detalle del tramo"}</SheetTitle>
+      <SheetContent
+        side={visitanteBottomSheet ? "bottom" : "right"}
+        className={cn(
+          "overflow-y-auto",
+          visitanteBottomSheet
+            ? "max-h-[90dvh] rounded-t-2xl border-t px-5 pb-6 pt-3"
+            : "w-full sm:max-w-md"
+        )}
+      >
+        {visitanteBottomSheet ? (
+          <div
+            className="mx-auto mb-2 h-1 w-10 shrink-0 rounded-full bg-muted-foreground/30"
+            aria-hidden
+          />
+        ) : null}
+
+        <SheetHeader className={visitanteBottomSheet ? "sr-only" : undefined}>
+          <SheetTitle>{tramo ? tituloTramoMapa(tramo.codigo) : "Detalle del tramo"}</SheetTitle>
           <SheetDescription>
-            {tramo
-              ? `${tramo.canal} — ${(tramo.longitud_m / 1000).toFixed(2)} km`
-              : "Seleccione un tramo en el mapa"}
+            {isResident
+              ? "Registro de avance, minitramos GPS y maquinaria"
+              : "Avance del desasolve e historial de jornadas"}
           </SheetDescription>
         </SheetHeader>
+
         {tramo ? (
-          <div className="mt-6 space-y-6">
+          <div className={cn("space-y-6", visitanteBottomSheet ? "mt-0" : "mt-6")}>
             {panelError ? (
-              <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive" role="alert">
+              <p
+                className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+                role="alert"
+              >
                 {panelError}
               </p>
             ) : null}
 
-            {isResident ? (
+            {!isResident ? (
               <>
+                <TramoDetalleResumen
+                  tramo={tramo}
+                  puntosAvance={puntosAvance}
+                  tituloId="tramo-detalle-sheet-title"
+                />
+                <TramoMaquinariaHistorialBlock tramoId={tramo.id} isResident={false} />
+              </>
+            ) : (
+              <>
+                <TramoDetalleResumen
+                  tramo={tramo}
+                  puntosAvance={puntosAvance}
+                  mostrarEncabezado={!visitanteBottomSheet}
+                />
+
+                <TramoMaquinariaHistorialBlock
+                  tramoId={tramo.id}
+                  isResident
+                  refreshKey={puntosRefreshKey}
+                />
+
                 {requiereOrigen && onGuardarOrigenInicio ? (
                   <TramoOrigenInicioBlock
                     tramo={tramo}
@@ -141,26 +189,33 @@ export function TramoDetallePanel({
                     })
                   }
                 />
+
+                <TramoPuntosHistorial
+                  tramoId={tramo.id}
+                  refreshKey={puntosRefreshKey}
+                  metrosEjecutados={tramo.metros_ejecutados}
+                  isResident={isResident}
+                  guardandoEstadoMinitramoId={guardandoEstadoMinitramoId}
+                  onEstadoMinitramoChange={onEstadoMinitramoChange}
+                  onEliminarMinitramo={onEliminarMinitramo}
+                  eliminandoId={eliminandoId}
+                />
+
+                <details className="rounded-lg border border-foreground/10 bg-muted/10 px-3 py-2">
+                  <summary className="cursor-pointer text-sm font-medium">
+                    Datos administrativos del tramo
+                  </summary>
+                  <div className="mt-3 pb-2">
+                    <TramoEditorForm
+                      tramo={tramo}
+                      isResident={isResident}
+                      loading={loading}
+                      onSubmit={(values) => onSubmit(tramo.id, values)}
+                    />
+                  </div>
+                </details>
               </>
-            ) : null}
-
-            <TramoPuntosHistorial
-              tramoId={tramo.id}
-              refreshKey={puntosRefreshKey}
-              metrosEjecutados={tramo.metros_ejecutados}
-              isResident={isResident}
-              guardandoEstadoMinitramoId={guardandoEstadoMinitramoId}
-              onEstadoMinitramoChange={isResident ? onEstadoMinitramoChange : undefined}
-              onEliminarMinitramo={isResident ? onEliminarMinitramo : undefined}
-              eliminandoId={eliminandoId}
-            />
-
-            <TramoEditorForm
-              tramo={tramo}
-              isResident={isResident}
-              loading={loading}
-              onSubmit={(values) => onSubmit(tramo.id, values)}
-            />
+            )}
           </div>
         ) : null}
       </SheetContent>
