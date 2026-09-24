@@ -115,7 +115,7 @@ export function TramoDetallePanel({
         open={open}
         tramo={tramo}
         onOpenChange={handleOpenChange}
-        {...(tramo ? contenidoResidenteProps : {})}
+        {...contenidoResidenteProps}
       />
     )
   }

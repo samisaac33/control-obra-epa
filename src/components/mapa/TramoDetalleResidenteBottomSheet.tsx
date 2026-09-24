@@ -10,8 +10,9 @@ import {
 } from "@/src/components/mapa/TramoDetalleResidenteContenido"
 import { tituloTramoMapa } from "@/src/lib/tramo-display"
 
-type TramoDetalleResidenteBottomSheetProps = Partial<
-  Omit<TramoDetalleResidenteContenidoProps, "tituloId" | "tramo">
+type TramoDetalleResidenteBottomSheetProps = Omit<
+  TramoDetalleResidenteContenidoProps,
+  "tituloId" | "tramo" | "mostrarEncabezadoResumen"
 > & {
   open: boolean
   tramo: CanalTramo | null
