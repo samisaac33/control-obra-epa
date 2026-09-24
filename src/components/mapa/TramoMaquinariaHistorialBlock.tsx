@@ -34,6 +34,7 @@ export function TramoMaquinariaHistorialBlock({
   const [eliminandoId, setEliminandoId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
+  const [formularioRegistroAbierto, setFormularioRegistroAbierto] = useState(false)
   const [fecha, setFecha] = useState("")
   const [metros, setMetros] = useState("")
   const [equipo, setEquipo] = useState("")
@@ -58,6 +59,10 @@ export function TramoMaquinariaHistorialBlock({
   useEffect(() => {
     void cargar()
   }, [cargar, refreshKey])
+
+  useEffect(() => {
+    setFormularioRegistroAbierto(false)
+  }, [tramoId])
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
@@ -203,67 +208,91 @@ export function TramoMaquinariaHistorialBlock({
       )}
 
       {isResident ? (
-        <form onSubmit={handleSubmit} className="space-y-3 rounded-xl border border-foreground/10 bg-muted/20 p-3">
-          <p className="text-sm font-medium">Registrar jornada</p>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="maq-fecha">Fecha</Label>
-              <Input
-                id="maq-fecha"
-                type="date"
-                required
-                value={fecha}
-                onChange={(e) => setFecha(e.target.value)}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="maq-metros">Metros desasolados</Label>
-              <Input
-                id="maq-metros"
-                type="number"
-                min={0}
-                step={0.1}
-                required
-                placeholder="Ej. 120"
-                value={metros}
-                onChange={(e) => setMetros(e.target.value)}
-              />
-            </div>
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="maq-equipo">Equipo / maquinaria</Label>
-            <Input
-              id="maq-equipo"
-              required
-              placeholder="Ej. Excavadora brazo largo"
-              value={equipo}
-              onChange={(e) => setEquipo(e.target.value)}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="maq-horas">Horas de trabajo (opcional)</Label>
-            <Input
-              id="maq-horas"
-              type="number"
-              min={0}
-              step={0.5}
-              value={horas}
-              onChange={(e) => setHoras(e.target.value)}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="maq-obs">Observaciones (opcional)</Label>
-            <Textarea
-              id="maq-obs"
-              rows={2}
-              value={observaciones}
-              onChange={(e) => setObservaciones(e.target.value)}
-            />
-          </div>
-          <Button type="submit" disabled={guardando} className="w-full">
-            {guardando ? "Guardando…" : "Agregar al historial"}
-          </Button>
-        </form>
+        <div className="rounded-xl border border-foreground/10 bg-muted/20 p-3">
+          {!formularioRegistroAbierto ? (
+            <Button
+              type="button"
+              variant="secondary"
+              className="w-full"
+              onClick={() => setFormularioRegistroAbierto(true)}
+            >
+              Registrar jornada
+            </Button>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-3">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-sm font-medium">Registrar jornada</p>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 px-2 text-muted-foreground"
+                  onClick={() => setFormularioRegistroAbierto(false)}
+                >
+                  Cancelar
+                </Button>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label htmlFor="maq-fecha">Fecha</Label>
+                  <Input
+                    id="maq-fecha"
+                    type="date"
+                    required
+                    value={fecha}
+                    onChange={(e) => setFecha(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="maq-metros">Metros desasolados</Label>
+                  <Input
+                    id="maq-metros"
+                    type="number"
+                    min={0}
+                    step={0.1}
+                    required
+                    placeholder="Ej. 120"
+                    value={metros}
+                    onChange={(e) => setMetros(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="maq-equipo">Equipo / maquinaria</Label>
+                <Input
+                  id="maq-equipo"
+                  required
+                  placeholder="Ej. Excavadora brazo largo"
+                  value={equipo}
+                  onChange={(e) => setEquipo(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="maq-horas">Horas de trabajo (opcional)</Label>
+                <Input
+                  id="maq-horas"
+                  type="number"
+                  min={0}
+                  step={0.5}
+                  value={horas}
+                  onChange={(e) => setHoras(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="maq-obs">Observaciones (opcional)</Label>
+                <Textarea
+                  id="maq-obs"
+                  rows={2}
+                  value={observaciones}
+                  onChange={(e) => setObservaciones(e.target.value)}
+                />
+              </div>
+              <Button type="submit" disabled={guardando} className="w-full">
+                {guardando ? "Guardando…" : "Agregar al historial"}
+              </Button>
+            </form>
+          )}
+        </div>
       ) : null}
     </section>
   )
