@@ -7,11 +7,13 @@ const CAMPOS_REGISTRO =
   "id, created_at, fecha_captura, lat, lng, sector, descripcion, numero_rubro, ubicacion_abscisa, actividad_especifica, maquinaria_utilizada, estado_hito, observacion_tecnica, grupo_id, image_path"
 
 export async function cargarEvidenciasLibroObra(
-  supabase: SupabaseClient
+  supabase: SupabaseClient,
+  proyectoId: string
 ): Promise<RegistroFotoBase[]> {
   const { data, error } = await supabase
     .from("registros_fotograficos")
     .select(CAMPOS_REGISTRO)
+    .eq("proyecto_id", proyectoId)
     .order("fecha_captura", { ascending: true })
     .limit(500)
 

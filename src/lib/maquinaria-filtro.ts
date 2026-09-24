@@ -1,4 +1,8 @@
 import {
+  ETAPAS_MAQUINARIA,
+  type EtapaMaquinariaId,
+} from "@/src/data/maquinaria-etapas"
+import {
   PERIODO_MAQUINARIA,
   REGISTRO_MAQUINARIA,
   type RegistroDia,
@@ -8,6 +12,23 @@ import { formatearFechaCorta } from "@/src/lib/maquinaria-resumen"
 export type RangoMaquinaria = {
   inicio: string
   fin: string
+}
+
+export type TipoReporteMaquinaria = "operativo" | "horas_maquinas" | "por_sitio"
+
+export type EtapaMaquinariaAplicada = {
+  desde: string
+  hasta: string
+  tipoReporte: TipoReporteMaquinaria | null
+}
+
+export function aplicarEtapaMaquinaria(etapaId: EtapaMaquinariaId): EtapaMaquinariaAplicada {
+  const etapa = ETAPAS_MAQUINARIA[etapaId]
+  return {
+    desde: etapa.desde,
+    hasta: etapa.hasta,
+    tipoReporte: etapa.tipoReporte,
+  }
 }
 
 export function resolverRangoMaquinaria(desde?: string, hasta?: string): RangoMaquinaria {

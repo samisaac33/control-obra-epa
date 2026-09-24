@@ -1,6 +1,8 @@
 import type { Metadata } from "next"
 
 import { LibroObraClient } from "@/src/components/LibroObraClient"
+import { ProyectoModuloGuard } from "@/src/components/ProyectoModuloGuard"
+import { PROYECTO_EMERGENCIA_MANABI } from "@/src/data/proyectos/catalog"
 import { cargarEvidenciasLibroObra } from "@/src/lib/cargar-evidencias-libro-obra"
 import { consolidarLibroObra } from "@/src/lib/libro-obra"
 import { createClient } from "@/src/lib/supabase/server"
@@ -18,7 +20,7 @@ export default async function LibroObraPage() {
 
   try {
     const supabase = await createClient()
-    const registros = await cargarEvidenciasLibroObra(supabase)
+    const registros = await cargarEvidenciasLibroObra(supabase, PROYECTO_EMERGENCIA_MANABI)
     entradas = consolidarLibroObra(registros)
   } catch (error) {
     errorCarga = error instanceof Error ? error.message : "No se pudieron cargar las evidencias."
@@ -26,6 +28,8 @@ export default async function LibroObraPage() {
   }
 
   return (
-    <LibroObraClient entradas={entradas} generadoEn={generadoEn} errorCarga={errorCarga} />
+    <ProyectoModuloGuard modulo="libroObra">
+      <LibroObraClient entradas={entradas} generadoEn={generadoEn} errorCarga={errorCarga} />
+    </ProyectoModuloGuard>
   )
 }

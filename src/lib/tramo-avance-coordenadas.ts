@@ -225,6 +225,38 @@ export type GuardarOrigenTramoEInicioInput = {
   userId: string
 }
 
+export async function reiniciarOrigenTramoYPuntos(
+  supabase: SupabaseClient,
+  tramo: CanalTramo
+): Promise<void> {
+  const { error: deleteError } = await supabase
+    .from("tramo_puntos_avance")
+    .delete()
+    .eq("tramo_id", tramo.id)
+
+  if (deleteError) throw new Error(deleteError.message)
+
+  const { error: updateError } = await supabase
+    .from("canal_tramos")
+    .update({
+      origen_extremo: null,
+      metros_ejecutados: 0,
+      avance_pct: 0,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", tramo.id)
+
+  if (updateError) throw new Error(updateError.message)
+
+  const tramoReset: CanalTramo = {
+    ...tramo,
+    origen_extremo: null,
+    metros_ejecutados: 0,
+    avance_pct: 0,
+  }
+  await recalcularAvanceTramoDesdePuntos(supabase, tramoReset, tramo.estado)
+}
+
 export async function guardarOrigenTramoEInicio(
   supabase: SupabaseClient,
   input: GuardarOrigenTramoEInicioInput

@@ -2,19 +2,35 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { BookOpen, Camera, ClipboardList, FileWarning, LayoutDashboard, Truck } from "lucide-react"
+import {
+  BookOpen,
+  Camera,
+  ClipboardList,
+  FileWarning,
+  LayoutDashboard,
+  Map,
+  Truck,
+} from "lucide-react"
 
-import { PROYECTO } from "@/src/data/proyecto"
+import { ProyectoSelect } from "@/src/components/ProyectoSelect"
+import { useProyecto } from "@/src/contexts/ProyectoContext"
+import type { ProyectoModulo } from "@/src/data/proyectos/catalog"
 import { cn } from "@/lib/utils"
 
-const items = [
-  { href: "/", label: "Inicio", icon: LayoutDashboard },
-  { href: "/emergencia", label: "Informe de afectación", icon: FileWarning },
-  { href: "/presupuesto", label: "Presupuesto", icon: ClipboardList },
-  { href: "/maquinaria", label: "Maquinaria y transporte", icon: Truck },
-  { href: "/fotos", label: "Registro Fotográfico", icon: Camera },
-  { href: "/libro-obra", label: "Informe de evidencias de obra", icon: BookOpen },
-] as const
+const items: {
+  href: string
+  label: string
+  icon: typeof LayoutDashboard
+  modulo: ProyectoModulo
+}[] = [
+  { href: "/", label: "Inicio", icon: LayoutDashboard, modulo: "fotos" },
+  { href: "/emergencia", label: "Informe de afectación", icon: FileWarning, modulo: "afectacion" },
+  { href: "/presupuesto", label: "Presupuesto", icon: ClipboardList, modulo: "presupuesto" },
+  { href: "/maquinaria", label: "Maquinaria y transporte", icon: Truck, modulo: "maquinaria" },
+  { href: "/mapa", label: "Mapa de avance", icon: Map, modulo: "mapaTramos" },
+  { href: "/fotos", label: "Registro Fotográfico", icon: Camera, modulo: "fotos" },
+  { href: "/libro-obra", label: "Informe de evidencias de obra", icon: BookOpen, modulo: "libroObra" },
+]
 
 type NavigationPanelProps = {
   /** Cierra el drawer móvil al pulsar un enlace */
@@ -26,6 +42,12 @@ type NavigationPanelProps = {
 
 export function NavigationPanel({ onNavigate, isDrawer, className }: NavigationPanelProps) {
   const pathname = usePathname()
+  const { proyectoActivo } = useProyecto()
+
+  const itemsVisibles = items.filter((item) => {
+    if (item.href === "/") return true
+    return proyectoActivo.modulos[item.modulo]
+  })
 
   return (
     <div className={cn("flex h-full min-h-0 flex-col", className)}>
@@ -39,11 +61,16 @@ export function NavigationPanel({ onNavigate, isDrawer, className }: NavigationP
           Control de Obra
         </p>
         <p className="mt-1.5 text-base font-semibold leading-tight text-white">JBS Consorcio</p>
-        <p className="mt-1 text-sm leading-tight text-slate-300">{PROYECTO.nombreObra}</p>
+        <p className="mt-1 text-sm leading-tight text-slate-300">{proyectoActivo.nombreObra}</p>
+        {isDrawer ? (
+          <div className="mt-3">
+            <ProyectoSelect className="w-full max-w-none border-slate-600 bg-slate-900 text-slate-100" compact />
+          </div>
+        ) : null}
       </div>
       <nav className="min-h-0 flex-1 overflow-y-auto p-2" aria-label="Secciones">
         <ul className="space-y-0.5">
-          {items.map(({ href, label, icon: Icon }) => {
+          {itemsVisibles.map(({ href, label, icon: Icon }) => {
             const isActive = pathname === href || (href !== "/" && pathname.startsWith(href))
             return (
               <li key={href}>

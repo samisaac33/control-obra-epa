@@ -1,10 +1,11 @@
-import type {
-  CanalTramo,
-  EstadoTramo,
-  GeoJsonLineString,
-  OrigenExtremoTramo,
+import {
+  etiquetaEstadoTramo,
+  type CanalTramo,
+  type EstadoTramo,
+  type GeoJsonLineString,
+  type OrigenExtremoTramo,
 } from "@/src/data/tramos/types"
-import { sincronizarAvanceDesdeMetros } from "@/src/lib/tramos-avance"
+import { longitudDesdeGeometria, sincronizarAvanceDesdeMetros } from "@/src/lib/tramos-avance"
 
 const EARTH_RADIUS_M = 6_371_000
 export const DISTANCIA_MAX_DETECCION_M = 25
@@ -323,10 +324,103 @@ export type SegmentoVisualTramo = {
   tipo: "minitramo" | "pendiente"
   geometria: GeoJsonLineString
   estadoSegmento?: EstadoTramo
+  longitud_m: number
+  letraInicio?: string
+  letraFin?: string
+}
+
+export type InfoSegmentoMapa = {
+  titulo: string
+  estadoLabel: string
+  longitudTexto: string
+  longitud_m: number
+  esMinitramo: boolean
+  etiquetaMinitramo: string | null
+  canal: string
+}
+
+export function formatLongitudSegmentoMapa(metros: number): string {
+  if (metros >= 1000) return `${(metros / 1000).toFixed(2)} km`
+  return `${metros.toFixed(0)} m`
+}
+
+export function infoSegmentoMapa(segmento: SegmentoVisualTramo): InfoSegmentoMapa {
+  const esMinitramo = segmento.tipo === "minitramo"
+  const estado =
+    segmento.estadoSegmento ?? (esMinitramo ? "en_ejecucion" : segmento.tramo.estado)
+  const etiquetaMinitramo =
+    esMinitramo && segmento.letraInicio && segmento.letraFin
+      ? `${etiquetaLetra(segmento.letraInicio)}–${etiquetaLetra(segmento.letraFin)}`
+      : null
+
+  return {
+    titulo: segmento.tramo.codigo,
+    estadoLabel: etiquetaEstadoTramo(estado),
+    longitud_m: segmento.longitud_m,
+    longitudTexto: formatLongitudSegmentoMapa(segmento.longitud_m),
+    esMinitramo,
+    etiquetaMinitramo,
+    canal: segmento.tramo.canal,
+  }
+}
+
+function escapeHtmlTexto(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+}
+
+export function htmlTooltipVisitanteSegmento(segmento: SegmentoVisualTramo): string {
+  const info = infoSegmentoMapa(segmento)
+  const minitramoLine = info.etiquetaMinitramo
+    ? `<p class="mapa-segmento-tooltip__row"><span class="mapa-segmento-tooltip__label">Minitramo</span> ${escapeHtmlTexto(info.etiquetaMinitramo)}</p>`
+    : ""
+  return `<div class="mapa-segmento-tooltip__inner">
+    <p class="mapa-segmento-tooltip__title">${escapeHtmlTexto(info.titulo)}</p>
+    ${minitramoLine}
+    <p class="mapa-segmento-tooltip__row"><span class="mapa-segmento-tooltip__label">Estado</span> ${escapeHtmlTexto(info.estadoLabel)}</p>
+    <p class="mapa-segmento-tooltip__row"><span class="mapa-segmento-tooltip__label">Longitud</span> ${escapeHtmlTexto(info.longitudTexto)}</p>
+  </div>`
+}
+
+function segmentoVisualDesdeGeometria(
+  tramo: CanalTramo,
+  tipo: SegmentoVisualTramo["tipo"],
+  geometria: GeoJsonLineString,
+  extras?: Pick<SegmentoVisualTramo, "estadoSegmento" | "letraInicio" | "letraFin">
+): SegmentoVisualTramo {
+  return {
+    tramo,
+    tipo,
+    geometria,
+    longitud_m: longitudDesdeGeometria(geometria),
+    estadoSegmento: extras?.estadoSegmento ?? (tipo === "pendiente" ? tramo.estado : undefined),
+    letraInicio: extras?.letraInicio,
+    letraFin: extras?.letraFin,
+  }
 }
 
 export function estadoEfectivoMinitramo(punto: TramoPuntoAvance): EstadoTramo {
   return punto.estado_minitramo ?? "en_ejecucion"
+}
+
+/** Longitud sobre el trazado de minitramos confirmados en estado terminado (base del mapa). */
+export function metrosMinitramosTerminadosTramo(
+  tramo: CanalTramo,
+  puntosAvance: TramoPuntoAvance[]
+): number {
+  const minitramos = minitramosDesdePuntos(puntosAvance, tramo.id)
+  let total = 0
+  for (const mt of minitramos) {
+    if (estadoEfectivoMinitramo(mt.puntoFin) !== "terminado") continue
+    const inicio = Math.min(mt.puntoInicio.abscisa_m, mt.puntoFin.abscisa_m)
+    const fin = Math.max(mt.puntoInicio.abscisa_m, mt.puntoFin.abscisa_m)
+    const geometria = geometriaEntreAbscisas(tramo.geometria, inicio, fin)
+    if (geometria) total += longitudDesdeGeometria(geometria)
+  }
+  return Math.min(tramo.longitud_m, total)
 }
 
 export function segmentosVisualesTramo(
@@ -339,7 +433,7 @@ export function segmentosVisualesTramo(
       : []
 
   if (minitramos.length === 0) {
-    return [{ tramo, tipo: "pendiente", geometria: tramo.geometria }]
+    return [segmentoVisualDesdeGeometria(tramo, "pendiente", tramo.geometria)]
   }
 
   const segmentos: SegmentoVisualTramo[] = []
@@ -357,27 +451,32 @@ export function segmentosVisualesTramo(
 
     if (inicio > cursor + 0.01) {
       const pendiente = geometriaEntreAbscisas(tramo.geometria, cursor, inicio)
-      if (pendiente) segmentos.push({ tramo, tipo: "pendiente", geometria: pendiente })
+      if (pendiente) segmentos.push(segmentoVisualDesdeGeometria(tramo, "pendiente", pendiente))
     }
 
     const minitramo = geometriaEntreAbscisas(tramo.geometria, inicio, fin)
     if (minitramo) {
-      segmentos.push({
-        tramo,
-        tipo: "minitramo",
-        geometria: minitramo,
-        estadoSegmento: estadoEfectivoMinitramo(mt.puntoFin),
-      })
+      segmentos.push(
+        segmentoVisualDesdeGeometria(tramo, "minitramo", minitramo, {
+          estadoSegmento: estadoEfectivoMinitramo(mt.puntoFin),
+          letraInicio: mt.letraInicio,
+          letraFin: mt.letraFin,
+        })
+      )
     }
     cursor = fin
   }
 
   if (cursor < tramo.longitud_m - 0.01) {
     const pendienteFinal = geometriaDesdeAbscisa(tramo.geometria, cursor)
-    if (pendienteFinal) segmentos.push({ tramo, tipo: "pendiente", geometria: pendienteFinal })
+    if (pendienteFinal) {
+      segmentos.push(segmentoVisualDesdeGeometria(tramo, "pendiente", pendienteFinal))
+    }
   }
 
-  return segmentos.length > 0 ? segmentos : [{ tramo, tipo: "pendiente", geometria: tramo.geometria }]
+  return segmentos.length > 0
+    ? segmentos
+    : [segmentoVisualDesdeGeometria(tramo, "pendiente", tramo.geometria)]
 }
 
 export type TramoDetectado = {
@@ -585,23 +684,33 @@ export function resumenMinitramos(
   return items
 }
 
+/** Siguiente posición válida (mínimo avance lógico) después del último punto confirmado. */
+export function posicionMinimaDespuesUltimoPunto(
+  tramo: CanalTramo,
+  puntos: TramoPuntoAvance[]
+): PuntoMarcado | null {
+  const ultimo = ultimoPuntoConfirmadoTramo(puntos, tramo.id)
+  if (!ultimo) return null
+
+  const logUlt = abscisaLogicaDesdeNatural(tramo, ultimo.abscisa_m)
+  const salto = Math.max(TOLERANCIA_CONTINUACION_M, 50, tramo.longitud_m * 0.05)
+  const logSig = Math.min(tramo.longitud_m, logUlt + salto)
+  const abscisa = abscisaNaturalDesdeLogica(tramo, logSig)
+  const coord = coordenadaDesdeAbscisa(tramo.geometria, abscisa)
+  return {
+    lat: coord?.lat ?? ultimo.lat,
+    lng: coord?.lng ?? ultimo.lng,
+    abscisa_m: abscisa,
+  }
+}
+
 export function posicionInicialPunto(
   tramo: CanalTramo,
   puntos: TramoPuntoAvance[]
 ): PuntoMarcado {
-  const ultimo = ultimoPuntoConfirmadoTramo(puntos, tramo.id)
-
-  if (ultimo) {
-    const logUlt = abscisaLogicaDesdeNatural(tramo, ultimo.abscisa_m)
-    const salto = Math.max(50, tramo.longitud_m * 0.05)
-    const logSig = Math.min(tramo.longitud_m, logUlt + salto)
-    const abscisa = abscisaNaturalDesdeLogica(tramo, logSig)
-    const coord = coordenadaDesdeAbscisa(tramo.geometria, abscisa)
-    return {
-      lat: coord?.lat ?? ultimo.lat,
-      lng: coord?.lng ?? ultimo.lng,
-      abscisa_m: abscisa,
-    }
+  const despuesUltimo = posicionMinimaDespuesUltimoPunto(tramo, puntos)
+  if (despuesUltimo) {
+    return despuesUltimo
   }
 
   const abscisa = abscisaNaturalExtremoInicio(tramo)
@@ -614,15 +723,26 @@ export function posicionInicialPunto(
   }
 }
 
-export function calcularPropuestaPunto(
+export type EvaluacionPropuestaPunto = {
+  propuesta: PropuestaPuntoMinitramo | null
+  motivoBloqueo: string | null
+}
+
+export function evaluarPropuestaPunto(
   tramo: CanalTramo,
   puntosPrevios: TramoPuntoAvance[],
   lat: number,
   lng: number,
   opciones?: { orden?: number; excluirPuntoId?: string; excluirGrupoId?: string }
-): PropuestaPuntoMinitramo | null {
+): EvaluacionPropuestaPunto {
   const proyeccion = proyectarPuntoEnLinea(lat, lng, tramo.geometria)
-  if (!proyeccion) return null
+  if (!proyeccion) {
+    return {
+      propuesta: null,
+      motivoBloqueo:
+        "La ubicación está lejos de la geometría del tramo. Arrastre el marcador sobre la línea del canal.",
+    }
+  }
 
   const puntoExcluido = opciones?.excluirPuntoId
     ? puntosPrevios.find((p) => p.id === opciones.excluirPuntoId)
@@ -648,7 +768,11 @@ export function calcularPropuestaPunto(
   const abscisa = Math.min(tramo.longitud_m, Math.max(0, proyeccion.abscisa_m))
 
   if (orden === 1) {
-    return null
+    return {
+      propuesta: null,
+      motivoBloqueo:
+        "El punto A se registra al confirmar el inicio del tramo. Use «Restablecer todo» si debe cambiar el extremo.",
+    }
   }
 
   const ordenados = puntosOrdenadosTramo(puntosBase, tramo.id)
@@ -657,7 +781,11 @@ export function calcularPropuestaPunto(
     const logAnterior = abscisaLogicaDesdeNatural(tramo, anterior.abscisa_m)
     const logNueva = abscisaLogicaDesdeNatural(tramo, abscisa)
     if (logNueva < logAnterior + TOLERANCIA_CONTINUACION_M - 0.01) {
-      return null
+      const letraAnterior = anterior.rol ? etiquetaLetra(anterior.rol) : "anterior"
+      return {
+        propuesta: null,
+        motivoBloqueo: `Mueva el punto ${letra} hacia adelante en la dirección del desasolve (al menos ${TOLERANCIA_CONTINUACION_M} m después del punto ${letraAnterior} en abscisa lógica). Use «Corregir último punto» si el ${letraAnterior} está mal ubicado, o «Restablecer todo» para elegir el otro extremo.`,
+      }
     }
   }
 
@@ -681,19 +809,32 @@ export function calcularPropuestaPunto(
   }
 
   return {
-    tramo,
-    punto: { lat: proyeccion.lat, lng: proyeccion.lng, abscisa_m: abscisa },
-    rol,
-    orden,
-    letra,
-    distancia_m: proyeccion.distancia_m,
-    cierraMinitramo,
-    letraParInicio,
-    metros_ejecutados_propuestos: metros,
-    avance_pct_propuesto: avancePct,
-    estado_sugerido: estadoSugeridoDesdeAvance(avancePct, tramo.estado),
-    mensaje,
+    propuesta: {
+      tramo,
+      punto: { lat: proyeccion.lat, lng: proyeccion.lng, abscisa_m: abscisa },
+      rol,
+      orden,
+      letra,
+      distancia_m: proyeccion.distancia_m,
+      cierraMinitramo,
+      letraParInicio,
+      metros_ejecutados_propuestos: metros,
+      avance_pct_propuesto: avancePct,
+      estado_sugerido: estadoSugeridoDesdeAvance(avancePct, tramo.estado),
+      mensaje,
+    },
+    motivoBloqueo: null,
   }
+}
+
+export function calcularPropuestaPunto(
+  tramo: CanalTramo,
+  puntosPrevios: TramoPuntoAvance[],
+  lat: number,
+  lng: number,
+  opciones?: { orden?: number; excluirPuntoId?: string; excluirGrupoId?: string }
+): PropuestaPuntoMinitramo | null {
+  return evaluarPropuestaPunto(tramo, puntosPrevios, lat, lng, opciones).propuesta
 }
 
 /** Pre-carga coordenadas GPS como siguiente punto en secuencia. */

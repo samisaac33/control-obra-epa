@@ -7,10 +7,13 @@ import { Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet"
 import { NavigationPanel } from "@/src/components/NavigationPanel"
+import { ProyectoSelect } from "@/src/components/ProyectoSelect"
+import { useProyecto } from "@/src/contexts/ProyectoContext"
 import { createClient } from "@/src/lib/supabase/client"
 import { cn } from "@/lib/utils"
 
 export function AppHeader() {
+  const { proyectoActivo } = useProyecto()
   const [open, setOpen] = useState(false)
   const [loadingLogout, setLoadingLogout] = useState(false)
   const [isResident, setIsResident] = useState(false)
@@ -95,7 +98,7 @@ export function AppHeader() {
             <span className="flex flex-col gap-0.5 md:hidden">
               <span className="line-clamp-2 text-sm font-semibold leading-snug">JBS Consorcio</span>
               <span className="line-clamp-2 text-xs font-normal leading-snug text-muted-foreground">
-                Sistema de Control de Obra
+                {proyectoActivo.nombreObra}
               </span>
             </span>
             <span className="hidden flex-col gap-0.5 md:flex">
@@ -103,11 +106,12 @@ export function AppHeader() {
                 JBS Consorcio
               </span>
               <span className="line-clamp-1 text-xs font-normal leading-snug text-muted-foreground">
-                Control de Obra EPA Manabí
+                {proyectoActivo.nombreObra}
               </span>
             </span>
           </h1>
         </div>
+        <ProyectoSelect className="min-w-0 max-w-[9rem] xs:max-w-[11rem] sm:max-w-xs" compact />
         {isResident ? (
           <Button
             type="button"

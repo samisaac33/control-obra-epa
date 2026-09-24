@@ -2,6 +2,7 @@ import Link from "next/link"
 import { FileWarning } from "lucide-react"
 
 import { AfectacionesResumen } from "@/src/components/AfectacionesResumen"
+import { ProyectoModuloGuard } from "@/src/components/ProyectoModuloGuard"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Button } from "@/components/ui/button"
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -24,6 +25,7 @@ import { SECTORES_FOTOGRAFICOS } from "@/src/data/sectores-fotos"
 
 export default function EmergenciaPage() {
   return (
+    <ProyectoModuloGuard modulo="afectacion">
     <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-[oklch(0.98_0.002_264)] text-foreground">
       <header className="shrink-0 border-b border-foreground/10 bg-card/80 shadow-sm ring-1 ring-foreground/5 backdrop-blur-sm">
         <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-5 sm:px-6 lg:px-8">
@@ -215,5 +217,6 @@ export default function EmergenciaPage() {
         </Accordion>
       </main>
     </div>
+    </ProyectoModuloGuard>
   )
 }

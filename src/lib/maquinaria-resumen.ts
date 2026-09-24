@@ -1,7 +1,9 @@
 import {
   ACCIONISTA_META,
+  FRENTE_META,
   type Accionista,
   type DuracionEquipo,
+  type FrenteObra,
   type RegistroDia,
   type RegistroEquipo,
   REGISTRO_MAQUINARIA,
@@ -10,6 +12,7 @@ import {
 export type ResumenEquipoFila = {
   equipo: string
   accionista: Accionista
+  frente?: FrenteObra
   diasCompletos: number
   mediosDias: number
   horas: number
@@ -62,23 +65,57 @@ export function etiquetaDuracion(registro: RegistroEquipo): string {
   }
 }
 
+export function esRegistroMaquina(registro: RegistroEquipo): boolean {
+  return (
+    registro.duracion === "dia_completo" ||
+    registro.duracion === "medio_dia" ||
+    registro.duracion === "hora"
+  )
+}
+
 function claveEquipo(registro: RegistroEquipo): string {
+  return registro.frente
+    ? `${registro.equipo}::${registro.accionista}::${registro.frente}`
+    : `${registro.equipo}::${registro.accionista}`
+}
+
+function claveEquipoConFrente(registro: RegistroEquipo): string {
+  return `${registro.equipo}::${registro.accionista}::${registro.frente ?? ""}`
+}
+
+function claveEquipoConsolidado(registro: RegistroEquipo): string {
   return `${registro.equipo}::${registro.accionista}`
 }
 
-export function resumenPorEquipo(dias: RegistroDia[] = REGISTRO_MAQUINARIA): ResumenEquipoFila[] {
+function ordenarFilasResumen(a: ResumenEquipoFila, b: ResumenEquipoFila): number {
+  if (a.accionista !== b.accionista) {
+    return a.accionista === "consorcio" ? -1 : 1
+  }
+  const frenteCmp = ordenFrente(a.frente) - ordenFrente(b.frente)
+  if (frenteCmp !== 0) return frenteCmp
+  return a.equipo.localeCompare(b.equipo, "es")
+}
+
+function acumularResumenEquipo(
+  dias: RegistroDia[],
+  claveFn: (registro: RegistroEquipo) => string,
+  filtroRegistro?: (registro: RegistroEquipo) => boolean
+): ResumenEquipoFila[] {
   const mapa = new Map<string, ResumenEquipoFila>()
 
   for (const dia of dias) {
     if (!dia.trabajado) continue
 
     for (const registro of dia.registros) {
-      const clave = claveEquipo(registro)
+      if (filtroRegistro && !filtroRegistro(registro)) continue
+
+      const clave = claveFn(registro)
       const fila =
         mapa.get(clave) ??
         ({
           equipo: registro.equipo,
           accionista: registro.accionista,
+          frente: registro.frente,
           diasCompletos: 0,
           mediosDias: 0,
           horas: 0,
@@ -112,12 +149,82 @@ export function resumenPorEquipo(dias: RegistroDia[] = REGISTRO_MAQUINARIA): Res
     }
   }
 
-  return [...mapa.values()].sort((a, b) => {
-    if (a.accionista !== b.accionista) {
-      return a.accionista === "consorcio" ? -1 : 1
+  return [...mapa.values()].sort(ordenarFilasResumen)
+}
+
+const ORDEN_FRENTE: Record<string, number> = {
+  "": 0,
+  cienega: 1,
+  poza_honda: 2,
+  pechiche: 3,
+  las_penas: 4,
+}
+
+function ordenFrente(frente?: FrenteObra): number {
+  return ORDEN_FRENTE[frente ?? ""] ?? 99
+}
+
+export function resumenFrenteEtiqueta(frente?: FrenteObra): string {
+  if (!frente) return "—"
+  return FRENTE_META[frente].label
+}
+
+export function frentesDelDia(dia: RegistroDia): FrenteObra[] {
+  const frentes = new Set<FrenteObra>()
+  for (const registro of dia.registros) {
+    if (registro.frente) frentes.add(registro.frente)
+  }
+  return [...frentes].sort((a, b) => ordenFrente(a) - ordenFrente(b))
+}
+
+export function resumenPorEquipo(dias: RegistroDia[] = REGISTRO_MAQUINARIA): ResumenEquipoFila[] {
+  return acumularResumenEquipo(dias, claveEquipo)
+}
+
+export function resumenMaquinasPorFrente(
+  dias: RegistroDia[] = REGISTRO_MAQUINARIA
+): ResumenEquipoFila[] {
+  return acumularResumenEquipo(dias, claveEquipoConFrente, esRegistroMaquina)
+}
+
+export function resumenMaquinasConsolidado(
+  dias: RegistroDia[] = REGISTRO_MAQUINARIA
+): ResumenEquipoFila[] {
+  return acumularResumenEquipo(dias, claveEquipoConsolidado, esRegistroMaquina).map((fila) => ({
+    ...fila,
+    frente: undefined,
+  }))
+}
+
+export type KpisMaquinas = {
+  diasConActividadMaquina: number
+  registrosMaquina: number
+  totalDiasEquipoMaquinas: number
+}
+
+export function kpisMaquinas(dias: RegistroDia[] = REGISTRO_MAQUINARIA): KpisMaquinas {
+  let registrosMaquina = 0
+  let totalDiasEquipoMaquinas = 0
+  const diasConMaquina = new Set<string>()
+
+  for (const dia of dias) {
+    if (!dia.trabajado) continue
+
+    let diaTieneMaquina = false
+    for (const registro of dia.registros) {
+      if (!esRegistroMaquina(registro)) continue
+      registrosMaquina += 1
+      totalDiasEquipoMaquinas += normalizarDuracion(registro)
+      diaTieneMaquina = true
     }
-    return a.equipo.localeCompare(b.equipo, "es")
-  })
+    if (diaTieneMaquina) diasConMaquina.add(dia.fecha)
+  }
+
+  return {
+    diasConActividadMaquina: diasConMaquina.size,
+    registrosMaquina,
+    totalDiasEquipoMaquinas,
+  }
 }
 
 export function resumenPorAccionista(dias: RegistroDia[] = REGISTRO_MAQUINARIA): Record<Accionista, number> {
@@ -165,7 +272,11 @@ export function kpisMaquinaria(dias: RegistroDia[] = REGISTRO_MAQUINARIA): KpisM
 
   for (const dia of dias) {
     for (const registro of dia.registros) {
-      if (registro.equipo === "Viajes de arena" && registro.duracion === "viajes") {
+      if (
+        (registro.equipo === "Viajes de arena" ||
+          registro.equipo === "Viajes de material para vía") &&
+        registro.duracion === "viajes"
+      ) {
         totalViajesArena += registro.cantidad ?? 0
       }
       if (registro.nota) {

@@ -4,6 +4,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import type { CanalTramo } from "@/src/data/tramos/types"
 import { MarcarPuntoTramoBlock } from "@/src/components/mapa/MarcarPuntoTramoBlock"
 import { TramoOrigenInicioBlock } from "@/src/components/mapa/TramoOrigenInicioBlock"
+import { TramoReiniciarOrigenBlock } from "@/src/components/mapa/TramoReiniciarOrigenBlock"
 import type { EstadoTramo, OrigenExtremoTramo } from "@/src/data/tramos/types"
 import { tramoListoParaMarcar, tramoRequiereConfigurarOrigen } from "@/src/lib/tramo-geometria"
 import { TramoEditorForm, type TramoFormValues } from "@/src/components/mapa/TramoEditorForm"
@@ -41,6 +42,8 @@ type TramoDetallePanelProps = {
   onEvidenciaSubida?: () => void
   onGuardarOrigenInicio?: (origen: OrigenExtremoTramo) => Promise<void>
   guardandoOrigen?: boolean
+  onReiniciarOrigenTramo?: () => Promise<void>
+  reiniciandoOrigen?: boolean
 }
 
 export function TramoDetallePanel({
@@ -64,6 +67,8 @@ export function TramoDetallePanel({
   onEvidenciaSubida,
   onGuardarOrigenInicio,
   guardandoOrigen = false,
+  onReiniciarOrigenTramo,
+  reiniciandoOrigen = false,
 }: TramoDetallePanelProps) {
   const puntosDelTramo = tramo
     ? puntosAvance.filter((p) => p.tramo_id === tramo.id && p.confirmado)
@@ -104,6 +109,13 @@ export function TramoDetallePanel({
                     tramo={tramo}
                     loading={guardandoOrigen}
                     onConfirmar={onGuardarOrigenInicio}
+                  />
+                ) : null}
+                {tramo.origen_extremo && onReiniciarOrigenTramo ? (
+                  <TramoReiniciarOrigenBlock
+                    tramo={tramo}
+                    loading={reiniciandoOrigen}
+                    onReiniciar={onReiniciarOrigenTramo}
                   />
                 ) : null}
                 {listoMarcar ? (

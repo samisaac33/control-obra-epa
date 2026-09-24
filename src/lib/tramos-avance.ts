@@ -1,4 +1,8 @@
 import type { CanalTramo, EstadoTramo, GeoJsonLineString } from "@/src/data/tramos/types"
+import {
+  metrosMinitramosTerminadosTramo,
+  type TramoPuntoAvance,
+} from "@/src/lib/tramo-geometria"
 
 const EARTH_RADIUS_M = 6_371_000
 
@@ -43,7 +47,10 @@ export type KpisTramos = {
   tramosPorEstado: Record<EstadoTramo, number>
 }
 
-export function calcularKpisTramos(tramos: CanalTramo[]): KpisTramos {
+export function calcularKpisTramos(
+  tramos: CanalTramo[],
+  puntosAvance?: TramoPuntoAvance[]
+): KpisTramos {
   let metrosTotales = 0
   let metrosEjecutados = 0
   const tramosPorEstado: Record<EstadoTramo, number> = {
@@ -54,9 +61,16 @@ export function calcularKpisTramos(tramos: CanalTramo[]): KpisTramos {
     suspendido: 0,
   }
 
+  const puntosConfirmados =
+    puntosAvance?.filter((p) => p.confirmado) ?? undefined
+
   for (const tramo of tramos) {
     metrosTotales += tramo.longitud_m
-    metrosEjecutados += tramo.metros_ejecutados
+    if (puntosConfirmados) {
+      metrosEjecutados += metrosMinitramosTerminadosTramo(tramo, puntosConfirmados)
+    } else {
+      metrosEjecutados += tramo.metros_ejecutados
+    }
     tramosPorEstado[tramo.estado] += 1
   }
 

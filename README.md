@@ -26,7 +26,14 @@ cp .env.example .env.local
 
 - Crea un bucket privado llamado `evidencias`.
 - Ejecuta `supabase/schema.sql` en el SQL Editor.
-- Reemplaza `TU_CORREO_RESIDENTE` por tu correo real antes de ejecutar.
+- Ejecuta las migraciones en `supabase/migrations/`, incluida `20250917_tramo_puntos_avance.sql` (historial GPS de avance por tramo en `/mapa`).
+- Reemplaza `TU_CORREO_RESIDENTE` por tu correo real antes de ejecutar (debe coincidir con `NEXT_PUBLIC_RESIDENTE_EMAIL` y las políticas RLS).
+
+### Avance por tramos en `/mapa`
+
+- El avance **georreferenciado** se registra con «Marcar avance en mapa» → «Confirmar avance».
+- La edición manual de metros/% en el formulario **no** crea puntos GPS; use el mapa para corregir después.
+- Requiere sesión con el correo residente autorizado en RLS.
 
 5. Levanta el proyecto:
 

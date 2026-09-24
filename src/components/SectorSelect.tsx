@@ -7,11 +7,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import {
-  ID_TODOS_LOS_SECTORES,
-  RUBROS_SECTORES,
-  TODOS_LOS_SECTORES,
-} from "@/src/data/sectores-fotos"
+import { ID_TODOS_LOS_SECTORES } from "@/src/data/sectores-fotos"
+import { useProyecto } from "@/src/contexts/ProyectoContext"
+import { getTodosLosSectoresPorProyecto } from "@/src/lib/sectores-por-proyecto"
 import { cn } from "@/lib/utils"
 
 type SectorSelectProps = {
@@ -36,16 +34,17 @@ export function SectorSelect({
   className,
   "aria-invalid": ariaInvalid,
 }: SectorSelectProps) {
+  const { proyectoId } = useProyecto()
   const isFilter = variant === "filter"
   const showAllOption = includeAllOption ?? isFilter
-  const opciones = showAllOption ? TODOS_LOS_SECTORES : RUBROS_SECTORES
+  const todosLosSectores = getTodosLosSectoresPorProyecto(proyectoId)
+  const opciones = showAllOption
+    ? todosLosSectores
+    : todosLosSectores.filter((s) => s.id !== ID_TODOS_LOS_SECTORES)
   const selectValue = value || (showAllOption ? ID_TODOS_LOS_SECTORES : undefined)
 
   return (
-    <Select
-      value={selectValue}
-      onValueChange={onChange}
-    >
+    <Select value={selectValue} onValueChange={onChange}>
       <SelectTrigger
         id={id}
         aria-invalid={ariaInvalid}

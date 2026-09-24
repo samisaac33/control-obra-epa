@@ -1,13 +1,15 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 
 import { ACCIONISTA_META } from "@/src/data/registro-maquinaria"
+import { useRegistroMaquinariaProyecto } from "@/src/hooks/use-registro-maquinaria-proyecto"
 import {
   agruparSemanas,
   construirMatrizCalendario,
   EQUIPO_ETIQUETA_CORTA,
+  etiquetaFrente,
   intensidadVisual,
   textoDetalleCelda,
   tituloColumna,
@@ -15,11 +17,10 @@ import {
   type CeldaMatriz,
   type ColumnaMatriz,
   type FilaMatriz,
+  type MatrizCalendario,
+  type SemanaMatriz,
 } from "@/src/lib/maquinaria-matriz"
 import { cn } from "@/lib/utils"
-
-const matriz = construirMatrizCalendario()
-const semanas = agruparSemanas(matriz.columnas)
 
 function claveCelda(filaId: string, fecha: string): string {
   return `${filaId}::${fecha}`
@@ -260,6 +261,7 @@ function LeyendaMatriz({ compacta = false }: { compacta?: boolean }) {
 }
 
 type MatrizTablaProps = {
+  matriz: MatrizCalendario
   columnas: ColumnaMatriz[]
   tamano?: "sm" | "md"
   etiquetasCortas?: boolean
@@ -269,6 +271,7 @@ type MatrizTablaProps = {
 }
 
 function MatrizTabla({
+  matriz,
   columnas,
   tamano = "md",
   etiquetasCortas = false,
@@ -321,6 +324,7 @@ function MatrizTabla({
           const nombreEquipo = etiquetasCortas
             ? (EQUIPO_ETIQUETA_CORTA[fila.equipo] ?? fila.equipo)
             : fila.equipo
+          const frente = etiquetaFrente(fila, etiquetasCortas)
 
           return (
             <tr key={fila.id} className="border-b border-foreground/5 last:border-b-0">
@@ -339,6 +343,11 @@ function MatrizTabla({
                     >
                       {nombreEquipo}
                     </span>
+                    {frente ? (
+                      <span className="block text-[9px] font-medium text-foreground/70 sm:text-[10px]">
+                        {frente}
+                      </span>
+                    ) : null}
                     <span className="text-[9px] text-muted-foreground sm:text-[10px]">{meta.label}</span>
                   </span>
                 </span>
@@ -369,24 +378,46 @@ function MatrizTabla({
   )
 }
 
-function MatrizCalendarioEscritorio() {
+function MatrizCalendarioEscritorio({ matriz, periodoEtiqueta }: { matriz: MatrizCalendario; periodoEtiqueta: string }) {
+  if (matriz.filas.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        Aún no hay registros de maquinaria para este proyecto.
+      </p>
+    )
+  }
+
   return (
     <div className="hidden md:block">
       <LeyendaMatriz />
       <div className="mt-4 overflow-x-auto rounded-xl border border-foreground/10">
-        <MatrizTabla columnas={matriz.columnas} tamano="md" />
+        <MatrizTabla matriz={matriz} columnas={matriz.columnas} tamano="md" />
       </div>
       <p className="mt-3 text-xs text-muted-foreground">
-        May – Jun 2026. Desplaza horizontalmente para ver todo el período. Pasa el cursor sobre una celda
+        {periodoEtiqueta}. Desplaza horizontalmente para ver todo el período. Pasa el cursor sobre una celda
         para ver el detalle.
       </p>
     </div>
   )
 }
 
-function MatrizCalendarioMovil() {
+function MatrizCalendarioMovil({
+  matriz,
+  semanas,
+}: {
+  matriz: MatrizCalendario
+  semanas: SemanaMatriz[]
+}) {
   const [semanaActiva, setSemanaActiva] = useState(0)
   const [detalleSeleccionado, setDetalleSeleccionado] = useState<DetalleCelda | null>(null)
+
+  if (matriz.filas.length === 0 || semanas.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground md:hidden">
+        Aún no hay registros de maquinaria para este proyecto.
+      </p>
+    )
+  }
 
   const semana = semanas[semanaActiva]
   const esPrimera = semanaActiva === 0
@@ -463,6 +494,7 @@ function MatrizCalendarioMovil() {
         <div className="pointer-events-none absolute inset-y-0 right-0 z-30 w-6 bg-linear-to-l from-card to-transparent" />
         <div className="overflow-x-auto overscroll-x-contain">
           <MatrizTabla
+            matriz={matriz}
             columnas={semana.columnas}
             tamano="sm"
             etiquetasCortas
@@ -497,10 +529,14 @@ function MatrizCalendarioMovil() {
 }
 
 export function MaquinariaMatrizCalendario() {
+  const { registros, periodo } = useRegistroMaquinariaProyecto()
+  const matriz = useMemo(() => construirMatrizCalendario(registros), [registros])
+  const semanas = useMemo(() => agruparSemanas(matriz.columnas), [matriz.columnas])
+
   return (
     <div className="space-y-0">
-      <MatrizCalendarioMovil />
-      <MatrizCalendarioEscritorio />
+      <MatrizCalendarioMovil matriz={matriz} semanas={semanas} />
+      <MatrizCalendarioEscritorio matriz={matriz} periodoEtiqueta={periodo.etiqueta} />
     </div>
   )
 }

@@ -1,4 +1,4 @@
-import { ACCIONISTA_META, type RegistroEquipo } from "@/src/data/registro-maquinaria"
+import { ACCIONISTA_META, FRENTE_META, type RegistroEquipo } from "@/src/data/registro-maquinaria"
 import { etiquetaDuracion } from "@/src/lib/maquinaria-resumen"
 import { cn } from "@/lib/utils"
 
@@ -21,6 +21,9 @@ export function MaquinariaRegistroBadge({ registro, className }: MaquinariaRegis
     >
       <span className={cn("size-2 shrink-0 rounded-full", meta.dotClass)} aria-hidden />
       <span className="font-medium">{registro.equipo}</span>
+      {registro.frente ? (
+        <span className="text-xs font-medium opacity-90">· {FRENTE_META[registro.frente].label}</span>
+      ) : null}
       <span className="text-xs opacity-80">· {duracion}</span>
       {registro.nota ? <span className="text-xs font-medium opacity-90">({registro.nota})</span> : null}
     </span>

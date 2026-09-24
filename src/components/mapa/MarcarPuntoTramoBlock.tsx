@@ -13,10 +13,12 @@ import {
   calcularPropuestaPunto,
   DISTANCIA_MAX_DETECCION_M,
   etiquetaLetra,
+  evaluarPropuestaPunto,
   intervalosDesdePuntos,
   metrosDesdeIntervalos,
   ordenDesdeRol,
   posicionInicialPunto,
+  posicionMinimaDespuesUltimoPunto,
   proyectarPuntoEnLinea,
   resumenMinitramos,
   siguienteLetraPunto,
@@ -113,16 +115,30 @@ export function MarcarPuntoTramoBlock({
     return calcularPropuestaPunto(tramo, puntosDelTramo, posicionGps.lat, posicionGps.lng)
   }, [tramo, puntosDelTramo, posicionGps, modoMarcado])
 
-  const propuestaEfectiva = useMemo(() => {
-    const opciones =
+  const opcionesPropuesta = useMemo(
+    () =>
       modoMarcado === "corregir" && ultimoPunto?.rol
         ? {
             excluirPuntoId: ultimoPunto.id,
             orden: ordenDesdeRol(ultimoPunto.rol),
           }
-        : undefined
-    return calcularPropuestaPunto(tramo, puntosDelTramo, lat, lng, opciones)
-  }, [tramo, puntosDelTramo, lat, lng, modoMarcado, ultimoPunto])
+        : undefined,
+    [modoMarcado, ultimoPunto]
+  )
+
+  const evaluacionPropuesta = useMemo(
+    () => evaluarPropuestaPunto(tramo, puntosDelTramo, lat, lng, opcionesPropuesta),
+    [tramo, puntosDelTramo, lat, lng, opcionesPropuesta]
+  )
+
+  const propuestaEfectiva = evaluacionPropuesta.propuesta
+  const motivoBloqueo = evaluacionPropuesta.motivoBloqueo
+
+  const posicionMinimaValida = useMemo(
+    () =>
+      modoMarcado === "nuevo" ? posicionMinimaDespuesUltimoPunto(tramo, puntosDelTramo) : null,
+    [modoMarcado, tramo, puntosDelTramo]
+  )
 
   const resumen = useMemo(() => resumenMinitramos(puntosDelTramo, tramo.id), [puntosDelTramo, tramo.id])
 
@@ -156,6 +172,20 @@ export function MarcarPuntoTramoBlock({
   }, [tramo.id, puntosDelTramo.length, modoMarcado, ultimoPunto?.id, posicionInicial.lat, posicionInicial.lng])
 
   useEffect(() => {
+    if (modoMarcado !== "nuevo" || !posicionMinimaValida || propuestaEfectiva) return
+    if (!motivoBloqueo?.includes("hacia adelante")) return
+    setLat(posicionMinimaValida.lat)
+    setLng(posicionMinimaValida.lng)
+  }, [
+    modoMarcado,
+    posicionMinimaValida,
+    propuestaEfectiva,
+    motivoBloqueo,
+    tramo.id,
+    puntosDelTramo.length,
+  ])
+
+  useEffect(() => {
     return () => detenerSeguimiento()
   }, [detenerSeguimiento])
 
@@ -185,6 +215,12 @@ export function MarcarPuntoTramoBlock({
   function handlePointMove(newLat: number, newLng: number) {
     setLat(newLat)
     setLng(newLng)
+  }
+
+  function handleColocarDespuesUltimo() {
+    if (!posicionMinimaValida) return
+    setLat(posicionMinimaValida.lat)
+    setLng(posicionMinimaValida.lng)
   }
 
   function handleEnlazarGps() {
@@ -353,6 +389,19 @@ export function MarcarPuntoTramoBlock({
           <p className="text-xs text-muted-foreground">{propuestaEfectiva.mensaje}</p>
         ) : null}
       </div>
+
+      {motivoBloqueo ? (
+        <p role="alert" className="text-sm text-destructive">
+          {motivoBloqueo}
+        </p>
+      ) : null}
+
+      {modoMarcado === "nuevo" && posicionMinimaValida && !propuestaEfectiva && motivoBloqueo ? (
+        <Button type="button" variant="outline" className="w-full" onClick={handleColocarDespuesUltimo}>
+          Colocar {letraActual} justo después de{" "}
+          {ultimoPunto?.rol ? etiquetaLetra(ultimoPunto.rol) : "A"}
+        </Button>
+      ) : null}
 
       <Button
         type="button"

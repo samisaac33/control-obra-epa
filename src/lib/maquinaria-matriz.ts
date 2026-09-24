@@ -1,7 +1,9 @@
 import {
   ACCIONISTA_META,
+  FRENTE_META,
   type Accionista,
   type DuracionEquipo,
+  type FrenteObra,
   type RegistroDia,
   PERIODO_MAQUINARIA,
   REGISTRO_MAQUINARIA,
@@ -12,6 +14,7 @@ export type FilaMatriz = {
   id: string
   equipo: string
   accionista: Accionista
+  frente?: FrenteObra
   esViajes: boolean
   esActividad: boolean
 }
@@ -48,17 +51,30 @@ const ORDEN_EQUIPOS = [
   "Rodillo",
   "Excavadora brazo corto",
   "Viajes de arena",
+  "Viajes de material para vía",
   "Descarga de tubos de hormigón",
   "Descarga de segundo lote de tubos de hormigón",
   "Instalación de tubos",
 ] as const
 
+const ORDEN_FRENTE: Record<string, number> = {
+  "": 0,
+  cienega: 1,
+  poza_honda: 2,
+  pechiche: 3,
+  las_penas: 4,
+}
+
 function claveCelda(filaId: string, fecha: string): string {
   return `${filaId}::${fecha}`
 }
 
-function claveFila(equipo: string, accionista: Accionista): string {
-  return `${equipo}::${accionista}`
+export function claveFila(
+  equipo: string,
+  accionista: Accionista,
+  frente?: FrenteObra
+): string {
+  return frente ? `${equipo}::${accionista}::${frente}` : `${equipo}::${accionista}`
 }
 
 export function generarRangoFechas(inicio: string, fin: string): string[] {
@@ -79,19 +95,24 @@ function diaSemanaCorto(fechaIso: string): string {
   return new Intl.DateTimeFormat("es-EC", { weekday: "narrow" }).format(fecha)
 }
 
+function ordenFrente(frente?: FrenteObra): number {
+  return ORDEN_FRENTE[frente ?? ""] ?? 99
+}
+
 function construirFilas(dias: RegistroDia[]): FilaMatriz[] {
   const vistos = new Set<string>()
   const filas: FilaMatriz[] = []
 
   for (const dia of dias) {
     for (const registro of dia.registros) {
-      const id = claveFila(registro.equipo, registro.accionista)
+      const id = claveFila(registro.equipo, registro.accionista, registro.frente)
       if (vistos.has(id)) continue
       vistos.add(id)
       filas.push({
         id,
         equipo: registro.equipo,
         accionista: registro.accionista,
+        frente: registro.frente,
         esViajes: registro.duracion === "viajes",
         esActividad: registro.duracion === "actividad",
       })
@@ -102,6 +123,8 @@ function construirFilas(dias: RegistroDia[]): FilaMatriz[] {
     if (a.accionista !== b.accionista) {
       return a.accionista === "consorcio" ? -1 : 1
     }
+    const frenteCmp = ordenFrente(a.frente) - ordenFrente(b.frente)
+    if (frenteCmp !== 0) return frenteCmp
     const idxA = ORDEN_EQUIPOS.indexOf(a.equipo as (typeof ORDEN_EQUIPOS)[number])
     const idxB = ORDEN_EQUIPOS.indexOf(b.equipo as (typeof ORDEN_EQUIPOS)[number])
     const ordenA = idxA === -1 ? 99 : idxA
@@ -157,7 +180,7 @@ export function construirMatrizCalendario(
     if (!dia.trabajado) continue
 
     for (const registro of dia.registros) {
-      const filaId = claveFila(registro.equipo, registro.accionista)
+      const filaId = claveFila(registro.equipo, registro.accionista, registro.frente)
       const key = claveCelda(filaId, dia.fecha)
       const existente = celdas.get(key)
       const cantidad = registro.cantidad ?? 1
@@ -186,15 +209,75 @@ export function construirMatrizCalendario(
   return { columnas, filas, celdas }
 }
 
-export function etiquetaFila(fila: FilaMatriz): string {
+export function etiquetaFrente(fila: FilaMatriz, compacta = false): string | null {
+  if (!fila.frente) return null
+  const meta = FRENTE_META[fila.frente]
+  return compacta ? meta.abrev : meta.label
+}
+
+export function etiquetaFilaConFrente(fila: FilaMatriz, compacta = false): string {
   const accionista = ACCIONISTA_META[fila.accionista].label
-  return `${fila.equipo} · ${accionista}`
+  const equipo = compacta ? (EQUIPO_ETIQUETA_CORTA[fila.equipo] ?? fila.equipo) : fila.equipo
+  const frente = etiquetaFrente(fila, compacta)
+  return frente ? `${equipo} · ${frente} · ${accionista}` : `${equipo} · ${accionista}`
+}
+
+export function etiquetaFila(fila: FilaMatriz): string {
+  return etiquetaFilaConFrente(fila, false)
 }
 
 export function tituloColumna(columna: ColumnaMatriz): string {
   const fecha = new Date(`${columna.fecha}T12:00:00`)
   const dia = fecha.getDate()
   return String(dia)
+}
+
+function diaSemanaNumero(fechaIso: string): number {
+  const dia = new Date(`${fechaIso}T12:00:00`).getDay()
+  return dia === 0 ? 7 : dia
+}
+
+function diaSemanaCortoPdf(fechaIso: string): string {
+  return new Intl.DateTimeFormat("es-EC", { weekday: "short" }).format(
+    new Date(`${fechaIso}T12:00:00`)
+  )
+}
+
+function mesCortoPdf(fechaIso: string): string {
+  return new Intl.DateTimeFormat("es-EC", { month: "short" })
+    .format(new Date(`${fechaIso}T12:00:00`))
+    .replace(/\.$/, "")
+}
+
+export function tituloColumnaPdf(
+  columna: ColumnaMatriz,
+  columnaAnterior?: ColumnaMatriz
+): { dia: string; diaSemana: string; mes?: string } {
+  const fecha = new Date(`${columna.fecha}T12:00:00`)
+  const mesActual = mesCortoPdf(columna.fecha)
+  const mesAnterior = columnaAnterior ? mesCortoPdf(columnaAnterior.fecha) : null
+  const mostrarMes =
+    !columnaAnterior ||
+    mesActual !== mesAnterior ||
+    fecha.getDate() === 1
+
+  return {
+    dia: String(fecha.getDate()),
+    diaSemana: diaSemanaCortoPdf(columna.fecha),
+    mes: mostrarMes ? mesActual : undefined,
+  }
+}
+
+export function partesEtiquetaFilaPdf(fila: FilaMatriz): {
+  equipo: string
+  frente: string | null
+  accionista: string
+} {
+  return {
+    equipo: EQUIPO_ETIQUETA_CORTA[fila.equipo] ?? fila.equipo,
+    frente: fila.frente ? FRENTE_META[fila.frente].label : null,
+    accionista: ACCIONISTA_META[fila.accionista].label,
+  }
 }
 
 export function tooltipColumna(columna: ColumnaMatriz): string {
@@ -236,6 +319,68 @@ export function agruparSemanas(
   return semanas
 }
 
+export function agruparSemanasCalendario(columnas: ColumnaMatriz[]): SemanaMatriz[] {
+  if (columnas.length === 0) return []
+
+  const semanas: SemanaMatriz[] = []
+  let inicio = 0
+
+  for (let i = 1; i <= columnas.length; i++) {
+    const esFin = i === columnas.length
+    const esLunes = !esFin && diaSemanaNumero(columnas[i].fecha) === 1
+
+    if (esFin || esLunes) {
+      const bloque = columnas.slice(inicio, i)
+      semanas.push({
+        indice: semanas.length,
+        etiqueta: `${formatearFechaCorta(bloque[0].fecha)} – ${formatearFechaCorta(bloque[bloque.length - 1].fecha)}`,
+        columnas: bloque,
+      })
+      inicio = i
+    }
+  }
+
+  return semanas
+}
+
+export type PaginaMatrizImpresa = {
+  indice: number
+  semanas: SemanaMatriz[]
+}
+
+export function agruparSemanasEnPaginasImpresion(semanas: SemanaMatriz[]): PaginaMatrizImpresa[] {
+  const paginas: PaginaMatrizImpresa[] = []
+  let cursor = 0
+
+  while (cursor < semanas.length) {
+    const restantes = semanas.length - cursor
+    const tamano = restantes === 3 ? 3 : Math.min(2, restantes)
+
+    paginas.push({
+      indice: paginas.length,
+      semanas: semanas.slice(cursor, cursor + tamano),
+    })
+    cursor += tamano
+  }
+
+  return paginas
+}
+
+export function filtrarFilasActivasEnBloque(
+  filas: FilaMatriz[],
+  columnas: ColumnaMatriz[],
+  celdas: Map<string, CeldaMatriz>
+): FilaMatriz[] {
+  const fechas = new Set(columnas.map((columna) => columna.fecha))
+
+  return filas.filter((fila) =>
+    [...fechas].some((fecha) => {
+      const celda = celdas.get(claveCelda(fila.id, fecha))
+      return celda !== undefined && celda.intensidad > 0
+    })
+  )
+}
+
 export function textoDetalleCelda(
   fila: FilaMatriz,
   columna: ColumnaMatriz,
@@ -262,4 +407,5 @@ export const EQUIPO_ETIQUETA_CORTA: Record<string, string> = {
   "Instalación de tubos": "Inst. tubos",
   Payloader: "Payloader",
   "Viajes de arena": "Viajes arena",
+  "Viajes de material para vía": "Viajes material vía",
 }

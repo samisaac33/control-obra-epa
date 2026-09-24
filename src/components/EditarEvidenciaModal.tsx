@@ -8,11 +8,12 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { EstadoHitoSelect } from "@/src/components/EstadoHitoSelect"
 import { SectorSelect } from "@/src/components/SectorSelect"
 import { estadoHitoParaGuardar, normalizarEstadoHito } from "@/src/data/estados-hito"
+import { useProyecto } from "@/src/contexts/ProyectoContext"
 import {
-  getSectorIdByLabel,
-  getSectorLabel,
-  isFiltroTodosLosSectores,
-} from "@/src/data/sectores-fotos"
+  getSectorIdByLabelPorProyecto,
+  getSectorLabelPorProyecto,
+  isFiltroTodosLosSectoresPorProyecto,
+} from "@/src/lib/sectores-por-proyecto"
 import { compressImage } from "@/src/lib/compress-image"
 import { validarCoordenadasOpcionales } from "@/src/lib/coordenadas-evidencia"
 import type { EvidenciaGrupo, RegistroFotoBase } from "@/src/lib/evidencias-grupo"
@@ -42,6 +43,7 @@ type EditarEvidenciaModalProps = {
 }
 
 export function EditarEvidenciaModal({ grupo, onClose, onSaved }: EditarEvidenciaModalProps) {
+  const { proyectoId } = useProyecto()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [sectorId, setSectorId] = useState("")
@@ -78,7 +80,7 @@ export function EditarEvidenciaModal({ grupo, onClose, onSaved }: EditarEvidenci
     setImagenesExistentes(grupo.imagenes)
     setNuevasImagenes([])
     setFileInputKey((key) => key + 1)
-    setSectorId(getSectorIdByLabel(representante.sector) ?? "")
+    setSectorId(getSectorIdByLabelPorProyecto(proyectoId, representante.sector) ?? "")
     setFechaCaptura(toLocalDatetimeValue(new Date(representante.fecha_captura)))
     setLat(representante.lat != null ? String(representante.lat) : "")
     setLng(representante.lng != null ? String(representante.lng) : "")
@@ -89,7 +91,7 @@ export function EditarEvidenciaModal({ grupo, onClose, onSaved }: EditarEvidenci
     setMaquinariaUtilizada(representante.maquinaria_utilizada ?? "")
     setEstadoHito(normalizarEstadoHito(representante.estado_hito) ?? "")
     setObservacionTecnica(representante.observacion_tecnica ?? "")
-  }, [grupo])
+  }, [grupo, proyectoId])
 
   useEffect(() => {
     if (!grupo) return
@@ -140,12 +142,12 @@ export function EditarEvidenciaModal({ grupo, onClose, onSaved }: EditarEvidenci
       return
     }
 
-    if (isFiltroTodosLosSectores(sectorId)) {
+    if (isFiltroTodosLosSectoresPorProyecto(proyectoId, sectorId)) {
       setError("Selecciona el rubro o frente de obra al que corresponde la evidencia.")
       return
     }
 
-    const sectorLabel = getSectorLabel(sectorId)
+    const sectorLabel = getSectorLabelPorProyecto(proyectoId, sectorId)
     if (!sectorLabel) {
       setError("Selecciona el sector de la evidencia.")
       return
@@ -174,6 +176,7 @@ export function EditarEvidenciaModal({ grupo, onClose, onSaved }: EditarEvidenci
       const imagenesEliminar = grupo.imagenes.filter((imagen) => !idsMantener.has(imagen.id))
 
       const metadatos = {
+        proyecto_id: proyectoId,
         fecha_captura: new Date(fechaCaptura).toISOString(),
         lat: coordenadas.lat,
         lng: coordenadas.lng,

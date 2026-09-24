@@ -12,12 +12,17 @@ import { EstadoHitoSelect } from "@/src/components/EstadoHitoSelect"
 import { EvidenciaGaleriaCard } from "@/src/components/EvidenciaGaleriaCard"
 import { EvidenciaGaleriaModal } from "@/src/components/EvidenciaGaleriaModal"
 import { RegistroFotoDetalle } from "@/src/components/RegistroFotoDetalle"
+import { ProyectoModuloGuard } from "@/src/components/ProyectoModuloGuard"
 import { SectorSelect } from "@/src/components/SectorSelect"
+import { AvancePorUbicacionBlock } from "@/src/components/mapa/AvancePorUbicacionBlock"
 import {
-  getSectorLabel,
-  ID_TODOS_LOS_SECTORES,
-  isFiltroTodosLosSectores,
-} from "@/src/data/sectores-fotos"
+  ConfirmarPuntoMinitramoModal,
+  type ConfirmarPuntoPayload,
+} from "@/src/components/mapa/ConfirmarPuntoMinitramoModal"
+import { useProyecto } from "@/src/contexts/ProyectoContext"
+import { PROYECTO_DESASOLVE_CANALES } from "@/src/data/proyectos/catalog"
+import type { CanalTramo } from "@/src/data/tramos/types"
+import { ID_TODOS_LOS_SECTORES } from "@/src/data/sectores-fotos"
 import { estadoHitoParaGuardar } from "@/src/data/estados-hito"
 import {
   agruparRegistrosFotograficos,
@@ -26,7 +31,20 @@ import {
 } from "@/src/lib/evidencias-grupo"
 import { compressImage } from "@/src/lib/compress-image"
 import { validarCoordenadasOpcionales } from "@/src/lib/coordenadas-evidencia"
+import {
+  calcularPropuestaPuntoDesdeGps,
+  type PropuestaPuntoMinitramo,
+  type TramoPuntoAvance,
+} from "@/src/lib/tramo-geometria"
+import {
+  cargarPuntosAvancePorProyecto,
+  confirmarPuntoMinitramo,
+} from "@/src/lib/tramo-avance-coordenadas"
 import { createClient } from "@/src/lib/supabase/client"
+import {
+  getSectorLabelPorProyecto,
+  isFiltroTodosLosSectoresPorProyecto,
+} from "@/src/lib/sectores-por-proyecto"
 
 type RegistroFoto = RegistroFotoBase
 
@@ -43,7 +61,33 @@ function trimOrNull(value: string): string | null {
   const trimmed = value.trim()
   return trimmed || null
 }
-export default function FotosPage() {
+
+function normalizarTramo(row: Record<string, unknown>): CanalTramo {
+  return {
+    id: String(row.id),
+    proyecto_id: String(row.proyecto_id),
+    codigo: String(row.codigo),
+    canal: String(row.canal),
+    longitud_m: Number(row.longitud_m),
+    geometria: row.geometria as CanalTramo["geometria"],
+    origen_extremo:
+      row.origen_extremo === "geometria_inicio" || row.origen_extremo === "geometria_fin"
+        ? row.origen_extremo
+        : null,
+    estado: row.estado as CanalTramo["estado"],
+    avance_pct: Number(row.avance_pct),
+    metros_ejecutados: Number(row.metros_ejecutados),
+    fecha_inicio: row.fecha_inicio ? String(row.fecha_inicio) : null,
+    fecha_fin: row.fecha_fin ? String(row.fecha_fin) : null,
+    semana_programada: row.semana_programada ? String(row.semana_programada) : null,
+    maquinaria_asignada: row.maquinaria_asignada ? String(row.maquinaria_asignada) : null,
+    observaciones: row.observaciones ? String(row.observaciones) : null,
+  }
+}
+
+function FotosPageContent() {
+  const { proyectoId, proyectoActivo } = useProyecto()
+  const esDesasolve = proyectoId === PROYECTO_DESASOLVE_CANALES
   const supabase = useMemo(() => createClient(), [])
   const residentEmail = process.env.NEXT_PUBLIC_RESIDENTE_EMAIL?.trim().toLowerCase()
   const toLocalDatetimeValue = useCallback((date: Date) => {
@@ -75,6 +119,14 @@ export default function FotosPage() {
   const [selectedGrupo, setSelectedGrupo] = useState<EvidenciaGrupo | null>(null)
   const [deletingGrupoId, setDeletingGrupoId] = useState<string | null>(null)
   const [editingGrupo, setEditingGrupo] = useState<EvidenciaGrupo | null>(null)
+  const [tramosDesasolve, setTramosDesasolve] = useState<CanalTramo[]>([])
+  const [puntosAvance, setPuntosAvance] = useState<TramoPuntoAvance[]>([])
+  const [registrarAvance, setRegistrarAvance] = useState(false)
+  const [tramoIdAvance, setTramoIdAvance] = useState("")
+  const [confirmModalAbierto, setConfirmModalAbierto] = useState(false)
+  const [propuestaConfirm, setPropuestaConfirm] = useState<PropuestaPuntoMinitramo | null>(null)
+  const [pendingFotoId, setPendingFotoId] = useState<string | null>(null)
+  const [confirmandoAvance, setConfirmandoAvance] = useState(false)
 
   const cargarRegistros = useCallback(async () => {
     setLoadingRegistros(true)
@@ -83,11 +135,12 @@ export default function FotosPage() {
       let query = supabase
         .from("registros_fotograficos")
         .select(CAMPOS_REGISTRO)
+        .eq("proyecto_id", proyectoId)
         .order("fecha_captura", { ascending: false })
         .limit(120)
 
-      if (!isFiltroTodosLosSectores(filtroSectorId)) {
-        const filtroSectorLabel = getSectorLabel(filtroSectorId)
+      if (!isFiltroTodosLosSectoresPorProyecto(proyectoId, filtroSectorId)) {
+        const filtroSectorLabel = getSectorLabelPorProyecto(proyectoId, filtroSectorId)
         if (filtroSectorLabel) {
           query = query.eq("sector", filtroSectorLabel)
         }
@@ -119,11 +172,47 @@ export default function FotosPage() {
     } finally {
       setLoadingRegistros(false)
     }
-  }, [filtroDesde, filtroHasta, filtroSectorId, supabase])
+  }, [filtroDesde, filtroHasta, filtroSectorId, proyectoId, supabase])
 
-  const filtroSectorLabel = isFiltroTodosLosSectores(filtroSectorId)
+  useEffect(() => {
+    setFiltroSectorId(ID_TODOS_LOS_SECTORES)
+    setSectorId("")
+    setRegistrarAvance(false)
+    setTramoIdAvance("")
+  }, [proyectoId])
+
+  const cargarDatosDesasolve = useCallback(async () => {
+    if (!esDesasolve) {
+      setTramosDesasolve([])
+      setPuntosAvance([])
+      return
+    }
+
+    try {
+      const [{ data: tramosData }, puntos] = await Promise.all([
+        supabase
+          .from("canal_tramos")
+          .select("*")
+          .eq("proyecto_id", proyectoId)
+          .order("codigo", { ascending: true }),
+        cargarPuntosAvancePorProyecto(supabase, proyectoId),
+      ])
+
+      setTramosDesasolve((tramosData ?? []).map((row) => normalizarTramo(row as Record<string, unknown>)))
+      setPuntosAvance(puntos)
+    } catch {
+      setTramosDesasolve([])
+      setPuntosAvance([])
+    }
+  }, [esDesasolve, proyectoId, supabase])
+
+  useEffect(() => {
+    void cargarDatosDesasolve()
+  }, [cargarDatosDesasolve])
+
+  const filtroSectorLabel = isFiltroTodosLosSectoresPorProyecto(proyectoId, filtroSectorId)
     ? null
-    : getSectorLabel(filtroSectorId)
+    : getSectorLabelPorProyecto(proyectoId, filtroSectorId)
   const grupos = useMemo(() => agruparRegistrosFotograficos(registros), [registros])
 
   useEffect(() => {
@@ -215,12 +304,12 @@ export default function FotosPage() {
       return
     }
 
-    if (isFiltroTodosLosSectores(sectorId)) {
+    if (isFiltroTodosLosSectoresPorProyecto(proyectoId, sectorId)) {
       setError("Selecciona el rubro o frente de obra al que corresponde la evidencia.")
       return
     }
 
-    const sectorLabel = getSectorLabel(sectorId)
+    const sectorLabel = getSectorLabelPorProyecto(proyectoId, sectorId)
     if (!sectorLabel) {
       setError("Selecciona el sector donde se tomó la evidencia.")
       return
@@ -230,6 +319,17 @@ export default function FotosPage() {
     if (coordenadas.error) {
       setError(coordenadas.error)
       return
+    }
+
+    if (esDesasolve && registrarAvance) {
+      if (coordenadas.lat === null || coordenadas.lng === null) {
+        setError("Para registrar avance de desasolve ingrese coordenadas o suba una foto con GPS.")
+        return
+      }
+      if (!tramoIdAvance) {
+        setError("Seleccione el tramo de canal para registrar el avance.")
+        return
+      }
     }
 
     setLoading(true)
@@ -247,6 +347,7 @@ export default function FotosPage() {
       const grupoId = crypto.randomUUID()
       const metadatosComunes = {
         created_by: user.id,
+        proyecto_id: proyectoId,
         fecha_captura: new Date(fechaCaptura).toISOString(),
         lat: coordenadas.lat,
         lng: coordenadas.lng,
@@ -262,6 +363,7 @@ export default function FotosPage() {
       }
 
       const rutasSubidas: string[] = []
+      let primerRegistroId: string | null = null
 
       for (const [index, archivo] of archivos.entries()) {
         const archivoComprimido = await compressImage(archivo)
@@ -282,15 +384,58 @@ export default function FotosPage() {
 
         rutasSubidas.push(imagePath)
 
-        const { error: insertError } = await supabase.from("registros_fotograficos").insert({
-          ...metadatosComunes,
-          image_path: imagePath,
-        })
+        const { data: inserted, error: insertError } = await supabase
+          .from("registros_fotograficos")
+          .insert({
+            ...metadatosComunes,
+            image_path: imagePath,
+          })
+          .select("id")
+          .single()
 
         if (insertError) {
           setError(insertError.message)
           await supabase.storage.from(BUCKET_NAME).remove(rutasSubidas)
           return
+        }
+
+        if (index === 0 && inserted?.id) {
+          primerRegistroId = String(inserted.id)
+        }
+      }
+
+      await cargarRegistros()
+
+      if (
+        esDesasolve &&
+        registrarAvance &&
+        coordenadas.lat !== null &&
+        coordenadas.lng !== null &&
+        tramoIdAvance
+      ) {
+        const tramo = tramosDesasolve.find((t) => t.id === tramoIdAvance)
+        if (tramo) {
+          const propuesta = calcularPropuestaPuntoDesdeGps(
+            tramo,
+            puntosAvance,
+            coordenadas.lat,
+            coordenadas.lng
+          )
+          if (propuesta) {
+            setPendingFotoId(primerRegistroId)
+            setPropuestaConfirm(propuesta)
+            setConfirmModalAbierto(true)
+            resetFormularioArchivos()
+            setSectorId("")
+            setDescripcion("")
+            setNumeroRubro("")
+            setUbicacionAbscisa("")
+            setActividadEspecifica("")
+            setMaquinariaUtilizada("")
+            setEstadoHito("")
+            setObservacionTecnica("")
+            return
+          }
         }
       }
 
@@ -306,9 +451,52 @@ export default function FotosPage() {
       setMaquinariaUtilizada("")
       setEstadoHito("")
       setObservacionTecnica("")
-      await cargarRegistros()
+      setRegistrarAvance(false)
+      setTramoIdAvance("")
     } finally {
       setLoading(false)
+    }
+  }
+
+  function cerrarConfirmacionAvance() {
+    setConfirmModalAbierto(false)
+    setPropuestaConfirm(null)
+    setPendingFotoId(null)
+    setFechaCaptura(toLocalDatetimeValue(new Date()))
+    setLat("")
+    setLng("")
+    setRegistrarAvance(false)
+    setTramoIdAvance("")
+  }
+
+  async function handleConfirmarAvance(payload: ConfirmarPuntoPayload) {
+    setConfirmandoAvance(true)
+    setError(null)
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) {
+        setError("Sesión no válida.")
+        return
+      }
+
+      await confirmarPuntoMinitramo(supabase, {
+        tramo: payload.tramo,
+        punto: payload.punto,
+        rol: payload.rol,
+        orden: payload.orden,
+        estado: payload.estado,
+        registro_foto_id: payload.registro_foto_id,
+        userId: user.id,
+      })
+
+      await cargarDatosDesasolve()
+      cerrarConfirmacionAvance()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudo confirmar el punto.")
+    } finally {
+      setConfirmandoAvance(false)
     }
   }
 
@@ -462,6 +650,18 @@ export default function FotosPage() {
                       />
                     </div>
                   </div>
+                  {esDesasolve && tramosDesasolve.length > 0 ? (
+                    <AvancePorUbicacionBlock
+                      lat={lat}
+                      lng={lng}
+                      tramos={tramosDesasolve}
+                      puntosPrevios={puntosAvance}
+                      tramoIdSeleccionado={tramoIdAvance}
+                      onTramoChange={setTramoIdAvance}
+                      registrarAvance={registrarAvance}
+                      onRegistrarAvanceChange={setRegistrarAvance}
+                    />
+                  ) : null}
                   <Accordion type="single" collapsible>
                     <AccordionItem value="datos-tecnicos" className="rounded-lg border border-foreground/10 px-3">
                       <AccordionTrigger className="py-3 text-left text-sm font-medium">
@@ -734,6 +934,23 @@ export default function FotosPage() {
         onClose={() => setEditingGrupo(null)}
         onSaved={() => void cargarRegistros()}
       />
+      <ConfirmarPuntoMinitramoModal
+        open={confirmModalAbierto}
+        propuestaInicial={propuestaConfirm}
+        puntosPrevios={puntosAvance}
+        registroFotoId={pendingFotoId}
+        loading={confirmandoAvance}
+        onConfirm={handleConfirmarAvance}
+        onCancel={cerrarConfirmacionAvance}
+      />
     </div>
+  )
+}
+
+export default function FotosPage() {
+  return (
+    <ProyectoModuloGuard modulo="fotos">
+      <FotosPageContent />
+    </ProyectoModuloGuard>
   )
 }

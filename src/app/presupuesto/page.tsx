@@ -1,6 +1,7 @@
 import { ClipboardList } from "lucide-react"
 
 import { DesglosePresupuestoAccordion } from "@/components/desglose-presupuesto-accordion"
+import { PresupuestoPageGuard } from "@/src/components/PresupuestoPageGuard"
 import { ResumenContratoAccordion } from "@/src/components/resumen-contrato-accordion"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { VINCULOS_PRESUPUESTO_INFRAESTRUCTURA } from "@/src/data/presupuesto-infraestructura"
@@ -18,6 +19,7 @@ export default function PresupuestoPage() {
   const grupos = presupuestoAgrupadoPorCategoria(presupuesto)
 
   return (
+    <PresupuestoPageGuard>
     <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-[oklch(0.98_0.002_264)] text-foreground">
       <header className="shrink-0 border-b border-foreground/10 bg-card/80 shadow-sm ring-1 ring-foreground/5 backdrop-blur-sm">
         <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-5 sm:px-6 lg:px-8">
@@ -86,5 +88,6 @@ export default function PresupuestoPage() {
         </section>
       </main>
     </div>
+    </PresupuestoPageGuard>
   )
 }

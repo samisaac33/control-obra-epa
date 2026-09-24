@@ -8,6 +8,7 @@ import L from "leaflet"
 import type { CanalTramo, EstadoTramo } from "@/src/data/tramos/types"
 import { etiquetaEstadoTramo } from "@/src/data/tramos/types"
 import {
+  htmlTooltipVisitanteSegmento,
   segmentosVisualesTramo,
   type SegmentoVisualTramo,
   type TramoPuntoAvance,
@@ -15,6 +16,7 @@ import {
 import { boundsDesdeTramos } from "@/src/lib/tramos-avance"
 import {
   ALTURA_MAPA_TRAMOS,
+  ALTURA_MAPA_VISITANTE_MOVIL,
   estiloContornoOscuroTramo,
   estiloHaloBlancoTramo,
   estiloSegmentoTramoEnMapa,
@@ -28,12 +30,19 @@ type MapaTramosLeafletProps = {
   tramos: CanalTramo[]
   tramoSeleccionadoId: string | null
   puntosAvance?: TramoPuntoAvance[]
+  isResident: boolean
+  esViewportMovil: boolean
+  modoMapaVisitanteMovil?: boolean
+  marcadoresCompactos?: boolean
+  alturaMapa?: string
   onTramoClick: (tramo: CanalTramo) => void
+  onSegmentoVisitanteClick?: (segmento: SegmentoVisualTramo) => void
 }
 
 type FeatureProps = {
   tramo: CanalTramo
   id: string
+  segmento: SegmentoVisualTramo
   tipo?: "minitramo" | "pendiente" | "ejecutado"
   estadoSegmento?: EstadoTramo
 }
@@ -52,22 +61,36 @@ function AjustarBounds({ tramos }: { tramos: CanalTramo[] }) {
 
 function registrarInteraccionTramo(
   layer: Layer,
-  tramo: CanalTramo,
-  tipo: "minitramo" | "pendiente" | "ejecutado" | undefined,
+  segmento: SegmentoVisualTramo,
   tramoSeleccionadoId: string | null,
+  isResident: boolean,
+  esViewportMovil: boolean,
   onTramoClick: (tramo: CanalTramo) => void,
-  estadoSegmento?: EstadoTramo
+  onSegmentoVisitanteClick?: (segmento: SegmentoVisualTramo) => void
 ) {
-  layer.bindTooltip(
-    `${tramo.codigo} · ${etiquetaEstadoTramo(tramo.estado)} · ${tramo.canal}`,
-    {
+  const { tramo, tipo, estadoSegmento } = segmento
+
+  if (isResident) {
+    layer.bindTooltip(`${tramo.codigo} · ${etiquetaEstadoTramo(tramo.estado)} · ${tramo.canal}`, {
       sticky: true,
       direction: "top",
-    }
-  )
+    })
+  } else if (!esViewportMovil) {
+    layer.bindTooltip(htmlTooltipVisitanteSegmento(segmento), {
+      sticky: true,
+      direction: "auto",
+      className: "mapa-segmento-tooltip",
+    })
+  }
 
   layer.on({
-    click: () => onTramoClick(tramo),
+    click: () => {
+      if (!isResident && esViewportMovil && onSegmentoVisitanteClick) {
+        onSegmentoVisitanteClick(segmento)
+        return
+      }
+      onTramoClick(tramo)
+    },
     mouseover: (event) => {
       const target = event.target as L.Path
       target.setStyle({
@@ -90,7 +113,7 @@ function featureCollectionDesdeTramos(tramos: CanalTramo[]): GeoJSON.FeatureColl
     type: "FeatureCollection",
     features: tramos.map((tramo) => ({
       type: "Feature",
-      properties: { tramo, id: tramo.id } satisfies FeatureProps,
+      properties: { tramo, id: tramo.id } satisfies Partial<FeatureProps>,
       geometry: tramo.geometria,
     })),
   }
@@ -106,6 +129,7 @@ function featureCollectionDesdeSegmentos(
       properties: {
         tramo: segmento.tramo,
         id: segmento.tramo.id,
+        segmento,
         tipo: segmento.tipo,
         estadoSegmento: segmento.estadoSegmento,
       } satisfies FeatureProps,
@@ -118,8 +142,17 @@ export function MapaTramosLeaflet({
   tramos,
   tramoSeleccionadoId,
   puntosAvance = [],
+  isResident,
+  esViewportMovil,
+  modoMapaVisitanteMovil = false,
+  marcadoresCompactos = false,
+  alturaMapa,
   onTramoClick,
+  onSegmentoVisitanteClick,
 }: MapaTramosLeafletProps) {
+  const altura = alturaMapa ?? (modoMapaVisitanteMovil ? ALTURA_MAPA_VISITANTE_MOVIL : ALTURA_MAPA_TRAMOS)
+  const iconSize = marcadoresCompactos ? 16 : 20
+  const fontSize = marcadoresCompactos ? 9 : 10
   const featureCollectionCompleta = useMemo(
     () => featureCollectionDesdeTramos(tramos),
     [tramos]
@@ -146,7 +179,7 @@ export function MapaTramosLeaflet({
     return (
       <div
         className="flex items-center justify-center rounded-xl border border-dashed border-foreground/15 bg-muted/20 text-sm text-muted-foreground"
-        style={{ height: ALTURA_MAPA_TRAMOS }}
+        style={{ height: altura }}
       >
         No hay tramos cargados. Importe el KMZ con{" "}
         <code className="mx-1 rounded bg-muted px-1">npm run import:kmz</code>.
@@ -154,7 +187,7 @@ export function MapaTramosLeaflet({
     )
   }
 
-  const layerKey = `${tramoSeleccionadoId ?? "none"}-${tramos
+  const layerKey = `${isResident ? "r" : "v"}-${esViewportMovil ? "m" : "d"}-${tramoSeleccionadoId ?? "none"}-${tramos
     .map((t) => `${t.id}:${t.metros_ejecutados}:${t.estado}`)
     .join("|")}-${puntosAvance.map((p) => `${p.id}:${p.estado_minitramo ?? ""}`).join(",")}`
 
@@ -165,7 +198,7 @@ export function MapaTramosLeaflet({
         zoom={12}
         scrollWheelZoom
         className="w-full z-0"
-        style={{ height: ALTURA_MAPA_TRAMOS }}
+        style={{ height: altura }}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -208,14 +241,15 @@ export function MapaTramosLeaflet({
           }}
           onEachFeature={(feature, layer) => {
             const props = feature.properties as FeatureProps
-            if (!props.tramo) return
+            if (!props.tramo || !props.segmento) return
             registrarInteraccionTramo(
               layer,
-              props.tramo,
-              props.tipo,
+              props.segmento,
               tramoSeleccionadoId,
+              isResident,
+              esViewportMovil,
               onTramoClick,
-              props.estadoSegmento
+              onSegmentoVisitanteClick
             )
           }}
         />
@@ -238,9 +272,9 @@ export function MapaTramosLeaflet({
                 position={[punto.lat, punto.lng]}
                 icon={L.divIcon({
                   className: "",
-                  html: `<div style="display:flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:${fillColor};border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35);font-size:10px;font-weight:700;color:#fff">${label}</div>`,
-                  iconSize: [20, 20],
-                  iconAnchor: [10, 10],
+                  html: `<div style="display:flex;align-items:center;justify-content:center;width:${iconSize}px;height:${iconSize}px;border-radius:50%;background:${fillColor};border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35);font-size:${fontSize}px;font-weight:700;color:#fff">${label}</div>`,
+                  iconSize: [iconSize, iconSize],
+                  iconAnchor: [iconSize / 2, iconSize / 2],
                 })}
               />
             )
@@ -250,7 +284,7 @@ export function MapaTramosLeaflet({
             <CircleMarker
               key={punto.id}
               center={[punto.lat, punto.lng]}
-              radius={6}
+              radius={marcadoresCompactos ? 5 : 6}
               pathOptions={{
                 color: "#ffffff",
                 weight: 2,

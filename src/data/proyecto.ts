@@ -1,11 +1,7 @@
-export const PROYECTO = {
-  nombreObra: "Contrato de Emergencia EPA Manabí",
-  numeroContrato: "CTO-2026-EP-0142",
-  cliente: "Empresa Pública del Agua (EPA EP)",
-  objeto:
-    "Desazolve y rehabilitación — Canales Poza Honda y compuertas La Estancilla y La Ciénega",
-  sistema: "Trasvase Manabí — Sistema de Riego Canales Poza Honda",
-} as const
+import { getProyecto, PROYECTO_EMERGENCIA_MANABI } from "@/src/data/proyectos/catalog"
+
+/** @deprecated Usar useProyecto() o getProyecto() según el contexto. */
+export const PROYECTO = getProyecto(PROYECTO_EMERGENCIA_MANABI)
 
 export const RESUMEN_CONTRATO = {
   nombreObra: PROYECTO.nombreObra,

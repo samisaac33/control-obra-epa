@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation"
 
 import { AppHeader } from "@/src/components/AppHeader"
+import { ProyectoProvider } from "@/src/contexts/ProyectoContext"
 import { Sidebar } from "@/src/components/Sidebar"
 
 type AppShellProps = {
@@ -24,12 +25,12 @@ export function AppShell({ children }: AppShellProps) {
   }
 
   return (
-    <>
+    <ProyectoProvider>
       <Sidebar />
       <div className="flex min-h-dvh min-w-0 flex-1 flex-col md:pl-64">
         <AppHeader />
         <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overflow-x-hidden">{children}</main>
       </div>
-    </>
+    </ProyectoProvider>
   )
 }

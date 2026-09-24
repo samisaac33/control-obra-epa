@@ -10,8 +10,13 @@ import {
   type ConfirmarPuntoPayload,
 } from "@/src/components/mapa/ConfirmarPuntoMinitramoModal"
 import { MapaTramosFiltros, type FiltrosTramos } from "@/src/components/mapa/MapaTramosFiltros"
+import { MapaSegmentoInfoModal } from "@/src/components/mapa/MapaSegmentoInfoModal"
+import { MapaTramosFiltrosSheet } from "@/src/components/mapa/MapaTramosFiltrosSheet"
 import { MapaTramosKpis } from "@/src/components/mapa/MapaTramosKpis"
+import { MapaTramosKpisBar } from "@/src/components/mapa/MapaTramosKpisBar"
 import { MapaTramosLeyenda } from "@/src/components/mapa/MapaTramosLeyenda"
+import { MapaVisitanteHint } from "@/src/components/mapa/MapaVisitanteHint"
+import { useEsViewportMovil } from "@/src/hooks/useEsViewportMovil"
 import {
   TramoDetallePanel,
   type SolicitarConfirmacionAvanceOptions,
@@ -29,8 +34,13 @@ import {
   eliminarMinitramo,
   eliminarPuntoHuérfano,
   guardarOrigenTramoEInicio,
+  reiniciarOrigenTramoYPuntos,
 } from "@/src/lib/tramo-avance-coordenadas"
-import type { PropuestaPuntoMinitramo, TramoPuntoAvance } from "@/src/lib/tramo-geometria"
+import type {
+  PropuestaPuntoMinitramo,
+  SegmentoVisualTramo,
+  TramoPuntoAvance,
+} from "@/src/lib/tramo-geometria"
 import {
   calcularKpisTramos,
   canalesUnicos,
@@ -91,6 +101,7 @@ export function MapaTramosClient() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [guardandoOrigen, setGuardandoOrigen] = useState(false)
+  const [reiniciandoOrigen, setReiniciandoOrigen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isResident, setIsResident] = useState(false)
   const [tramoSeleccionado, setTramoSeleccionado] = useState<CanalTramo | null>(null)
@@ -111,6 +122,8 @@ export function MapaTramosClient() {
   const [eliminandoId, setEliminandoId] = useState<string | null>(null)
   const [guardandoEstadoMinitramoId, setGuardandoEstadoMinitramoId] = useState<string | null>(null)
   const [panelError, setPanelError] = useState<string | null>(null)
+  const [segmentoVisitante, setSegmentoVisitante] = useState<SegmentoVisualTramo | null>(null)
+  const esViewportMovil = useEsViewportMovil()
 
   const cargarDatos = useCallback(async () => {
     setLoading(true)
@@ -158,7 +171,10 @@ export function MapaTramosClient() {
     [tramos, filtros]
   )
 
-  const kpis = useMemo(() => calcularKpisTramos(tramosFiltrados), [tramosFiltrados])
+  const kpis = useMemo(
+    () => calcularKpisTramos(tramosFiltrados, puntosAvance),
+    [tramosFiltrados, puntosAvance]
+  )
 
   const tramoSeleccionadoId = tramoSeleccionado?.id ?? null
 
@@ -269,6 +285,32 @@ export function MapaTramosClient() {
     }
   }
 
+  async function handleReiniciarOrigenTramo() {
+    if (!tramoSeleccionado) return
+    setReiniciandoOrigen(true)
+    setPanelError(null)
+    try {
+      await reiniciarOrigenTramoYPuntos(supabase, tramoSeleccionado)
+      await cargarDatos()
+      setTramoSeleccionado((prev) =>
+        prev
+          ? {
+              ...prev,
+              origen_extremo: null,
+              metros_ejecutados: 0,
+              avance_pct: 0,
+            }
+          : prev
+      )
+      setPuntosRefreshKey((k) => k + 1)
+    } catch (err) {
+      setPanelError(err instanceof Error ? err.message : "No se pudo reiniciar el tramo.")
+      throw err
+    } finally {
+      setReiniciandoOrigen(false)
+    }
+  }
+
   async function handleGuardarOrigenInicio(origen: OrigenExtremoTramo) {
     if (!tramoSeleccionado) return
     setGuardandoOrigen(true)
@@ -347,6 +389,25 @@ export function MapaTramosClient() {
     return puntosAvance.filter((p) => p.tramo_id === propuestaConfirm.tramo.id)
   }, [puntosAvance, propuestaConfirm])
 
+  const visitanteMovil = !isResident && esViewportMovil
+  const visitanteDesktop = !isResident && !esViewportMovil
+
+  const mapaLeaflet = (
+    <MapaTramosLeaflet
+      tramos={tramosFiltrados}
+      tramoSeleccionadoId={tramoSeleccionadoId}
+      puntosAvance={puntosAvance}
+      isResident={isResident}
+      esViewportMovil={esViewportMovil}
+      modoMapaVisitanteMovil={visitanteMovil}
+      marcadoresCompactos={visitanteMovil}
+      onTramoClick={handleTramoClick}
+      onSegmentoVisitanteClick={
+        isResident ? undefined : (segmento) => setSegmentoVisitante(segmento)
+      }
+    />
+  )
+
   return (
     <ProyectoModuloGuard modulo="mapaTramos">
       <div className="p-4 sm:p-6">
@@ -360,8 +421,19 @@ export function MapaTramosClient() {
                 <div>
                   <CardTitle>Mapa interactivo</CardTitle>
                   <CardDescription>
-                    Haga clic en un tramo para ver detalle y registrar avance
-                    {isResident ? " (residente)" : ""}. Los colores indican el estado de desasolve.
+                    {isResident ? (
+                      <>
+                        Haga clic en un tramo para ver detalle y registrar avance (residente). Los
+                        colores indican el estado de desasolve.
+                      </>
+                    ) : visitanteMovil ? (
+                      <>Avance del desasolve en el mapa. Toque un tramo coloreado para ver detalle.</>
+                    ) : (
+                      <>
+                        Pase el cursor sobre un tramo coloreado para ver minitramos, o haga clic para
+                        abrir el detalle del tramo.
+                      </>
+                    )}
                   </CardDescription>
                 </div>
               </div>
@@ -373,23 +445,37 @@ export function MapaTramosClient() {
                 </p>
               ) : null}
 
-              <MapaTramosKpis kpis={kpis} />
+              {visitanteMovil ? (
+                <>
+                  <div className="relative">
+                    {mapaLeaflet}
+                    <MapaVisitanteHint activo />
+                    <MapaTramosKpisBar kpis={kpis} modo="overlay" />
+                  </div>
+                  <MapaTramosFiltrosSheet
+                    filtros={filtros}
+                    canales={canalesUnicos(tramos)}
+                    semanas={semanasProgramadasUnicas(tramos)}
+                    onChange={setFiltros}
+                  />
+                </>
+              ) : (
+                <>
+                  {visitanteDesktop ? <MapaTramosKpisBar kpis={kpis} modo="stack" /> : null}
+                  {isResident ? <MapaTramosKpis kpis={kpis} /> : null}
 
-              <MapaTramosFiltros
-                filtros={filtros}
-                canales={canalesUnicos(tramos)}
-                semanas={semanasProgramadasUnicas(tramos)}
-                onChange={setFiltros}
-              />
+                  <MapaTramosFiltros
+                    filtros={filtros}
+                    canales={canalesUnicos(tramos)}
+                    semanas={semanasProgramadasUnicas(tramos)}
+                    onChange={setFiltros}
+                  />
 
-              <MapaTramosLeyenda />
+                  <MapaTramosLeyenda />
 
-              <MapaTramosLeaflet
-                tramos={tramosFiltrados}
-                tramoSeleccionadoId={tramoSeleccionadoId}
-                puntosAvance={puntosAvance}
-                onTramoClick={handleTramoClick}
-              />
+                  {mapaLeaflet}
+                </>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -416,6 +502,19 @@ export function MapaTramosClient() {
         onEvidenciaSubida={() => void cargarDatos()}
         onGuardarOrigenInicio={isResident ? handleGuardarOrigenInicio : undefined}
         guardandoOrigen={guardandoOrigen}
+        onReiniciarOrigenTramo={isResident ? handleReiniciarOrigenTramo : undefined}
+        reiniciandoOrigen={reiniciandoOrigen}
+      />
+
+      <MapaSegmentoInfoModal
+        open={segmentoVisitante !== null}
+        segmento={segmentoVisitante}
+        esViewportMovil={esViewportMovil}
+        onClose={() => setSegmentoVisitante(null)}
+        onVerDetalleTramo={(tramo) => {
+          setSegmentoVisitante(null)
+          handleTramoClick(tramo)
+        }}
       />
 
       <ConfirmarPuntoMinitramoModal

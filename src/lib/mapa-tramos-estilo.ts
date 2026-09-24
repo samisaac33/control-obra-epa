@@ -4,6 +4,7 @@ import type { CanalTramo, EstadoTramo } from "@/src/data/tramos/types"
 import { COLOR_MINITRAMO, colorEstadoTramo } from "@/src/data/tramos/types"
 
 export const ALTURA_MAPA_TRAMOS = "min(65vh, 560px)"
+export const ALTURA_MAPA_VISITANTE_MOVIL = "min(78dvh, 640px)"
 export const MAX_ZOOM_MAPA_TRAMOS = 14
 
 const PESO_NORMAL = 6

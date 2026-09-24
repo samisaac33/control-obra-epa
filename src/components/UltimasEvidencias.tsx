@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { EvidenciaGaleriaCard } from "@/src/components/EvidenciaGaleriaCard"
 import { EvidenciaGaleriaModal } from "@/src/components/EvidenciaGaleriaModal"
+import { useProyecto } from "@/src/contexts/ProyectoContext"
 import {
   agruparRegistrosFotograficos,
   type EvidenciaGrupo,
@@ -16,7 +17,14 @@ import { createClient } from "@/src/lib/supabase/client"
 const BUCKET_NAME = "evidencias"
 const LIMITE_GRUPOS = 6
 
-export function UltimasEvidencias() {
+type UltimasEvidenciasProps = {
+  proyectoId?: string
+  limite?: number
+}
+
+export function UltimasEvidencias({ proyectoId: proyectoIdProp, limite = LIMITE_GRUPOS }: UltimasEvidenciasProps) {
+  const { proyectoId: proyectoIdContexto } = useProyecto()
+  const proyectoId = proyectoIdProp ?? proyectoIdContexto
   const supabase = useMemo(() => createClient(), [])
   const [grupos, setGrupos] = useState<EvidenciaGrupo[]>([])
   const [selectedGrupo, setSelectedGrupo] = useState<EvidenciaGrupo | null>(null)
@@ -32,6 +40,7 @@ export function UltimasEvidencias() {
         .select(
           "id, sector, fecha_captura, lat, lng, descripcion, numero_rubro, ubicacion_abscisa, actividad_especifica, maquinaria_utilizada, estado_hito, observacion_tecnica, grupo_id, image_path, created_at"
         )
+        .eq("proyecto_id", proyectoId)
         .order("fecha_captura", { ascending: false })
         .limit(40)
 
@@ -49,27 +58,24 @@ export function UltimasEvidencias() {
         })
       )
 
-      setGrupos(agruparRegistrosFotograficos(signedRows).slice(0, LIMITE_GRUPOS))
+      setGrupos(agruparRegistrosFotograficos(signedRows).slice(0, limite))
     } catch {
       setError("No se pudieron cargar las evidencias recientes.")
     } finally {
       setLoading(false)
     }
-  }, [supabase])
+  }, [limite, proyectoId, supabase])
 
   useEffect(() => {
-    const frame = requestAnimationFrame(() => {
-      void cargar()
-    })
-    return () => cancelAnimationFrame(frame)
+    void cargar()
   }, [cargar])
 
   if (loading) {
-    return <p className="text-sm text-muted-foreground">Cargando evidencias recientes...</p>
+    return <p className="text-sm text-muted-foreground">Cargando evidencias...</p>
   }
 
   if (error) {
-    return <p className="text-sm text-muted-foreground">{error}</p>
+    return <p className="text-sm text-destructive">{error}</p>
   }
 
   if (grupos.length === 0) {
@@ -81,30 +87,22 @@ export function UltimasEvidencias() {
   }
 
   return (
-    <div className="space-y-4">
+    <>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {grupos.map((grupo) => (
-          <article
+          <EvidenciaGaleriaCard
             key={grupo.grupoId}
-            className="overflow-hidden rounded-lg border border-border bg-card"
-          >
-            <EvidenciaGaleriaCard grupo={grupo} onOpenGaleria={() => setSelectedGrupo(grupo)} />
-            <div className="space-y-0.5 p-3 text-sm">
-              <p className="font-medium text-foreground">{grupo.representante.sector}</p>
-              <p className="text-xs text-muted-foreground">
-                {new Date(grupo.representante.fecha_captura).toLocaleString("es-EC", {
-                  timeZone: "America/Guayaquil",
-                })}
-                {grupo.imagenes.length > 1 ? ` — ${grupo.imagenes.length} fotos` : ""}
-              </p>
-            </div>
-          </article>
+            grupo={grupo}
+            onOpenGaleria={() => setSelectedGrupo(grupo)}
+          />
         ))}
       </div>
-      <Button asChild variant="outline" size="sm">
-        <Link href="/fotos">Ver todas las evidencias</Link>
-      </Button>
+      <div className="mt-4">
+        <Button variant="outline" size="sm" asChild>
+          <Link href="/fotos">Ver todas las evidencias</Link>
+        </Button>
+      </div>
       <EvidenciaGaleriaModal grupo={selectedGrupo} onClose={() => setSelectedGrupo(null)} />
-    </div>
+    </>
   )
 }
