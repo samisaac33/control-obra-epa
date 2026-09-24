@@ -15,7 +15,6 @@ import { MapaTramosFiltrosSheet } from "@/src/components/mapa/MapaTramosFiltrosS
 import { MapaTramosKpis } from "@/src/components/mapa/MapaTramosKpis"
 import { MapaTramosKpisBar } from "@/src/components/mapa/MapaTramosKpisBar"
 import { MapaTramosLeyenda } from "@/src/components/mapa/MapaTramosLeyenda"
-import { MapaVisitanteHint } from "@/src/components/mapa/MapaVisitanteHint"
 import { useEsViewportMovil } from "@/src/hooks/useEsViewportMovil"
 import {
   TramoDetallePanel,
@@ -447,11 +446,8 @@ export function MapaTramosClient() {
 
               {visitanteMovil ? (
                 <>
-                  <div className="relative">
-                    {mapaLeaflet}
-                    <MapaVisitanteHint activo />
-                    <MapaTramosKpisBar kpis={kpis} modo="overlay" />
-                  </div>
+                  {mapaLeaflet}
+                  <MapaTramosKpisBar kpis={kpis} modo="stack" />
                   <MapaTramosFiltrosSheet
                     filtros={filtros}
                     canales={canalesUnicos(tramos)}
