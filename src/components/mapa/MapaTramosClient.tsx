@@ -496,7 +496,7 @@ export function MapaTramosClient() {
         tramo={tramoSeleccionado}
         open={panelAbierto}
         onOpenChange={setPanelAbierto}
-        visitanteUsaBottomSheet={visitanteMovil}
+        detalleEnBottomSheet={esViewportMovil}
         isResident={isResident}
         loading={saving}
         proyectoId={proyectoId}
