@@ -1,5 +1,6 @@
 "use client"
 
+import { cn } from "@/lib/utils"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import type { CanalTramo } from "@/src/data/tramos/types"
 import { MarcarPuntoTramoBlock } from "@/src/components/mapa/MarcarPuntoTramoBlock"
@@ -13,6 +14,7 @@ import { TramoPuntosHistorial } from "@/src/components/mapa/TramoPuntosHistorial
 import { TramoDetalleResumen } from "@/src/components/mapa/TramoDetalleResumen"
 import { TramoMaquinariaHistorialBlock } from "@/src/components/mapa/TramoMaquinariaHistorialBlock"
 import { TramoDetalleVisitanteBottomSheet } from "@/src/components/mapa/TramoDetalleVisitanteBottomSheet"
+import { TramoDetalleVisitanteContenido } from "@/src/components/mapa/TramoDetalleVisitanteContenido"
 import { tituloTramoMapa } from "@/src/lib/tramo-display"
 import type { PropuestaPuntoMinitramo, TramoPuntoAvance } from "@/src/lib/tramo-geometria"
 
@@ -107,9 +109,11 @@ export function TramoDetallePanel({
         onOpenChange(nextOpen)
       }}
     >
-      <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-md">
-        <SheetHeader>
-          <SheetTitle>{tramo ? tituloTramoMapa(tramo.codigo) : "Detalle del tramo"}</SheetTitle>
+      <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-lg">
+        <SheetHeader className={!isResident ? "sr-only" : undefined}>
+          <SheetTitle id={isResident ? "tramo-detalle-sheet-title" : undefined}>
+            {tramo ? tituloTramoMapa(tramo.codigo) : "Detalle del tramo"}
+          </SheetTitle>
           <SheetDescription>
             {isResident
               ? "Registro de avance, minitramos GPS y maquinaria"
@@ -118,27 +122,24 @@ export function TramoDetallePanel({
         </SheetHeader>
 
         {tramo ? (
-          <div className="mt-6 space-y-6">
-            {panelError ? (
-              <p
-                className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
-                role="alert"
-              >
-                {panelError}
-              </p>
-            ) : null}
-
+          <div className={cn(isResident ? "mt-6 space-y-6" : "space-y-0")}>
             {!isResident ? (
-              <>
-                <TramoDetalleResumen
-                  tramo={tramo}
-                  puntosAvance={puntosAvance}
-                  tituloId="tramo-detalle-sheet-title"
-                />
-                <TramoMaquinariaHistorialBlock tramoId={tramo.id} isResident={false} />
-              </>
+              <TramoDetalleVisitanteContenido
+                tramo={tramo}
+                puntosAvance={puntosAvance}
+                panelError={panelError}
+                tituloId="tramo-detalle-sheet-title"
+              />
             ) : (
               <>
+                {panelError ? (
+                  <p
+                    className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+                    role="alert"
+                  >
+                    {panelError}
+                  </p>
+                ) : null}
                 <TramoDetalleResumen tramo={tramo} puntosAvance={puntosAvance} />
 
                 <TramoMaquinariaHistorialBlock
