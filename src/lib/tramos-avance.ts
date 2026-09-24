@@ -84,6 +84,28 @@ export function calcularKpisTramos(
   }
 }
 
+export type AvanceDesasolveTramo = {
+  metrosEjecutados: number
+  metrosTotales: number
+  avancePct: number
+  usaAvanceGps: boolean
+}
+
+/** Km ejecutados alineados con KPIs del mapa (minitramos GPS terminados si hay puntos). */
+export function avanceDesasolveTramo(
+  tramo: CanalTramo,
+  puntosAvance: TramoPuntoAvance[]
+): AvanceDesasolveTramo {
+  const usaAvanceGps = puntosAvance.some((p) => p.confirmado && p.tramo_id === tramo.id)
+  const metrosEjecutados = usaAvanceGps
+    ? metrosMinitramosTerminadosTramo(tramo, puntosAvance)
+    : tramo.metros_ejecutados
+  const metrosTotales = tramo.longitud_m
+  const avancePct = sincronizarAvanceDesdeMetros(metrosTotales, metrosEjecutados)
+
+  return { metrosEjecutados, metrosTotales, avancePct, usaAvanceGps }
+}
+
 export function filtrarTramos(
   tramos: CanalTramo[],
   filtros: {
