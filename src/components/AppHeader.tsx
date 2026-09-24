@@ -58,18 +58,18 @@ export function AppHeader() {
       return
     }
 
-    const main = document.querySelector("main")
-    if (!main) return
-
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    function scrollActual() {
+      const main = document.querySelector("main")
+      if (main && main.scrollHeight > main.clientHeight + 1) {
+        return main.scrollTop
+      }
+      return window.scrollY
+    }
 
     function onScroll() {
-      const y = main!.scrollTop
+      const y = scrollActual()
       if (y <= UMBRAL_SCROLL_MAPA_PX) {
         setHeaderOculto(false)
-      } else if (reduceMotion) {
-        setHeaderOculto(y > scrollPrevRef.current + UMBRAL_SCROLL_MAPA_PX)
-        if (y < scrollPrevRef.current - UMBRAL_SCROLL_MAPA_PX) setHeaderOculto(false)
       } else if (y > scrollPrevRef.current + UMBRAL_SCROLL_MAPA_PX) {
         setHeaderOculto(true)
       } else if (y < scrollPrevRef.current - UMBRAL_SCROLL_MAPA_PX) {
@@ -78,8 +78,13 @@ export function AppHeader() {
       scrollPrevRef.current = y
     }
 
-    main.addEventListener("scroll", onScroll, { passive: true })
-    return () => main.removeEventListener("scroll", onScroll)
+    const main = document.querySelector("main")
+    main?.addEventListener("scroll", onScroll, { passive: true })
+    window.addEventListener("scroll", onScroll, { passive: true })
+    return () => {
+      main?.removeEventListener("scroll", onScroll)
+      window.removeEventListener("scroll", onScroll)
+    }
   }, [pathname, esViewportMovil])
 
   const ocultarEnMapaMovil = pathname === "/mapa" && esViewportMovil && headerOculto

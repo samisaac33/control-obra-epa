@@ -15,7 +15,7 @@ type MapaTramosKpisBarProps = {
 
 function KpiChip({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex shrink-0 snap-start flex-col rounded-lg border border-foreground/10 bg-card/95 px-3 py-2 shadow-sm backdrop-blur-sm">
+    <div className="flex w-[7.25rem] shrink-0 snap-start flex-col rounded-lg border border-foreground/10 bg-card/95 px-3 py-2 shadow-sm backdrop-blur-sm sm:w-auto sm:min-w-[6.5rem]">
       <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
         {label}
       </span>
@@ -90,7 +90,7 @@ function chipsDesdeKpis(kpis: KpisTramos) {
 
 function KpisChips({ kpis }: { kpis: KpisTramos }) {
   return (
-    <div className="flex gap-2 overflow-x-auto pb-0.5 snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <div className="flex gap-2 overflow-x-auto overscroll-x-contain pb-0.5 snap-x snap-mandatory touch-pan-x [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {chipsDesdeKpis(kpis).map((chip) => (
         <KpiChip key={chip.label} label={chip.label} value={chip.value} />
       ))}
@@ -100,16 +100,16 @@ function KpisChips({ kpis }: { kpis: KpisTramos }) {
 
 function KpisChipsCarrusel({ kpis }: { kpis: KpisTramos }) {
   const contenedorRef = useRef<HTMLDivElement>(null)
-  const [modoManual, setModoManual] = useState(false)
+  const pausaUsuarioHastaRef = useRef(0)
+  const [soloManual, setSoloManual] = useState(false)
   const chips = chipsDesdeKpis(kpis)
 
   useEffect(() => {
-    const el = contenedorRef.current
-    if (!el || modoManual) return
+    if (soloManual) return
 
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
     if (reduceMotion) {
-      setModoManual(true)
+      setSoloManual(true)
       return
     }
 
@@ -117,67 +117,74 @@ function KpisChipsCarrusel({ kpis }: { kpis: KpisTramos }) {
     let rafId = 0
     let direction = 1
     let pausaHasta = 0
-    const velocidadPx = 0.45
+    const velocidadPx = 0.55
     const pausaMs = 1500
 
-    function medirOverflow() {
-      return Math.max(0, el!.scrollWidth - el!.clientWidth)
-    }
+    function iniciarCuandoListo() {
+      const el = contenedorRef.current
+      if (!el || cancelado) return
 
-    function tick(now: number) {
-      if (cancelado || !el) return
-
-      const maxScroll = medirOverflow()
-      if (maxScroll <= 1) {
-        rafId = requestAnimationFrame(tick)
+      const maxScroll = Math.max(0, el.scrollWidth - el.clientWidth)
+      if (maxScroll <= 2) {
+        rafId = requestAnimationFrame(() => iniciarCuandoListo())
         return
       }
 
-      if (now < pausaHasta) {
+      function tick(now: number) {
+        if (cancelado || !el) return
+
+        const max = Math.max(0, el.scrollWidth - el.clientWidth)
+        if (max <= 2) {
+          rafId = requestAnimationFrame(tick)
+          return
+        }
+
+        if (now < pausaHasta || now < pausaUsuarioHastaRef.current) {
+          rafId = requestAnimationFrame(tick)
+          return
+        }
+
+        el.scrollLeft += direction * velocidadPx
+
+        if (direction > 0 && el.scrollLeft >= max - 1) {
+          el.scrollLeft = max
+          direction = -1
+          pausaHasta = now + pausaMs
+        } else if (direction < 0 && el.scrollLeft <= 1) {
+          el.scrollLeft = 0
+          direction = 1
+          pausaHasta = now + pausaMs
+        }
+
         rafId = requestAnimationFrame(tick)
-        return
-      }
-
-      el.scrollLeft += direction * velocidadPx
-
-      if (direction > 0 && el.scrollLeft >= maxScroll - 1) {
-        el.scrollLeft = maxScroll
-        direction = -1
-        pausaHasta = now + pausaMs
-      } else if (direction < 0 && el.scrollLeft <= 1) {
-        el.scrollLeft = 0
-        direction = 1
-        pausaHasta = now + pausaMs
       }
 
       rafId = requestAnimationFrame(tick)
     }
 
-    rafId = requestAnimationFrame(tick)
-
-    const observer = new ResizeObserver(() => {
-      if (medirOverflow() <= 1) {
-        el.scrollLeft = 0
-      }
-    })
-    observer.observe(el)
+    rafId = requestAnimationFrame(iniciarCuandoListo)
 
     return () => {
       cancelado = true
       cancelAnimationFrame(rafId)
-      observer.disconnect()
     }
-  }, [kpis, modoManual])
+  }, [kpis, soloManual])
 
-  if (modoManual) {
+  if (soloManual) {
     return <KpisChips kpis={kpis} />
   }
 
   return (
     <div
       ref={contenedorRef}
-      className="flex gap-2 overflow-x-hidden pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      className="flex gap-2 overflow-x-auto overscroll-x-contain pb-0.5 snap-x snap-mandatory touch-pan-x [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       aria-label="Indicadores del mapa"
+      onTouchStart={() => {
+        pausaUsuarioHastaRef.current = performance.now() + 4000
+      }}
+      onPointerDown={() => {
+        pausaUsuarioHastaRef.current = performance.now() + 4000
+      }}
     >
       {chips.map((chip) => (
         <KpiChip key={chip.label} label={chip.label} value={chip.value} />
