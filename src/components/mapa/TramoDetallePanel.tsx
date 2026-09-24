@@ -1,6 +1,5 @@
 "use client"
 
-import { cn } from "@/lib/utils"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import type { CanalTramo } from "@/src/data/tramos/types"
 import { MarcarPuntoTramoBlock } from "@/src/components/mapa/MarcarPuntoTramoBlock"
@@ -13,8 +12,8 @@ import { TramoEvidenciaUploadBlock } from "@/src/components/mapa/TramoEvidenciaU
 import { TramoPuntosHistorial } from "@/src/components/mapa/TramoPuntosHistorial"
 import { TramoDetalleResumen } from "@/src/components/mapa/TramoDetalleResumen"
 import { TramoMaquinariaHistorialBlock } from "@/src/components/mapa/TramoMaquinariaHistorialBlock"
+import { TramoDetalleVisitanteBottomSheet } from "@/src/components/mapa/TramoDetalleVisitanteBottomSheet"
 import { tituloTramoMapa } from "@/src/lib/tramo-display"
-import { useEsViewportMovil } from "@/src/hooks/useEsViewportMovil"
 import type { PropuestaPuntoMinitramo, TramoPuntoAvance } from "@/src/lib/tramo-geometria"
 
 export type SolicitarConfirmacionAvanceOptions = {
@@ -49,6 +48,8 @@ type TramoDetallePanelProps = {
   guardandoOrigen?: boolean
   onReiniciarOrigenTramo?: () => Promise<void>
   reiniciandoOrigen?: boolean
+  /** Visitante en layout móvil del mapa: bottom sheet fijo (no Sheet lateral). */
+  visitanteUsaBottomSheet?: boolean
 }
 
 export function TramoDetallePanel({
@@ -74,16 +75,29 @@ export function TramoDetallePanel({
   guardandoOrigen = false,
   onReiniciarOrigenTramo,
   reiniciandoOrigen = false,
+  visitanteUsaBottomSheet = false,
 }: TramoDetallePanelProps) {
-  const esViewportMovil = useEsViewportMovil()
-  const visitanteBottomSheet = !isResident && esViewportMovil
-
   const puntosDelTramo = tramo
     ? puntosAvance.filter((p) => p.tramo_id === tramo.id && p.confirmado)
     : []
 
   const requiereOrigen = tramo ? tramoRequiereConfigurarOrigen(tramo, puntosDelTramo) : false
   const listoMarcar = tramo ? tramoListoParaMarcar(tramo, puntosDelTramo) : false
+
+  if (!isResident && visitanteUsaBottomSheet) {
+    return (
+      <TramoDetalleVisitanteBottomSheet
+        open={open}
+        tramo={tramo}
+        puntosAvance={puntosAvance}
+        panelError={panelError}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) onClearPanelError?.()
+          onOpenChange(nextOpen)
+        }}
+      />
+    )
+  }
 
   return (
     <Sheet
@@ -93,23 +107,8 @@ export function TramoDetallePanel({
         onOpenChange(nextOpen)
       }}
     >
-      <SheetContent
-        side={visitanteBottomSheet ? "bottom" : "right"}
-        className={cn(
-          "overflow-y-auto",
-          visitanteBottomSheet
-            ? "max-h-[90dvh] rounded-t-2xl border-t px-5 pb-6 pt-3"
-            : "w-full sm:max-w-md"
-        )}
-      >
-        {visitanteBottomSheet ? (
-          <div
-            className="mx-auto mb-2 h-1 w-10 shrink-0 rounded-full bg-muted-foreground/30"
-            aria-hidden
-          />
-        ) : null}
-
-        <SheetHeader className={visitanteBottomSheet ? "sr-only" : undefined}>
+      <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-md">
+        <SheetHeader>
           <SheetTitle>{tramo ? tituloTramoMapa(tramo.codigo) : "Detalle del tramo"}</SheetTitle>
           <SheetDescription>
             {isResident
@@ -119,7 +118,7 @@ export function TramoDetallePanel({
         </SheetHeader>
 
         {tramo ? (
-          <div className={cn("space-y-6", visitanteBottomSheet ? "mt-0" : "mt-6")}>
+          <div className="mt-6 space-y-6">
             {panelError ? (
               <p
                 className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
@@ -140,11 +139,7 @@ export function TramoDetallePanel({
               </>
             ) : (
               <>
-                <TramoDetalleResumen
-                  tramo={tramo}
-                  puntosAvance={puntosAvance}
-                  mostrarEncabezado={!visitanteBottomSheet}
-                />
+                <TramoDetalleResumen tramo={tramo} puntosAvance={puntosAvance} />
 
                 <TramoMaquinariaHistorialBlock
                   tramoId={tramo.id}
