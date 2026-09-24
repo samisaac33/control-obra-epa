@@ -85,7 +85,7 @@ function registrarInteraccionTramo(
 
   layer.on({
     click: () => {
-      if (!isResident && esViewportMovil && onSegmentoVisitanteClick) {
+      if (!isResident && onSegmentoVisitanteClick) {
         onSegmentoVisitanteClick(segmento)
         return
       }

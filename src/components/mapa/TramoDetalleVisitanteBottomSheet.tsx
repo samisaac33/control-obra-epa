@@ -4,8 +4,7 @@ import { X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import type { CanalTramo } from "@/src/data/tramos/types"
-import { TramoDetalleResumen } from "@/src/components/mapa/TramoDetalleResumen"
-import { TramoMaquinariaHistorialBlock } from "@/src/components/mapa/TramoMaquinariaHistorialBlock"
+import { TramoDetalleVisitanteContenido } from "@/src/components/mapa/TramoDetalleVisitanteContenido"
 import type { TramoPuntoAvance } from "@/src/lib/tramo-geometria"
 
 type TramoDetalleVisitanteBottomSheetProps = {
@@ -49,24 +48,12 @@ export function TramoDetalleVisitanteBottomSheet({
           <X className="size-4" />
         </Button>
 
-        {panelError ? (
-          <p
-            className="mb-3 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
-            role="alert"
-          >
-            {panelError}
-          </p>
-        ) : null}
-
-        <TramoDetalleResumen
+        <TramoDetalleVisitanteContenido
           tramo={tramo}
           puntosAvance={puntosAvance}
+          panelError={panelError}
           tituloId="tramo-detalle-visitante-title"
         />
-
-        <div className="mt-6">
-          <TramoMaquinariaHistorialBlock tramoId={tramo.id} isResident={false} />
-        </div>
 
         <Button type="button" variant="outline" className="mt-6 w-full" onClick={() => onOpenChange(false)}>
           Cerrar

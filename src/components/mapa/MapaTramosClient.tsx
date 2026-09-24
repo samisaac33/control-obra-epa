@@ -392,8 +392,8 @@ export function MapaTramosClient() {
     return puntosAvance.filter((p) => p.tramo_id === propuestaConfirm.tramo.id)
   }, [puntosAvance, propuestaConfirm])
 
-  const visitanteMovil = !isResident && esViewportMovil
-  const visitanteDesktop = !isResident && !esViewportMovil
+  const visitante = !isResident
+  const visitanteMovil = visitante && esViewportMovil
 
   const mapaLeaflet = (
     <MapaTramosLeaflet
@@ -419,7 +419,7 @@ export function MapaTramosClient() {
       <div className="p-4 sm:p-6">
         <div className="mx-auto max-w-6xl space-y-6">
           <Card className="border-foreground/10">
-            {!visitanteMovil ? (
+            {isResident ? (
               <CardHeader>
                 <div className="flex items-start gap-3">
                   <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg border border-foreground/10 bg-muted/80">
@@ -428,57 +428,62 @@ export function MapaTramosClient() {
                   <div>
                     <CardTitle>Mapa interactivo</CardTitle>
                     <CardDescription>
-                      {isResident ? (
-                        <>
-                          Haga clic en un tramo para ver detalle y registrar avance (residente). Los
-                          colores indican el estado de desasolve.
-                        </>
-                      ) : (
-                        <>
-                          Pase el cursor sobre un tramo coloreado para ver minitramos, o haga clic para
-                          abrir el detalle del tramo.
-                        </>
-                      )}
+                      Haga clic en un tramo para ver detalle y registrar avance (residente). Los
+                      colores indican el estado de desasolve.
                     </CardDescription>
                   </div>
                 </div>
               </CardHeader>
             ) : null}
-            <CardContent className={cn("space-y-4", visitanteMovil && "pt-4")}>
+            <CardContent className={cn("space-y-4", visitante && "pt-4")}>
               {error ? (
                 <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
                   {error}
                 </p>
               ) : null}
 
-              {visitanteMovil ? (
+              {visitante ? (
                 <>
-                  <MapaTramosKpisBar kpis={kpis} modo="stack" chipsCarrusel />
+                  <MapaTramosKpisBar
+                    kpis={kpis}
+                    modo="stack"
+                    chipsCarrusel={visitanteMovil}
+                  />
                   <p className="text-sm text-muted-foreground">
-                    Toque un tramo coloreado para ver detalle.
+                    {visitanteMovil
+                      ? "Toque un tramo coloreado para ver detalle."
+                      : "Pase el cursor sobre un tramo coloreado para ver minitramos, o haga clic para abrir el resumen."}
                   </p>
                   {mapaLeaflet}
-                  <MapaTramosFiltrosSheet
-                    filtros={filtros}
-                    canales={canalesUnicos(tramos)}
-                    semanas={semanasProgramadasUnicas(tramos)}
-                    onChange={setFiltros}
-                  />
+                  {visitanteMovil ? (
+                    <MapaTramosFiltrosSheet
+                      filtros={filtros}
+                      canales={canalesUnicos(tramos)}
+                      semanas={semanasProgramadasUnicas(tramos)}
+                      onChange={setFiltros}
+                    />
+                  ) : (
+                    <>
+                      <MapaTramosFiltros
+                        filtros={filtros}
+                        canales={canalesUnicos(tramos)}
+                        semanas={semanasProgramadasUnicas(tramos)}
+                        onChange={setFiltros}
+                      />
+                      <MapaTramosLeyenda />
+                    </>
+                  )}
                 </>
               ) : (
                 <>
-                  {visitanteDesktop ? <MapaTramosKpisBar kpis={kpis} modo="stack" /> : null}
-                  {isResident ? <MapaTramosKpis kpis={kpis} /> : null}
-
+                  <MapaTramosKpis kpis={kpis} />
                   <MapaTramosFiltros
                     filtros={filtros}
                     canales={canalesUnicos(tramos)}
                     semanas={semanasProgramadasUnicas(tramos)}
                     onChange={setFiltros}
                   />
-
                   <MapaTramosLeyenda />
-
                   {mapaLeaflet}
                 </>
               )}
@@ -513,7 +518,7 @@ export function MapaTramosClient() {
         reiniciandoOrigen={reiniciandoOrigen}
       />
 
-      {visitanteMovil ? (
+      {visitante ? (
         <MapaSegmentoInfoModal
           open={tramoVisitanteModal !== null}
           tramo={tramoVisitanteModal?.tramo ?? null}
