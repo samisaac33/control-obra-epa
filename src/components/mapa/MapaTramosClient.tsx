@@ -4,6 +4,7 @@ import dynamic from "next/dynamic"
 import { Map } from "lucide-react"
 import { useCallback, useEffect, useMemo, useState } from "react"
 
+import { cn } from "@/lib/utils"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   ConfirmarPuntoMinitramoModal,
@@ -418,32 +419,32 @@ export function MapaTramosClient() {
       <div className="p-4 sm:p-6">
         <div className="mx-auto max-w-6xl space-y-6">
           <Card className="border-foreground/10">
-            <CardHeader>
-              <div className="flex items-start gap-3">
-                <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg border border-foreground/10 bg-muted/80">
-                  <Map className="size-4" aria-hidden />
+            {!visitanteMovil ? (
+              <CardHeader>
+                <div className="flex items-start gap-3">
+                  <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg border border-foreground/10 bg-muted/80">
+                    <Map className="size-4" aria-hidden />
+                  </div>
+                  <div>
+                    <CardTitle>Mapa interactivo</CardTitle>
+                    <CardDescription>
+                      {isResident ? (
+                        <>
+                          Haga clic en un tramo para ver detalle y registrar avance (residente). Los
+                          colores indican el estado de desasolve.
+                        </>
+                      ) : (
+                        <>
+                          Pase el cursor sobre un tramo coloreado para ver minitramos, o haga clic para
+                          abrir el detalle del tramo.
+                        </>
+                      )}
+                    </CardDescription>
+                  </div>
                 </div>
-                <div>
-                  <CardTitle>Mapa interactivo</CardTitle>
-                  <CardDescription>
-                    {isResident ? (
-                      <>
-                        Haga clic en un tramo para ver detalle y registrar avance (residente). Los
-                        colores indican el estado de desasolve.
-                      </>
-                    ) : visitanteMovil ? (
-                      <>Avance del desasolve en el mapa. Toque un tramo coloreado para ver detalle.</>
-                    ) : (
-                      <>
-                        Pase el cursor sobre un tramo coloreado para ver minitramos, o haga clic para
-                        abrir el detalle del tramo.
-                      </>
-                    )}
-                  </CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
+              </CardHeader>
+            ) : null}
+            <CardContent className={cn("space-y-4", visitanteMovil && "pt-4")}>
               {error ? (
                 <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
                   {error}
@@ -452,8 +453,11 @@ export function MapaTramosClient() {
 
               {visitanteMovil ? (
                 <>
+                  <MapaTramosKpisBar kpis={kpis} modo="stack" chipsCarrusel />
+                  <p className="text-sm text-muted-foreground">
+                    Toque un tramo coloreado para ver detalle.
+                  </p>
                   {mapaLeaflet}
-                  <MapaTramosKpisBar kpis={kpis} modo="stack" />
                   <MapaTramosFiltrosSheet
                     filtros={filtros}
                     canales={canalesUnicos(tramos)}

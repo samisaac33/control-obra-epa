@@ -1,5 +1,7 @@
 "use client"
 
+import { useEffect, useRef, useState } from "react"
+
 import { cn } from "@/lib/utils"
 import type { KpisTramos } from "@/src/lib/tramos-avance"
 import { formatearNumero } from "@/src/lib/maquinaria-resumen"
@@ -7,6 +9,7 @@ import { formatearNumero } from "@/src/lib/maquinaria-resumen"
 type MapaTramosKpisBarProps = {
   kpis: KpisTramos
   modo: "stack" | "overlay"
+  chipsCarrusel?: boolean
   className?: string
 }
 
@@ -75,19 +78,120 @@ function KpisHero({ kpis, compact }: { kpis: KpisTramos; compact?: boolean }) {
   )
 }
 
+function chipsDesdeKpis(kpis: KpisTramos) {
+  return [
+    { label: "Km totales", value: formatearNumero(kpis.kmTotales, 2) },
+    { label: "Tramos", value: String(kpis.totalTramos) },
+    { label: "Terminados", value: String(kpis.tramosPorEstado.terminado) },
+    { label: "Pendientes", value: String(kpis.tramosPorEstado.pendiente) },
+    { label: "En ejecución", value: String(kpis.tramosPorEstado.en_ejecucion) },
+  ] as const
+}
+
 function KpisChips({ kpis }: { kpis: KpisTramos }) {
   return (
     <div className="flex gap-2 overflow-x-auto pb-0.5 snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-      <KpiChip label="Km totales" value={formatearNumero(kpis.kmTotales, 2)} />
-      <KpiChip label="Tramos" value={String(kpis.totalTramos)} />
-      <KpiChip label="Terminados" value={String(kpis.tramosPorEstado.terminado)} />
-      <KpiChip label="Pendientes" value={String(kpis.tramosPorEstado.pendiente)} />
-      <KpiChip label="En ejecución" value={String(kpis.tramosPorEstado.en_ejecucion)} />
+      {chipsDesdeKpis(kpis).map((chip) => (
+        <KpiChip key={chip.label} label={chip.label} value={chip.value} />
+      ))}
     </div>
   )
 }
 
-export function MapaTramosKpisBar({ kpis, modo, className }: MapaTramosKpisBarProps) {
+function KpisChipsCarrusel({ kpis }: { kpis: KpisTramos }) {
+  const contenedorRef = useRef<HTMLDivElement>(null)
+  const [modoManual, setModoManual] = useState(false)
+  const chips = chipsDesdeKpis(kpis)
+
+  useEffect(() => {
+    const el = contenedorRef.current
+    if (!el || modoManual) return
+
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    if (reduceMotion) {
+      setModoManual(true)
+      return
+    }
+
+    let cancelado = false
+    let rafId = 0
+    let direction = 1
+    let pausaHasta = 0
+    const velocidadPx = 0.45
+    const pausaMs = 1500
+
+    function medirOverflow() {
+      return Math.max(0, el!.scrollWidth - el!.clientWidth)
+    }
+
+    function tick(now: number) {
+      if (cancelado || !el) return
+
+      const maxScroll = medirOverflow()
+      if (maxScroll <= 1) {
+        rafId = requestAnimationFrame(tick)
+        return
+      }
+
+      if (now < pausaHasta) {
+        rafId = requestAnimationFrame(tick)
+        return
+      }
+
+      el.scrollLeft += direction * velocidadPx
+
+      if (direction > 0 && el.scrollLeft >= maxScroll - 1) {
+        el.scrollLeft = maxScroll
+        direction = -1
+        pausaHasta = now + pausaMs
+      } else if (direction < 0 && el.scrollLeft <= 1) {
+        el.scrollLeft = 0
+        direction = 1
+        pausaHasta = now + pausaMs
+      }
+
+      rafId = requestAnimationFrame(tick)
+    }
+
+    rafId = requestAnimationFrame(tick)
+
+    const observer = new ResizeObserver(() => {
+      if (medirOverflow() <= 1) {
+        el.scrollLeft = 0
+      }
+    })
+    observer.observe(el)
+
+    return () => {
+      cancelado = true
+      cancelAnimationFrame(rafId)
+      observer.disconnect()
+    }
+  }, [kpis, modoManual])
+
+  if (modoManual) {
+    return <KpisChips kpis={kpis} />
+  }
+
+  return (
+    <div
+      ref={contenedorRef}
+      className="flex gap-2 overflow-x-hidden pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      aria-label="Indicadores del mapa"
+    >
+      {chips.map((chip) => (
+        <KpiChip key={chip.label} label={chip.label} value={chip.value} />
+      ))}
+    </div>
+  )
+}
+
+function KpisChipsRow({ kpis, carrusel }: { kpis: KpisTramos; carrusel?: boolean }) {
+  if (carrusel) return <KpisChipsCarrusel kpis={kpis} />
+  return <KpisChips kpis={kpis} />
+}
+
+export function MapaTramosKpisBar({ kpis, modo, chipsCarrusel, className }: MapaTramosKpisBarProps) {
   if (modo === "overlay") {
     return (
       <div
@@ -100,7 +204,7 @@ export function MapaTramosKpisBar({ kpis, modo, className }: MapaTramosKpisBarPr
           <KpisHero kpis={kpis} compact />
         </div>
         <div className="pointer-events-auto">
-          <KpisChips kpis={kpis} />
+          <KpisChipsRow kpis={kpis} carrusel={chipsCarrusel} />
         </div>
       </div>
     )
@@ -109,7 +213,7 @@ export function MapaTramosKpisBar({ kpis, modo, className }: MapaTramosKpisBarPr
   return (
     <div className={cn("space-y-3", className)}>
       <KpisHero kpis={kpis} />
-      <KpisChips kpis={kpis} />
+      <KpisChipsRow kpis={kpis} carrusel={chipsCarrusel} />
     </div>
   )
 }

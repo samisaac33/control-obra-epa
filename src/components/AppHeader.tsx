@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
+import { useEffect, useRef, useState } from "react"
+import { usePathname, useRouter } from "next/navigation"
 import { Menu } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -11,10 +11,17 @@ import { ProyectoSelect } from "@/src/components/ProyectoSelect"
 import { useProyecto } from "@/src/contexts/ProyectoContext"
 import { createClient } from "@/src/lib/supabase/client"
 import { cn } from "@/lib/utils"
+import { useEsViewportMovil } from "@/src/hooks/useEsViewportMovil"
+
+const UMBRAL_SCROLL_MAPA_PX = 10
 
 export function AppHeader() {
+  const pathname = usePathname()
+  const esViewportMovil = useEsViewportMovil()
   const { proyectoActivo } = useProyecto()
   const [open, setOpen] = useState(false)
+  const [headerOculto, setHeaderOculto] = useState(false)
+  const scrollPrevRef = useRef(0)
   const [loadingLogout, setLoadingLogout] = useState(false)
   const [isResident, setIsResident] = useState(false)
   const router = useRouter()
@@ -43,6 +50,40 @@ export function AppHeader() {
     }
   }, [residentEmail])
 
+  useEffect(() => {
+    const activo = pathname === "/mapa" && esViewportMovil
+    if (!activo) {
+      setHeaderOculto(false)
+      scrollPrevRef.current = 0
+      return
+    }
+
+    const main = document.querySelector("main")
+    if (!main) return
+
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+
+    function onScroll() {
+      const y = main!.scrollTop
+      if (y <= UMBRAL_SCROLL_MAPA_PX) {
+        setHeaderOculto(false)
+      } else if (reduceMotion) {
+        setHeaderOculto(y > scrollPrevRef.current + UMBRAL_SCROLL_MAPA_PX)
+        if (y < scrollPrevRef.current - UMBRAL_SCROLL_MAPA_PX) setHeaderOculto(false)
+      } else if (y > scrollPrevRef.current + UMBRAL_SCROLL_MAPA_PX) {
+        setHeaderOculto(true)
+      } else if (y < scrollPrevRef.current - UMBRAL_SCROLL_MAPA_PX) {
+        setHeaderOculto(false)
+      }
+      scrollPrevRef.current = y
+    }
+
+    main.addEventListener("scroll", onScroll, { passive: true })
+    return () => main.removeEventListener("scroll", onScroll)
+  }, [pathname, esViewportMovil])
+
+  const ocultarEnMapaMovil = pathname === "/mapa" && esViewportMovil && headerOculto
+
   async function handleLogout() {
     setLoadingLogout(true)
     try {
@@ -56,7 +97,13 @@ export function AppHeader() {
   }
 
   return (
-    <header className="sticky top-0 z-30 border-b border-border/80 bg-card/95 shadow-sm ring-1 ring-foreground/5 backdrop-blur-md supports-backdrop-filter:bg-card/80">
+    <header
+      className={cn(
+        "sticky top-0 z-30 border-b border-border/80 bg-card/95 shadow-sm ring-1 ring-foreground/5 backdrop-blur-md supports-backdrop-filter:bg-card/80",
+        "transition-transform duration-300 ease-out motion-reduce:transition-none",
+        ocultarEnMapaMovil && "-translate-y-full"
+      )}
+    >
       <div className="mx-auto flex min-h-12 w-full min-w-0 max-w-7xl items-center gap-2 px-3 py-2.5 sm:px-5">
         <Button
           type="button"
