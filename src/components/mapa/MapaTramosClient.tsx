@@ -121,7 +121,10 @@ export function MapaTramosClient() {
   const [eliminandoId, setEliminandoId] = useState<string | null>(null)
   const [guardandoEstadoMinitramoId, setGuardandoEstadoMinitramoId] = useState<string | null>(null)
   const [panelError, setPanelError] = useState<string | null>(null)
-  const [segmentoVisitante, setSegmentoVisitante] = useState<SegmentoVisualTramo | null>(null)
+  const [tramoVisitanteModal, setTramoVisitanteModal] = useState<{
+    tramo: CanalTramo
+    segmentoDestacado: SegmentoVisualTramo
+  } | null>(null)
   const esViewportMovil = useEsViewportMovil()
 
   const cargarDatos = useCallback(async () => {
@@ -402,7 +405,10 @@ export function MapaTramosClient() {
       marcadoresCompactos={visitanteMovil}
       onTramoClick={handleTramoClick}
       onSegmentoVisitanteClick={
-        isResident ? undefined : (segmento) => setSegmentoVisitante(segmento)
+        isResident
+          ? undefined
+          : (segmento) =>
+              setTramoVisitanteModal({ tramo: segmento.tramo, segmentoDestacado: segmento })
       }
     />
   )
@@ -502,16 +508,19 @@ export function MapaTramosClient() {
         reiniciandoOrigen={reiniciandoOrigen}
       />
 
-      <MapaSegmentoInfoModal
-        open={segmentoVisitante !== null}
-        segmento={segmentoVisitante}
-        esViewportMovil={esViewportMovil}
-        onClose={() => setSegmentoVisitante(null)}
-        onVerDetalleTramo={(tramo) => {
-          setSegmentoVisitante(null)
-          handleTramoClick(tramo)
-        }}
-      />
+      {visitanteMovil ? (
+        <MapaSegmentoInfoModal
+          open={tramoVisitanteModal !== null}
+          tramo={tramoVisitanteModal?.tramo ?? null}
+          puntosAvance={puntosAvance}
+          segmentoDestacado={tramoVisitanteModal?.segmentoDestacado ?? null}
+          onClose={() => setTramoVisitanteModal(null)}
+          onVerDetalleTramo={(tramo) => {
+            setTramoVisitanteModal(null)
+            handleTramoClick(tramo)
+          }}
+        />
+      ) : null}
 
       <ConfirmarPuntoMinitramoModal
         open={confirmModalAbierto}
