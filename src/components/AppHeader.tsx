@@ -22,6 +22,8 @@ export function AppHeader() {
   const [open, setOpen] = useState(false)
   const [headerOculto, setHeaderOculto] = useState(false)
   const scrollPrevRef = useRef(0)
+  const headerRef = useRef<HTMLElement>(null)
+  const modoMapaMovil = pathname === "/mapa" && esViewportMovil
   const [loadingLogout, setLoadingLogout] = useState(false)
   const [isResident, setIsResident] = useState(false)
   const router = useRouter()
@@ -87,7 +89,40 @@ export function AppHeader() {
     }
   }, [pathname, esViewportMovil])
 
-  const ocultarEnMapaMovil = pathname === "/mapa" && esViewportMovil && headerOculto
+  useEffect(() => {
+    const main = document.querySelector("main")
+    if (!main) return
+
+    if (!modoMapaMovil) {
+      main.style.paddingTop = ""
+      main.removeAttribute("data-mapa-header")
+      return
+    }
+
+    const altura = headerRef.current?.offsetHeight ?? 0
+    main.setAttribute("data-mapa-header", headerOculto ? "hidden" : "visible")
+    main.style.paddingTop = headerOculto ? "0px" : `${altura}px`
+
+    return () => {
+      main.style.paddingTop = ""
+      main.removeAttribute("data-mapa-header")
+    }
+  }, [modoMapaMovil, headerOculto])
+
+  useEffect(() => {
+    if (!modoMapaMovil || headerOculto) return
+    const main = document.querySelector("main")
+    const header = headerRef.current
+    if (!main || !header) return
+
+    const observer = new ResizeObserver(() => {
+      main.style.paddingTop = `${header.offsetHeight}px`
+    })
+    observer.observe(header)
+    return () => observer.disconnect()
+  }, [modoMapaMovil, headerOculto])
+
+  const ocultarEnMapaMovil = modoMapaMovil && headerOculto
 
   async function handleLogout() {
     setLoadingLogout(true)
@@ -103,9 +138,11 @@ export function AppHeader() {
 
   return (
     <header
+      ref={headerRef}
       className={cn(
-        "sticky top-0 z-30 border-b border-border/80 bg-card/95 shadow-sm ring-1 ring-foreground/5 backdrop-blur-md supports-backdrop-filter:bg-card/80",
+        "z-30 border-b border-border/80 bg-card/95 shadow-sm ring-1 ring-foreground/5 backdrop-blur-md supports-backdrop-filter:bg-card/80",
         "transition-transform duration-300 ease-out motion-reduce:transition-none",
+        modoMapaMovil ? "fixed top-0 left-0 right-0 md:left-64" : "sticky top-0",
         ocultarEnMapaMovil && "-translate-y-full"
       )}
     >

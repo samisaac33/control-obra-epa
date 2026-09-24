@@ -13,67 +13,22 @@ type MapaTramosKpisBarProps = {
   className?: string
 }
 
-function KpiChip({ label, value }: { label: string; value: string }) {
+function KpiChip({ label, value, integrado }: { label: string; value: string; integrado?: boolean }) {
   return (
-    <div className="flex w-[7.25rem] shrink-0 snap-start flex-col rounded-lg border border-foreground/10 bg-card/95 px-3 py-2 shadow-sm backdrop-blur-sm sm:w-auto sm:min-w-[6.5rem]">
+    <div
+      className={cn(
+        "flex w-[7.25rem] shrink-0 snap-start flex-col rounded-lg px-3 py-2 sm:w-auto sm:min-w-[6.5rem]",
+        integrado
+          ? "border border-foreground/10 bg-muted/40"
+          : "border border-foreground/10 bg-card/95 shadow-sm backdrop-blur-sm"
+      )}
+    >
       <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
         {label}
       </span>
       <span className="mt-0.5 font-mono text-sm font-semibold tabular-nums text-foreground">
         {value}
       </span>
-    </div>
-  )
-}
-
-function KpisHero({ kpis, compact }: { kpis: KpisTramos; compact?: boolean }) {
-  const pct = Math.min(100, Math.max(0, kpis.avanceGlobalPct))
-  return (
-    <div
-      className={cn(
-        "rounded-xl border border-foreground/10 bg-card/95 shadow-sm backdrop-blur-sm ring-1 ring-foreground/5",
-        compact ? "px-3 py-2.5" : "p-4"
-      )}
-    >
-      <div className="flex items-end justify-between gap-3">
-        <div>
-          <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-            Avance global
-          </p>
-          <p
-            className={cn(
-              "font-mono font-semibold tabular-nums text-foreground",
-              compact ? "text-xl" : "text-3xl"
-            )}
-          >
-            {formatearNumero(pct, 1)}%
-          </p>
-        </div>
-        <p className="text-right text-xs text-muted-foreground">
-          <span className="font-medium text-foreground">
-            {formatearNumero(kpis.kmEjecutados, 2)} km
-          </span>
-          <span className="block">de {formatearNumero(kpis.kmTotales, 2)} km</span>
-        </p>
-      </div>
-      <div
-        className="mt-2 h-2 overflow-hidden rounded-full bg-muted"
-        role="progressbar"
-        aria-valuenow={pct}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-label="Avance global del desasolve"
-      >
-        <div
-          className="h-full rounded-full bg-primary transition-[width] duration-300"
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-      {!compact ? (
-        <p className="mt-2 text-xs text-muted-foreground">
-          Km ejecutados: minitramos GPS en estado terminado
-        </p>
-      ) : null}
     </div>
   )
 }
@@ -88,17 +43,23 @@ function chipsDesdeKpis(kpis: KpisTramos) {
   ] as const
 }
 
-function KpisChips({ kpis }: { kpis: KpisTramos }) {
+function KpisChips({
+  kpis,
+  integrado,
+}: {
+  kpis: KpisTramos
+  integrado?: boolean
+}) {
   return (
     <div className="flex gap-2 overflow-x-auto overscroll-x-contain pb-0.5 snap-x snap-mandatory touch-pan-x [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {chipsDesdeKpis(kpis).map((chip) => (
-        <KpiChip key={chip.label} label={chip.label} value={chip.value} />
+        <KpiChip key={chip.label} label={chip.label} value={chip.value} integrado={integrado} />
       ))}
     </div>
   )
 }
 
-function KpisChipsCarrusel({ kpis }: { kpis: KpisTramos }) {
+function KpisChipsCarrusel({ kpis, integrado }: { kpis: KpisTramos; integrado?: boolean }) {
   const contenedorRef = useRef<HTMLDivElement>(null)
   const pausaUsuarioHastaRef = useRef(0)
   const [soloManual, setSoloManual] = useState(false)
@@ -171,7 +132,7 @@ function KpisChipsCarrusel({ kpis }: { kpis: KpisTramos }) {
   }, [kpis, soloManual])
 
   if (soloManual) {
-    return <KpisChips kpis={kpis} />
+    return <KpisChips kpis={kpis} integrado={integrado} />
   }
 
   return (
@@ -187,15 +148,85 @@ function KpisChipsCarrusel({ kpis }: { kpis: KpisTramos }) {
       }}
     >
       {chips.map((chip) => (
-        <KpiChip key={chip.label} label={chip.label} value={chip.value} />
+        <KpiChip key={chip.label} label={chip.label} value={chip.value} integrado={integrado} />
       ))}
     </div>
   )
 }
 
-function KpisChipsRow({ kpis, carrusel }: { kpis: KpisTramos; carrusel?: boolean }) {
-  if (carrusel) return <KpisChipsCarrusel kpis={kpis} />
-  return <KpisChips kpis={kpis} />
+function KpisChipsRow({
+  kpis,
+  carrusel,
+  integrado,
+}: {
+  kpis: KpisTramos
+  carrusel?: boolean
+  integrado?: boolean
+}) {
+  if (carrusel) return <KpisChipsCarrusel kpis={kpis} integrado={integrado} />
+  return <KpisChips kpis={kpis} integrado={integrado} />
+}
+
+function KpisHero({
+  kpis,
+  compact,
+  mostrarChips,
+  chipsCarrusel,
+}: {
+  kpis: KpisTramos
+  compact?: boolean
+  mostrarChips?: boolean
+  chipsCarrusel?: boolean
+}) {
+  const pct = Math.min(100, Math.max(0, kpis.avanceGlobalPct))
+  return (
+    <div
+      className={cn(
+        "rounded-xl border border-foreground/10 bg-card/95 shadow-sm backdrop-blur-sm ring-1 ring-foreground/5",
+        compact ? "px-3 py-2.5" : "p-4"
+      )}
+    >
+      <div className="flex items-end justify-between gap-3">
+        <div>
+          <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+            Avance global
+          </p>
+          <p
+            className={cn(
+              "font-mono font-semibold tabular-nums text-foreground",
+              compact ? "text-xl" : "text-3xl"
+            )}
+          >
+            {formatearNumero(pct, 1)}%
+          </p>
+        </div>
+        <p className="text-right text-xs text-muted-foreground">
+          <span className="font-medium text-foreground">
+            {formatearNumero(kpis.kmEjecutados, 2)} km
+          </span>
+          <span className="block">de {formatearNumero(kpis.kmTotales, 2)} km</span>
+        </p>
+      </div>
+      <div
+        className="mt-2 h-2 overflow-hidden rounded-full bg-muted"
+        role="progressbar"
+        aria-valuenow={pct}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-label="Avance global del desasolve"
+      >
+        <div
+          className="h-full rounded-full bg-primary transition-[width] duration-300"
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      {mostrarChips ? (
+        <div className="mt-3 border-t border-foreground/10 pt-3">
+          <KpisChipsRow kpis={kpis} carrusel={chipsCarrusel} integrado />
+        </div>
+      ) : null}
+    </div>
+  )
 }
 
 export function MapaTramosKpisBar({ kpis, modo, chipsCarrusel, className }: MapaTramosKpisBarProps) {
@@ -208,19 +239,15 @@ export function MapaTramosKpisBar({ kpis, modo, chipsCarrusel, className }: Mapa
         )}
       >
         <div className="pointer-events-auto">
-          <KpisHero kpis={kpis} compact />
-        </div>
-        <div className="pointer-events-auto">
-          <KpisChipsRow kpis={kpis} carrusel={chipsCarrusel} />
+          <KpisHero kpis={kpis} compact mostrarChips chipsCarrusel={chipsCarrusel} />
         </div>
       </div>
     )
   }
 
   return (
-    <div className={cn("space-y-3", className)}>
-      <KpisHero kpis={kpis} />
-      <KpisChipsRow kpis={kpis} carrusel={chipsCarrusel} />
+    <div className={className}>
+      <KpisHero kpis={kpis} mostrarChips chipsCarrusel={chipsCarrusel} />
     </div>
   )
 }

@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation"
 
+import { cn } from "@/lib/utils"
 import { AppHeader } from "@/src/components/AppHeader"
 import { ProyectoProvider } from "@/src/contexts/ProyectoContext"
 import { Sidebar } from "@/src/components/Sidebar"
@@ -29,7 +30,12 @@ export function AppShell({ children }: AppShellProps) {
       <Sidebar />
       <div className="flex h-dvh min-h-0 min-w-0 flex-1 flex-col overflow-hidden md:pl-64">
         <AppHeader />
-        <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overflow-x-hidden overscroll-y-contain">
+        <main
+          className={cn(
+            "flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overflow-x-hidden overscroll-y-contain",
+            pathname === "/mapa" && "transition-[padding-top] duration-300 ease-out motion-reduce:transition-none"
+          )}
+        >
           {children}
         </main>
       </div>
