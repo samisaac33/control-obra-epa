@@ -79,7 +79,6 @@ export function TramoDetallePanel({
   }
 
   const contenidoResidenteProps = {
-    tramo: tramo!,
     loading,
     proyectoId,
     puntosAvance,
@@ -150,8 +149,8 @@ export function TramoDetallePanel({
               />
             ) : (
               <TramoDetalleResidenteContenido
-                {...contenidoResidenteProps}
                 tramo={tramo}
+                {...contenidoResidenteProps}
                 tituloId="tramo-detalle-sheet-title"
               />
             )}
