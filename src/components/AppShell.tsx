@@ -27,9 +27,11 @@ export function AppShell({ children }: AppShellProps) {
   return (
     <ProyectoProvider>
       <Sidebar />
-      <div className="flex min-h-dvh min-w-0 flex-1 flex-col md:pl-64">
+      <div className="flex h-dvh min-h-0 min-w-0 flex-1 flex-col overflow-hidden md:pl-64">
         <AppHeader />
-        <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overflow-x-hidden">{children}</main>
+        <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overflow-x-hidden overscroll-y-contain">
+          {children}
+        </main>
       </div>
     </ProyectoProvider>
   )
