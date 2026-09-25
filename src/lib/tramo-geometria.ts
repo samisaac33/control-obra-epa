@@ -347,7 +347,7 @@ export function formatLongitudSegmentoMapa(metros: number): string {
 export function infoSegmentoMapa(segmento: SegmentoVisualTramo): InfoSegmentoMapa {
   const esMinitramo = segmento.tipo === "minitramo"
   const estado =
-    segmento.estadoSegmento ?? (esMinitramo ? "en_ejecucion" : segmento.tramo.estado)
+    segmento.estadoSegmento ?? (esMinitramo ? "en_ejecucion" : "pendiente")
   const etiquetaMinitramo =
     esMinitramo && segmento.letraInicio && segmento.letraFin
       ? `${etiquetaLetra(segmento.letraInicio)}–${etiquetaLetra(segmento.letraFin)}`

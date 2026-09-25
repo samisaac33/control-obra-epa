@@ -9,6 +9,7 @@ import {
   extremoInicioCoord,
   intervalosDesdePuntos,
   metrosDesdeIntervalos,
+  metrosMinitramosTerminadosTramo,
   ordenDesdeRol,
   puntosOrdenadosTramo,
   type PuntoMarcado,
@@ -126,14 +127,13 @@ export async function cargarPuntosAvancePorTramo(
 
 function estadoDesdeAvanceRecalculo(avancePct: number, estadoActual: EstadoTramo): EstadoTramo {
   if (avancePct >= 100) return "terminado"
-  if (avancePct > 0) return estadoActual === "programado" ? "programado" : "pendiente"
-  return estadoActual === "programado" ? "programado" : "pendiente"
+  if (estadoActual === "programado") return "programado"
+  return "pendiente"
 }
 
 export async function recalcularAvanceTramoDesdePuntos(
   supabase: SupabaseClient,
-  tramo: CanalTramo,
-  estadoOverride?: EstadoTramo
+  tramo: CanalTramo
 ): Promise<void> {
   const { data, error } = await supabase
     .from("tramo_puntos_avance")
@@ -144,10 +144,12 @@ export async function recalcularAvanceTramoDesdePuntos(
   if (error) throw new Error(error.message)
 
   const puntos = (data ?? []).map((row) => normalizarPuntoAvance(row as Record<string, unknown>))
-  const intervalos = intervalosDesdePuntos(puntos, tramo.id)
-  const metros = metrosDesdeIntervalos(intervalos, tramo.longitud_m)
+  const tienePuntosGps = puntos.length > 0
+  const metros = tienePuntosGps
+    ? metrosMinitramosTerminadosTramo(tramo, puntos)
+    : metrosDesdeIntervalos(intervalosDesdePuntos(puntos, tramo.id), tramo.longitud_m)
   const avancePct = sincronizarAvanceDesdeMetros(tramo.longitud_m, metros)
-  const estado = estadoOverride ?? estadoDesdeAvanceRecalculo(avancePct, tramo.estado)
+  const estado = estadoDesdeAvanceRecalculo(avancePct, tramo.estado)
 
   const { error: updateError } = await supabase
     .from("canal_tramos")
@@ -198,7 +200,7 @@ export async function confirmarPuntoMinitramo(
 
   if (insertError) throw new Error(insertError.message)
 
-  await recalcularAvanceTramoDesdePuntos(supabase, input.tramo, input.estado)
+  await recalcularAvanceTramoDesdePuntos(supabase, input.tramo)
 
   if (input.registro_foto_id) {
     const { error: fotoError } = await supabase
@@ -232,7 +234,7 @@ export async function corregirPuntoMinitramo(
 
   if (updateError) throw new Error(updateError.message)
 
-  await recalcularAvanceTramoDesdePuntos(supabase, input.tramo, input.estado)
+  await recalcularAvanceTramoDesdePuntos(supabase, input.tramo)
 }
 
 export async function eliminarMinitramo(

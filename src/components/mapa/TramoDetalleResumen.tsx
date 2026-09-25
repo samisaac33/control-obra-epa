@@ -23,7 +23,7 @@ function estadoSegmentoVisual(segmento: SegmentoVisualTramo): EstadoTramo {
   if (segmento.tipo === "minitramo") {
     return segmento.estadoSegmento ?? "en_ejecucion"
   }
-  return segmento.estadoSegmento ?? segmento.tramo.estado
+  return segmento.estadoSegmento ?? "pendiente"
 }
 
 export function BarraSegmentosTramo({
