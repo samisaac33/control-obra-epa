@@ -1,4 +1,9 @@
-import type { CanalTramo, EstadoTramo, GeoJsonLineString } from "@/src/data/tramos/types"
+import type {
+  CanalTramo,
+  EstadoOperativoMapa,
+  EstadoTramo,
+  GeoJsonLineString,
+} from "@/src/data/tramos/types"
 import {
   metrosMinitramosTerminadosTramo,
   type TramoPuntoAvance,
@@ -71,7 +76,7 @@ export function calcularKpisTramos(
     } else {
       metrosEjecutados += tramo.metros_ejecutados
     }
-    const estado = estadoTramoParaMapa(tramo, puntosConfirmados)
+    const estado = estadoOperativoMapa(tramo, puntosConfirmados)
     tramosPorEstado[estado] += 1
   }
 
@@ -124,10 +129,27 @@ export function estadoTramoParaMapa(
   return tramo.estado
 }
 
+/** Clasificación operativa para leyenda, filtro y KPIs (3 estados). */
+export function estadoOperativoMapa(
+  tramo: CanalTramo,
+  puntosAvance?: TramoPuntoAvance[]
+): EstadoOperativoMapa {
+  const puntosConfirmados = puntosAvance?.filter((p) => p.confirmado) ?? []
+  const { avancePct } = avanceDesasolveTramo(tramo, puntosConfirmados)
+
+  if (avancePct >= 100) return "terminado"
+  if (avancePct > 0 && avancePct < 100) return "en_ejecucion"
+
+  const derivado = estadoTramoParaMapa(tramo, puntosAvance)
+  if (derivado === "en_ejecucion") return "en_ejecucion"
+
+  return "pendiente"
+}
+
 export function filtrarTramos(
   tramos: CanalTramo[],
   filtros: {
-    estado?: EstadoTramo | "todos"
+    estado?: EstadoOperativoMapa | "todos"
     tramoId?: string | "todos"
     semanaProgramada?: string
   },
@@ -135,7 +157,7 @@ export function filtrarTramos(
 ): CanalTramo[] {
   return tramos.filter((tramo) => {
     if (filtros.estado && filtros.estado !== "todos") {
-      const estadoEfectivo = estadoTramoParaMapa(tramo, puntosAvance)
+      const estadoEfectivo = estadoOperativoMapa(tramo, puntosAvance)
       if (estadoEfectivo !== filtros.estado) return false
     }
     if (filtros.tramoId && filtros.tramoId !== "todos" && tramo.id !== filtros.tramoId) {
