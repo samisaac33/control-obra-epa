@@ -129,7 +129,9 @@ export function TramoDetalleResidenteContenido({
           puntosPrevios={puntosDelTramo}
           isResident
           guardandoEstadoMinitramoId={guardandoEstadoMinitramoId}
+          eliminandoId={eliminandoId}
           onEstadoMinitramoChange={onEstadoMinitramoChange}
+          onEliminarMinitramo={onEliminarMinitramo}
           onSolicitarConfirmacion={(propuesta, opciones) =>
             onSolicitarConfirmacionAvance(propuesta, opciones)
           }

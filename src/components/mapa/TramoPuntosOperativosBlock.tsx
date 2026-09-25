@@ -108,7 +108,11 @@ export function TramoPuntosOperativosBlock({
                     <SelectTrigger id={`estado-punto-${punto.id}`} className="h-9 w-full text-xs">
                       <SelectValue placeholder="Estado" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent
+                      position="popper"
+                      side="bottom"
+                      className="z-[90] max-h-[min(16rem,50dvh)] w-(--radix-select-trigger-width)"
+                    >
                       <SelectItem value="sin_asignar">Sin estado operativo</SelectItem>
                       {ESTADOS_TRAMO.map((estado) => (
                         <SelectItem key={estado.id} value={estado.id}>
