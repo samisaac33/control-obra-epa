@@ -44,7 +44,6 @@ import type {
 import { crearRegistroMaquinariaTramo } from "@/src/lib/tramo-maquinaria-historial"
 import {
   calcularKpisTramos,
-  canalesUnicos,
   filtrarTramos,
   semanasProgramadasUnicas,
 } from "@/src/lib/tramos-avance"
@@ -109,7 +108,7 @@ export function MapaTramosClient() {
   const [panelAbierto, setPanelAbierto] = useState(false)
   const [filtros, setFiltros] = useState<FiltrosTramos>({
     estado: "todos",
-    canal: "todos",
+    tramoId: "todos",
     semanaProgramada: "todos",
   })
   const [puntosAvance, setPuntosAvance] = useState<TramoPuntoAvance[]>([])
@@ -476,7 +475,7 @@ export function MapaTramosClient() {
                   {visitanteMovil ? (
                     <MapaTramosFiltrosSheet
                       filtros={filtros}
-                      canales={canalesUnicos(tramos)}
+                      tramos={tramos}
                       semanas={semanasProgramadasUnicas(tramos)}
                       onChange={setFiltros}
                     />
@@ -484,7 +483,7 @@ export function MapaTramosClient() {
                     <>
                       <MapaTramosFiltros
                         filtros={filtros}
-                        canales={canalesUnicos(tramos)}
+                        tramos={tramos}
                         semanas={semanasProgramadasUnicas(tramos)}
                         onChange={setFiltros}
                       />
@@ -497,7 +496,7 @@ export function MapaTramosClient() {
                   <MapaTramosKpis kpis={kpis} />
                   <MapaTramosFiltros
                     filtros={filtros}
-                    canales={canalesUnicos(tramos)}
+                    tramos={tramos}
                     semanas={semanasProgramadasUnicas(tramos)}
                     onChange={setFiltros}
                   />

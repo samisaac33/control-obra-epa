@@ -7,18 +7,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { ESTADOS_TRAMO, type EstadoTramo } from "@/src/data/tramos/types"
+import { ESTADOS_TRAMO, type CanalTramo, type EstadoTramo } from "@/src/data/tramos/types"
 import { Label } from "@/components/ui/label"
 
 export type FiltrosTramos = {
   estado: EstadoTramo | "todos"
-  canal: string | "todos"
+  tramoId: string | "todos"
   semanaProgramada: string | "todos"
 }
 
 type MapaTramosFiltrosProps = {
   filtros: FiltrosTramos
-  canales: string[]
+  tramos: Pick<CanalTramo, "id" | "codigo">[]
   semanas: string[]
   onChange: (filtros: FiltrosTramos) => void
 }
@@ -27,7 +27,7 @@ const INPUT_CLASS = "h-10 w-full min-w-0"
 
 export function MapaTramosFiltros({
   filtros,
-  canales,
+  tramos,
   semanas,
   onChange,
 }: MapaTramosFiltrosProps) {
@@ -56,19 +56,19 @@ export function MapaTramosFiltros({
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="filtro-canal">Canal</Label>
+        <Label htmlFor="filtro-tramo">Tramos</Label>
         <Select
-          value={filtros.canal}
-          onValueChange={(value) => onChange({ ...filtros, canal: value })}
+          value={filtros.tramoId}
+          onValueChange={(value) => onChange({ ...filtros, tramoId: value })}
         >
-          <SelectTrigger id="filtro-canal" className={INPUT_CLASS}>
+          <SelectTrigger id="filtro-tramo" className={INPUT_CLASS}>
             <SelectValue placeholder="Todos" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="todos">Todos los canales</SelectItem>
-            {canales.map((canal) => (
-              <SelectItem key={canal} value={canal}>
-                {canal}
+            <SelectItem value="todos">Todos los tramos</SelectItem>
+            {tramos.map((tramo) => (
+              <SelectItem key={tramo.id} value={tramo.id}>
+                {tramo.codigo}
               </SelectItem>
             ))}
           </SelectContent>

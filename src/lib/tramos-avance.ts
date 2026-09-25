@@ -110,7 +110,7 @@ export function filtrarTramos(
   tramos: CanalTramo[],
   filtros: {
     estado?: EstadoTramo | "todos"
-    canal?: string | "todos"
+    tramoId?: string | "todos"
     semanaProgramada?: string
   }
 ): CanalTramo[] {
@@ -118,7 +118,7 @@ export function filtrarTramos(
     if (filtros.estado && filtros.estado !== "todos" && tramo.estado !== filtros.estado) {
       return false
     }
-    if (filtros.canal && filtros.canal !== "todos" && tramo.canal !== filtros.canal) {
+    if (filtros.tramoId && filtros.tramoId !== "todos" && tramo.id !== filtros.tramoId) {
       return false
     }
     if (

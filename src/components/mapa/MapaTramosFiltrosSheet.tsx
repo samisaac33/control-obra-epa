@@ -16,7 +16,7 @@ import { MapaTramosLeyenda } from "@/src/components/mapa/MapaTramosLeyenda"
 
 type MapaTramosFiltrosSheetProps = {
   filtros: FiltrosTramos
-  canales: string[]
+  tramos: { id: string; codigo: string }[]
   semanas: string[]
   onChange: (filtros: FiltrosTramos) => void
 }
@@ -24,14 +24,14 @@ type MapaTramosFiltrosSheetProps = {
 function filtrosActivos(filtros: FiltrosTramos): boolean {
   return (
     filtros.estado !== "todos" ||
-    filtros.canal !== "todos" ||
+    filtros.tramoId !== "todos" ||
     filtros.semanaProgramada !== "todos"
   )
 }
 
 export function MapaTramosFiltrosSheet({
   filtros,
-  canales,
+  tramos,
   semanas,
   onChange,
 }: MapaTramosFiltrosSheetProps) {
@@ -54,7 +54,7 @@ export function MapaTramosFiltrosSheet({
           <SheetDescription>Refine los tramos visibles y consulte la leyenda de colores.</SheetDescription>
         </SheetHeader>
         <div className="mt-4 space-y-4">
-          <MapaTramosFiltros filtros={filtros} canales={canales} semanas={semanas} onChange={onChange} />
+          <MapaTramosFiltros filtros={filtros} tramos={tramos} semanas={semanas} onChange={onChange} />
           <MapaTramosLeyenda />
         </div>
       </SheetContent>
