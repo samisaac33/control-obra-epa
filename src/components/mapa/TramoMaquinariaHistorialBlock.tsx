@@ -1,21 +1,20 @@
 "use client"
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react"
-import Link from "next/link"
 import { Trash2 } from "lucide-react"
 
-import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { RegistrarJornadaTramoFields } from "@/src/components/mapa/RegistrarJornadaTramoFields"
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
+  estadoInicialJornada,
+  jornadaInputDesdeFormState,
+  type RegistrarJornadaFormState,
+  validarJornadaFormState,
+} from "@/src/components/mapa/registrar-jornada-tramo-utils"
+import {
+  cargarEquiposMaquinariaProyecto,
+  type ProyectoEquipoMaquinaria,
+} from "@/src/lib/proyecto-equipos-maquinaria"
 import {
   cargarRegistrosMaquinariaTramo,
   crearRegistroMaquinariaTramo,
@@ -24,14 +23,7 @@ import {
   formatearMetrosDesasolados,
   type TramoRegistroMaquinaria,
 } from "@/src/lib/tramo-maquinaria-historial"
-import {
-  cargarEquiposMaquinariaProyecto,
-  type ProyectoEquipoMaquinaria,
-} from "@/src/lib/proyecto-equipos-maquinaria"
 import { createClient } from "@/src/lib/supabase/client"
-import { useEsViewportMovil } from "@/src/hooks/useEsViewportMovil"
-
-const EQUIPO_OTRO_VALUE = "__otro__"
 
 type TramoMaquinariaHistorialBlockProps = {
   tramoId: string
@@ -47,8 +39,6 @@ export function TramoMaquinariaHistorialBlock({
   refreshKey = 0,
 }: TramoMaquinariaHistorialBlockProps) {
   const supabase = useMemo(() => createClient(), [])
-  const esViewportMovil = useEsViewportMovil()
-  const usarSelectNativoEquipo = isResident && esViewportMovil
   const [registros, setRegistros] = useState<TramoRegistroMaquinaria[]>([])
   const [loading, setLoading] = useState(true)
   const [guardando, setGuardando] = useState(false)
@@ -56,14 +46,8 @@ export function TramoMaquinariaHistorialBlock({
   const [error, setError] = useState<string | null>(null)
 
   const [formularioRegistroAbierto, setFormularioRegistroAbierto] = useState(false)
+  const [jornadaForm, setJornadaForm] = useState<RegistrarJornadaFormState>(() => estadoInicialJornada())
   const [equiposCatalogo, setEquiposCatalogo] = useState<ProyectoEquipoMaquinaria[]>([])
-  const [cargandoEquipos, setCargandoEquipos] = useState(false)
-  const [equipoSeleccionId, setEquipoSeleccionId] = useState("")
-  const [equipoOtroTexto, setEquipoOtroTexto] = useState("")
-  const [fecha, setFecha] = useState("")
-  const [metros, setMetros] = useState("")
-  const [horas, setHoras] = useState("")
-  const [observaciones, setObservaciones] = useState("")
 
   const cargar = useCallback(async () => {
     setLoading(true)
@@ -85,75 +69,42 @@ export function TramoMaquinariaHistorialBlock({
 
   useEffect(() => {
     setFormularioRegistroAbierto(false)
-    setEquipoSeleccionId("")
-    setEquipoOtroTexto("")
+    setJornadaForm(estadoInicialJornada())
   }, [tramoId])
 
   useEffect(() => {
-    if (!formularioRegistroAbierto || !isResident || !proyectoId) return
-
-    let cancelado = false
-    setCargandoEquipos(true)
-    void cargarEquiposMaquinariaProyecto(supabase, proyectoId, { soloActivos: true })
-      .then((data) => {
-        if (!cancelado) setEquiposCatalogo(data)
-      })
-      .catch(() => {
-        if (!cancelado) setEquiposCatalogo([])
-      })
-      .finally(() => {
-        if (!cancelado) setCargandoEquipos(false)
-      })
-
-    return () => {
-      cancelado = true
-    }
+    if (!formularioRegistroAbierto || !isResident) return
+    void cargarEquiposMaquinariaProyecto(supabase, proyectoId, { soloActivos: true }).then(
+      setEquiposCatalogo
+    )
   }, [formularioRegistroAbierto, isResident, proyectoId, supabase])
 
   function resetFormularioJornada() {
-    setEquipoSeleccionId("")
-    setEquipoOtroTexto("")
-    setMetros("")
-    setHoras("")
-    setObservaciones("")
-  }
-
-  function resolverNombreEquipo(): string {
-    if (equipoSeleccionId === EQUIPO_OTRO_VALUE) {
-      return equipoOtroTexto.trim()
-    }
-    const encontrado = equiposCatalogo.find((e) => e.id === equipoSeleccionId)
-    return encontrado?.nombre.trim() ?? ""
+    setJornadaForm(estadoInicialJornada())
   }
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
     if (!isResident) return
 
-    const equipoFinal = resolverNombreEquipo()
-    const metrosNum = Number(metros.replace(",", "."))
+    const equipos =
+      equiposCatalogo.length > 0
+        ? equiposCatalogo
+        : await cargarEquiposMaquinariaProyecto(supabase, proyectoId, { soloActivos: true })
 
-    if (!fecha || !equipoSeleccionId || !equipoFinal || !Number.isFinite(metrosNum) || metrosNum < 0) {
-      setError("Complete fecha, equipo y metros desasolados válidos.")
+    const validacion = validarJornadaFormState(jornadaForm, equipos)
+    if (validacion) {
+      setError(validacion)
       return
     }
 
-    const horasNum = horas.trim() ? Number(horas.replace(",", ".")) : null
-    if (horasNum != null && (!Number.isFinite(horasNum) || horasNum < 0)) {
-      setError("Las horas de trabajo no son válidas.")
-      return
-    }
+    const input = jornadaInputDesdeFormState(jornadaForm, equipos)
+    if (!input) return
 
     setGuardando(true)
     setError(null)
     try {
-      await crearRegistroMaquinariaTramo(supabase, tramoId, {
-        fecha,
-        metros_desasolados: metrosNum,
-        equipo: equipoFinal,
-        duracion_horas: horasNum,
-        observaciones: observaciones.trim() || null,
-      })
+      await crearRegistroMaquinariaTramo(supabase, tramoId, input)
       resetFormularioJornada()
       await cargar()
     } catch (err) {
@@ -179,7 +130,6 @@ export function TramoMaquinariaHistorialBlock({
   }
 
   const totalMetros = registros.reduce((sum, r) => sum + r.metros_desasolados, 0)
-  const mostrarEquipoOtro = equipoSeleccionId === EQUIPO_OTRO_VALUE
 
   return (
     <section className="space-y-3">
@@ -295,133 +245,14 @@ export function TramoMaquinariaHistorialBlock({
                   Cancelar
                 </Button>
               </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="space-y-1.5">
-                  <Label htmlFor="maq-fecha">Fecha</Label>
-                  <Input
-                    id="maq-fecha"
-                    type="date"
-                    required
-                    value={fecha}
-                    onChange={(e) => setFecha(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="maq-metros">Metros desasolados</Label>
-                  <Input
-                    id="maq-metros"
-                    type="number"
-                    min={0}
-                    step={0.1}
-                    required
-                    placeholder="Ej. 120"
-                    value={metros}
-                    onChange={(e) => setMetros(e.target.value)}
-                  />
-                </div>
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="maq-equipo">Equipo / maquinaria</Label>
-                {usarSelectNativoEquipo ? (
-                  /* Bottom sheet móvil: select nativo evita portal/z-index de Radix */
-                  <select
-                    id="maq-equipo"
-                    required
-                    disabled={cargandoEquipos}
-                    value={equipoSeleccionId}
-                    onChange={(event) => {
-                      const value = event.target.value
-                      setEquipoSeleccionId(value)
-                      if (value !== EQUIPO_OTRO_VALUE) setEquipoOtroTexto("")
-                    }}
-                    className={cn(
-                      "h-10 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none",
-                      "focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
-                      "disabled:cursor-not-allowed disabled:opacity-50 md:text-sm dark:bg-input/30"
-                    )}
-                  >
-                    <option value="" disabled={equipoSeleccionId !== ""}>
-                      {cargandoEquipos ? "Cargando equipos…" : "Seleccione un equipo"}
-                    </option>
-                    {equiposCatalogo.map((item) => (
-                      <option key={item.id} value={item.id}>
-                        {item.nombre}
-                      </option>
-                    ))}
-                    <option value={EQUIPO_OTRO_VALUE}>Otro…</option>
-                  </select>
-                ) : (
-                  <Select
-                    value={equipoSeleccionId || undefined}
-                    onValueChange={(value) => {
-                      setEquipoSeleccionId(value)
-                      if (value !== EQUIPO_OTRO_VALUE) setEquipoOtroTexto("")
-                    }}
-                    disabled={cargandoEquipos}
-                  >
-                    <SelectTrigger id="maq-equipo" className="h-10 w-full">
-                      <SelectValue
-                        placeholder={
-                          cargandoEquipos ? "Cargando equipos…" : "Seleccione un equipo"
-                        }
-                      />
-                    </SelectTrigger>
-                    <SelectContent
-                      position="popper"
-                      side="bottom"
-                      className="z-[100] max-h-[min(16rem,50dvh)] w-(--radix-select-trigger-width)"
-                    >
-                      {equiposCatalogo.map((item) => (
-                        <SelectItem key={item.id} value={item.id}>
-                          {item.nombre}
-                        </SelectItem>
-                      ))}
-                      <SelectItem value={EQUIPO_OTRO_VALUE}>Otro…</SelectItem>
-                    </SelectContent>
-                  </Select>
-                )}
-                {equiposCatalogo.length === 0 && !cargandoEquipos ? (
-                  <p className="text-xs text-muted-foreground">
-                    No hay equipos en el catálogo.{" "}
-                    <Link href="/maquinaria" className="font-medium text-primary underline-offset-4 hover:underline">
-                      Regístrelos en Maquinaria
-                    </Link>
-                    .
-                  </p>
-                ) : null}
-                {mostrarEquipoOtro ? (
-                  <Input
-                    id="maq-equipo-otro"
-                    required
-                    placeholder="Nombre del equipo"
-                    value={equipoOtroTexto}
-                    onChange={(e) => setEquipoOtroTexto(e.target.value)}
-                    className="mt-2"
-                    aria-label="Otro equipo"
-                  />
-                ) : null}
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="maq-horas">Horas de trabajo (opcional)</Label>
-                <Input
-                  id="maq-horas"
-                  type="number"
-                  min={0}
-                  step={0.5}
-                  value={horas}
-                  onChange={(e) => setHoras(e.target.value)}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="maq-obs">Observaciones (opcional)</Label>
-                <Textarea
-                  id="maq-obs"
-                  rows={2}
-                  value={observaciones}
-                  onChange={(e) => setObservaciones(e.target.value)}
-                />
-              </div>
-              <Button type="submit" disabled={guardando || cargandoEquipos} className="w-full">
+              <RegistrarJornadaTramoFields
+                proyectoId={proyectoId}
+                idPrefix="maq"
+                values={jornadaForm}
+                onChange={(patch) => setJornadaForm((prev) => ({ ...prev, ...patch }))}
+                disabled={guardando}
+              />
+              <Button type="submit" disabled={guardando} className="w-full">
                 {guardando ? "Guardando…" : "Agregar al historial"}
               </Button>
             </form>
