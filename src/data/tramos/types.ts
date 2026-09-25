@@ -40,8 +40,9 @@ export const ESTADOS_TRAMO: { id: EstadoTramo; label: string; color: string }[] 
   { id: "suspendido", label: "Suspendido", color: "#94a3b8" },
 ]
 
-/** Leyenda del mapa y confirmación: mismos 5 estados que planificación (opción 3). */
-export const ESTADOS_TRAMO_MAPA: { id: EstadoTramo; label: string; color: string }[] = ESTADOS_TRAMO
+/** Confirmación de puntos: estados operativos del segmento (sin duplicar «en ejecución» de la leyenda). */
+export const ESTADOS_TRAMO_MAPA: { id: EstadoTramo; label: string; color: string }[] =
+  ESTADOS_TRAMO.filter((e) => e.id !== "en_ejecucion")
 
 /** @deprecated Usar colorEstadoTramo("en_ejecucion") */
 export const COLOR_MINITRAMO = "#ca8a04"
