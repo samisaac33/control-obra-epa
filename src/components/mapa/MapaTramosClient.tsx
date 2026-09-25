@@ -482,11 +482,12 @@ export function MapaTramosClient() {
                     modo="stack"
                     chipsCarrusel={visitanteMovil}
                   />
-                  <p className="text-sm text-muted-foreground">
-                    {visitanteMovil
-                      ? "Toque un tramo coloreado para ver detalle."
-                      : "Pase el cursor sobre un tramo coloreado para ver minitramos, o haga clic para abrir el resumen."}
-                  </p>
+                  {visitanteMovil ? null : (
+                    <p className="text-sm text-muted-foreground">
+                      Pase el cursor sobre un tramo coloreado para ver minitramos, o haga clic para
+                      abrir el resumen.
+                    </p>
+                  )}
                   <MapaTramosLeyenda compact={visitanteMovil} />
                   <MapaTramosFiltroTramo
                     filtros={filtros}
