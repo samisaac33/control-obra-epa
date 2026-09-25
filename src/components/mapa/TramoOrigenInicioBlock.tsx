@@ -6,10 +6,14 @@ import { Button } from "@/components/ui/button"
 import type { CanalTramo, OrigenExtremoTramo } from "@/src/data/tramos/types"
 import { etiquetaOrigenExtremo, extremoInicioCoord } from "@/src/lib/tramo-geometria"
 
+export type ConfirmarOrigenInicioOptions = {
+  marcarEnEjecucion?: boolean
+}
+
 type TramoOrigenInicioBlockProps = {
   tramo: CanalTramo
   loading?: boolean
-  onConfirmar: (origen: OrigenExtremoTramo) => Promise<void>
+  onConfirmar: (origen: OrigenExtremoTramo, opciones?: ConfirmarOrigenInicioOptions) => Promise<void>
 }
 
 export function TramoOrigenInicioBlock({
@@ -20,11 +24,11 @@ export function TramoOrigenInicioBlock({
   const [seleccion, setSeleccion] = useState<OrigenExtremoTramo | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  async function handleGuardar() {
+  async function handleGuardar(marcarEnEjecucion: boolean) {
     if (!seleccion) return
     setError(null)
     try {
-      await onConfirmar(seleccion)
+      await onConfirmar(seleccion, { marcarEnEjecucion })
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo guardar el inicio del tramo.")
     }
@@ -35,8 +39,8 @@ export function TramoOrigenInicioBlock({
       <div>
         <h4 className="text-sm font-medium">Inicio del tramo</h4>
         <p className="mt-1 text-xs text-muted-foreground">
-          ¿Desde qué extremo inicia el desasolve en este tramo? Se registrará automáticamente el
-          punto A en ese extremo.
+          ¿Desde qué extremo inicia el desasolve? Se registrará el punto A en ese extremo. Puede
+          iniciar ya en ejecución (parpadeo en el mapa) sin necesidad de marcar el punto B.
         </p>
       </div>
 
@@ -66,14 +70,25 @@ export function TramoOrigenInicioBlock({
         </p>
       ) : null}
 
-      <Button
-        type="button"
-        className="w-full"
-        disabled={!seleccion || loading}
-        onClick={() => void handleGuardar()}
-      >
-        {loading ? "Guardando…" : "Confirmar inicio y punto A"}
-      </Button>
+      <div className="flex flex-col gap-2">
+        <Button
+          type="button"
+          className="w-full"
+          disabled={!seleccion || loading}
+          onClick={() => void handleGuardar(false)}
+        >
+          {loading ? "Guardando…" : "Confirmar inicio y punto A"}
+        </Button>
+        <Button
+          type="button"
+          variant="secondary"
+          className="w-full border border-amber-500/40 bg-amber-500/10 text-amber-950 hover:bg-amber-500/20 dark:text-amber-100"
+          disabled={!seleccion || loading}
+          onClick={() => void handleGuardar(true)}
+        >
+          {loading ? "Guardando…" : "En ejecución (inicio + punto A)"}
+        </Button>
+      </div>
     </div>
   )
 }

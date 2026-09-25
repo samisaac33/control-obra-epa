@@ -41,17 +41,48 @@ export function normalizarPuntoAvance(row: Record<string, unknown>): TramoPuntoA
   }
 }
 
-export async function actualizarEstadoMinitramo(
+export async function actualizarEstadoPuntoAvance(
   supabase: SupabaseClient,
-  puntoFinId: string,
-  estado: EstadoTramo
+  tramoId: string,
+  puntoId: string,
+  estado: EstadoTramo | null
 ): Promise<void> {
+  if (estado === null) {
+    const { error } = await supabase
+      .from("tramo_puntos_avance")
+      .update({ estado_minitramo: null })
+      .eq("id", puntoId)
+
+    if (error) throw new Error(error.message)
+    return
+  }
+
+  if (estado === "en_ejecucion") {
+    const { error: clearError } = await supabase
+      .from("tramo_puntos_avance")
+      .update({ estado_minitramo: null })
+      .eq("tramo_id", tramoId)
+      .eq("estado_minitramo", "en_ejecucion")
+      .neq("id", puntoId)
+
+    if (clearError) throw new Error(clearError.message)
+  }
+
   const { error } = await supabase
     .from("tramo_puntos_avance")
     .update({ estado_minitramo: estado })
-    .eq("id", puntoFinId)
+    .eq("id", puntoId)
 
   if (error) throw new Error(error.message)
+}
+
+export async function actualizarEstadoMinitramo(
+  supabase: SupabaseClient,
+  puntoFinId: string,
+  estado: EstadoTramo,
+  tramoId: string
+): Promise<void> {
+  await actualizarEstadoPuntoAvance(supabase, tramoId, puntoFinId, estado)
 }
 
 export async function cargarPuntosAvancePorProyecto(
@@ -223,6 +254,7 @@ export type GuardarOrigenTramoEInicioInput = {
   tramo: CanalTramo
   origen_extremo: OrigenExtremoTramo
   userId: string
+  marcarEnEjecucion?: boolean
 }
 
 export async function reiniciarOrigenTramoYPuntos(
@@ -290,6 +322,7 @@ export async function guardarOrigenTramoEInicio(
     created_by: input.userId,
     rol: "a",
     grupo_id: null,
+    estado_minitramo: input.marcarEnEjecucion ? "en_ejecucion" : null,
   })
 
   if (insertError) throw new Error(insertError.message)

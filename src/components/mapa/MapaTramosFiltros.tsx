@@ -53,6 +53,7 @@ export function MapaTramosFiltros({
             ))}
           </SelectContent>
         </Select>
+        <p className="text-[11px] text-muted-foreground">Planificación del tramo (administrativo).</p>
       </div>
 
       <div className="space-y-1.5">

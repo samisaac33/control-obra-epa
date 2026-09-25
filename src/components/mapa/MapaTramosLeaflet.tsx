@@ -23,6 +23,8 @@ import {
   MAX_ZOOM_MAPA_TRAMOS,
   pesoTramoEnMapa,
 } from "@/src/lib/mapa-tramos-estilo"
+import { htmlMarcadorPuntoAvance } from "@/src/lib/mapa-punto-marker"
+import { puntoEnEjecucionOperativo } from "@/src/lib/tramo-geometria"
 
 import "leaflet/dist/leaflet.css"
 
@@ -254,25 +256,17 @@ export function MapaTramosLeaflet({
           }}
         />
         {puntosAvance.map((punto) => {
-          const seleccionado = punto.tramo_id === tramoSeleccionadoId
-          const label = punto.rol ? punto.rol.toUpperCase() : ""
-          const orden = punto.rol ? punto.rol.charCodeAt(0) - 96 : 0
-          const fillColor = label
-            ? orden % 2 === 0
-              ? "#ea580c"
-              : "#2563eb"
-            : seleccionado
-              ? "#2563eb"
-              : "#16a34a"
+          const enEjecucion = puntoEnEjecucionOperativo(punto)
+          const html = htmlMarcadorPuntoAvance(punto, iconSize, fontSize)
 
-          if (label) {
+          if (punto.rol || enEjecucion) {
             return (
               <Marker
                 key={punto.id}
                 position={[punto.lat, punto.lng]}
                 icon={L.divIcon({
                   className: "",
-                  html: `<div style="display:flex;align-items:center;justify-content:center;width:${iconSize}px;height:${iconSize}px;border-radius:50%;background:${fillColor};border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35);font-size:${fontSize}px;font-weight:700;color:#fff">${label}</div>`,
+                  html,
                   iconSize: [iconSize, iconSize],
                   iconAnchor: [iconSize / 2, iconSize / 2],
                 })}
@@ -280,6 +274,7 @@ export function MapaTramosLeaflet({
             )
           }
 
+          const seleccionado = punto.tramo_id === tramoSeleccionadoId
           return (
             <CircleMarker
               key={punto.id}
@@ -288,7 +283,7 @@ export function MapaTramosLeaflet({
               pathOptions={{
                 color: "#ffffff",
                 weight: 2,
-                fillColor,
+                fillColor: seleccionado ? "#2563eb" : "#16a34a",
                 fillOpacity: 0.95,
               }}
             />

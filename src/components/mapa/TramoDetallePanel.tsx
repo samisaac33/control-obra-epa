@@ -10,6 +10,7 @@ import { TramoDetalleResidenteBottomSheet } from "@/src/components/mapa/TramoDet
 import { TramoDetalleResidenteContenido } from "@/src/components/mapa/TramoDetalleResidenteContenido"
 import { tituloTramoMapa } from "@/src/lib/tramo-display"
 import type { PropuestaPuntoMinitramo, TramoPuntoAvance } from "@/src/lib/tramo-geometria"
+import type { ConfirmarOrigenInicioOptions } from "@/src/components/mapa/TramoOrigenInicioBlock"
 import type { EstadoTramo, OrigenExtremoTramo } from "@/src/data/tramos/types"
 
 export type SolicitarConfirmacionAvanceOptions = {
@@ -38,9 +39,13 @@ type TramoDetallePanelProps = {
   onEliminarMinitramo?: (grupoId: string) => void
   onEliminarPuntoHuérfano?: (puntoId: string) => void
   onEstadoMinitramoChange?: (puntoFinId: string, estado: EstadoTramo) => void | Promise<void>
+  onEstadoPuntoChange?: (puntoId: string, estado: EstadoTramo | null) => void | Promise<void>
   guardandoEstadoMinitramoId?: string | null
   onEvidenciaSubida?: () => void
-  onGuardarOrigenInicio?: (origen: OrigenExtremoTramo) => Promise<void>
+  onGuardarOrigenInicio?: (
+    origen: OrigenExtremoTramo,
+    opciones?: ConfirmarOrigenInicioOptions
+  ) => Promise<void>
   guardandoOrigen?: boolean
   onReiniciarOrigenTramo?: () => Promise<void>
   reiniciandoOrigen?: boolean
@@ -65,6 +70,7 @@ export function TramoDetallePanel({
   onEliminarMinitramo,
   onEliminarPuntoHuérfano,
   onEstadoMinitramoChange,
+  onEstadoPuntoChange,
   guardandoEstadoMinitramoId = null,
   onEvidenciaSubida,
   onGuardarOrigenInicio,
@@ -92,6 +98,7 @@ export function TramoDetallePanel({
     onSolicitarConfirmacionAvance,
     onEliminarMinitramo,
     onEstadoMinitramoChange,
+    onEstadoPuntoChange,
     onEvidenciaSubida,
     onGuardarOrigenInicio,
     onReiniciarOrigenTramo,
