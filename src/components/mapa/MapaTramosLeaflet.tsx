@@ -170,14 +170,14 @@ export function MapaTramosLeaflet({
   esViewportMovil,
   modoMapaVisitanteMovil = false,
   marcadoresCompactos = false,
-  alturaMapa,
+  alturaMapa: alturaMapaProp,
   onTramoClick,
   onSegmentoVisitanteClick,
 }: MapaTramosLeafletProps) {
   const [pantallaCompleta, setPantallaCompleta] = useState(false)
   const alturaNormal =
-    alturaMapa ?? (modoMapaVisitanteMovil ? ALTURA_MAPA_VISITANTE_MOVIL : ALTURA_MAPA_TRAMOS)
-  const alturaMapa = pantallaCompleta ? "100%" : alturaNormal
+    alturaMapaProp ?? (modoMapaVisitanteMovil ? ALTURA_MAPA_VISITANTE_MOVIL : ALTURA_MAPA_TRAMOS)
+  const alturaMapaContenedor = pantallaCompleta ? "100%" : alturaNormal
 
   useEffect(() => {
     if (!pantallaCompleta) return
@@ -269,7 +269,7 @@ export function MapaTramosLeaflet({
         zoom={12}
         scrollWheelZoom
         className={cn("z-0 w-full", pantallaCompleta && "min-h-0 flex-1")}
-        style={{ height: alturaMapa }}
+        style={{ height: alturaMapaContenedor }}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
