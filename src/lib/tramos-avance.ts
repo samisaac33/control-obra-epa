@@ -132,6 +132,14 @@ export function filtrarTramos(
   })
 }
 
+export function compararCodigoTramo(a: string, b: string): number {
+  return a.localeCompare(b, "es", { numeric: true, sensitivity: "base" })
+}
+
+export function tramosOrdenadosPorCodigo<T extends { codigo: string }>(tramos: readonly T[]): T[] {
+  return [...tramos].sort((a, b) => compararCodigoTramo(a.codigo, b.codigo))
+}
+
 export function canalesUnicos(tramos: CanalTramo[]): string[] {
   return [...new Set(tramos.map((t) => t.canal))].sort((a, b) => a.localeCompare(b, "es"))
 }
