@@ -1,5 +1,7 @@
 "use client"
 
+import { useMemo } from "react"
+
 import {
   Select,
   SelectContent,
@@ -8,6 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { ESTADOS_TRAMO, type CanalTramo, type EstadoTramo } from "@/src/data/tramos/types"
+import { tramosOrdenadosPorCodigo } from "@/src/lib/tramos-avance"
 import { Label } from "@/components/ui/label"
 
 export type FiltrosTramos = {
@@ -31,6 +34,8 @@ export function MapaTramosFiltros({
   semanas,
   onChange,
 }: MapaTramosFiltrosProps) {
+  const tramosOrdenados = useMemo(() => tramosOrdenadosPorCodigo(tramos), [tramos])
+
   return (
     <div className="grid gap-3 sm:grid-cols-3">
       <div className="space-y-1.5">
@@ -67,7 +72,7 @@ export function MapaTramosFiltros({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="todos">Todos los tramos</SelectItem>
-            {tramos.map((tramo) => (
+            {tramosOrdenados.map((tramo) => (
               <SelectItem key={tramo.id} value={tramo.id}>
                 {tramo.codigo}
               </SelectItem>
