@@ -1,11 +1,25 @@
+import { cn } from "@/lib/utils"
 import { ESTADOS_OPERATIVOS_MAPA } from "@/src/data/tramos/types"
 
 export function MapaTramosLeyenda({ compact = false }: { compact?: boolean }) {
   return (
     <div className="space-y-1.5">
-      <div className="flex flex-wrap gap-x-4 gap-y-2 rounded-lg border border-foreground/10 bg-card px-3 py-2 text-xs">
+      <div
+        className={cn(
+          "rounded-lg border border-foreground/10 bg-card px-2 py-2 text-xs sm:px-3",
+          compact
+            ? "grid grid-cols-3 gap-x-1 text-[10px] leading-tight sm:text-xs"
+            : "flex flex-wrap gap-x-4 gap-y-2"
+        )}
+      >
         {ESTADOS_OPERATIVOS_MAPA.map((estado) => (
-          <span key={estado.id} className="inline-flex items-center gap-1.5">
+          <span
+            key={estado.id}
+            className={cn(
+              "inline-flex items-center gap-1",
+              compact && "min-w-0 justify-center gap-0.5 whitespace-nowrap sm:gap-1"
+            )}
+          >
             <span
               className={
                 estado.id === "en_ejecucion"
