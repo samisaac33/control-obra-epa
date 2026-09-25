@@ -50,7 +50,9 @@ type MarcarPuntoTramoBlockProps = {
   puntosPrevios: TramoPuntoAvance[]
   isResident?: boolean
   guardandoEstadoMinitramoId?: string | null
+  eliminandoId?: string | null
   onEstadoMinitramoChange?: (puntoFinId: string, estado: EstadoTramo) => void | Promise<void>
+  onEliminarMinitramo?: (grupoId: string) => void
   onSolicitarConfirmacion: (
     propuesta: PropuestaPuntoMinitramo,
     opciones?: SolicitarConfirmacionMarcarOptions
@@ -62,7 +64,9 @@ export function MarcarPuntoTramoBlock({
   puntosPrevios,
   isResident = false,
   guardandoEstadoMinitramoId = null,
+  eliminandoId = null,
   onEstadoMinitramoChange,
+  onEliminarMinitramo,
   onSolicitarConfirmacion,
 }: MarcarPuntoTramoBlockProps) {
   const puntosDelTramo = useMemo(
@@ -375,7 +379,9 @@ export function MarcarPuntoTramoBlock({
             items={resumen}
             isResident={isResident}
             guardandoEstadoId={guardandoEstadoMinitramoId}
+            eliminandoId={eliminandoId}
             onEstadoChange={onEstadoMinitramoChange}
+            onEliminar={onEliminarMinitramo}
             compact
           />
         )}
