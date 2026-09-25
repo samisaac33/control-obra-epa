@@ -211,11 +211,7 @@ export function AppHeader() {
           >
             {loadingLogout ? "Saliendo..." : "Cerrar sesión"}
           </Button>
-        ) : (
-          <Button type="button" variant="outline" onClick={() => router.push("/login")} className="h-9 shrink-0">
-            Ingreso residente
-          </Button>
-        )}
+        ) : null}
       </div>
     </header>
   )
