@@ -34,6 +34,7 @@ import {
   eliminarMinitramo,
   eliminarPuntoHuérfano,
   guardarOrigenTramoEInicio,
+  recalcularAvanceTramoDesdePuntos,
   reiniciarOrigenTramoYPuntos,
 } from "@/src/lib/tramo-avance-coordenadas"
 import type {
@@ -370,6 +371,7 @@ export function MapaTramosClient() {
     setPanelError(null)
     try {
       await actualizarEstadoPuntoAvance(supabase, tramoSeleccionado.id, puntoId, estado)
+      await recalcularAvanceTramoDesdePuntos(supabase, tramoSeleccionado)
       await cargarDatos()
       setPuntosRefreshKey((k) => k + 1)
     } catch (err) {
