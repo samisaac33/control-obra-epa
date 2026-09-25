@@ -18,6 +18,7 @@ import {
   type TramoPuntoAvance,
 } from "@/src/lib/tramo-geometria"
 import { boundsDesdeTramos } from "@/src/lib/tramos-avance"
+import { Z_MAPA_PANTALLA_COMPLETA } from "@/src/lib/mapa-capas-z"
 import {
   ALTURA_MAPA_TRAMOS,
   ALTURA_MAPA_VISITANTE_MOVIL,
@@ -245,7 +246,10 @@ export function MapaTramosLeaflet({
     <div
       className={cn(
         pantallaCompleta
-          ? "fixed inset-0 z-[200] flex h-dvh w-screen max-w-none flex-col overflow-hidden bg-background pt-[env(safe-area-inset-top,0px)] pb-[env(safe-area-inset-bottom,0px)]"
+          ? cn(
+              "fixed inset-0 flex h-dvh w-screen max-w-none flex-col overflow-hidden bg-background pt-[env(safe-area-inset-top,0px)] pb-[env(safe-area-inset-bottom,0px)]",
+              Z_MAPA_PANTALLA_COMPLETA
+            )
           : "relative overflow-hidden rounded-xl border border-foreground/10 ring-1 ring-foreground/5"
       )}
     >
