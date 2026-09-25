@@ -85,7 +85,12 @@ export function TramoDetalleResidenteContenido({
         mostrarEncabezado={mostrarEncabezadoResumen}
       />
 
-      <TramoMaquinariaHistorialBlock tramoId={tramo.id} isResident refreshKey={puntosRefreshKey} />
+      <TramoMaquinariaHistorialBlock
+        tramoId={tramo.id}
+        proyectoId={tramo.proyecto_id}
+        isResident
+        refreshKey={puntosRefreshKey}
+      />
 
       {requiereOrigen && onGuardarOrigenInicio ? (
         <TramoOrigenInicioBlock

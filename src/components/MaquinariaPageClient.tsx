@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { KpiCard } from "@/src/components/KpiCard"
 import { MaquinariaAccionistaChip } from "@/src/components/MaquinariaRegistroBadge"
 import { MaquinariaCronologia } from "@/src/components/MaquinariaCronologia"
+import { MaquinariaCatalogoEquipos } from "@/src/components/MaquinariaCatalogoEquipos"
 import { MaquinariaExportClient } from "@/src/components/MaquinariaExportClient"
 import { MaquinariaMatrizCalendario } from "@/src/components/MaquinariaMatrizCalendario"
 import { MaquinariaResumenTabla } from "@/src/components/MaquinariaResumenTabla"
@@ -50,6 +51,8 @@ export function MaquinariaPageClient() {
         </header>
 
         <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col space-y-6 px-4 py-6 sm:space-y-8 sm:px-6 sm:py-8 lg:px-8">
+          <MaquinariaCatalogoEquipos />
+
           <section aria-labelledby="generar-documento-title">
             <h2 id="generar-documento-title" className="sr-only">
               Generar documento PDF

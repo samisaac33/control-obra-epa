@@ -1,11 +1,19 @@
 "use client"
 
-import { FormEvent, useCallback, useEffect, useState } from "react"
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react"
+import Link from "next/link"
 import { Trash2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import {
   cargarRegistrosMaquinariaTramo,
@@ -15,19 +23,28 @@ import {
   formatearMetrosDesasolados,
   type TramoRegistroMaquinaria,
 } from "@/src/lib/tramo-maquinaria-historial"
+import {
+  cargarEquiposMaquinariaProyecto,
+  type ProyectoEquipoMaquinaria,
+} from "@/src/lib/proyecto-equipos-maquinaria"
 import { createClient } from "@/src/lib/supabase/client"
+
+const EQUIPO_OTRO_VALUE = "__otro__"
 
 type TramoMaquinariaHistorialBlockProps = {
   tramoId: string
+  proyectoId: string
   isResident: boolean
   refreshKey?: number
 }
 
 export function TramoMaquinariaHistorialBlock({
   tramoId,
+  proyectoId,
   isResident,
   refreshKey = 0,
 }: TramoMaquinariaHistorialBlockProps) {
+  const supabase = useMemo(() => createClient(), [])
   const [registros, setRegistros] = useState<TramoRegistroMaquinaria[]>([])
   const [loading, setLoading] = useState(true)
   const [guardando, setGuardando] = useState(false)
@@ -35,9 +52,12 @@ export function TramoMaquinariaHistorialBlock({
   const [error, setError] = useState<string | null>(null)
 
   const [formularioRegistroAbierto, setFormularioRegistroAbierto] = useState(false)
+  const [equiposCatalogo, setEquiposCatalogo] = useState<ProyectoEquipoMaquinaria[]>([])
+  const [cargandoEquipos, setCargandoEquipos] = useState(false)
+  const [equipoSeleccionId, setEquipoSeleccionId] = useState("")
+  const [equipoOtroTexto, setEquipoOtroTexto] = useState("")
   const [fecha, setFecha] = useState("")
   const [metros, setMetros] = useState("")
-  const [equipo, setEquipo] = useState("")
   const [horas, setHoras] = useState("")
   const [observaciones, setObservaciones] = useState("")
 
@@ -45,7 +65,6 @@ export function TramoMaquinariaHistorialBlock({
     setLoading(true)
     setError(null)
     try {
-      const supabase = createClient()
       const data = await cargarRegistrosMaquinariaTramo(supabase, tramoId)
       setRegistros(data)
     } catch (err) {
@@ -54,7 +73,7 @@ export function TramoMaquinariaHistorialBlock({
     } finally {
       setLoading(false)
     }
-  }, [tramoId])
+  }, [supabase, tramoId])
 
   useEffect(() => {
     void cargar()
@@ -62,14 +81,55 @@ export function TramoMaquinariaHistorialBlock({
 
   useEffect(() => {
     setFormularioRegistroAbierto(false)
+    setEquipoSeleccionId("")
+    setEquipoOtroTexto("")
   }, [tramoId])
+
+  useEffect(() => {
+    if (!formularioRegistroAbierto || !isResident || !proyectoId) return
+
+    let cancelado = false
+    setCargandoEquipos(true)
+    void cargarEquiposMaquinariaProyecto(supabase, proyectoId, { soloActivos: true })
+      .then((data) => {
+        if (!cancelado) setEquiposCatalogo(data)
+      })
+      .catch(() => {
+        if (!cancelado) setEquiposCatalogo([])
+      })
+      .finally(() => {
+        if (!cancelado) setCargandoEquipos(false)
+      })
+
+    return () => {
+      cancelado = true
+    }
+  }, [formularioRegistroAbierto, isResident, proyectoId, supabase])
+
+  function resetFormularioJornada() {
+    setEquipoSeleccionId("")
+    setEquipoOtroTexto("")
+    setMetros("")
+    setHoras("")
+    setObservaciones("")
+  }
+
+  function resolverNombreEquipo(): string {
+    if (equipoSeleccionId === EQUIPO_OTRO_VALUE) {
+      return equipoOtroTexto.trim()
+    }
+    const encontrado = equiposCatalogo.find((e) => e.id === equipoSeleccionId)
+    return encontrado?.nombre.trim() ?? ""
+  }
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
     if (!isResident) return
 
+    const equipoFinal = resolverNombreEquipo()
     const metrosNum = Number(metros.replace(",", "."))
-    if (!fecha || !equipo.trim() || !Number.isFinite(metrosNum) || metrosNum < 0) {
+
+    if (!fecha || !equipoSeleccionId || !equipoFinal || !Number.isFinite(metrosNum) || metrosNum < 0) {
       setError("Complete fecha, equipo y metros desasolados válidos.")
       return
     }
@@ -83,18 +143,14 @@ export function TramoMaquinariaHistorialBlock({
     setGuardando(true)
     setError(null)
     try {
-      const supabase = createClient()
       await crearRegistroMaquinariaTramo(supabase, tramoId, {
         fecha,
         metros_desasolados: metrosNum,
-        equipo: equipo.trim(),
+        equipo: equipoFinal,
         duracion_horas: horasNum,
         observaciones: observaciones.trim() || null,
       })
-      setMetros("")
-      setEquipo("")
-      setHoras("")
-      setObservaciones("")
+      resetFormularioJornada()
       await cargar()
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo guardar el registro.")
@@ -109,7 +165,6 @@ export function TramoMaquinariaHistorialBlock({
     setEliminandoId(id)
     setError(null)
     try {
-      const supabase = createClient()
       await eliminarRegistroMaquinariaTramo(supabase, id)
       await cargar()
     } catch (err) {
@@ -120,6 +175,7 @@ export function TramoMaquinariaHistorialBlock({
   }
 
   const totalMetros = registros.reduce((sum, r) => sum + r.metros_desasolados, 0)
+  const mostrarEquipoOtro = equipoSeleccionId === EQUIPO_OTRO_VALUE
 
   return (
     <section className="space-y-3">
@@ -227,7 +283,10 @@ export function TramoMaquinariaHistorialBlock({
                   variant="ghost"
                   size="sm"
                   className="h-8 px-2 text-muted-foreground"
-                  onClick={() => setFormularioRegistroAbierto(false)}
+                  onClick={() => {
+                    setFormularioRegistroAbierto(false)
+                    resetFormularioJornada()
+                  }}
                 >
                   Cancelar
                 </Button>
@@ -259,13 +318,50 @@ export function TramoMaquinariaHistorialBlock({
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="maq-equipo">Equipo / maquinaria</Label>
-                <Input
-                  id="maq-equipo"
-                  required
-                  placeholder="Ej. Excavadora brazo largo"
-                  value={equipo}
-                  onChange={(e) => setEquipo(e.target.value)}
-                />
+                <Select
+                  value={equipoSeleccionId || undefined}
+                  onValueChange={(value) => {
+                    setEquipoSeleccionId(value)
+                    if (value !== EQUIPO_OTRO_VALUE) setEquipoOtroTexto("")
+                  }}
+                  disabled={cargandoEquipos}
+                >
+                  <SelectTrigger id="maq-equipo" className="h-10 w-full">
+                    <SelectValue
+                      placeholder={
+                        cargandoEquipos ? "Cargando equipos…" : "Seleccione un equipo"
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {equiposCatalogo.map((item) => (
+                      <SelectItem key={item.id} value={item.id}>
+                        {item.nombre}
+                      </SelectItem>
+                    ))}
+                    <SelectItem value={EQUIPO_OTRO_VALUE}>Otro…</SelectItem>
+                  </SelectContent>
+                </Select>
+                {equiposCatalogo.length === 0 && !cargandoEquipos ? (
+                  <p className="text-xs text-muted-foreground">
+                    No hay equipos en el catálogo.{" "}
+                    <Link href="/maquinaria" className="font-medium text-primary underline-offset-4 hover:underline">
+                      Regístrelos en Maquinaria
+                    </Link>
+                    .
+                  </p>
+                ) : null}
+                {mostrarEquipoOtro ? (
+                  <Input
+                    id="maq-equipo-otro"
+                    required
+                    placeholder="Nombre del equipo"
+                    value={equipoOtroTexto}
+                    onChange={(e) => setEquipoOtroTexto(e.target.value)}
+                    className="mt-2"
+                    aria-label="Otro equipo"
+                  />
+                ) : null}
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="maq-horas">Horas de trabajo (opcional)</Label>
@@ -287,7 +383,7 @@ export function TramoMaquinariaHistorialBlock({
                   onChange={(e) => setObservaciones(e.target.value)}
                 />
               </div>
-              <Button type="submit" disabled={guardando} className="w-full">
+              <Button type="submit" disabled={guardando || cargandoEquipos} className="w-full">
                 {guardando ? "Guardando…" : "Agregar al historial"}
               </Button>
             </form>
