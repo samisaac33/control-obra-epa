@@ -40,14 +40,11 @@ export const ESTADOS_TRAMO: { id: EstadoTramo; label: string; color: string }[] 
   { id: "suspendido", label: "Suspendido", color: "#94a3b8" },
 ]
 
-/** Estados visibles en leyenda del mapa y confirmación de minitramos */
-export const ESTADOS_TRAMO_MAPA: { id: EstadoTramo; label: string; color: string }[] = [
-  { id: "pendiente", label: "Pendiente", color: "#6366f1" },
-  { id: "programado", label: "Programado", color: "#ef4444" },
-  { id: "terminado", label: "Terminado", color: "#16a34a" },
-]
+/** Leyenda del mapa y confirmación: mismos 5 estados que planificación (opción 3). */
+export const ESTADOS_TRAMO_MAPA: { id: EstadoTramo; label: string; color: string }[] = ESTADOS_TRAMO
 
-export const COLOR_MINITRAMO = "#059669"
+/** @deprecated Usar colorEstadoTramo("en_ejecucion") */
+export const COLOR_MINITRAMO = "#ca8a04"
 
 export function colorEstadoTramo(estado: EstadoTramo): string {
   return ESTADOS_TRAMO.find((e) => e.id === estado)?.color ?? "#94a3b8"

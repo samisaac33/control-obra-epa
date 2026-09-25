@@ -4,7 +4,11 @@ import { useState } from "react"
 
 import type { CanalTramo, EstadoTramo, OrigenExtremoTramo } from "@/src/data/tramos/types"
 import { MarcarPuntoTramoBlock } from "@/src/components/mapa/MarcarPuntoTramoBlock"
-import { TramoOrigenInicioBlock } from "@/src/components/mapa/TramoOrigenInicioBlock"
+import {
+  TramoOrigenInicioBlock,
+  type ConfirmarOrigenInicioOptions,
+} from "@/src/components/mapa/TramoOrigenInicioBlock"
+import { TramoPuntosOperativosBlock } from "@/src/components/mapa/TramoPuntosOperativosBlock"
 import { TramoReiniciarOrigenBlock } from "@/src/components/mapa/TramoReiniciarOrigenBlock"
 import { tramoListoParaMarcar, tramoRequiereConfigurarOrigen } from "@/src/lib/tramo-geometria"
 import { TramoEditorForm, type TramoFormValues } from "@/src/components/mapa/TramoEditorForm"
@@ -35,8 +39,12 @@ export type TramoDetalleResidenteContenidoProps = {
   ) => void
   onEliminarMinitramo?: (grupoId: string) => void
   onEstadoMinitramoChange?: (puntoFinId: string, estado: EstadoTramo) => void | Promise<void>
+  onEstadoPuntoChange?: (puntoId: string, estado: EstadoTramo | null) => void | Promise<void>
   onEvidenciaSubida?: () => void
-  onGuardarOrigenInicio?: (origen: OrigenExtremoTramo) => Promise<void>
+  onGuardarOrigenInicio?: (
+    origen: OrigenExtremoTramo,
+    opciones?: ConfirmarOrigenInicioOptions
+  ) => Promise<void>
   onReiniciarOrigenTramo?: () => Promise<void>
 }
 
@@ -57,6 +65,7 @@ export function TramoDetalleResidenteContenido({
   onSolicitarConfirmacionAvance,
   onEliminarMinitramo,
   onEstadoMinitramoChange,
+  onEstadoPuntoChange,
   onEvidenciaSubida,
   onGuardarOrigenInicio,
   onReiniciarOrigenTramo,
@@ -104,6 +113,14 @@ export function TramoDetalleResidenteContenido({
           tramo={tramo}
           loading={reiniciandoOrigen}
           onReiniciar={onReiniciarOrigenTramo}
+        />
+      ) : null}
+      {listoMarcar && onEstadoPuntoChange ? (
+        <TramoPuntosOperativosBlock
+          tramoId={tramo.id}
+          puntos={puntosDelTramo}
+          guardandoPuntoId={guardandoEstadoMinitramoId}
+          onEstadoPuntoChange={onEstadoPuntoChange}
         />
       ) : null}
       {listoMarcar ? (

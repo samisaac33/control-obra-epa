@@ -237,8 +237,8 @@ export function MarcarPuntoTramoBlock({
       <div>
         <h4 className="text-sm font-medium">Marcar minitramos en mapa</h4>
         <p className="mt-1 text-xs text-muted-foreground">
-          Confirme punto a punto (A, B, C, D…). Cada tramo consecutivo (A–B, B–C, C–D…) forma un
-          minitramo ejecutado en verde.
+          Confirme punto a punto (A, B, C, D…). Cada par consecutivo (A–B, B–C…) forma un segmento
+          GPS coloreado según su estado operativo (véase leyenda del mapa).
         </p>
       </div>
 

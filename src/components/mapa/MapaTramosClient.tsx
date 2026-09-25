@@ -27,7 +27,7 @@ import { useProyecto } from "@/src/contexts/ProyectoContext"
 import type { CanalTramo, EstadoTramo, OrigenExtremoTramo } from "@/src/data/tramos/types"
 import { createClient } from "@/src/lib/supabase/client"
 import {
-  actualizarEstadoMinitramo,
+  actualizarEstadoPuntoAvance,
   cargarPuntosAvancePorProyecto,
   confirmarPuntoMinitramo,
   corregirPuntoMinitramo,
@@ -331,7 +331,10 @@ export function MapaTramosClient() {
     }
   }
 
-  async function handleGuardarOrigenInicio(origen: OrigenExtremoTramo) {
+  async function handleGuardarOrigenInicio(
+    origen: OrigenExtremoTramo,
+    opciones?: { marcarEnEjecucion?: boolean }
+  ) {
     if (!tramoSeleccionado) return
     setGuardandoOrigen(true)
     setPanelError(null)
@@ -348,12 +351,14 @@ export function MapaTramosClient() {
         tramo: tramoSeleccionado,
         origen_extremo: origen,
         userId: user.id,
+        marcarEnEjecucion: opciones?.marcarEnEjecucion,
       })
 
       await cargarDatos()
       setTramoSeleccionado((prev) =>
         prev ? { ...prev, origen_extremo: origen } : prev
       )
+      setPuntosRefreshKey((k) => k + 1)
     } catch (err) {
       setPanelError(err instanceof Error ? err.message : "No se pudo configurar el inicio.")
       throw err
@@ -362,17 +367,25 @@ export function MapaTramosClient() {
     }
   }
 
-  async function handleEstadoMinitramoChange(puntoFinId: string, estado: EstadoTramo) {
-    setGuardandoEstadoMinitramoId(puntoFinId)
+  async function handleEstadoPuntoChange(puntoId: string, estado: EstadoTramo | null) {
+    if (!tramoSeleccionado) return
+    setGuardandoEstadoMinitramoId(puntoId)
     setPanelError(null)
     try {
-      await actualizarEstadoMinitramo(supabase, puntoFinId, estado)
+      await actualizarEstadoPuntoAvance(supabase, tramoSeleccionado.id, puntoId, estado)
       await cargarDatos()
+      setPuntosRefreshKey((k) => k + 1)
     } catch (err) {
-      setPanelError(err instanceof Error ? err.message : "No se pudo guardar el estado del minitramo.")
+      setPanelError(
+        err instanceof Error ? err.message : "No se pudo guardar el estado del punto."
+      )
     } finally {
       setGuardandoEstadoMinitramoId(null)
     }
+  }
+
+  async function handleEstadoMinitramoChange(puntoFinId: string, estado: EstadoTramo) {
+    await handleEstadoPuntoChange(puntoFinId, estado)
   }
 
   async function handleEliminarMinitramo(segmentoPuntoFinId: string) {
@@ -527,6 +540,7 @@ export function MapaTramosClient() {
         onEliminarMinitramo={isResident ? handleEliminarMinitramo : undefined}
         onEliminarPuntoHuérfano={isResident ? handleEliminarPuntoHuérfano : undefined}
         onEstadoMinitramoChange={isResident ? handleEstadoMinitramoChange : undefined}
+        onEstadoPuntoChange={isResident ? handleEstadoPuntoChange : undefined}
         guardandoEstadoMinitramoId={guardandoEstadoMinitramoId}
         onEvidenciaSubida={() => void cargarDatos()}
         onGuardarOrigenInicio={isResident ? handleGuardarOrigenInicio : undefined}
