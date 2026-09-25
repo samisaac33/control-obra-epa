@@ -1,10 +1,12 @@
 import { ESTADOS_TRAMO } from "@/src/data/tramos/types"
 
+const ESTADOS_LEYENDA_TRAZADO = ESTADOS_TRAMO.filter((e) => e.id !== "en_ejecucion")
+
 export function MapaTramosLeyenda() {
   return (
     <div className="space-y-1.5">
       <div className="flex flex-wrap gap-x-4 gap-y-2 rounded-lg border border-foreground/10 bg-card px-3 py-2 text-xs">
-        {ESTADOS_TRAMO.map((estado) => (
+        {ESTADOS_LEYENDA_TRAZADO.map((estado) => (
           <span key={estado.id} className="inline-flex items-center gap-1.5">
             <span
               className="size-3 rounded-sm ring-1 ring-foreground/10"
