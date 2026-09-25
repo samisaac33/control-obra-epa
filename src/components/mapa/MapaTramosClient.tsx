@@ -483,6 +483,7 @@ export function MapaTramosClient() {
                       ? "Toque un tramo coloreado para ver detalle."
                       : "Pase el cursor sobre un tramo coloreado para ver minitramos, o haga clic para abrir el resumen."}
                   </p>
+                  <MapaTramosLeyenda compact={visitanteMovil} />
                   {mapaLeaflet}
                   {visitanteMovil ? (
                     <MapaTramosFiltrosSheet
@@ -492,15 +493,12 @@ export function MapaTramosClient() {
                       onChange={setFiltros}
                     />
                   ) : (
-                    <>
-                      <MapaTramosFiltros
-                        filtros={filtros}
-                        tramos={tramos}
-                        semanas={semanasProgramadasUnicas(tramos)}
-                        onChange={setFiltros}
-                      />
-                      <MapaTramosLeyenda />
-                    </>
+                    <MapaTramosFiltros
+                      filtros={filtros}
+                      tramos={tramos}
+                      semanas={semanasProgramadasUnicas(tramos)}
+                      onChange={setFiltros}
+                    />
                   )}
                 </>
               ) : (

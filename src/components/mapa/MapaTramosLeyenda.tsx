@@ -2,7 +2,7 @@ import { ESTADOS_TRAMO } from "@/src/data/tramos/types"
 
 const ESTADOS_LEYENDA_TRAZADO = ESTADOS_TRAMO.filter((e) => e.id !== "en_ejecucion")
 
-export function MapaTramosLeyenda() {
+export function MapaTramosLeyenda({ compact = false }: { compact?: boolean }) {
   return (
     <div className="space-y-1.5">
       <div className="flex flex-wrap gap-x-4 gap-y-2 rounded-lg border border-foreground/10 bg-card px-3 py-2 text-xs">
@@ -25,10 +25,12 @@ export function MapaTramosLeyenda() {
           Punto en ejecución (parpadeo)
         </span>
       </div>
-      <p className="text-[11px] text-muted-foreground">
-        Colores del trazado según estado operativo GPS del segmento. El filtro «Estado» arriba es
-        planificación del tramo.
-      </p>
+      {compact ? null : (
+        <p className="text-[11px] text-muted-foreground">
+          Colores del trazado según estado operativo GPS del segmento. El filtro «Estado» arriba es
+          planificación del tramo.
+        </p>
+      )}
     </div>
   )
 }
