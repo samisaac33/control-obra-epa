@@ -49,6 +49,11 @@ type TramoRow = {
   origen_extremo: string | null
   metros_ejecutados: number
   avance_pct: number
+  estado: string
+}
+
+function estadoTrasResetGps(estadoActual: string): string {
+  return estadoActual === "programado" ? "programado" : "pendiente"
 }
 
 function parseArgs(argv: string[]) {
@@ -111,7 +116,7 @@ async function main() {
 
   const { data: tramos, error: tramosError } = await supabase
     .from("canal_tramos")
-    .select("id, codigo, origen_extremo, metros_ejecutados, avance_pct")
+    .select("id, codigo, origen_extremo, metros_ejecutados, avance_pct, estado")
     .eq("proyecto_id", proyecto)
 
   if (tramosError) throw new Error(tramosError.message)
@@ -172,16 +177,19 @@ async function main() {
     .in("tramo_id", tramoIds)
   if (updFotos) throw new Error(`fotos: ${updFotos.message}`)
 
-  const { error: updTramos } = await supabase
-    .from("canal_tramos")
-    .update({
-      origen_extremo: null,
-      metros_ejecutados: 0,
-      avance_pct: 0,
-      updated_at: new Date().toISOString(),
-    })
-    .in("id", tramoIds)
-  if (updTramos) throw new Error(`canal_tramos: ${updTramos.message}`)
+  for (const t of objetivo) {
+    const { error: updTramo } = await supabase
+      .from("canal_tramos")
+      .update({
+        origen_extremo: null,
+        metros_ejecutados: 0,
+        avance_pct: 0,
+        estado: estadoTrasResetGps(t.estado),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", t.id)
+    if (updTramo) throw new Error(`canal_tramos ${t.codigo}: ${updTramo.message}`)
+  }
 
   const despues = await contarRelacionados(supabase, tramoIds)
   console.log("\nDespués del reset:")
@@ -191,7 +199,7 @@ async function main() {
 
   const { data: verificacion } = await supabase
     .from("canal_tramos")
-    .select("codigo, origen_extremo, metros_ejecutados, avance_pct")
+    .select("codigo, origen_extremo, metros_ejecutados, avance_pct, estado")
     .in("id", tramoIds)
 
   console.log("\nEstado canal_tramos:")

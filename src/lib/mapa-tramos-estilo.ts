@@ -57,7 +57,8 @@ export function estiloSegmentoTramoEnMapa(
     const segEstado = estadoSegmento ?? "en_ejecucion"
     return estiloLineaTramo(colorEstadoTramo(segEstado), seleccionado, hover)
   }
-  return estiloTramoPendienteEnMapa(tramo, seleccionado, hover)
+  const estadoPendiente = estadoSegmento ?? "pendiente"
+  return estiloLineaTramo(colorEstadoTramo(estadoPendiente), seleccionado, hover)
 }
 
 export function estiloHaloBlancoTramo(seleccionado: boolean): PathOptions {
