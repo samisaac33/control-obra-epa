@@ -41,6 +41,7 @@ import type {
   SegmentoVisualTramo,
   TramoPuntoAvance,
 } from "@/src/lib/tramo-geometria"
+import { crearRegistroMaquinariaTramo } from "@/src/lib/tramo-maquinaria-historial"
 import {
   calcularKpisTramos,
   canalesUnicos,
@@ -279,8 +280,25 @@ export function MapaTramosClient() {
         })
       }
 
+      if (payload.jornada) {
+        try {
+          await crearRegistroMaquinariaTramo(supabase, payload.tramo.id, payload.jornada)
+        } catch (jornadaErr) {
+          await cargarDatos()
+          setPanelError(
+            jornadaErr instanceof Error
+              ? `Punto guardado, pero la jornada no se registró: ${jornadaErr.message}`
+              : "Punto guardado, pero no se pudo registrar la jornada."
+          )
+          cerrarConfirmacion()
+          setPuntosRefreshKey((k) => k + 1)
+          return
+        }
+      }
+
       await cargarDatos()
       cerrarConfirmacion()
+      setPuntosRefreshKey((k) => k + 1)
     } catch (err) {
       setPanelError(err instanceof Error ? err.message : "No se pudo confirmar el punto.")
     } finally {
@@ -540,6 +558,7 @@ export function MapaTramosClient() {
         modo={confirmModo}
         puntoId={confirmPuntoId}
         loading={confirmandoAvance}
+        mostrarRegistrarJornada={isResident}
         onConfirm={handleConfirmarPunto}
         onCancel={cerrarConfirmacion}
       />
