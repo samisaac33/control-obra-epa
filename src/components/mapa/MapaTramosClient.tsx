@@ -179,8 +179,8 @@ export function MapaTramosClient() {
   }, [supabase, residentEmail])
 
   const tramosFiltrados = useMemo(
-    () => filtrarTramos(tramos, filtros),
-    [tramos, filtros]
+    () => filtrarTramos(tramos, filtros, puntosAvance),
+    [tramos, filtros, puntosAvance]
   )
 
   const kpis = useMemo(
