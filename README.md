@@ -34,6 +34,14 @@ cp .env.example .env.local
 - El avance **georreferenciado** se registra con «Marcar avance en mapa» → «Confirmar avance».
 - La edición manual de metros/% en el formulario **no** crea puntos GPS; use el mapa para corregir después.
 - Requiere sesión con el correo residente autorizado en RLS.
+- **Restablecer tramos en bloque** (puntos GPS, jornadas maquinaria del tramo, vínculo `tramo_id` en fotos):
+
+```bash
+npm run reset:tramos-gps:dry-run -- --proyecto desasolve-canales --codigos 1,8
+npm run reset:tramos-gps -- --proyecto desasolve-canales --codigos 1,8
+```
+
+  Requiere `SUPABASE_SERVICE_ROLE_KEY` en `.env.local`. Alternativa: ejecutar [`supabase/scripts/reset_tramos_desasolve_1_8.sql`](supabase/scripts/reset_tramos_desasolve_1_8.sql) en el SQL Editor de Supabase.
 
 5. Levanta el proyecto:
 
