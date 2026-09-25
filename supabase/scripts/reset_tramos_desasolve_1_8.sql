@@ -66,11 +66,12 @@ set
   origen_extremo = null,
   metros_ejecutados = 0,
   avance_pct = 0,
+  estado = case when c.estado = 'programado' then 'programado' else 'pendiente' end,
   updated_at = now()
 from tramos_objetivo t
 where c.id = t.id;
 
-select codigo, origen_extremo, metros_ejecutados, avance_pct
+select codigo, origen_extremo, metros_ejecutados, avance_pct, estado
 from public.canal_tramos
 where proyecto_id = 'desasolve-canales'
   and lower(trim(regexp_replace(codigo, '^tramo\s+', '', 'i'))) in ('1', '8');

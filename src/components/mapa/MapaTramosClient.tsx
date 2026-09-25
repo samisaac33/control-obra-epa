@@ -143,9 +143,17 @@ export function MapaTramosClient() {
 
       if (tramosError) throw new Error(tramosError.message)
 
-      setTramos((tramosData ?? []).map((row) => normalizarTramo(row as Record<string, unknown>)))
+      const tramosNormalizados = (tramosData ?? []).map((row) =>
+        normalizarTramo(row as Record<string, unknown>)
+      )
+      setTramos(tramosNormalizados)
       setPuntosAvance(puntos)
       setPuntosRefreshKey((k) => k + 1)
+      setTramoSeleccionado((prev) => {
+        if (!prev) return prev
+        const actualizado = tramosNormalizados.find((t) => t.id === prev.id)
+        return actualizado ?? prev
+      })
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudieron cargar los tramos.")
       setTramos([])
@@ -312,17 +320,6 @@ export function MapaTramosClient() {
     try {
       await reiniciarOrigenTramoYPuntos(supabase, tramoSeleccionado)
       await cargarDatos()
-      setTramoSeleccionado((prev) =>
-        prev
-          ? {
-              ...prev,
-              origen_extremo: null,
-              metros_ejecutados: 0,
-              avance_pct: 0,
-            }
-          : prev
-      )
-      setPuntosRefreshKey((k) => k + 1)
     } catch (err) {
       setPanelError(err instanceof Error ? err.message : "No se pudo reiniciar el tramo.")
       throw err

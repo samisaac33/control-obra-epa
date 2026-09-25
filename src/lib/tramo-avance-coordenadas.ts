@@ -286,7 +286,7 @@ export async function reiniciarOrigenTramoYPuntos(
     metros_ejecutados: 0,
     avance_pct: 0,
   }
-  await recalcularAvanceTramoDesdePuntos(supabase, tramoReset, tramo.estado)
+  await recalcularAvanceTramoDesdePuntos(supabase, tramoReset)
 }
 
 export async function guardarOrigenTramoEInicio(

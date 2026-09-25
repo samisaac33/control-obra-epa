@@ -396,7 +396,8 @@ function segmentoVisualDesdeGeometria(
     tipo,
     geometria,
     longitud_m: longitudDesdeGeometria(geometria),
-    estadoSegmento: extras?.estadoSegmento ?? (tipo === "pendiente" ? tramo.estado : undefined),
+    estadoSegmento:
+      extras?.estadoSegmento ?? (tipo === "pendiente" ? ("pendiente" as EstadoTramo) : undefined),
     letraInicio: extras?.letraInicio,
     letraFin: extras?.letraFin,
   }
