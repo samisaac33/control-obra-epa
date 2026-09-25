@@ -71,7 +71,8 @@ export function calcularKpisTramos(
     } else {
       metrosEjecutados += tramo.metros_ejecutados
     }
-    tramosPorEstado[tramo.estado] += 1
+    const estado = estadoTramoParaMapa(tramo, puntosConfirmados)
+    tramosPorEstado[estado] += 1
   }
 
   return {
@@ -106,17 +107,36 @@ export function avanceDesasolveTramo(
   return { metrosEjecutados, metrosTotales, avancePct, usaAvanceGps }
 }
 
+/** Estado para KPIs y filtros del mapa: terminado solo con avance al 100 %. */
+export function estadoTramoParaMapa(
+  tramo: CanalTramo,
+  puntosAvance?: TramoPuntoAvance[]
+): EstadoTramo {
+  const puntosConfirmados = puntosAvance?.filter((p) => p.confirmado) ?? []
+  const { avancePct } = avanceDesasolveTramo(tramo, puntosConfirmados)
+
+  if (avancePct >= 100) return "terminado"
+
+  if (tramo.estado === "terminado") {
+    return avancePct > 0 ? "en_ejecucion" : "pendiente"
+  }
+
+  return tramo.estado
+}
+
 export function filtrarTramos(
   tramos: CanalTramo[],
   filtros: {
     estado?: EstadoTramo | "todos"
     tramoId?: string | "todos"
     semanaProgramada?: string
-  }
+  },
+  puntosAvance?: TramoPuntoAvance[]
 ): CanalTramo[] {
   return tramos.filter((tramo) => {
-    if (filtros.estado && filtros.estado !== "todos" && tramo.estado !== filtros.estado) {
-      return false
+    if (filtros.estado && filtros.estado !== "todos") {
+      const estadoEfectivo = estadoTramoParaMapa(tramo, puntosAvance)
+      if (estadoEfectivo !== filtros.estado) return false
     }
     if (filtros.tramoId && filtros.tramoId !== "todos" && tramo.id !== filtros.tramoId) {
       return false
