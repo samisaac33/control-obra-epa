@@ -1,10 +1,13 @@
 "use client"
 
-import { useEffect, useMemo } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { CircleMarker, GeoJSON, MapContainer, Marker, TileLayer, useMap } from "react-leaflet"
 import type { Layer, PathOptions } from "leaflet"
 import L from "leaflet"
+import { Expand, Minimize2 } from "lucide-react"
 
+import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 import type { CanalTramo, EstadoTramo } from "@/src/data/tramos/types"
 import { etiquetaEstadoTramo } from "@/src/data/tramos/types"
 import {
@@ -57,6 +60,24 @@ function AjustarBounds({ tramos }: { tramos: CanalTramo[] }) {
     if (!bounds) return
     map.fitBounds(bounds, { padding: [24, 24], maxZoom: MAX_ZOOM_MAPA_TRAMOS })
   }, [map, tramos])
+
+  return null
+}
+
+/** Leaflet no detecta cambios de tamaño del contenedor al pasar a pantalla completa. */
+function InvalidarTamanoMapa({ pantallaCompleta }: { pantallaCompleta: boolean }) {
+  const map = useMap()
+
+  useEffect(() => {
+    const id = window.requestAnimationFrame(() => {
+      map.invalidateSize()
+    })
+    const timeout = window.setTimeout(() => map.invalidateSize(), 150)
+    return () => {
+      window.cancelAnimationFrame(id)
+      window.clearTimeout(timeout)
+    }
+  }, [map, pantallaCompleta])
 
   return null
 }
@@ -152,7 +173,28 @@ export function MapaTramosLeaflet({
   onTramoClick,
   onSegmentoVisitanteClick,
 }: MapaTramosLeafletProps) {
-  const altura = alturaMapa ?? (modoMapaVisitanteMovil ? ALTURA_MAPA_VISITANTE_MOVIL : ALTURA_MAPA_TRAMOS)
+  const [pantallaCompleta, setPantallaCompleta] = useState(false)
+  const alturaNormal =
+    alturaMapa ?? (modoMapaVisitanteMovil ? ALTURA_MAPA_VISITANTE_MOVIL : ALTURA_MAPA_TRAMOS)
+  const altura = pantallaCompleta ? "100dvh" : alturaNormal
+
+  useEffect(() => {
+    if (!pantallaCompleta) return
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = "hidden"
+    return () => {
+      document.body.style.overflow = prevOverflow
+    }
+  }, [pantallaCompleta])
+
+  useEffect(() => {
+    if (!pantallaCompleta) return
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setPantallaCompleta(false)
+    }
+    window.addEventListener("keydown", onKeyDown)
+    return () => window.removeEventListener("keydown", onKeyDown)
+  }, [pantallaCompleta])
   const iconSize = marcadoresCompactos ? 16 : 20
   const fontSize = marcadoresCompactos ? 9 : 10
   const featureCollectionCompleta = useMemo(
@@ -199,7 +241,27 @@ export function MapaTramosLeaflet({
     .join("|")}-${puntosVisibles.map((p) => `${p.id}:${p.estado_minitramo ?? ""}`).join(",")}`
 
   return (
-    <div className="overflow-hidden rounded-xl border border-foreground/10 ring-1 ring-foreground/5">
+    <div
+      className={cn(
+        "relative overflow-hidden rounded-xl border border-foreground/10 ring-1 ring-foreground/5",
+        pantallaCompleta && "fixed inset-0 z-[100] rounded-none border-0 ring-0"
+      )}
+    >
+      <Button
+        type="button"
+        variant="secondary"
+        size="icon"
+        className="absolute top-2 right-2 z-[1000] size-9 border border-foreground/15 bg-background/95 shadow-md backdrop-blur-sm touch-manipulation"
+        aria-label={pantallaCompleta ? "Salir de pantalla completa" : "Expandir mapa a pantalla completa"}
+        aria-pressed={pantallaCompleta}
+        onClick={() => setPantallaCompleta((prev) => !prev)}
+      >
+        {pantallaCompleta ? (
+          <Minimize2 className="size-4" aria-hidden />
+        ) : (
+          <Expand className="size-4" aria-hidden />
+        )}
+      </Button>
       <MapContainer
         center={centroInicial}
         zoom={12}
@@ -211,6 +273,7 @@ export function MapaTramosLeaflet({
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+        <InvalidarTamanoMapa pantallaCompleta={pantallaCompleta} />
         <AjustarBounds tramos={tramos} />
         <GeoJSON
           key={`contorno-${layerKey}`}
