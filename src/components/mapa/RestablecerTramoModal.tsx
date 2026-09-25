@@ -1,7 +1,10 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
+import { MapaOverlayPortal } from "@/src/components/mapa/MapaOverlayPortal"
 import type { CanalTramo } from "@/src/data/tramos/types"
+import { Z_MAPA_DIALOG } from "@/src/lib/mapa-capas-z"
 
 type RestablecerTramoModalProps = {
   open: boolean
@@ -21,15 +24,19 @@ export function RestablecerTramoModal({
   if (!open || !tramo) return null
 
   return (
-    <div
-      className="fixed inset-0 z-[80] flex items-end justify-center bg-black/50 p-4 sm:items-center"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="restablecer-tramo-title"
-      onClick={(event) => {
-        if (event.target === event.currentTarget && !loading) onCancel()
-      }}
-    >
+    <MapaOverlayPortal open>
+      <div
+        className={cn(
+          "fixed inset-0 flex items-end justify-center bg-black/50 p-4 sm:items-center",
+          Z_MAPA_DIALOG
+        )}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="restablecer-tramo-title"
+        onClick={(event) => {
+          if (event.target === event.currentTarget && !loading) onCancel()
+        }}
+      >
       <div className="w-full max-w-md rounded-xl border border-foreground/10 bg-background p-5 shadow-xl">
         <h2 id="restablecer-tramo-title" className="text-lg font-semibold">
           Restablecer todo
@@ -54,5 +61,6 @@ export function RestablecerTramoModal({
         </div>
       </div>
     </div>
+    </MapaOverlayPortal>
   )
 }

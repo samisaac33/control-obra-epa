@@ -3,11 +3,14 @@
 import { X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import type { CanalTramo } from "@/src/data/tramos/types"
+import { cn } from "@/lib/utils"
+import { MapaOverlayPortal } from "@/src/components/mapa/MapaOverlayPortal"
 import {
   TramoDetalleResidenteContenido,
   type TramoDetalleResidenteContenidoProps,
 } from "@/src/components/mapa/TramoDetalleResidenteContenido"
+import type { CanalTramo } from "@/src/data/tramos/types"
+import { Z_MAPA_OVERLAY } from "@/src/lib/mapa-capas-z"
 import { tituloTramoMapa } from "@/src/lib/tramo-display"
 
 type TramoDetalleResidenteBottomSheetProps = Omit<
@@ -28,15 +31,16 @@ export function TramoDetalleResidenteBottomSheet({
   if (!open || !tramo) return null
 
   return (
-    <div
-      className="fixed inset-0 z-[70] flex items-end justify-center bg-black/50"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="tramo-detalle-residente-title"
-      onClick={(event) => {
-        if (event.target === event.currentTarget) onOpenChange(false)
-      }}
-    >
+    <MapaOverlayPortal open>
+      <div
+        className={cn("fixed inset-0 flex items-end justify-center bg-black/50", Z_MAPA_OVERLAY)}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="tramo-detalle-residente-title"
+        onClick={(event) => {
+          if (event.target === event.currentTarget) onOpenChange(false)
+        }}
+      >
       <div className="relative max-h-[92dvh] w-full overflow-y-auto rounded-t-2xl border border-foreground/10 border-b-0 bg-background px-5 pb-8 pt-3 shadow-xl">
         <div className="mx-auto mb-3 h-1 w-10 shrink-0 rounded-full bg-muted-foreground/30" aria-hidden />
 
@@ -67,5 +71,6 @@ export function TramoDetalleResidenteBottomSheet({
         </Button>
       </div>
     </div>
+    </MapaOverlayPortal>
   )
 }

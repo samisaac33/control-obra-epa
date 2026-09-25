@@ -5,6 +5,12 @@ import { useEffect, useMemo, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
+import { cn } from "@/lib/utils"
+import { MapaOverlayPortal } from "@/src/components/mapa/MapaOverlayPortal"
+import {
+  Z_MAPA_DIALOG,
+  Z_MAPA_SELECT_EN_DIALOG,
+} from "@/src/lib/mapa-capas-z"
 import {
   Select,
   SelectContent,
@@ -199,12 +205,16 @@ export function ConfirmarPuntoMinitramoModal({
     }))
 
   return (
-    <div
-      className="fixed inset-0 z-[80] flex items-end justify-center bg-black/50 p-4 sm:items-center"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="confirmar-punto-title"
-    >
+    <MapaOverlayPortal open>
+      <div
+        className={cn(
+          "fixed inset-0 flex items-end justify-center bg-black/50 p-4 sm:items-center",
+          Z_MAPA_DIALOG
+        )}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="confirmar-punto-title"
+      >
       <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl border border-foreground/10 bg-background p-5 shadow-xl">
         <h2 id="confirmar-punto-title" className="text-lg font-semibold">
           {esCorreccion
@@ -285,7 +295,10 @@ export function ConfirmarPuntoMinitramoModal({
               <SelectContent
                 position="popper"
                 side="bottom"
-                className="z-[90] max-h-[min(16rem,50dvh)] w-(--radix-select-trigger-width)"
+                className={cn(
+                  Z_MAPA_SELECT_EN_DIALOG,
+                  "max-h-[min(16rem,50dvh)] w-(--radix-select-trigger-width)"
+                )}
               >
                 {ESTADOS_TRAMO_MAPA.map((e) => (
                   <SelectItem key={e.id} value={e.id}>
@@ -325,7 +338,7 @@ export function ConfirmarPuntoMinitramoModal({
                   values={jornadaForm}
                   onChange={(patch) => setJornadaForm((prev) => ({ ...prev, ...patch }))}
                   disabled={loading}
-                  selectContentZIndexClass="z-[90]"
+                  selectContentZIndexClass={Z_MAPA_SELECT_EN_DIALOG}
                 />
               ) : null}
               {errorJornada ? (
@@ -355,5 +368,6 @@ export function ConfirmarPuntoMinitramoModal({
         </div>
       </div>
     </div>
+    </MapaOverlayPortal>
   )
 }
