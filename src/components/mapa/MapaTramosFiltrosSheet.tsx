@@ -54,7 +54,13 @@ export function MapaTramosFiltrosSheet({
           <SheetDescription>Refine los tramos visibles y consulte la leyenda de colores.</SheetDescription>
         </SheetHeader>
         <div className="mt-4 space-y-4">
-          <MapaTramosFiltros filtros={filtros} tramos={tramos} semanas={semanas} onChange={onChange} />
+          <MapaTramosFiltros
+            filtros={filtros}
+            tramos={tramos}
+            semanas={semanas}
+            onChange={onChange}
+            campos={["estado", "semana"]}
+          />
           <MapaTramosLeyenda />
         </div>
       </SheetContent>

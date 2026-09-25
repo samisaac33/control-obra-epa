@@ -10,7 +10,11 @@ import {
   ConfirmarPuntoMinitramoModal,
   type ConfirmarPuntoPayload,
 } from "@/src/components/mapa/ConfirmarPuntoMinitramoModal"
-import { MapaTramosFiltros, type FiltrosTramos } from "@/src/components/mapa/MapaTramosFiltros"
+import {
+  MapaTramosFiltroTramo,
+  MapaTramosFiltros,
+  type FiltrosTramos,
+} from "@/src/components/mapa/MapaTramosFiltros"
 import { MapaSegmentoInfoModal } from "@/src/components/mapa/MapaSegmentoInfoModal"
 import { MapaTramosFiltrosSheet } from "@/src/components/mapa/MapaTramosFiltrosSheet"
 import { MapaTramosKpis } from "@/src/components/mapa/MapaTramosKpis"
@@ -484,6 +488,12 @@ export function MapaTramosClient() {
                       : "Pase el cursor sobre un tramo coloreado para ver minitramos, o haga clic para abrir el resumen."}
                   </p>
                   <MapaTramosLeyenda compact={visitanteMovil} />
+                  <MapaTramosFiltroTramo
+                    filtros={filtros}
+                    tramos={tramos}
+                    onChange={setFiltros}
+                    selectId="filtro-tramo-visitante-inline"
+                  />
                   {mapaLeaflet}
                   {visitanteMovil ? (
                     <MapaTramosFiltrosSheet
@@ -498,6 +508,7 @@ export function MapaTramosClient() {
                       tramos={tramos}
                       semanas={semanasProgramadasUnicas(tramos)}
                       onChange={setFiltros}
+                      campos={["estado", "semana"]}
                     />
                   )}
                 </>
