@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
+import { createPortal } from "react-dom"
 import { CircleMarker, GeoJSON, MapContainer, Marker, TileLayer, useMap } from "react-leaflet"
 import type { Layer, PathOptions } from "leaflet"
 import L from "leaflet"
@@ -169,14 +170,14 @@ export function MapaTramosLeaflet({
   esViewportMovil,
   modoMapaVisitanteMovil = false,
   marcadoresCompactos = false,
-  alturaMapa,
+  alturaMapa: alturaMapaProp,
   onTramoClick,
   onSegmentoVisitanteClick,
 }: MapaTramosLeafletProps) {
   const [pantallaCompleta, setPantallaCompleta] = useState(false)
   const alturaNormal =
-    alturaMapa ?? (modoMapaVisitanteMovil ? ALTURA_MAPA_VISITANTE_MOVIL : ALTURA_MAPA_TRAMOS)
-  const altura = pantallaCompleta ? "100dvh" : alturaNormal
+    alturaMapaProp ?? (modoMapaVisitanteMovil ? ALTURA_MAPA_VISITANTE_MOVIL : ALTURA_MAPA_TRAMOS)
+  const alturaMapaContenedor = pantallaCompleta ? "100%" : alturaNormal
 
   useEffect(() => {
     if (!pantallaCompleta) return
@@ -228,7 +229,7 @@ export function MapaTramosLeaflet({
     return (
       <div
         className="flex items-center justify-center rounded-xl border border-dashed border-foreground/15 bg-muted/20 text-sm text-muted-foreground"
-        style={{ height: altura }}
+        style={{ height: alturaNormal }}
       >
         No hay tramos cargados. Importe el KMZ con{" "}
         <code className="mx-1 rounded bg-muted px-1">npm run import:kmz</code>.
@@ -240,11 +241,12 @@ export function MapaTramosLeaflet({
     .map((t) => `${t.id}:${t.metros_ejecutados}:${t.estado}`)
     .join("|")}-${puntosVisibles.map((p) => `${p.id}:${p.estado_minitramo ?? ""}`).join(",")}`
 
-  return (
+  const mapaShell = (
     <div
       className={cn(
-        "relative overflow-hidden rounded-xl border border-foreground/10 ring-1 ring-foreground/5",
-        pantallaCompleta && "fixed inset-0 z-[100] rounded-none border-0 ring-0"
+        pantallaCompleta
+          ? "fixed inset-0 z-[200] flex h-dvh w-screen max-w-none flex-col overflow-hidden bg-background pt-[env(safe-area-inset-top,0px)] pb-[env(safe-area-inset-bottom,0px)]"
+          : "relative overflow-hidden rounded-xl border border-foreground/10 ring-1 ring-foreground/5"
       )}
     >
       <Button
@@ -266,8 +268,8 @@ export function MapaTramosLeaflet({
         center={centroInicial}
         zoom={12}
         scrollWheelZoom
-        className="w-full z-0"
-        style={{ height: altura }}
+        className={cn("z-0 w-full", pantallaCompleta && "min-h-0 flex-1")}
+        style={{ height: alturaMapaContenedor }}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -360,4 +362,19 @@ export function MapaTramosLeaflet({
       </MapContainer>
     </div>
   )
+
+  if (pantallaCompleta && typeof document !== "undefined") {
+    return (
+      <>
+        <div
+          aria-hidden
+          className="overflow-hidden rounded-xl ring-1 ring-foreground/5 ring-inset"
+          style={{ height: alturaNormal }}
+        />
+        {createPortal(mapaShell, document.body)}
+      </>
+    )
+  }
+
+  return mapaShell
 }
