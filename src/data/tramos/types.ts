@@ -32,6 +32,19 @@ export type CanalTramo = {
   updated_at?: string
 }
 
+export type EstadoOperativoMapa = Extract<EstadoTramo, "pendiente" | "en_ejecucion" | "terminado">
+
+/** Leyenda y filtro «Estado» en /mapa (3 estados operativos). */
+export const ESTADOS_OPERATIVOS_MAPA: {
+  id: EstadoOperativoMapa
+  label: string
+  color: string
+}[] = [
+  { id: "pendiente", label: "Pendiente", color: "#6366f1" },
+  { id: "en_ejecucion", label: "En ejecución", color: "#ca8a04" },
+  { id: "terminado", label: "Terminado", color: "#16a34a" },
+]
+
 export const ESTADOS_TRAMO: { id: EstadoTramo; label: string; color: string }[] = [
   { id: "pendiente", label: "Pendiente", color: "#6366f1" },
   { id: "programado", label: "Programado", color: "#ef4444" },

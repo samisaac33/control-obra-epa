@@ -9,12 +9,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { ESTADOS_TRAMO, type CanalTramo, type EstadoTramo } from "@/src/data/tramos/types"
+import {
+  ESTADOS_OPERATIVOS_MAPA,
+  type CanalTramo,
+  type EstadoOperativoMapa,
+} from "@/src/data/tramos/types"
 import { tramosOrdenadosPorCodigo } from "@/src/lib/tramos-avance"
 import { Label } from "@/components/ui/label"
 
 export type FiltrosTramos = {
-  estado: EstadoTramo | "todos"
+  estado: EstadoOperativoMapa | "todos"
   tramoId: string | "todos"
   semanaProgramada: string | "todos"
 }
@@ -43,7 +47,7 @@ export function MapaTramosFiltros({
         <Select
           value={filtros.estado}
           onValueChange={(value) =>
-            onChange({ ...filtros, estado: value as EstadoTramo | "todos" })
+            onChange({ ...filtros, estado: value as EstadoOperativoMapa | "todos" })
           }
         >
           <SelectTrigger id="filtro-estado" className={INPUT_CLASS}>
@@ -51,14 +55,16 @@ export function MapaTramosFiltros({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="todos">Todos los estados</SelectItem>
-            {ESTADOS_TRAMO.map((estado) => (
+            {ESTADOS_OPERATIVOS_MAPA.map((estado) => (
               <SelectItem key={estado.id} value={estado.id}>
                 {estado.label}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
-        <p className="text-[11px] text-muted-foreground">Planificación del tramo (administrativo).</p>
+        <p className="text-[11px] text-muted-foreground">
+          Avance operativo del tramo (GPS y minitramos).
+        </p>
       </div>
 
       <div className="space-y-1.5">
