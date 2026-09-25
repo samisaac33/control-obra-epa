@@ -4,6 +4,7 @@ import { FormEvent, useCallback, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { Trash2 } from "lucide-react"
 
+import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -28,6 +29,7 @@ import {
   type ProyectoEquipoMaquinaria,
 } from "@/src/lib/proyecto-equipos-maquinaria"
 import { createClient } from "@/src/lib/supabase/client"
+import { useEsViewportMovil } from "@/src/hooks/useEsViewportMovil"
 
 const EQUIPO_OTRO_VALUE = "__otro__"
 
@@ -45,6 +47,8 @@ export function TramoMaquinariaHistorialBlock({
   refreshKey = 0,
 }: TramoMaquinariaHistorialBlockProps) {
   const supabase = useMemo(() => createClient(), [])
+  const esViewportMovil = useEsViewportMovil()
+  const usarSelectNativoEquipo = isResident && esViewportMovil
   const [registros, setRegistros] = useState<TramoRegistroMaquinaria[]>([])
   const [loading, setLoading] = useState(true)
   const [guardando, setGuardando] = useState(false)
@@ -318,30 +322,64 @@ export function TramoMaquinariaHistorialBlock({
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="maq-equipo">Equipo / maquinaria</Label>
-                <Select
-                  value={equipoSeleccionId || undefined}
-                  onValueChange={(value) => {
-                    setEquipoSeleccionId(value)
-                    if (value !== EQUIPO_OTRO_VALUE) setEquipoOtroTexto("")
-                  }}
-                  disabled={cargandoEquipos}
-                >
-                  <SelectTrigger id="maq-equipo" className="h-10 w-full">
-                    <SelectValue
-                      placeholder={
-                        cargandoEquipos ? "Cargando equipos…" : "Seleccione un equipo"
-                      }
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
+                {usarSelectNativoEquipo ? (
+                  /* Bottom sheet móvil: select nativo evita portal/z-index de Radix */
+                  <select
+                    id="maq-equipo"
+                    required
+                    disabled={cargandoEquipos}
+                    value={equipoSeleccionId}
+                    onChange={(event) => {
+                      const value = event.target.value
+                      setEquipoSeleccionId(value)
+                      if (value !== EQUIPO_OTRO_VALUE) setEquipoOtroTexto("")
+                    }}
+                    className={cn(
+                      "h-10 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none",
+                      "focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
+                      "disabled:cursor-not-allowed disabled:opacity-50 md:text-sm dark:bg-input/30"
+                    )}
+                  >
+                    <option value="" disabled={equipoSeleccionId !== ""}>
+                      {cargandoEquipos ? "Cargando equipos…" : "Seleccione un equipo"}
+                    </option>
                     {equiposCatalogo.map((item) => (
-                      <SelectItem key={item.id} value={item.id}>
+                      <option key={item.id} value={item.id}>
                         {item.nombre}
-                      </SelectItem>
+                      </option>
                     ))}
-                    <SelectItem value={EQUIPO_OTRO_VALUE}>Otro…</SelectItem>
-                  </SelectContent>
-                </Select>
+                    <option value={EQUIPO_OTRO_VALUE}>Otro…</option>
+                  </select>
+                ) : (
+                  <Select
+                    value={equipoSeleccionId || undefined}
+                    onValueChange={(value) => {
+                      setEquipoSeleccionId(value)
+                      if (value !== EQUIPO_OTRO_VALUE) setEquipoOtroTexto("")
+                    }}
+                    disabled={cargandoEquipos}
+                  >
+                    <SelectTrigger id="maq-equipo" className="h-10 w-full">
+                      <SelectValue
+                        placeholder={
+                          cargandoEquipos ? "Cargando equipos…" : "Seleccione un equipo"
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent
+                      position="popper"
+                      side="bottom"
+                      className="z-[100] max-h-[min(16rem,50dvh)] w-(--radix-select-trigger-width)"
+                    >
+                      {equiposCatalogo.map((item) => (
+                        <SelectItem key={item.id} value={item.id}>
+                          {item.nombre}
+                        </SelectItem>
+                      ))}
+                      <SelectItem value={EQUIPO_OTRO_VALUE}>Otro…</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
                 {equiposCatalogo.length === 0 && !cargandoEquipos ? (
                   <p className="text-xs text-muted-foreground">
                     No hay equipos en el catálogo.{" "}
