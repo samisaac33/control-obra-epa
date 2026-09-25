@@ -160,9 +160,14 @@ export function MapaTramosLeaflet({
     [tramos]
   )
 
+  const puntosVisibles = useMemo(() => {
+    const ids = new Set(tramos.map((t) => t.id))
+    return puntosAvance.filter((p) => ids.has(p.tramo_id))
+  }, [tramos, puntosAvance])
+
   const segmentosColoreados = useMemo(
-    () => tramos.flatMap((tramo) => segmentosVisualesTramo(tramo, puntosAvance)),
-    [tramos, puntosAvance]
+    () => tramos.flatMap((tramo) => segmentosVisualesTramo(tramo, puntosVisibles)),
+    [tramos, puntosVisibles]
   )
 
   const featureCollectionColoreada = useMemo(
@@ -191,7 +196,7 @@ export function MapaTramosLeaflet({
 
   const layerKey = `${isResident ? "r" : "v"}-${esViewportMovil ? "m" : "d"}-${tramoSeleccionadoId ?? "none"}-${tramos
     .map((t) => `${t.id}:${t.metros_ejecutados}:${t.estado}`)
-    .join("|")}-${puntosAvance.map((p) => `${p.id}:${p.estado_minitramo ?? ""}`).join(",")}`
+    .join("|")}-${puntosVisibles.map((p) => `${p.id}:${p.estado_minitramo ?? ""}`).join(",")}`
 
   return (
     <div className="overflow-hidden rounded-xl border border-foreground/10 ring-1 ring-foreground/5">
@@ -255,7 +260,7 @@ export function MapaTramosLeaflet({
             )
           }}
         />
-        {puntosAvance.map((punto) => {
+        {puntosVisibles.map((punto) => {
           const enEjecucion = puntoEnEjecucionOperativo(punto)
           const html = htmlMarcadorPuntoAvance(punto, iconSize, fontSize)
 
