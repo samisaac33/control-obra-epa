@@ -19,6 +19,7 @@ import { MapaSegmentoInfoModal } from "@/src/components/mapa/MapaSegmentoInfoMod
 import { MapaTramosFiltrosSheet } from "@/src/components/mapa/MapaTramosFiltrosSheet"
 import { MapaTramosKpis } from "@/src/components/mapa/MapaTramosKpis"
 import { MapaTramosKpisBar } from "@/src/components/mapa/MapaTramosKpisBar"
+import { MapaTramosBrechasControl } from "@/src/components/mapa/MapaTramosBrechasControl"
 import { MapaTramosLeyenda } from "@/src/components/mapa/MapaTramosLeyenda"
 import { useEsViewportMovil } from "@/src/hooks/useEsViewportMovil"
 import {
@@ -28,6 +29,7 @@ import {
 import type { TramoFormValues } from "@/src/components/mapa/TramoEditorForm"
 import { ProyectoModuloGuard } from "@/src/components/ProyectoModuloGuard"
 import { useProyecto } from "@/src/contexts/ProyectoContext"
+import { PROYECTO_DESASOLVE_CANALES } from "@/src/data/proyectos/catalog"
 import type { CanalTramo, EstadoTramo, OrigenExtremoTramo } from "@/src/data/tramos/types"
 import { createClient } from "@/src/lib/supabase/client"
 import {
@@ -127,6 +129,8 @@ export function MapaTramosClient() {
   const [eliminandoId, setEliminandoId] = useState<string | null>(null)
   const [guardandoEstadoMinitramoId, setGuardandoEstadoMinitramoId] = useState<string | null>(null)
   const [panelError, setPanelError] = useState<string | null>(null)
+  const [mostrarBrechasConexion, setMostrarBrechasConexion] = useState(false)
+  const [incluirBrechasAuto, setIncluirBrechasAuto] = useState(false)
   const [tramoVisitanteModal, setTramoVisitanteModal] = useState<{
     tramo: CanalTramo
     segmentoDestacado: SegmentoVisualTramo
@@ -427,6 +431,7 @@ export function MapaTramosClient() {
 
   const visitante = !isResident
   const visitanteMovil = visitante && esViewportMovil
+  const mapaDesasolve = proyectoId === PROYECTO_DESASOLVE_CANALES
 
   const mapaLeaflet = (
     <MapaTramosLeaflet
@@ -437,6 +442,8 @@ export function MapaTramosClient() {
       esViewportMovil={esViewportMovil}
       modoMapaVisitanteMovil={visitanteMovil}
       marcadoresCompactos={visitanteMovil}
+      mostrarBrechas={mostrarBrechasConexion}
+      incluirBrechasAuto={incluirBrechasAuto}
       onTramoClick={handleTramoClick}
       onSegmentoVisitanteClick={
         isResident
@@ -495,6 +502,15 @@ export function MapaTramosClient() {
                     onChange={setFiltros}
                     selectId="filtro-tramo-visitante-inline"
                   />
+                  {mapaDesasolve ? (
+                    <MapaTramosBrechasControl
+                      compact={visitanteMovil}
+                      mostrarBrechas={mostrarBrechasConexion}
+                      incluirBrechasAuto={incluirBrechasAuto}
+                      onMostrarBrechasChange={setMostrarBrechasConexion}
+                      onIncluirAutoChange={setIncluirBrechasAuto}
+                    />
+                  ) : null}
                   {mapaLeaflet}
                   {visitanteMovil ? (
                     <MapaTramosFiltrosSheet
@@ -523,6 +539,14 @@ export function MapaTramosClient() {
                     onChange={setFiltros}
                   />
                   <MapaTramosLeyenda />
+                  {mapaDesasolve ? (
+                    <MapaTramosBrechasControl
+                      mostrarBrechas={mostrarBrechasConexion}
+                      incluirBrechasAuto={incluirBrechasAuto}
+                      onMostrarBrechasChange={setMostrarBrechasConexion}
+                      onIncluirAutoChange={setIncluirBrechasAuto}
+                    />
+                  ) : null}
                   {mapaLeaflet}
                 </>
               )}
