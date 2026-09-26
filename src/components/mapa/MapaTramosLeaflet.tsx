@@ -29,7 +29,6 @@ import {
   pesoTramoEnMapa,
 } from "@/src/lib/mapa-tramos-estilo"
 import { MapaEtiquetasTramoPorZoom } from "@/src/components/mapa/MapaEtiquetasTramoPorZoom"
-import { MapaTramosBrechasCapa } from "@/src/components/mapa/MapaTramosBrechasCapa"
 import { htmlMarcadorPuntoAvance } from "@/src/lib/mapa-punto-marker"
 import { puntoEnEjecucionOperativo } from "@/src/lib/tramo-geometria"
 
@@ -44,8 +43,6 @@ type MapaTramosLeafletProps = {
   modoMapaVisitanteMovil?: boolean
   marcadoresCompactos?: boolean
   alturaMapa?: string
-  mostrarBrechas?: boolean
-  incluirBrechasAuto?: boolean
   onTramoClick: (tramo: CanalTramo) => void
   onSegmentoVisitanteClick?: (segmento: SegmentoVisualTramo) => void
 }
@@ -176,8 +173,6 @@ export function MapaTramosLeaflet({
   modoMapaVisitanteMovil = false,
   marcadoresCompactos = false,
   alturaMapa: alturaMapaProp,
-  mostrarBrechas = false,
-  incluirBrechasAuto = false,
   onTramoClick,
   onSegmentoVisitanteClick,
 }: MapaTramosLeafletProps) {
@@ -287,11 +282,6 @@ export function MapaTramosLeaflet({
         />
         <InvalidarTamanoMapa pantallaCompleta={pantallaCompleta} />
         <MapaEtiquetasTramoPorZoom tramos={tramos} tramoSeleccionadoId={tramoSeleccionadoId} />
-        <MapaTramosBrechasCapa
-          tramos={tramos}
-          mostrarBrechas={mostrarBrechas}
-          incluirBrechasAuto={incluirBrechasAuto}
-        />
         <AjustarBounds tramos={tramos} />
         <GeoJSON
           key={`contorno-${layerKey}`}
