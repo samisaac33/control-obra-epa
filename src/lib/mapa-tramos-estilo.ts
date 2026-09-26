@@ -6,6 +6,8 @@ import { colorEstadoTramo } from "@/src/data/tramos/types"
 export const ALTURA_MAPA_TRAMOS = "min(65vh, 560px)"
 export const ALTURA_MAPA_VISITANTE_MOVIL = "min(78dvh, 640px)"
 export const MAX_ZOOM_MAPA_TRAMOS = 14
+/** A partir de este zoom se muestran números de tramo en el mapa. */
+export const ZOOM_MIN_ETIQUETAS_TRAMO = 13
 
 const PESO_NORMAL = 6
 const PESO_SELECCIONADO = 8

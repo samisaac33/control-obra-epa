@@ -28,6 +28,7 @@ import {
   MAX_ZOOM_MAPA_TRAMOS,
   pesoTramoEnMapa,
 } from "@/src/lib/mapa-tramos-estilo"
+import { MapaEtiquetasTramoPorZoom } from "@/src/components/mapa/MapaEtiquetasTramoPorZoom"
 import { htmlMarcadorPuntoAvance } from "@/src/lib/mapa-punto-marker"
 import { puntoEnEjecucionOperativo } from "@/src/lib/tramo-geometria"
 
@@ -280,6 +281,7 @@ export function MapaTramosLeaflet({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         <InvalidarTamanoMapa pantallaCompleta={pantallaCompleta} />
+        <MapaEtiquetasTramoPorZoom tramos={tramos} tramoSeleccionadoId={tramoSeleccionadoId} />
         <AjustarBounds tramos={tramos} />
         <GeoJSON
           key={`contorno-${layerKey}`}
