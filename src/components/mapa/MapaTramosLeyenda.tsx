@@ -36,7 +36,8 @@ export function MapaTramosLeyenda({ compact = false }: { compact?: boolean }) {
       {compact ? null : (
         <p className="text-[11px] text-muted-foreground">
           Colores del trazado y marcadores según avance operativo (minitramos GPS). Coincide con el
-          filtro «Estado».
+          filtro «Estado». Tramos 1–24: tonos fríos; 25–33: tonos cálidos (mismo significado por
+          estado).
         </p>
       )}
     </div>

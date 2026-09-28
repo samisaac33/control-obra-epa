@@ -29,7 +29,7 @@ export function MapaTramosKpis({ kpis, compact }: MapaTramosKpisProps) {
         <KpiCard
           label="En ejecución"
           valor={String(kpis.tramosPorEstado.en_ejecucion)}
-          detalle={`Terminados: ${kpis.tramosPorEstado.terminado} · Pendientes: ${kpis.tramosPorEstado.pendiente}`}
+          detalle={`Terminados: ${kpis.tramosPorEstado.terminado}`}
         />
       ) : null}
     </div>

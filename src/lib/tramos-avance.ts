@@ -4,8 +4,10 @@ import type {
   EstadoTramo,
   GeoJsonLineString,
 } from "@/src/data/tramos/types"
+import { numeroTramoDesdeCodigo } from "@/src/lib/mapa-tramo-etiqueta"
 import {
   metrosMinitramosTerminadosTramo,
+  puntoEnEjecucionOperativo,
   type TramoPuntoAvance,
 } from "@/src/lib/tramo-geometria"
 
@@ -138,10 +140,11 @@ export function estadoOperativoMapa(
   const { avancePct } = avanceDesasolveTramo(tramo, puntosConfirmados)
 
   if (avancePct >= 100) return "terminado"
-  if (avancePct > 0 && avancePct < 100) return "en_ejecucion"
 
-  const derivado = estadoTramoParaMapa(tramo, puntosAvance)
-  if (derivado === "en_ejecucion") return "en_ejecucion"
+  const tieneFrenteActivo = puntosConfirmados.some(
+    (p) => p.tramo_id === tramo.id && puntoEnEjecucionOperativo(p)
+  )
+  if (tieneFrenteActivo) return "en_ejecucion"
 
   return "pendiente"
 }
@@ -171,6 +174,17 @@ export function filtrarTramos(
       return false
     }
     return true
+  })
+}
+
+export function filtrarTramosPorRangoNumerico(
+  tramos: CanalTramo[],
+  min: number,
+  max: number
+): CanalTramo[] {
+  return tramos.filter((tramo) => {
+    const n = numeroTramoDesdeCodigo(tramo.codigo)
+    return n !== null && n >= min && n <= max
   })
 }
 

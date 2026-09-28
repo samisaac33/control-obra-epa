@@ -42,7 +42,8 @@ type MapaTramosLeafletProps = {
   esViewportMovil: boolean
   modoMapaVisitanteMovil?: boolean
   marcadoresCompactos?: boolean
-  alturaMapa?: string
+  mostrarEtiquetasTramo?: boolean
+  mostrarPuntosAvance?: boolean
   onTramoClick: (tramo: CanalTramo) => void
   onSegmentoVisitanteClick?: (segmento: SegmentoVisualTramo) => void
 }
@@ -61,7 +62,10 @@ function AjustarBounds({ tramos }: { tramos: CanalTramo[] }) {
   useEffect(() => {
     const bounds = boundsDesdeTramos(tramos)
     if (!bounds) return
-    map.fitBounds(bounds, { padding: [24, 24], maxZoom: MAX_ZOOM_MAPA_TRAMOS })
+    map.fitBounds(bounds, {
+      padding: [24, 24],
+      maxZoom: MAX_ZOOM_MAPA_TRAMOS,
+    })
   }, [map, tramos])
 
   return null
@@ -172,13 +176,13 @@ export function MapaTramosLeaflet({
   esViewportMovil,
   modoMapaVisitanteMovil = false,
   marcadoresCompactos = false,
-  alturaMapa: alturaMapaProp,
+  mostrarEtiquetasTramo = true,
+  mostrarPuntosAvance = true,
   onTramoClick,
   onSegmentoVisitanteClick,
 }: MapaTramosLeafletProps) {
   const [pantallaCompleta, setPantallaCompleta] = useState(false)
-  const alturaNormal =
-    alturaMapaProp ?? (modoMapaVisitanteMovil ? ALTURA_MAPA_VISITANTE_MOVIL : ALTURA_MAPA_TRAMOS)
+  const alturaNormal = modoMapaVisitanteMovil ? ALTURA_MAPA_VISITANTE_MOVIL : ALTURA_MAPA_TRAMOS
   const alturaMapaContenedor = pantallaCompleta ? "100%" : alturaNormal
 
   useEffect(() => {
@@ -233,8 +237,7 @@ export function MapaTramosLeaflet({
         className="flex items-center justify-center rounded-xl border border-dashed border-foreground/15 bg-muted/20 text-sm text-muted-foreground"
         style={{ height: alturaNormal }}
       >
-        No hay tramos cargados. Importe el KMZ con{" "}
-        <code className="mx-1 rounded bg-muted px-1">npm run import:kmz</code>.
+        No hay tramos visibles con los filtros actuales.
       </div>
     )
   }
@@ -273,6 +276,11 @@ export function MapaTramosLeaflet({
         center={centroInicial}
         zoom={12}
         scrollWheelZoom
+        dragging
+        doubleClickZoom
+        touchZoom
+        boxZoom
+        keyboard
         className={cn("z-0 w-full", pantallaCompleta && "min-h-0 flex-1")}
         style={{ height: alturaMapaContenedor }}
       >
@@ -281,7 +289,11 @@ export function MapaTramosLeaflet({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         <InvalidarTamanoMapa pantallaCompleta={pantallaCompleta} />
-        <MapaEtiquetasTramoPorZoom tramos={tramos} tramoSeleccionadoId={tramoSeleccionadoId} />
+        <MapaEtiquetasTramoPorZoom
+          tramos={tramos}
+          tramoSeleccionadoId={tramoSeleccionadoId}
+          mostrar={mostrarEtiquetasTramo}
+        />
         <AjustarBounds tramos={tramos} />
         <GeoJSON
           key={`contorno-${layerKey}`}
@@ -331,7 +343,8 @@ export function MapaTramosLeaflet({
             )
           }}
         />
-        {puntosVisibles.map((punto) => {
+        {mostrarPuntosAvance
+          ? puntosVisibles.map((punto) => {
           const enEjecucion = puntoEnEjecucionOperativo(punto)
           const html = htmlMarcadorPuntoAvance(punto, iconSize, fontSize)
 
@@ -364,7 +377,8 @@ export function MapaTramosLeaflet({
               }}
             />
           )
-        })}
+        })
+          : null}
       </MapContainer>
     </div>
   )

@@ -17,6 +17,7 @@ import {
 } from "@/src/components/mapa/MapaTramosFiltros"
 import { MapaSegmentoInfoModal } from "@/src/components/mapa/MapaSegmentoInfoModal"
 import { MapaTramosFiltrosSheet } from "@/src/components/mapa/MapaTramosFiltrosSheet"
+import { MapaOpcionesCapasMapa } from "@/src/components/mapa/MapaOpcionesCapasMapa"
 import { MapaTramosKpis } from "@/src/components/mapa/MapaTramosKpis"
 import { MapaTramosKpisBar } from "@/src/components/mapa/MapaTramosKpisBar"
 import { MapaTramosLeyenda } from "@/src/components/mapa/MapaTramosLeyenda"
@@ -29,6 +30,7 @@ import type { TramoFormValues } from "@/src/components/mapa/TramoEditorForm"
 import { ProyectoModuloGuard } from "@/src/components/ProyectoModuloGuard"
 import { useProyecto } from "@/src/contexts/ProyectoContext"
 import type { CanalTramo, EstadoTramo, OrigenExtremoTramo } from "@/src/data/tramos/types"
+import { normalizarTramo } from "@/src/lib/canal-tramos-normalize"
 import { createClient } from "@/src/lib/supabase/client"
 import {
   actualizarEstadoPuntoAvance,
@@ -50,6 +52,7 @@ import { crearRegistroMaquinariaTramo } from "@/src/lib/tramo-maquinaria-histori
 import {
   calcularKpisTramos,
   filtrarTramos,
+  filtrarTramosPorRangoNumerico,
   semanasProgramadasUnicas,
 } from "@/src/lib/tramos-avance"
 
@@ -65,32 +68,6 @@ const MapaTramosLeaflet = dynamic(
     ),
   }
 )
-
-function normalizarTramo(row: Record<string, unknown>): CanalTramo {
-  const origenRaw = row.origen_extremo ? String(row.origen_extremo) : null
-  const origen_extremo =
-    origenRaw === "geometria_inicio" || origenRaw === "geometria_fin" ? origenRaw : null
-
-  return {
-    id: String(row.id),
-    proyecto_id: String(row.proyecto_id),
-    codigo: String(row.codigo),
-    canal: String(row.canal),
-    longitud_m: Number(row.longitud_m),
-    geometria: row.geometria as CanalTramo["geometria"],
-    origen_extremo,
-    estado: row.estado as CanalTramo["estado"],
-    avance_pct: Number(row.avance_pct),
-    metros_ejecutados: Number(row.metros_ejecutados),
-    fecha_inicio: row.fecha_inicio ? String(row.fecha_inicio) : null,
-    fecha_fin: row.fecha_fin ? String(row.fecha_fin) : null,
-    semana_programada: row.semana_programada ? String(row.semana_programada) : null,
-    maquinaria_asignada: row.maquinaria_asignada ? String(row.maquinaria_asignada) : null,
-    observaciones: row.observaciones ? String(row.observaciones) : null,
-    created_at: row.created_at ? String(row.created_at) : undefined,
-    updated_at: row.updated_at ? String(row.updated_at) : undefined,
-  }
-}
 
 function trimOrNull(value: string): string | null {
   const trimmed = value.trim()
@@ -132,6 +109,9 @@ export function MapaTramosClient() {
     segmentoDestacado: SegmentoVisualTramo
   } | null>(null)
   const esViewportMovil = useEsViewportMovil()
+  const [vistaSoloTramos1a24, setVistaSoloTramos1a24] = useState(false)
+  const [ocultarEtiquetasTramo, setOcultarEtiquetasTramo] = useState(false)
+  const [ocultarPuntosAvance, setOcultarPuntosAvance] = useState(false)
 
   const cargarDatos = useCallback(async () => {
     setLoading(true)
@@ -182,9 +162,15 @@ export function MapaTramosClient() {
     void checkResident()
   }, [supabase, residentEmail])
 
+  const tramosParaVista = useMemo(
+    () =>
+      vistaSoloTramos1a24 ? filtrarTramosPorRangoNumerico(tramos, 1, 24) : tramos,
+    [tramos, vistaSoloTramos1a24]
+  )
+
   const tramosFiltrados = useMemo(
-    () => filtrarTramos(tramos, filtros, puntosAvance),
-    [tramos, filtros, puntosAvance]
+    () => filtrarTramos(tramosParaVista, filtros, puntosAvance),
+    [tramosParaVista, filtros, puntosAvance]
   )
 
   const kpis = useMemo(
@@ -437,6 +423,8 @@ export function MapaTramosClient() {
       esViewportMovil={esViewportMovil}
       modoMapaVisitanteMovil={visitanteMovil}
       marcadoresCompactos={visitanteMovil}
+      mostrarEtiquetasTramo={!ocultarEtiquetasTramo}
+      mostrarPuntosAvance={!ocultarPuntosAvance}
       onTramoClick={handleTramoClick}
       onSegmentoVisitanteClick={
         isResident
@@ -489,12 +477,26 @@ export function MapaTramosClient() {
                     </p>
                   )}
                   <MapaTramosLeyenda compact={visitanteMovil} />
-                  <MapaTramosFiltroTramo
-                    filtros={filtros}
-                    tramos={tramos}
-                    onChange={setFiltros}
-                    selectId="filtro-tramo-visitante-inline"
-                  />
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                    <div className="min-w-0 sm:flex-1">
+                      <MapaTramosFiltroTramo
+                        filtros={filtros}
+                        tramos={tramos}
+                        onChange={setFiltros}
+                        selectId="filtro-tramo-visitante-inline"
+                      />
+                    </div>
+                    <MapaOpcionesCapasMapa
+                      vistaSoloTramos1a24={vistaSoloTramos1a24}
+                      onVistaSoloTramos1a24Change={setVistaSoloTramos1a24}
+                      ocultarEtiquetasTramo={ocultarEtiquetasTramo}
+                      onOcultarEtiquetasTramoChange={setOcultarEtiquetasTramo}
+                      ocultarPuntosAvance={ocultarPuntosAvance}
+                      onOcultarPuntosAvanceChange={setOcultarPuntosAvance}
+                      idPrefix="visitante"
+                      className="sm:max-w-md sm:flex-1"
+                    />
+                  </div>
                   {mapaLeaflet}
                   {visitanteMovil ? (
                     <MapaTramosFiltrosSheet
@@ -515,6 +517,15 @@ export function MapaTramosClient() {
                 </>
               ) : (
                 <>
+                  <MapaOpcionesCapasMapa
+                    vistaSoloTramos1a24={vistaSoloTramos1a24}
+                    onVistaSoloTramos1a24Change={setVistaSoloTramos1a24}
+                    ocultarEtiquetasTramo={ocultarEtiquetasTramo}
+                    onOcultarEtiquetasTramoChange={setOcultarEtiquetasTramo}
+                    ocultarPuntosAvance={ocultarPuntosAvance}
+                    onOcultarPuntosAvanceChange={setOcultarPuntosAvance}
+                    idPrefix="residente"
+                  />
                   <MapaTramosKpis kpis={kpis} />
                   <MapaTramosFiltros
                     filtros={filtros}

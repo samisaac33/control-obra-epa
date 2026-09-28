@@ -38,7 +38,6 @@ function chipsDesdeKpis(kpis: KpisTramos) {
     { label: "Km totales", value: formatearNumero(kpis.kmTotales, 2) },
     { label: "Tramos", value: String(kpis.totalTramos) },
     { label: "Terminados", value: String(kpis.tramosPorEstado.terminado) },
-    { label: "Pendientes", value: String(kpis.tramosPorEstado.pendiente) },
     { label: "En ejecución", value: String(kpis.tramosPorEstado.en_ejecucion) },
   ] as const
 }

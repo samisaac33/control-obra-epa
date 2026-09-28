@@ -1,6 +1,14 @@
 import type { CanalTramo } from "@/src/data/tramos/types"
 import { coordenadaDesdeAbscisa } from "@/src/lib/tramo-geometria"
 
+/** Número de tramo para filtros (p. ej. 21 desde «tramo 21»). */
+export function numeroTramoDesdeCodigo(codigo: string): number | null {
+  const etiqueta = numeroEtiquetaMapa(codigo)
+  if (!etiqueta || !/^\d+$/.test(etiqueta)) return null
+  const n = Number.parseInt(etiqueta, 10)
+  return Number.isFinite(n) ? n : null
+}
+
 /** Número corto para etiqueta en mapa (p. ej. «21» desde «tramo 21»). */
 export function numeroEtiquetaMapa(codigo: string): string | null {
   const trimmed = codigo.trim()

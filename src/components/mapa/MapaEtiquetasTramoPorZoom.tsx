@@ -16,11 +16,16 @@ import { ZOOM_MIN_ETIQUETAS_TRAMO } from "@/src/lib/mapa-tramos-estilo"
 type MapaEtiquetasTramoPorZoomProps = {
   tramos: CanalTramo[]
   tramoSeleccionadoId: string | null
+  /** Mostrar números aunque el zoom sea bajo. */
+  etiquetasSiempre?: boolean
+  mostrar?: boolean
 }
 
 export function MapaEtiquetasTramoPorZoom({
   tramos,
   tramoSeleccionadoId,
+  etiquetasSiempre = false,
+  mostrar = true,
 }: MapaEtiquetasTramoPorZoomProps) {
   const map = useMap()
   const [zoom, setZoom] = useState(() => map.getZoom())
@@ -33,10 +38,11 @@ export function MapaEtiquetasTramoPorZoom({
     setZoom(map.getZoom())
   }, [map])
 
-  const mostrar = zoom >= ZOOM_MIN_ETIQUETAS_TRAMO
+  const visiblePorZoom = etiquetasSiempre || zoom >= ZOOM_MIN_ETIQUETAS_TRAMO
+  const capaActiva = mostrar && visiblePorZoom
 
   const etiquetas = useMemo(() => {
-    if (!mostrar) return []
+    if (!capaActiva) return []
 
     const items: {
       id: string
@@ -60,9 +66,9 @@ export function MapaEtiquetasTramoPorZoom({
     }
 
     return items
-  }, [tramos, tramoSeleccionadoId, mostrar])
+  }, [tramos, tramoSeleccionadoId, capaActiva])
 
-  if (!mostrar || etiquetas.length === 0) return null
+  if (!capaActiva || etiquetas.length === 0) return null
 
   return (
     <>
