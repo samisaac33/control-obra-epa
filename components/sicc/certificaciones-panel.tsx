@@ -1,7 +1,8 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { ClipboardCheck, FileText, Printer } from "lucide-react"
+import Link from "next/link"
+import { ClipboardCheck, FileText, Printer, ShieldCheck } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -31,12 +32,14 @@ import {
 import { EstadoModuloBadge } from "@/components/sicc/estado-modulo-badge"
 import { KpiCard } from "@/components/sicc/kpi-card"
 import { useSiccData } from "@/components/sicc/sicc-data-provider"
+import { SOLICITUD_CONTRATANTE } from "@/data/ensayos-tolerancias-severino"
 import { presupuestoData } from "@/data/presupuesto"
 import {
   calcularResumenCertificacion,
   generarTextoCertificacion,
 } from "@/lib/sicc/certificaciones"
 import { formatearCantidad, formatearUsd } from "@/lib/sicc/format"
+import { SICC_BASE } from "@/lib/sicc/modules"
 import type { EstadoCertificacion } from "@/lib/sicc/types"
 import { cn } from "@/lib/utils"
 
@@ -190,6 +193,33 @@ export function CertificacionesPanel() {
           }}
         />
       </div>
+
+      <Card className="border-amber-500/25 bg-amber-500/5">
+        <CardHeader className="pb-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-amber-500/20 bg-background">
+                <ShieldCheck className="size-5 text-amber-700 dark:text-amber-400" />
+              </div>
+              <div>
+                <CardTitle className="text-base">
+                  Observaciones Planilla {SOLICITUD_CONTRATANTE.planillaReferencia}
+                </CardTitle>
+                <CardDescription className="mt-1.5 text-sm leading-relaxed">
+                  La contratante solicita ensayos y tolerancias (§ 1.5–4.5) de Severino.
+                  Documente el cumplimiento en Calidad antes de reenviar la planilla.
+                </CardDescription>
+              </div>
+            </div>
+            <Button type="button" variant="outline" className="shrink-0 gap-2" asChild>
+              <Link href={`${SICC_BASE}/calidad`}>
+                <ShieldCheck className="size-4" />
+                Ir a ensayos
+              </Link>
+            </Button>
+          </div>
+        </CardHeader>
+      </Card>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,0.9fr)]">
         <Card className="border-foreground/10">

@@ -152,3 +152,12 @@ export interface ResumenCertificacion {
   porcentajeAcumulado: number
   rubrosConAvancePeriodo: number
 }
+
+export type {
+  EstadoCumplimientoEnsayo,
+} from "@/data/ensayos-tolerancias-severino"
+
+export type EstadoCumplimientoEnsayosMap = Record<
+  string,
+  import("@/data/ensayos-tolerancias-severino").EstadoCumplimientoEnsayo
+>

@@ -3,6 +3,8 @@ const STORAGE_KEY = "sicc-datos-v1"
 export interface SiccPersistedData {
   metrados: import("@/lib/sicc/types").EntradaMetrado[]
   libroObra: import("@/lib/sicc/types").EntradaLibroObra[]
+  /** Cumplimiento de ensayos/tolerancias (Planilla 3 — Severino). */
+  estadosEnsayos?: import("@/lib/sicc/types").EstadoCumplimientoEnsayosMap
 }
 
 export function cargarDatosSicc(): SiccPersistedData | null {
