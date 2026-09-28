@@ -1,4 +1,7 @@
-import { MaquinariaDocumentoEncabezado } from "@/src/components/MaquinariaDocumentoEncabezado"
+import {
+  MaquinariaDocumentoEncabezado,
+  type MaquinariaDocumentoProyecto,
+} from "@/src/components/MaquinariaDocumentoEncabezado"
 import { ACCIONISTA_META, type Accionista, type RegistroDia } from "@/src/data/registro-maquinaria"
 import type { RangoMaquinaria, TipoReporteMaquinaria } from "@/src/lib/maquinaria-filtro"
 import {
@@ -27,6 +30,7 @@ import {
 } from "@/src/lib/maquinaria-resumen"
 
 type MaquinariaDocumentoProps = {
+  proyecto: MaquinariaDocumentoProyecto
   dias: RegistroDia[]
   rango: RangoMaquinaria
   rangoEtiqueta: string
@@ -306,6 +310,7 @@ function MatrizSemanalImpresa({
 }
 
 export function MaquinariaDocumento({
+  proyecto,
   dias,
   rango,
   rangoEtiqueta,
@@ -325,6 +330,7 @@ export function MaquinariaDocumento({
       className="maquinaria-documento-compacto mx-auto max-w-[210mm] bg-white px-6 py-8 text-neutral-950 shadow-sm ring-1 ring-neutral-200 print:mx-0 print:max-w-none print:px-0 print:py-0 print:shadow-none print:ring-0"
     >
       <MaquinariaDocumentoEncabezado
+        proyecto={proyecto}
         subtitulo={
           esHorasMaquinas
             ? "Reporte de horas de máquinas"
@@ -431,7 +437,7 @@ export function MaquinariaDocumento({
       )}
 
       <footer className="mt-4 border-t border-neutral-300 pt-2 text-center text-[10px] text-neutral-500 print:mt-3">
-        <p>Registro operativo de maquinaria — JBS Consorcio</p>
+        <p>Registro operativo de maquinaria — {proyecto.nombreObra}</p>
         <p className="mt-0.5">Uso exclusivo para fiscalización interna. No sustituye firmas oficiales.</p>
       </footer>
     </div>

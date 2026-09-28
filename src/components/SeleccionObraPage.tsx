@@ -33,7 +33,7 @@ export function SeleccionObraPage() {
           Control de Obra
         </p>
         <h1 className="mt-1 font-heading text-xl font-semibold tracking-tight sm:text-2xl">
-          JBS Consorcio
+          Control de Obra
         </h1>
         <p className="mt-2 max-w-xl text-sm text-muted-foreground">
           Elija la obra a consultar. Cada contrato tiene su propio panel; no es necesario cambiar de

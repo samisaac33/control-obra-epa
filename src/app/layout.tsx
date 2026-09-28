@@ -2,7 +2,6 @@ import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 
 import { AppShell } from "@/src/components/AppShell"
-import { PROYECTO } from "@/src/data/proyecto"
 import "./globals.css"
 
 const geistSans = Geist({
@@ -18,8 +17,9 @@ const geistMono = Geist_Mono({
 const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "https://control-obra-epa.vercel.app"
 
-const siteTitle = "JBS Consorcio | Control de Obra EPA Manabí"
-const siteDescription = `Panel de control de obra del ${PROYECTO.nombreObra.toLowerCase()}: informe de afectación, presupuesto contractual, registro de maquinaria y transporte, y evidencias fotográficas georreferenciadas.`
+const siteTitle = "Control de Obra EPA Manabí"
+const siteDescription =
+  "Panel de control de obra EPA Manabí: informe de afectación, presupuesto contractual, registro de maquinaria y transporte, y evidencias fotográficas georreferenciadas."
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -33,15 +33,15 @@ export const metadata: Metadata = {
     "EPA Manabí",
     "Poza Honda",
     "control de obra",
-    "JBS Consorcio",
     "emergencia",
     "maquinaria",
+    "desasolve",
   ],
   openGraph: {
     type: "website",
     locale: "es_EC",
     url: siteUrl,
-    siteName: "JBS Consorcio — Control de Obra",
+    siteName: "Control de Obra EPA Manabí",
     title: siteTitle,
     description: siteDescription,
   },
