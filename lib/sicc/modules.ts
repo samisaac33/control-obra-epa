@@ -96,15 +96,15 @@ export const MODULOS_SICC: ModuloSicc[] = [
     id: "calidad",
     titulo: "Calidad y HSE",
     descripcion:
-      "Plan de calidad, ensayos de laboratorio, inspecciones y seguridad ocupacional.",
+      "Ensayos y tolerancias de Severino (Planilla 3), inspecciones y seguimiento de cumplimiento.",
     href: `${SICC_BASE}/calidad`,
     fase: 2,
-    estado: "proximamente",
+    estado: "activo",
     funcionalidades: [
-      "Checklists de inspección",
-      "Registro de ensayos",
-      "No conformidades",
-      "Accidentes y capacitaciones",
+      "Ensayos y tolerancias rubros 1–4 Severino",
+      "Cumplimiento frente a observaciones EPA",
+      "Anexo imprimible para Planilla 3",
+      "Registro de criterios ISO / ABB / fabricante",
     ],
   },
   {

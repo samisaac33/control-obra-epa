@@ -22,6 +22,11 @@ import { calcularResumenPresupuesto } from "@/lib/sicc/presupuesto-sicc"
 import { calcularCurvaS } from "@/lib/sicc/presupuesto-sicc"
 import { obtenerPeriodosDesdeMetrados } from "@/lib/sicc/certificaciones"
 import {
+  estadoInicialEnsayos,
+  normalizarEstadosEnsayos,
+  type EstadoCumplimientoMap,
+} from "@/lib/sicc/calidad-ensayos"
+import {
   cargarDatosSicc,
   guardarDatosSicc,
   reiniciarDatosSicc,
@@ -29,6 +34,7 @@ import {
 import type {
   EntradaLibroObra,
   EntradaMetrado,
+  EstadoCumplimientoEnsayo,
   KpiObra,
   ObraSicc,
   PuntoCurvaS,
@@ -41,9 +47,11 @@ interface SiccDataContextValue {
   obra: ObraSicc
   metrados: EntradaMetrado[]
   libroObra: EntradaLibroObra[]
+  estadosEnsayos: EstadoCumplimientoMap
   listo: boolean
   agregarMetrado: (entrada: Omit<EntradaMetrado, "id">) => void
   agregarLibroObra: (entrada: Omit<EntradaLibroObra, "id">) => void
+  actualizarEstadoEnsayo: (requisitoId: string, estado: EstadoCumplimientoEnsayo) => void
   reiniciarDatos: () => void
   kpis: KpiObra[]
   resumenesMetrados: ResumenRubroMetrado[]
@@ -59,6 +67,9 @@ const SiccDataContext = createContext<SiccDataContextValue | null>(null)
 export function SiccDataProvider({ children }: { children: React.ReactNode }) {
   const [metrados, setMetrados] = useState<EntradaMetrado[]>(ENTRADAS_METRADO_DEMO)
   const [libroObra, setLibroObra] = useState<EntradaLibroObra[]>(ENTRADAS_LIBRO_DEMO)
+  const [estadosEnsayos, setEstadosEnsayos] = useState<EstadoCumplimientoMap>(
+    estadoInicialEnsayos
+  )
   const [listo, setListo] = useState(false)
 
   useEffect(() => {
@@ -66,14 +77,15 @@ export function SiccDataProvider({ children }: { children: React.ReactNode }) {
     if (guardado) {
       setMetrados(guardado.metrados)
       setLibroObra(guardado.libroObra)
+      setEstadosEnsayos(normalizarEstadosEnsayos(guardado.estadosEnsayos))
     }
     setListo(true)
   }, [])
 
   useEffect(() => {
     if (!listo) return
-    guardarDatosSicc({ metrados, libroObra })
-  }, [metrados, libroObra, listo])
+    guardarDatosSicc({ metrados, libroObra, estadosEnsayos })
+  }, [metrados, libroObra, estadosEnsayos, listo])
 
   const agregarMetrado = useCallback((entrada: Omit<EntradaMetrado, "id">) => {
     setMetrados((prev) => [...prev, { ...entrada, id: crearId("met") }])
@@ -83,10 +95,18 @@ export function SiccDataProvider({ children }: { children: React.ReactNode }) {
     setLibroObra((prev) => [...prev, { ...entrada, id: crearId("lo") }])
   }, [])
 
+  const actualizarEstadoEnsayo = useCallback(
+    (requisitoId: string, estado: EstadoCumplimientoEnsayo) => {
+      setEstadosEnsayos((prev) => ({ ...prev, [requisitoId]: estado }))
+    },
+    []
+  )
+
   const reiniciarDatos = useCallback(() => {
     reiniciarDatosSicc()
     setMetrados(ENTRADAS_METRADO_DEMO)
     setLibroObra(ENTRADAS_LIBRO_DEMO)
+    setEstadosEnsayos(estadoInicialEnsayos())
   }, [])
 
   const fechaReferencia = useMemo(
@@ -137,9 +157,11 @@ export function SiccDataProvider({ children }: { children: React.ReactNode }) {
       obra: OBRA_DEMO,
       metrados,
       libroObra,
+      estadosEnsayos,
       listo,
       agregarMetrado,
       agregarLibroObra,
+      actualizarEstadoEnsayo,
       reiniciarDatos,
       kpis,
       resumenesMetrados,
@@ -152,9 +174,11 @@ export function SiccDataProvider({ children }: { children: React.ReactNode }) {
     [
       metrados,
       libroObra,
+      estadosEnsayos,
       listo,
       agregarMetrado,
       agregarLibroObra,
+      actualizarEstadoEnsayo,
       reiniciarDatos,
       kpis,
       resumenesMetrados,
