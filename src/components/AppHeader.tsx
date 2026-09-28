@@ -183,21 +183,8 @@ export function AppHeader() {
           </SheetContent>
         </Sheet>
         <div className="min-w-0 flex-1">
-          <h1 className="text-foreground">
-            <span className="flex flex-col gap-0.5 md:hidden">
-              <span className="line-clamp-2 text-sm font-semibold leading-snug">JBS Consorcio</span>
-              <span className="line-clamp-2 text-xs font-normal leading-snug text-muted-foreground">
-                {proyectoActivo.nombreObra}
-              </span>
-            </span>
-            <span className="hidden flex-col gap-0.5 md:flex">
-              <span className="line-clamp-1 text-sm font-semibold leading-snug sm:text-base">
-                JBS Consorcio
-              </span>
-              <span className="line-clamp-1 text-xs font-normal leading-snug text-muted-foreground">
-                {proyectoActivo.nombreObra}
-              </span>
-            </span>
+          <h1 className="line-clamp-2 text-sm font-semibold leading-snug text-foreground sm:line-clamp-1 sm:text-base">
+            {proyectoActivo.nombreObra}
           </h1>
         </div>
         {isResident ? (
