@@ -6,10 +6,8 @@ import { cn } from "@/lib/utils"
 type MapaOpcionesCapasMapaProps = {
   vistaSoloTramos1a24: boolean
   onVistaSoloTramos1a24Change: (value: boolean) => void
-  ocultarEtiquetasTramo: boolean
-  onOcultarEtiquetasTramoChange: (value: boolean) => void
-  ocultarPuntosAvance: boolean
-  onOcultarPuntosAvanceChange: (value: boolean) => void
+  mostrarNumerosYPuntosAvance: boolean
+  onMostrarNumerosYPuntosAvanceChange: (value: boolean) => void
   idPrefix: string
   className?: string
 }
@@ -19,25 +17,21 @@ type OpcionCheckboxProps = {
   checked: boolean
   onChange: (checked: boolean) => void
   titulo: string
-  descripcion: string
 }
 
-function OpcionCheckbox({ id, checked, onChange, titulo, descripcion }: OpcionCheckboxProps) {
+function OpcionCheckbox({ id, checked, onChange, titulo }: OpcionCheckboxProps) {
   return (
-    <div className="flex min-w-0 items-start gap-2">
+    <div className="flex min-w-0 items-center gap-2">
       <input
         id={id}
         type="checkbox"
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
-        className="mt-0.5 size-4 shrink-0 rounded border-border"
+        className="size-4 shrink-0 rounded border-border"
       />
-      <div className="min-w-0">
-        <Label htmlFor={id} className="cursor-pointer font-medium">
-          {titulo}
-        </Label>
-        <p className="text-xs text-muted-foreground">{descripcion}</p>
-      </div>
+      <Label htmlFor={id} className="min-w-0 cursor-pointer font-medium">
+        {titulo}
+      </Label>
     </div>
   )
 }
@@ -45,10 +39,8 @@ function OpcionCheckbox({ id, checked, onChange, titulo, descripcion }: OpcionCh
 export function MapaOpcionesCapasMapa({
   vistaSoloTramos1a24,
   onVistaSoloTramos1a24Change,
-  ocultarEtiquetasTramo,
-  onOcultarEtiquetasTramoChange,
-  ocultarPuntosAvance,
-  onOcultarPuntosAvanceChange,
+  mostrarNumerosYPuntosAvance,
+  onMostrarNumerosYPuntosAvanceChange,
   idPrefix,
   className,
 }: MapaOpcionesCapasMapaProps) {
@@ -64,21 +56,12 @@ export function MapaOpcionesCapasMapa({
         checked={vistaSoloTramos1a24}
         onChange={onVistaSoloTramos1a24Change}
         titulo="Vista tramos 1–24"
-        descripcion="Enfoca el mapa en los tramos 1 al 24. Desactivado: todos los tramos del proyecto."
       />
       <OpcionCheckbox
-        id={`${idPrefix}-ocultar-etiquetas-tramo`}
-        checked={ocultarEtiquetasTramo}
-        onChange={onOcultarEtiquetasTramoChange}
-        titulo="Ocultar números de tramos"
-        descripcion="No muestra la etiqueta del número en el centro del tramo (sigue aplicando el zoom mínimo cuando están visibles)."
-      />
-      <OpcionCheckbox
-        id={`${idPrefix}-ocultar-puntos-avance`}
-        checked={ocultarPuntosAvance}
-        onChange={onOcultarPuntosAvanceChange}
-        titulo="Ocultar puntos A, B, C…"
-        descripcion="Oculta marcadores de avance GPS en el mapa."
+        id={`${idPrefix}-mostrar-numeros-puntos`}
+        checked={mostrarNumerosYPuntosAvance}
+        onChange={onMostrarNumerosYPuntosAvanceChange}
+        titulo="Mostrar números de tramos y puntos A, B, C…"
       />
     </div>
   )

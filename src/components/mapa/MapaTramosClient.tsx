@@ -110,8 +110,7 @@ export function MapaTramosClient() {
   } | null>(null)
   const esViewportMovil = useEsViewportMovil()
   const [vistaSoloTramos1a24, setVistaSoloTramos1a24] = useState(false)
-  const [ocultarEtiquetasTramo, setOcultarEtiquetasTramo] = useState(false)
-  const [ocultarPuntosAvance, setOcultarPuntosAvance] = useState(false)
+  const [mostrarNumerosYPuntosAvance, setMostrarNumerosYPuntosAvance] = useState(false)
 
   const cargarDatos = useCallback(async () => {
     setLoading(true)
@@ -423,8 +422,8 @@ export function MapaTramosClient() {
       esViewportMovil={esViewportMovil}
       modoMapaVisitanteMovil={visitanteMovil}
       marcadoresCompactos={visitanteMovil}
-      mostrarEtiquetasTramo={!ocultarEtiquetasTramo}
-      mostrarPuntosAvance={!ocultarPuntosAvance}
+      mostrarEtiquetasTramo={mostrarNumerosYPuntosAvance}
+      mostrarPuntosAvance={mostrarNumerosYPuntosAvance}
       onTramoClick={handleTramoClick}
       onSegmentoVisitanteClick={
         isResident
@@ -489,10 +488,8 @@ export function MapaTramosClient() {
                     <MapaOpcionesCapasMapa
                       vistaSoloTramos1a24={vistaSoloTramos1a24}
                       onVistaSoloTramos1a24Change={setVistaSoloTramos1a24}
-                      ocultarEtiquetasTramo={ocultarEtiquetasTramo}
-                      onOcultarEtiquetasTramoChange={setOcultarEtiquetasTramo}
-                      ocultarPuntosAvance={ocultarPuntosAvance}
-                      onOcultarPuntosAvanceChange={setOcultarPuntosAvance}
+                      mostrarNumerosYPuntosAvance={mostrarNumerosYPuntosAvance}
+                      onMostrarNumerosYPuntosAvanceChange={setMostrarNumerosYPuntosAvance}
                       idPrefix="visitante"
                       className="sm:max-w-md sm:flex-1"
                     />
@@ -520,10 +517,8 @@ export function MapaTramosClient() {
                   <MapaOpcionesCapasMapa
                     vistaSoloTramos1a24={vistaSoloTramos1a24}
                     onVistaSoloTramos1a24Change={setVistaSoloTramos1a24}
-                    ocultarEtiquetasTramo={ocultarEtiquetasTramo}
-                    onOcultarEtiquetasTramoChange={setOcultarEtiquetasTramo}
-                    ocultarPuntosAvance={ocultarPuntosAvance}
-                    onOcultarPuntosAvanceChange={setOcultarPuntosAvance}
+                    mostrarNumerosYPuntosAvance={mostrarNumerosYPuntosAvance}
+                    onMostrarNumerosYPuntosAvanceChange={setMostrarNumerosYPuntosAvance}
                     idPrefix="residente"
                   />
                   <MapaTramosKpis kpis={kpis} />
