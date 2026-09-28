@@ -12,6 +12,9 @@ const COLOR_ESTADO_ZONA_25_33: Record<EstadoTramo, string> = {
   suspendido: "#78716c",
 }
 
+/** Swatch de leyenda para «Nuevos tramos» (zona 25–33, tono naranja del mapa). */
+export const COLOR_LEYENDA_NUEVOS_TRAMOS = COLOR_ESTADO_ZONA_25_33.pendiente
+
 export function tramoEnZonaAlta(codigoTramo: string | null | undefined): boolean {
   if (!codigoTramo) return false
   const n = numeroTramoDesdeCodigo(codigoTramo)
