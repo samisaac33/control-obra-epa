@@ -12,7 +12,6 @@ import { cn } from "@/lib/utils"
 import type { CanalTramo, EstadoTramo } from "@/src/data/tramos/types"
 import { etiquetaEstadoTramo } from "@/src/data/tramos/types"
 import {
-  esSegmentoMinitramoTerminado,
   htmlTooltipVisitanteSegmento,
   segmentosVisualesTramo,
   type SegmentoVisualTramo,
@@ -97,6 +96,7 @@ function registrarInteraccionTramo(
   tramoSeleccionadoId: string | null,
   isResident: boolean,
   esViewportMovil: boolean,
+  mostrarMinitramosTerminados: boolean,
   onTramoClick: (tramo: CanalTramo) => void,
   onSegmentoVisitanteClick?: (segmento: SegmentoVisualTramo) => void
 ) {
@@ -134,7 +134,14 @@ function registrarInteraccionTramo(
       const seleccionado = tramo.id === tramoSeleccionadoId
       const target = event.target as L.Path
       target.setStyle(
-        estiloSegmentoTramoEnMapa(tramo, tipo ?? "pendiente", seleccionado, false, estadoSegmento)
+        estiloSegmentoTramoEnMapa(
+          tramo,
+          tipo ?? "pendiente",
+          seleccionado,
+          false,
+          estadoSegmento,
+          mostrarMinitramosTerminados
+        )
       )
     },
   })
@@ -217,11 +224,10 @@ export function MapaTramosLeaflet({
     return puntosAvance.filter((p) => ids.has(p.tramo_id))
   }, [tramos, puntosAvance])
 
-  const segmentosColoreados = useMemo(() => {
-    const todos = tramos.flatMap((tramo) => segmentosVisualesTramo(tramo, puntosVisibles))
-    if (mostrarMinitramosTerminados) return todos
-    return todos.filter((segmento) => !esSegmentoMinitramoTerminado(segmento))
-  }, [tramos, puntosVisibles, mostrarMinitramosTerminados])
+  const segmentosColoreados = useMemo(
+    () => tramos.flatMap((tramo) => segmentosVisualesTramo(tramo, puntosVisibles)),
+    [tramos, puntosVisibles]
+  )
 
   const featureCollectionColoreada = useMemo(
     () => featureCollectionDesdeSegmentos(segmentosColoreados),
@@ -330,7 +336,8 @@ export function MapaTramosLeaflet({
               props?.tipo ?? "pendiente",
               seleccionado,
               false,
-              props?.estadoSegmento
+              props?.estadoSegmento,
+              mostrarMinitramosTerminados
             )
           }}
           onEachFeature={(feature, layer) => {
@@ -342,6 +349,7 @@ export function MapaTramosLeaflet({
               tramoSeleccionadoId,
               isResident,
               esViewportMovil,
+              mostrarMinitramosTerminados,
               onTramoClick,
               onSegmentoVisitanteClick
             )
