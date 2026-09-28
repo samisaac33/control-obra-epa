@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 
 import { useProyecto } from "@/src/contexts/ProyectoContext"
 import type { ProyectoModulo } from "@/src/data/proyectos/catalog"
+import { rutaObra } from "@/src/lib/rutas-proyecto"
 
 type ProyectoModuloGuardProps = {
   modulo: ProyectoModulo
@@ -18,9 +19,9 @@ export function ProyectoModuloGuard({ modulo, children }: ProyectoModuloGuardPro
   useEffect(() => {
     if (!listo) return
     if (!proyectoActivo.modulos[modulo]) {
-      router.replace("/")
+      router.replace(rutaObra(proyectoActivo.id))
     }
-  }, [listo, modulo, proyectoActivo.modulos, router])
+  }, [listo, modulo, proyectoActivo.id, proyectoActivo.modulos, router])
 
   if (!listo || !proyectoActivo.modulos[modulo]) {
     return null

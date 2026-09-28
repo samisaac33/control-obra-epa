@@ -12,24 +12,24 @@ import {
   Truck,
 } from "lucide-react"
 
-import { ProyectoSelect } from "@/src/components/ProyectoSelect"
 import { useProyecto } from "@/src/contexts/ProyectoContext"
 import type { ProyectoModulo } from "@/src/data/proyectos/catalog"
+import { rutaObra } from "@/src/lib/rutas-proyecto"
 import { cn } from "@/lib/utils"
 
 const items: {
-  href: string
+  segment: string
   label: string
   icon: typeof LayoutDashboard
   modulo: ProyectoModulo
 }[] = [
-  { href: "/", label: "Inicio", icon: LayoutDashboard, modulo: "fotos" },
-  { href: "/emergencia", label: "Informe de afectación", icon: FileWarning, modulo: "afectacion" },
-  { href: "/presupuesto", label: "Presupuesto", icon: ClipboardList, modulo: "presupuesto" },
-  { href: "/maquinaria", label: "Maquinaria y transporte", icon: Truck, modulo: "maquinaria" },
-  { href: "/mapa", label: "Mapa de avance", icon: Map, modulo: "mapaTramos" },
-  { href: "/fotos", label: "Registro Fotográfico", icon: Camera, modulo: "fotos" },
-  { href: "/libro-obra", label: "Informe de evidencias de obra", icon: BookOpen, modulo: "libroObra" },
+  { segment: "", label: "Inicio", icon: LayoutDashboard, modulo: "fotos" },
+  { segment: "emergencia", label: "Informe de afectación", icon: FileWarning, modulo: "afectacion" },
+  { segment: "presupuesto", label: "Presupuesto", icon: ClipboardList, modulo: "presupuesto" },
+  { segment: "maquinaria", label: "Maquinaria y transporte", icon: Truck, modulo: "maquinaria" },
+  { segment: "mapa", label: "Mapa de avance", icon: Map, modulo: "mapaTramos" },
+  { segment: "fotos", label: "Registro Fotográfico", icon: Camera, modulo: "fotos" },
+  { segment: "libro-obra", label: "Informe de evidencias de obra", icon: BookOpen, modulo: "libroObra" },
 ]
 
 type NavigationPanelProps = {
@@ -44,10 +44,15 @@ export function NavigationPanel({ onNavigate, isDrawer, className }: NavigationP
   const pathname = usePathname()
   const { proyectoActivo } = useProyecto()
 
-  const itemsVisibles = items.filter((item) => {
-    if (item.href === "/") return true
-    return proyectoActivo.modulos[item.modulo]
-  })
+  const itemsVisibles = items
+    .filter((item) => {
+      if (item.segment === "") return true
+      return proyectoActivo.modulos[item.modulo]
+    })
+    .map((item) => ({
+      ...item,
+      href: rutaObra(proyectoActivo.id, item.segment),
+    }))
 
   return (
     <div className={cn("flex h-full min-h-0 flex-col", className)}>
@@ -62,16 +67,12 @@ export function NavigationPanel({ onNavigate, isDrawer, className }: NavigationP
         </p>
         <p className="mt-1.5 text-base font-semibold leading-tight text-white">JBS Consorcio</p>
         <p className="mt-1 text-sm leading-tight text-slate-300">{proyectoActivo.nombreObra}</p>
-        {isDrawer ? (
-          <div className="mt-3">
-            <ProyectoSelect className="w-full max-w-none border-slate-600 bg-slate-900 text-slate-100" compact />
-          </div>
-        ) : null}
       </div>
       <nav className="min-h-0 flex-1 overflow-y-auto p-2" aria-label="Secciones">
         <ul className="space-y-0.5">
           {itemsVisibles.map(({ href, label, icon: Icon }) => {
-            const isActive = pathname === href || (href !== "/" && pathname.startsWith(href))
+            const isActive =
+              pathname === href || (href !== rutaObra(proyectoActivo.id) && pathname.startsWith(`${href}/`))
             return (
               <li key={href}>
                 <Link

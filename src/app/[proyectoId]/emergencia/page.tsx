@@ -22,8 +22,15 @@ import {
   ZONAS_CANALES,
 } from "@/src/data/informe-afectacion"
 import { SECTORES_FOTOGRAFICOS } from "@/src/data/sectores-fotos"
+import { rutaObra } from "@/src/lib/rutas-proyecto"
 
-export default function EmergenciaPage() {
+type EmergenciaPageProps = {
+  params: Promise<{ proyectoId: string }>
+}
+
+export default async function EmergenciaPage({ params }: EmergenciaPageProps) {
+  const { proyectoId } = await params
+  const fotosHref = rutaObra(proyectoId, "fotos")
   return (
     <ProyectoModuloGuard modulo="afectacion">
     <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-[oklch(0.98_0.002_264)] text-foreground">
@@ -123,7 +130,7 @@ export default function EmergenciaPage() {
                   )}
                 </ul>
                 <Button asChild variant="outline" size="sm" className="mt-3">
-                  <Link href="/fotos">Consultar evidencias por sector</Link>
+                  <Link href={fotosHref}>Consultar evidencias por sector</Link>
                 </Button>
               </div>
             </AccordionContent>

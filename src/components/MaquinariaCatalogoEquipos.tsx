@@ -7,11 +7,14 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { useProyecto } from "@/src/contexts/ProyectoContext"
 import { useEquiposMaquinariaProyecto } from "@/src/hooks/use-equipos-maquinaria-proyecto"
 import { createClient } from "@/src/lib/supabase/client"
+import { rutaObra } from "@/src/lib/rutas-proyecto"
 import { cn } from "@/lib/utils"
 
 export function MaquinariaCatalogoEquipos() {
+  const { proyectoId } = useProyecto()
   const supabase = useMemo(() => createClient(), [])
   const residentEmail = process.env.NEXT_PUBLIC_RESIDENTE_EMAIL?.trim().toLowerCase()
   const [isResident, setIsResident] = useState(false)
@@ -172,7 +175,10 @@ export function MaquinariaCatalogoEquipos() {
           </CardTitle>
           <CardDescription>
             Catálogo usado al registrar jornadas en el{" "}
-            <Link href="/mapa" className="font-medium text-primary underline-offset-4 hover:underline">
+            <Link
+              href={rutaObra(proyectoId, "mapa")}
+              className="font-medium text-primary underline-offset-4 hover:underline"
+            >
               mapa de tramos
             </Link>
             . {isResident ? "Agregue o desactive equipos aquí." : "Solo lectura."}

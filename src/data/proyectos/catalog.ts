@@ -71,5 +71,3 @@ export function getProyecto(id: string): ProyectoConfig {
 export function proyectoTieneModulo(proyectoId: string, modulo: ProyectoModulo): boolean {
   return getProyecto(proyectoId).modulos[modulo]
 }
-
-export const STORAGE_KEY_PROYECTO_ACTIVO = "control-obra:proyecto-activo"

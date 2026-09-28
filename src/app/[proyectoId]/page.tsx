@@ -1,0 +1,7 @@
+import { HomePageClient } from "@/src/components/HomePageClient"
+
+export const dynamic = "force-dynamic"
+
+export default function Home() {
+  return <HomePageClient />
+}

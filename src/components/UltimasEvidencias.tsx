@@ -13,6 +13,7 @@ import {
   type RegistroFotoBase,
 } from "@/src/lib/evidencias-grupo"
 import { createClient } from "@/src/lib/supabase/client"
+import { rutaObra } from "@/src/lib/rutas-proyecto"
 
 const BUCKET_NAME = "evidencias"
 const LIMITE_GRUPOS = 6
@@ -99,7 +100,7 @@ export function UltimasEvidencias({ proyectoId: proyectoIdProp, limite = LIMITE_
       </div>
       <div className="mt-4">
         <Button variant="outline" size="sm" asChild>
-          <Link href="/fotos">Ver todas las evidencias</Link>
+          <Link href={rutaObra(proyectoId, "fotos")}>Ver todas las evidencias</Link>
         </Button>
       </div>
       <EvidenciaGaleriaModal grupo={selectedGrupo} onClose={() => setSelectedGrupo(null)} />
