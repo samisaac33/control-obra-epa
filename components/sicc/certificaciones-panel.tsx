@@ -39,6 +39,7 @@ import {
   generarTextoCertificacion,
 } from "@/lib/sicc/certificaciones"
 import { formatearCantidad, formatearUsd } from "@/lib/sicc/format"
+import { imprimirDocumentoTextoPlano } from "@/lib/sicc/imprimir-documento-html"
 import { SICC_BASE } from "@/lib/sicc/modules"
 import type { EstadoCertificacion } from "@/lib/sicc/types"
 import { cn } from "@/lib/utils"
@@ -90,25 +91,10 @@ export function CertificacionesPanel() {
 
   function imprimirCertificacion() {
     if (!resumen) return
-    const ventana = window.open("", "_blank", "noopener,noreferrer")
-    if (!ventana) return
-
-    ventana.document.write(`
-      <!DOCTYPE html>
-      <html lang="es">
-        <head>
-          <meta charset="utf-8" />
-          <title>Certificación ${resumen.periodo.etiqueta} — ${obra.nombre}</title>
-          <style>
-            body { font-family: ui-monospace, monospace; font-size: 11px; line-height: 1.5; padding: 2rem; white-space: pre-wrap; }
-          </style>
-        </head>
-        <body>${textoCertificacion.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</body>
-      </html>
-    `)
-    ventana.document.close()
-    ventana.focus()
-    ventana.print()
+    imprimirDocumentoTextoPlano(
+      `Certificación ${resumen.periodo.etiqueta} — ${obra.nombre}`,
+      textoCertificacion
+    )
   }
 
   if (!resumen || !periodoActivo) {
