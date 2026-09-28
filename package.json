@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "generate:infimas-pdf": "tsx scripts/generate-infimas-pdf.ts",
+    "generate:guia-pdf": "tsx scripts/generate-guia-practica-pdf.ts",
     "import:kmz": "tsx scripts/import-kmz-tramos.ts",
     "import:kmz:dry-run": "tsx scripts/import-kmz-tramos.ts --dry-run",
     "import:kmz:sql": "tsx scripts/import-kmz-tramos.ts --sql-out supabase/seed/canal_tramos_desasolve.sql",
