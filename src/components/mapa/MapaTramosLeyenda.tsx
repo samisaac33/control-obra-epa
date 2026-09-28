@@ -29,7 +29,7 @@ export function MapaTramosLeyenda({ compact = false }: { compact?: boolean }) {
               style={{ backgroundColor: estado.color }}
               aria-hidden
             />
-            {estado.label}
+            {estado.id === "en_ejecucion" ? "Nuevos tramos" : estado.label}
           </span>
         ))}
       </div>
