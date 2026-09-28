@@ -22,15 +22,18 @@ import {
 import { EstadoModuloBadge } from "@/components/sicc/estado-modulo-badge"
 import { KpiCard } from "@/components/sicc/kpi-card"
 import { useSiccData } from "@/components/sicc/sicc-data-provider"
+import { GUIA_ENSAYOS_CONTRATANTE, guiaPorRubroId } from "@/data/guia-ensayos-contratante-severino"
 import {
   ENSAYOS_TOLERANCIAS_SEVERINO,
   SOLICITUD_CONTRATANTE,
   type EstadoCumplimientoEnsayo,
 } from "@/data/ensayos-tolerancias-severino"
+import { calcularResumenCumplimiento } from "@/lib/sicc/calidad-ensayos"
 import {
-  calcularResumenCumplimiento,
-  generarTextoAnexoEnsayos,
-} from "@/lib/sicc/calidad-ensayos"
+  generarDocumentoEnsayoRubro,
+  generarIndiceEntregaPlanilla3,
+  tituloDocumentoRubro,
+} from "@/lib/sicc/documentos-ensayos-severino"
 import { imprimirDocumentoTextoPlano } from "@/lib/sicc/imprimir-documento-html"
 import type { KpiObra } from "@/lib/sicc/types"
 import { cn } from "@/lib/utils"
@@ -66,8 +69,8 @@ export function CalidadPanel() {
     [estadosEnsayos]
   )
 
-  const textoAnexo = useMemo(
-    () => generarTextoAnexoEnsayos(obra, estadosEnsayos),
+  const indiceEntrega = useMemo(
+    () => generarIndiceEntregaPlanilla3(obra, estadosEnsayos),
     [obra, estadosEnsayos]
   )
 
@@ -98,10 +101,17 @@ export function CalidadPanel() {
     },
   ]
 
-  function imprimirAnexo() {
+  function imprimirIndice() {
     imprimirDocumentoTextoPlano(
-      `Anexo ensayos Planilla ${SOLICITUD_CONTRATANTE.planillaReferencia} — ${obra.nombre}`,
-      textoAnexo
+      `Índice entrega Planilla ${SOLICITUD_CONTRATANTE.planillaReferencia} — ${obra.nombre}`,
+      indiceEntrega
+    )
+  }
+
+  function imprimirDocumentoRubro(rubroId: number) {
+    imprimirDocumentoTextoPlano(
+      `${tituloDocumentoRubro(rubroId)} — ${obra.nombre}`,
+      generarDocumentoEnsayoRubro(obra, rubroId)
     )
   }
 
@@ -122,9 +132,9 @@ export function CalidadPanel() {
             de {SOLICITUD_CONTRATANTE.categoria}.
           </p>
         </div>
-        <Button type="button" onClick={imprimirAnexo} className="gap-2">
+        <Button type="button" onClick={imprimirIndice} variant="outline" className="gap-2">
           <Printer className="size-4" />
-          Imprimir anexo Planilla {SOLICITUD_CONTRATANTE.planillaReferencia}
+          Índice de entrega Planilla {SOLICITUD_CONTRATANTE.planillaReferencia}
         </Button>
       </div>
 
@@ -150,20 +160,74 @@ export function CalidadPanel() {
         ))}
       </div>
 
+      <Card className="border-foreground/10 bg-muted/10">
+        <CardHeader>
+          <CardTitle className="text-base">Qué solicita la contratante (guía práctica)</CardTitle>
+          <CardDescription className="leading-relaxed">
+            Cada imagen que envió la EPA corresponde a un rubro de Severino. No basta copiar el
+            pliego: hay que ejecutar ensayos y adjuntar actas, informes o certificados.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {GUIA_ENSAYOS_CONTRATANTE.map((guia) => (
+            <div
+              key={guia.rubroId}
+              className="rounded-lg border border-foreground/10 bg-background p-4"
+            >
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {guia.imagenReferencia}
+              </p>
+              <p className="mt-1 text-sm font-medium">{guia.actividadContractual}</p>
+              <p className="mt-2 text-sm text-muted-foreground">{guia.quePideLaContratante}</p>
+              <ul className="mt-3 space-y-2">
+                {guia.ensayosRequeridos.map((e) => (
+                  <li key={e.nombre} className="text-sm leading-relaxed">
+                    <span className="font-medium text-foreground">{e.nombre}</span>
+                    <span className="text-muted-foreground"> ({e.tipo}) — </span>
+                    {e.descripcionPractica}
+                    <span className="mt-1 block text-xs text-muted-foreground">
+                      Entregar: {e.evidenciaAEntregar}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
       <div className="space-y-4">
-        {ENSAYOS_TOLERANCIAS_SEVERINO.map((esp) => (
+        {ENSAYOS_TOLERANCIAS_SEVERINO.map((esp) => {
+          const guia = guiaPorRubroId(esp.rubroId)
+          return (
           <Card key={esp.seccion} className="border-foreground/10">
             <CardHeader className="pb-3">
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge variant="outline" className="font-mono tabular-nums">
-                  Rubro {esp.rubroId}
-                </Badge>
-                <Badge variant="secondary" className="font-mono">
-                  § {esp.seccion}
-                </Badge>
-                <CardTitle className="text-base">{esp.titulo}</CardTitle>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant="outline" className="font-mono tabular-nums">
+                    Rubro {esp.rubroId}
+                  </Badge>
+                  <Badge variant="secondary" className="font-mono">
+                    § {esp.seccion}
+                  </Badge>
+                  <CardTitle className="text-base">{esp.titulo}</CardTitle>
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  className="gap-2"
+                  onClick={() => imprimirDocumentoRubro(esp.rubroId)}
+                >
+                  <Printer className="size-4" />
+                  Imprimir documento § {esp.seccion}
+                </Button>
               </div>
               <CardDescription className="mt-1">{esp.rubroDetalle}</CardDescription>
+              {guia ? (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Incluye: {guia.documentosGenerados.join(" · ")}
+                </p>
+              ) : null}
             </CardHeader>
             <CardContent className="space-y-3">
               {esp.requisitos.map((req) => {
@@ -214,7 +278,8 @@ export function CalidadPanel() {
               })}
             </CardContent>
           </Card>
-        ))}
+          )
+        })}
       </div>
 
       <Card className="border-dashed border-foreground/20">
@@ -224,17 +289,17 @@ export function CalidadPanel() {
               <ShieldCheck className="size-5 text-muted-foreground" />
             </div>
             <div>
-              <CardTitle className="text-base">Anexo para fiscalización</CardTitle>
+              <CardTitle className="text-base">Índice de entrega a fiscalización</CardTitle>
               <CardDescription>
-                Documento listo para adjuntar a la respuesta de observaciones de la Planilla{" "}
-                {SOLICITUD_CONTRATANTE.planillaReferencia}.
+                Lista de actas e informes por rubro. Imprima un documento por imagen/rubro y
+                complételo en campo o con el taller de balanceo / END.
               </CardDescription>
             </div>
           </div>
         </CardHeader>
         <CardContent>
           <pre className="max-h-64 overflow-auto rounded-lg border border-foreground/10 bg-muted/30 p-4 font-mono text-[11px] leading-relaxed whitespace-pre-wrap text-muted-foreground">
-            {textoAnexo}
+            {indiceEntrega}
           </pre>
         </CardContent>
       </Card>
