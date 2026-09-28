@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils"
 import type { CanalTramo, EstadoTramo } from "@/src/data/tramos/types"
 import { etiquetaEstadoTramo } from "@/src/data/tramos/types"
 import {
+  esSegmentoMinitramoTerminado,
   htmlTooltipVisitanteSegmento,
   segmentosVisualesTramo,
   type SegmentoVisualTramo,
@@ -44,6 +45,7 @@ type MapaTramosLeafletProps = {
   marcadoresCompactos?: boolean
   mostrarEtiquetasTramo?: boolean
   mostrarPuntosAvance?: boolean
+  mostrarMinitramosTerminados?: boolean
   onTramoClick: (tramo: CanalTramo) => void
   onSegmentoVisitanteClick?: (segmento: SegmentoVisualTramo) => void
 }
@@ -178,6 +180,7 @@ export function MapaTramosLeaflet({
   marcadoresCompactos = false,
   mostrarEtiquetasTramo = true,
   mostrarPuntosAvance = true,
+  mostrarMinitramosTerminados = false,
   onTramoClick,
   onSegmentoVisitanteClick,
 }: MapaTramosLeafletProps) {
@@ -214,10 +217,11 @@ export function MapaTramosLeaflet({
     return puntosAvance.filter((p) => ids.has(p.tramo_id))
   }, [tramos, puntosAvance])
 
-  const segmentosColoreados = useMemo(
-    () => tramos.flatMap((tramo) => segmentosVisualesTramo(tramo, puntosVisibles)),
-    [tramos, puntosVisibles]
-  )
+  const segmentosColoreados = useMemo(() => {
+    const todos = tramos.flatMap((tramo) => segmentosVisualesTramo(tramo, puntosVisibles))
+    if (mostrarMinitramosTerminados) return todos
+    return todos.filter((segmento) => !esSegmentoMinitramoTerminado(segmento))
+  }, [tramos, puntosVisibles, mostrarMinitramosTerminados])
 
   const featureCollectionColoreada = useMemo(
     () => featureCollectionDesdeSegmentos(segmentosColoreados),
@@ -242,7 +246,7 @@ export function MapaTramosLeaflet({
     )
   }
 
-  const layerKey = `${isResident ? "r" : "v"}-${esViewportMovil ? "m" : "d"}-${tramoSeleccionadoId ?? "none"}-${tramos
+  const layerKey = `${isResident ? "r" : "v"}-${esViewportMovil ? "m" : "d"}-${mostrarMinitramosTerminados ? "mtt1" : "mtt0"}-${tramoSeleccionadoId ?? "none"}-${tramos
     .map((t) => `${t.id}:${t.metros_ejecutados}:${t.estado}`)
     .join("|")}-${puntosVisibles.map((p) => `${p.id}:${p.estado_minitramo ?? ""}`).join(",")}`
 

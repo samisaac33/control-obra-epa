@@ -412,6 +412,13 @@ export function puntoEnEjecucionOperativo(punto: TramoPuntoAvance): boolean {
   return punto.estado_minitramo === "en_ejecucion"
 }
 
+export function esSegmentoMinitramoTerminado(segmento: SegmentoVisualTramo): boolean {
+  return (
+    segmento.tipo === "minitramo" &&
+    (segmento.estadoSegmento ?? "en_ejecucion") === "terminado"
+  )
+}
+
 /** Longitud sobre el trazado de minitramos confirmados en estado terminado (base del mapa). */
 export function metrosMinitramosTerminadosTramo(
   tramo: CanalTramo,

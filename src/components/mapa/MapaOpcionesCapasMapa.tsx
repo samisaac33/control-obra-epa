@@ -8,6 +8,8 @@ type MapaOpcionesCapasMapaProps = {
   onVistaSoloTramos1a24Change: (value: boolean) => void
   mostrarNumerosYPuntosAvance: boolean
   onMostrarNumerosYPuntosAvanceChange: (value: boolean) => void
+  mostrarMinitramosTerminados: boolean
+  onMostrarMinitramosTerminadosChange: (value: boolean) => void
   idPrefix: string
   className?: string
 }
@@ -17,9 +19,10 @@ type OpcionCheckboxProps = {
   checked: boolean
   onChange: (checked: boolean) => void
   titulo: string
+  ariaLabel?: string
 }
 
-function OpcionCheckbox({ id, checked, onChange, titulo }: OpcionCheckboxProps) {
+function OpcionCheckbox({ id, checked, onChange, titulo, ariaLabel }: OpcionCheckboxProps) {
   return (
     <div className="flex min-w-0 items-center gap-2">
       <input
@@ -27,6 +30,7 @@ function OpcionCheckbox({ id, checked, onChange, titulo }: OpcionCheckboxProps) 
         type="checkbox"
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
+        aria-label={ariaLabel}
         className="size-4 shrink-0 rounded border-border"
       />
       <Label htmlFor={id} className="min-w-0 cursor-pointer font-medium">
@@ -41,6 +45,8 @@ export function MapaOpcionesCapasMapa({
   onVistaSoloTramos1a24Change,
   mostrarNumerosYPuntosAvance,
   onMostrarNumerosYPuntosAvanceChange,
+  mostrarMinitramosTerminados,
+  onMostrarMinitramosTerminadosChange,
   idPrefix,
   className,
 }: MapaOpcionesCapasMapaProps) {
@@ -62,6 +68,13 @@ export function MapaOpcionesCapasMapa({
         checked={mostrarNumerosYPuntosAvance}
         onChange={onMostrarNumerosYPuntosAvanceChange}
         titulo="Mostrar números de tramos y puntos A, B, C…"
+      />
+      <OpcionCheckbox
+        id={`${idPrefix}-mtt`}
+        checked={mostrarMinitramosTerminados}
+        onChange={onMostrarMinitramosTerminadosChange}
+        titulo="MTT"
+        ariaLabel="Mostrar minitramos terminados"
       />
     </div>
   )

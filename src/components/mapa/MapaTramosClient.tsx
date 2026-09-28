@@ -111,6 +111,7 @@ export function MapaTramosClient() {
   const esViewportMovil = useEsViewportMovil()
   const [vistaSoloTramos1a24, setVistaSoloTramos1a24] = useState(false)
   const [mostrarNumerosYPuntosAvance, setMostrarNumerosYPuntosAvance] = useState(false)
+  const [mostrarMinitramosTerminados, setMostrarMinitramosTerminados] = useState(false)
 
   const cargarDatos = useCallback(async () => {
     setLoading(true)
@@ -424,6 +425,7 @@ export function MapaTramosClient() {
       marcadoresCompactos={visitanteMovil}
       mostrarEtiquetasTramo={mostrarNumerosYPuntosAvance}
       mostrarPuntosAvance={mostrarNumerosYPuntosAvance}
+      mostrarMinitramosTerminados={mostrarMinitramosTerminados}
       onTramoClick={handleTramoClick}
       onSegmentoVisitanteClick={
         isResident
@@ -490,6 +492,8 @@ export function MapaTramosClient() {
                       onVistaSoloTramos1a24Change={setVistaSoloTramos1a24}
                       mostrarNumerosYPuntosAvance={mostrarNumerosYPuntosAvance}
                       onMostrarNumerosYPuntosAvanceChange={setMostrarNumerosYPuntosAvance}
+                      mostrarMinitramosTerminados={mostrarMinitramosTerminados}
+                      onMostrarMinitramosTerminadosChange={setMostrarMinitramosTerminados}
                       idPrefix="visitante"
                       className="sm:max-w-md sm:flex-1"
                     />
@@ -519,6 +523,8 @@ export function MapaTramosClient() {
                     onVistaSoloTramos1a24Change={setVistaSoloTramos1a24}
                     mostrarNumerosYPuntosAvance={mostrarNumerosYPuntosAvance}
                     onMostrarNumerosYPuntosAvanceChange={setMostrarNumerosYPuntosAvance}
+                    mostrarMinitramosTerminados={mostrarMinitramosTerminados}
+                    onMostrarMinitramosTerminadosChange={setMostrarMinitramosTerminados}
                     idPrefix="residente"
                   />
                   <MapaTramosKpis kpis={kpis} />
