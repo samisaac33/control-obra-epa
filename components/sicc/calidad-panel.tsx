@@ -31,6 +31,7 @@ import {
   calcularResumenCumplimiento,
   generarTextoAnexoEnsayos,
 } from "@/lib/sicc/calidad-ensayos"
+import { imprimirDocumentoTextoPlano } from "@/lib/sicc/imprimir-documento-html"
 import type { KpiObra } from "@/lib/sicc/types"
 import { cn } from "@/lib/utils"
 
@@ -98,25 +99,10 @@ export function CalidadPanel() {
   ]
 
   function imprimirAnexo() {
-    const ventana = window.open("", "_blank", "noopener,noreferrer")
-    if (!ventana) return
-
-    ventana.document.write(`
-      <!DOCTYPE html>
-      <html lang="es">
-        <head>
-          <meta charset="utf-8" />
-          <title>Anexo ensayos Planilla ${SOLICITUD_CONTRATANTE.planillaReferencia} — ${obra.nombre}</title>
-          <style>
-            body { font-family: ui-monospace, monospace; font-size: 11px; line-height: 1.5; padding: 2rem; white-space: pre-wrap; }
-          </style>
-        </head>
-        <body>${textoAnexo.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</body>
-      </html>
-    `)
-    ventana.document.close()
-    ventana.focus()
-    ventana.print()
+    imprimirDocumentoTextoPlano(
+      `Anexo ensayos Planilla ${SOLICITUD_CONTRATANTE.planillaReferencia} — ${obra.nombre}`,
+      textoAnexo
+    )
   }
 
   return (

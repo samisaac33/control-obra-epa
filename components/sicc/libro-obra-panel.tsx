@@ -17,6 +17,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { EstadoModuloBadge } from "@/components/sicc/estado-modulo-badge"
 import { useSiccData } from "@/components/sicc/sicc-data-provider"
 import { formatearFechaCorta } from "@/lib/sicc/format"
+import { imprimirDocumentoTextoPlano } from "@/lib/sicc/imprimir-documento-html"
 import { generarTextoLibroObra } from "@/lib/sicc/libro-obra"
 
 export function LibroObraPanel() {
@@ -61,25 +62,7 @@ export function LibroObraPanel() {
   }
 
   function imprimirLibro() {
-    const ventana = window.open("", "_blank", "noopener,noreferrer")
-    if (!ventana) return
-
-    ventana.document.write(`
-      <!DOCTYPE html>
-      <html lang="es">
-        <head>
-          <meta charset="utf-8" />
-          <title>Libro de obra — ${obra.nombre}</title>
-          <style>
-            body { font-family: ui-monospace, monospace; font-size: 12px; line-height: 1.5; padding: 2rem; white-space: pre-wrap; }
-          </style>
-        </head>
-        <body>${textoGenerado.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</body>
-      </html>
-    `)
-    ventana.document.close()
-    ventana.focus()
-    ventana.print()
+    imprimirDocumentoTextoPlano(`Libro de obra — ${obra.nombre}`, textoGenerado)
   }
 
   return (
