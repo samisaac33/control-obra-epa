@@ -1,6 +1,12 @@
-import { PROYECTO } from "@/src/data/proyecto"
+import type { ProyectoConfig } from "@/src/data/proyectos/catalog"
+
+export type MaquinariaDocumentoProyecto = Pick<
+  ProyectoConfig,
+  "nombreObra" | "objeto" | "numeroContrato" | "cliente" | "sistema"
+>
 
 type MaquinariaDocumentoEncabezadoProps = {
+  proyecto: MaquinariaDocumentoProyecto
   subtitulo: string
   rangoEtiqueta: string
   generadoEn: string
@@ -8,6 +14,7 @@ type MaquinariaDocumentoEncabezadoProps = {
 }
 
 export function MaquinariaDocumentoEncabezado({
+  proyecto,
   subtitulo,
   rangoEtiqueta,
   generadoEn,
@@ -25,21 +32,21 @@ export function MaquinariaDocumentoEncabezado({
         {subtitulo}
       </p>
       <h1 className="mt-1 font-heading text-lg font-bold leading-tight sm:text-xl">
-        {PROYECTO.nombreObra}
+        {proyecto.nombreObra}
       </h1>
-      <p className="mt-1 text-xs text-neutral-700">{PROYECTO.objeto}</p>
+      <p className="mt-1 text-xs text-neutral-700">{proyecto.objeto}</p>
       <dl className="mt-2 grid gap-0.5 text-xs text-neutral-800 sm:grid-cols-2 sm:gap-x-4 sm:text-left">
         <div>
           <dt className="inline font-semibold">Contrato: </dt>
-          <dd className="inline">{PROYECTO.numeroContrato}</dd>
+          <dd className="inline">{proyecto.numeroContrato}</dd>
         </div>
         <div>
           <dt className="inline font-semibold">Cliente: </dt>
-          <dd className="inline">{PROYECTO.cliente}</dd>
+          <dd className="inline">{proyecto.cliente}</dd>
         </div>
         <div>
           <dt className="inline font-semibold">Sistema: </dt>
-          <dd className="inline">{PROYECTO.sistema}</dd>
+          <dd className="inline">{proyecto.sistema}</dd>
         </div>
         <div>
           <dt className="inline font-semibold">Período del reporte: </dt>

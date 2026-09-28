@@ -1,4 +1,7 @@
-import { MaquinariaDocumentoEncabezado } from "@/src/components/MaquinariaDocumentoEncabezado"
+import {
+  MaquinariaDocumentoEncabezado,
+  type MaquinariaDocumentoProyecto,
+} from "@/src/components/MaquinariaDocumentoEncabezado"
 import { ETAPAS_MAQUINARIA, type EtapaMaquinariaId } from "@/src/data/maquinaria-etapas"
 import type { RegistroDia } from "@/src/data/registro-maquinaria"
 import {
@@ -13,6 +16,7 @@ import {
 } from "@/src/lib/maquinaria-reporte-sitio"
 
 type MaquinariaDocumentoPorSitioProps = {
+  proyecto: MaquinariaDocumentoProyecto
   dias: RegistroDia[]
   rangoEtiqueta: string
   generadoEn: string
@@ -101,6 +105,7 @@ function FilaTablaSitio({
 }
 
 export function MaquinariaDocumentoPorSitio({
+  proyecto,
   dias,
   rangoEtiqueta,
   generadoEn,
@@ -117,6 +122,7 @@ export function MaquinariaDocumentoPorSitio({
       className="maquinaria-documento-compacto mx-auto max-w-[210mm] bg-white px-6 py-8 text-neutral-950 shadow-sm ring-1 ring-neutral-200 print:mx-0 print:max-w-none print:px-0 print:py-0 print:shadow-none print:ring-0"
     >
       <MaquinariaDocumentoEncabezado
+        proyecto={proyecto}
         subtitulo={
           etapaLabel
             ? `Reporte por sitio — ${etapaLabel}`
@@ -165,7 +171,7 @@ export function MaquinariaDocumentoPorSitio({
       ))}
 
       <footer className="mt-4 border-t border-neutral-300 pt-2 text-center text-[10px] text-neutral-500 print:mt-3">
-        <p>Registro operativo de maquinaria — JBS Consorcio</p>
+        <p>Registro operativo de maquinaria — {proyecto.nombreObra}</p>
         <p className="mt-0.5">Uso exclusivo para fiscalización interna. No sustituye firmas oficiales.</p>
       </footer>
     </div>

@@ -65,8 +65,7 @@ export function NavigationPanel({ onNavigate, isDrawer, className }: NavigationP
         <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
           Control de Obra
         </p>
-        <p className="mt-1.5 text-base font-semibold leading-tight text-white">JBS Consorcio</p>
-        <p className="mt-1 text-sm leading-tight text-slate-300">{proyectoActivo.nombreObra}</p>
+        <p className="mt-1.5 text-base font-semibold leading-tight text-white">{proyectoActivo.nombreObra}</p>
       </div>
       <nav className="min-h-0 flex-1 overflow-y-auto p-2" aria-label="Secciones">
         <ul className="space-y-0.5">

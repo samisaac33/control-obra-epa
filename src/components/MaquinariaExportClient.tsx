@@ -12,6 +12,7 @@ import {
   ETAPAS_MAQUINARIA_OPCIONES,
   type EtapaMaquinariaId,
 } from "@/src/data/maquinaria-etapas"
+import { useProyecto } from "@/src/contexts/ProyectoContext"
 import { useRegistroMaquinariaProyecto } from "@/src/hooks/use-registro-maquinaria-proyecto"
 import {
   aplicarEtapaMaquinaria,
@@ -45,6 +46,7 @@ function descripcionReporte(tipoReporte: TipoReporteMaquinaria): string {
 }
 
 export function MaquinariaExportClient({ generadoEn }: MaquinariaExportClientProps) {
+  const { proyectoActivo } = useProyecto()
   const { registros, periodo } = useRegistroMaquinariaProyecto()
   const [etapa, setEtapa] = useState<EtapaMaquinariaId>("")
   const [desde, setDesde] = useState("")
@@ -241,6 +243,7 @@ export function MaquinariaExportClient({ generadoEn }: MaquinariaExportClientPro
       <div className="maquinaria-documento-preview mt-6 print:mt-0">
         {tipoReporte === "por_sitio" ? (
           <MaquinariaDocumentoPorSitio
+            proyecto={proyectoActivo}
             dias={diasFiltrados}
             rangoEtiqueta={rangoEtiqueta}
             generadoEn={generadoEn}
@@ -248,6 +251,7 @@ export function MaquinariaExportClient({ generadoEn }: MaquinariaExportClientPro
           />
         ) : (
           <MaquinariaDocumento
+            proyecto={proyectoActivo}
             dias={diasFiltrados}
             rango={rango}
             rangoEtiqueta={rangoEtiqueta}
