@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils"
 import { ESTADOS_OPERATIVOS_MAPA } from "@/src/data/tramos/types"
+import { COLOR_LEYENDA_NUEVOS_TRAMOS } from "@/src/lib/mapa-tramos-zona-color"
 
 export function MapaTramosLeyenda({ compact = false }: { compact?: boolean }) {
   return (
@@ -21,12 +22,11 @@ export function MapaTramosLeyenda({ compact = false }: { compact?: boolean }) {
             )}
           >
             <span
-              className={
-                estado.id === "en_ejecucion"
-                  ? "mapa-punto-en-ejecucion size-3 rounded-full ring-2 ring-[#ca8a04]"
-                  : "size-3 rounded-sm ring-1 ring-foreground/10"
-              }
-              style={{ backgroundColor: estado.color }}
+              className="size-3 rounded-sm ring-1 ring-foreground/10"
+              style={{
+                backgroundColor:
+                  estado.id === "en_ejecucion" ? COLOR_LEYENDA_NUEVOS_TRAMOS : estado.color,
+              }}
               aria-hidden
             />
             {estado.id === "en_ejecucion" ? "Nuevos tramos" : estado.label}
