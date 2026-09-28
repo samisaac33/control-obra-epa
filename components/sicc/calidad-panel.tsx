@@ -1,7 +1,15 @@
 "use client"
 
 import { useMemo } from "react"
-import { Camera, ClipboardList, FileWarning, ListOrdered, Printer, ShieldCheck } from "lucide-react"
+import {
+  Camera,
+  ClipboardList,
+  Download,
+  FileWarning,
+  ListOrdered,
+  Printer,
+  ShieldCheck,
+} from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -178,11 +186,21 @@ export function CalidadPanel() {
 
       <Card className="border-foreground/10 bg-muted/10">
         <CardHeader>
-          <CardTitle className="text-base">Qué solicita la contratante (guía práctica)</CardTitle>
-          <CardDescription className="leading-relaxed">
-            Procedimiento en campo, tipo de actividad (no siempre es «ensayo») y fotos mínimas
-            para adjuntar al expediente PDF.
-          </CardDescription>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <CardTitle className="text-base">Qué solicita la contratante (guía práctica)</CardTitle>
+              <CardDescription className="mt-1.5 leading-relaxed">
+                Procedimiento en campo, tipo de actividad (no siempre es «ensayo») y fotos mínimas
+                para adjuntar al expediente PDF.
+              </CardDescription>
+            </div>
+            <Button type="button" variant="default" className="gap-2 shrink-0" asChild>
+              <a href="/api/sicc/guia-practica" download="Guia-Practica-Ensayos-Severino-Planilla-3.pdf">
+                <Download className="size-4" />
+                Descargar guía PDF
+              </a>
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="space-y-6">
           {GUIA_ENSAYOS_CONTRATANTE.map((guia) => (
