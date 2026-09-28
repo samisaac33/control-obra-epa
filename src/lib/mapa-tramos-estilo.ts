@@ -53,12 +53,17 @@ export function estiloSegmentoTramoEnMapa(
   tipo: "minitramo" | "pendiente" | "ejecutado",
   seleccionado: boolean,
   hover = false,
-  estadoSegmento?: EstadoTramo
+  estadoSegmento?: EstadoTramo,
+  mostrarMinitramosTerminados = true
 ): PathOptions {
   const codigo = tramo?.codigo
   if (tipo === "minitramo" || tipo === "ejecutado") {
     const segEstado = estadoSegmento ?? "en_ejecucion"
-    return estiloLineaTramo(colorEstadoTramoEnMapa(segEstado, codigo), seleccionado, hover)
+    const color =
+      segEstado === "terminado" && !mostrarMinitramosTerminados
+        ? colorEstadoTramoEnMapa("pendiente", codigo)
+        : colorEstadoTramoEnMapa(segEstado, codigo)
+    return estiloLineaTramo(color, seleccionado, hover)
   }
   const estadoPendiente = estadoSegmento ?? "pendiente"
   return estiloLineaTramo(colorEstadoTramoEnMapa(estadoPendiente, codigo), seleccionado, hover)
