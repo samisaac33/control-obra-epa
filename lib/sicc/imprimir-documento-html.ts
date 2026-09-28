@@ -1,3 +1,5 @@
+import { ESTILOS_DOCUMENTO_CALIDAD } from "@/lib/sicc/placeholder-documento"
+
 function escaparHtml(texto: string): string {
   return texto
     .replace(/&/g, "&amp;")
@@ -80,16 +82,7 @@ function usarImpresionEnPagina(): boolean {
   return pantallaPequena || punteroTactil
 }
 
-/**
- * Abre diálogo de impresión con texto plano preformateado.
- * Evita `window.open("", …, "noopener")` + `document.write`, que en Safari móvil
- * deja `about:blank` sin contenido.
- */
-export function imprimirDocumentoTextoPlano(titulo: string, contenidoTextoPlano: string): void {
-  if (typeof window === "undefined") return
-
-  const html = construirHtmlImprimible(titulo, contenidoTextoPlano)
-
+function lanzarImpresionHtml(html: string): void {
   if (usarImpresionEnPagina()) {
     imprimirEnIframe(html)
     return
@@ -97,7 +90,6 @@ export function imprimirDocumentoTextoPlano(titulo: string, contenidoTextoPlano:
 
   const blob = new Blob([html], { type: "text/html;charset=utf-8" })
   const url = URL.createObjectURL(blob)
-
   const ventana = window.open(url, "_blank")
   if (ventana) {
     const imprimirVentana = () => {
@@ -110,11 +102,44 @@ export function imprimirDocumentoTextoPlano(titulo: string, contenidoTextoPlano:
         window.setTimeout(() => URL.revokeObjectURL(url), 60_000)
       }
     }
-
     window.setTimeout(imprimirVentana, 300)
     return
   }
-
   URL.revokeObjectURL(url)
   imprimirEnIframe(html)
+}
+
+/** Página HTML completa para documentos de calidad (tablas + marcadores amarillos). */
+export function construirHtmlDocumentoCalidad(titulo: string, contenidoHtml: string): string {
+  const tituloSeguro = escaparHtml(titulo)
+  return `<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>${tituloSeguro}</title>
+    <style>
+      body { margin: 0; padding: 1.25rem; background: #fff; }
+      ${ESTILOS_DOCUMENTO_CALIDAD}
+    </style>
+  </head>
+  <body>${contenidoHtml}</body>
+</html>`
+}
+
+/** Imprime HTML ya formateado (p. ej. desde envolverDocumentoCalidad). */
+export function imprimirDocumentoHtml(titulo: string, contenidoHtml: string): void {
+  if (typeof window === "undefined") return
+  lanzarImpresionHtml(construirHtmlDocumentoCalidad(titulo, contenidoHtml))
+}
+
+/**
+ * Abre diálogo de impresión con texto plano preformateado.
+ * Evita `window.open("", …, "noopener")` + `document.write`, que en Safari móvil
+ * deja `about:blank` sin contenido.
+ */
+export function imprimirDocumentoTextoPlano(titulo: string, contenidoTextoPlano: string): void {
+  if (typeof window === "undefined") return
+
+  lanzarImpresionHtml(construirHtmlImprimible(titulo, contenidoTextoPlano))
 }
