@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { MapaTramosKpis } from "@/src/components/mapa/MapaTramosKpis"
 import { useProyecto } from "@/src/contexts/ProyectoContext"
 import { PROYECTO_DESASOLVE_CANALES } from "@/src/data/proyectos/catalog"
+import { rutaObra } from "@/src/lib/rutas-proyecto"
 import type { CanalTramo } from "@/src/data/tramos/types"
 import { createClient } from "@/src/lib/supabase/client"
 import { cargarPuntosAvancePorProyecto } from "@/src/lib/tramo-avance-coordenadas"
@@ -16,19 +17,19 @@ import { calcularKpisTramos } from "@/src/lib/tramos-avance"
 
 const accesos = [
   {
-    href: "/mapa",
+    segment: "mapa",
     label: "Mapa de avance",
     descripcion: "Tramos de canal georreferenciados con estado y avance por longitud",
     icon: Map,
   },
   {
-    href: "/fotos",
+    segment: "fotos",
     label: "Evidencias fotográficas",
     descripcion: "Registro de campo georreferenciado por canal y frente",
     icon: Camera,
   },
   {
-    href: "/maquinaria",
+    segment: "maquinaria",
     label: "Maquinaria y transporte",
     descripcion: "Uso diario de excavadoras y equipos de apoyo",
     icon: Truck,
@@ -36,7 +37,7 @@ const accesos = [
 ] as const
 
 export function HomeProyectoDesasolve() {
-  const { proyectoActivo } = useProyecto()
+  const { proyectoActivo, proyectoId } = useProyecto()
   const supabase = useMemo(() => createClient(), [])
   const [kpis, setKpis] = useState(calcularKpisTramos([]))
 
@@ -118,9 +119,11 @@ export function HomeProyectoDesasolve() {
             Accesos rápidos
           </h2>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {accesos.map(({ href, label, descripcion, icon: Icon }) => (
+            {accesos.map(({ segment, label, descripcion, icon: Icon }) => {
+              const href = rutaObra(proyectoId, segment)
+              return (
               <Link
-                key={href}
+                key={segment}
                 href={href}
                 className="group flex flex-col rounded-xl border border-foreground/10 bg-card p-4 shadow-sm ring-1 ring-foreground/5 transition-colors hover:border-primary/30 hover:bg-primary/5"
               >
@@ -131,7 +134,7 @@ export function HomeProyectoDesasolve() {
                 <p className="mt-1 flex-1 text-xs leading-relaxed text-muted-foreground">{descripcion}</p>
                 <span className="mt-3 text-xs font-medium text-primary">Ir a la sección →</span>
               </Link>
-            ))}
+            )})}
           </div>
         </section>
 

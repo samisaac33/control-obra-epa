@@ -24,6 +24,7 @@ import {
   type ProyectoEquipoMaquinaria,
 } from "@/src/lib/proyecto-equipos-maquinaria"
 import { createClient } from "@/src/lib/supabase/client"
+import { rutaObra } from "@/src/lib/rutas-proyecto"
 
 type RegistrarJornadaTramoFieldsProps = {
   proyectoId: string
@@ -170,7 +171,10 @@ export function RegistrarJornadaTramoFields({
         {equiposCatalogo.length === 0 && !cargandoEquipos ? (
           <p className="text-xs text-muted-foreground">
             No hay equipos en el catálogo.{" "}
-            <Link href="/maquinaria" className="font-medium text-primary underline-offset-4 hover:underline">
+            <Link
+              href={rutaObra(proyectoId, "maquinaria")}
+              className="font-medium text-primary underline-offset-4 hover:underline"
+            >
               Regístrelos en Maquinaria
             </Link>
             .

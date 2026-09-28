@@ -1,13 +1,19 @@
+"use client"
+
 import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useProyecto } from "@/src/contexts/ProyectoContext"
+import { rutaObra } from "@/src/lib/rutas-proyecto"
 
 type SeccionEnPreparacionProps = {
   titulo: string
 }
 
 export function SeccionEnPreparacion({ titulo }: SeccionEnPreparacionProps) {
+  const { proyectoId } = useProyecto()
+
   return (
     <div className="p-4 sm:p-6">
       <Card className="mx-auto max-w-2xl border-foreground/10">
@@ -21,7 +27,7 @@ export function SeccionEnPreparacion({ titulo }: SeccionEnPreparacionProps) {
             evidencias fotográficas.
           </p>
           <Button asChild variant="outline">
-            <Link href="/">Volver al inicio</Link>
+            <Link href={rutaObra(proyectoId)}>Volver al inicio</Link>
           </Button>
         </CardContent>
       </Card>

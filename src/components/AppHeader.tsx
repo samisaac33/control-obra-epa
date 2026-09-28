@@ -7,9 +7,9 @@ import { Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet"
 import { NavigationPanel } from "@/src/components/NavigationPanel"
-import { ProyectoSelect } from "@/src/components/ProyectoSelect"
 import { useProyecto } from "@/src/contexts/ProyectoContext"
 import { createClient } from "@/src/lib/supabase/client"
+import { esRutaMapaObra } from "@/src/lib/rutas-proyecto"
 import { cn } from "@/lib/utils"
 import { useEsViewportMovil } from "@/src/hooks/useEsViewportMovil"
 
@@ -23,7 +23,7 @@ export function AppHeader() {
   const [headerOculto, setHeaderOculto] = useState(false)
   const scrollPrevRef = useRef(0)
   const headerRef = useRef<HTMLElement>(null)
-  const modoMapaMovil = pathname === "/mapa" && esViewportMovil
+  const modoMapaMovil = esRutaMapaObra(pathname) && esViewportMovil
   const [loadingLogout, setLoadingLogout] = useState(false)
   const [isResident, setIsResident] = useState(false)
   const router = useRouter()
@@ -53,7 +53,7 @@ export function AppHeader() {
   }, [residentEmail])
 
   useEffect(() => {
-    const activo = pathname === "/mapa" && esViewportMovil
+    const activo = esRutaMapaObra(pathname) && esViewportMovil
     if (!activo) {
       setHeaderOculto(false)
       scrollPrevRef.current = 0
@@ -187,7 +187,6 @@ export function AppHeader() {
             {proyectoActivo.nombreObra}
           </h1>
         </div>
-        <ProyectoSelect className="min-w-0 max-w-[9rem] xs:max-w-[11rem] sm:max-w-xs" compact />
         {isResident ? (
           <Button
             type="button"
