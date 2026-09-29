@@ -6,6 +6,11 @@ import {
 } from "@/src/data/proyectos/catalog"
 import { rutaObra } from "@/src/lib/rutas-proyecto"
 import { updateSession } from "@/src/lib/supabase/middleware"
+import {
+  isVisitaGateConfigured,
+  rutasPublicasVisita,
+  validarCookieVisita,
+} from "@/src/lib/visita-acceso"
 
 const REDIRECTS_EMERGENCIA: Record<string, string> = {
   "/presupuesto": rutaObra(PROYECTO_EMERGENCIA_MANABI, "presupuesto"),
@@ -23,7 +28,21 @@ export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
   const residenteEmail = process.env.NEXT_PUBLIC_RESIDENTE_EMAIL?.trim().toLowerCase()
-  const isResident = !residenteEmail || user?.email?.toLowerCase() === residenteEmail
+  const isResident = Boolean(
+    residenteEmail && user?.email?.toLowerCase() === residenteEmail
+  )
+
+  if (
+    isVisitaGateConfigured() &&
+    !rutasPublicasVisita(pathname) &&
+    !isResident &&
+    !(await validarCookieVisita(request))
+  ) {
+    const ingresoUrl = request.nextUrl.clone()
+    ingresoUrl.pathname = "/ingreso"
+    ingresoUrl.searchParams.set("next", `${pathname}${request.nextUrl.search}`)
+    return NextResponse.redirect(ingresoUrl)
+  }
 
   if (user && isResident && pathname === "/login") {
     const homeUrl = request.nextUrl.clone()

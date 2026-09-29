@@ -21,6 +21,13 @@ cp .env.example .env.local
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `NEXT_PUBLIC_RESIDENTE_EMAIL` (correo autorizado para editar)
+- **Acceso visitantes (opcional):** `VISITANTE_SESSION_SECRET` (cadena aleatoria ≥ 32 caracteres) y `VISITANTE_PIN` o `VISITANTE_PIN_SHA256` (hash SHA-256 en hex del PIN). Si están definidos, quien no sea residente debe ingresar el PIN en `/ingreso` (cookie firmada ~30 días; sin cuentas en Supabase).
+
+  Generar hash del PIN (ejemplo PIN `482910`):
+
+  ```bash
+  node -e "const c=require('crypto');console.log(c.createHash('sha256').update('482910','utf8').digest('hex'))"
+  ```
 
 4. En Supabase:
 
@@ -51,8 +58,9 @@ npm run dev
 
 ## Flujo implementado
 
-- `/login`: acceso por correo y contrasena.
-- Middleware de proteccion para rutas privadas.
-- Cierre de sesion desde el header.
+- `/ingreso`: PIN compartido de obra para visitantes (solo si configuró variables de visita).
+- `/login`: acceso por correo y contrasena del residente (omite el PIN).
+- Proxy de proteccion: redirige a `/ingreso` sin cookie de visita válida.
+- Cierre de sesion del residente o «Salir» de visita desde el header del panel de obra.
 - `/fotos`: carga de imagen + latitud/longitud + sector + observacion.
 - Evidencias guardadas en Storage y metadatos en `registros_fotograficos`.
