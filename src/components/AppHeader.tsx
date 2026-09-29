@@ -25,6 +25,8 @@ export function AppHeader() {
   const headerRef = useRef<HTMLElement>(null)
   const modoMapaMovil = esRutaMapaObra(pathname) && esViewportMovil
   const [loadingLogout, setLoadingLogout] = useState(false)
+  const [loadingVisitaSalir, setLoadingVisitaSalir] = useState(false)
+  const [visitaActiva, setVisitaActiva] = useState(false)
   const [isResident, setIsResident] = useState(false)
   const router = useRouter()
   const residentEmail = process.env.NEXT_PUBLIC_RESIDENTE_EMAIL?.trim().toLowerCase()
@@ -51,6 +53,21 @@ export function AppHeader() {
       subscription.unsubscribe()
     }
   }, [residentEmail])
+
+  useEffect(() => {
+    async function refreshVisitaEstado() {
+      try {
+        const res = await fetch("/api/visita/estado")
+        if (!res.ok) return
+        const data = (await res.json()) as { gateEnabled?: boolean; authenticated?: boolean }
+        setVisitaActiva(Boolean(data.gateEnabled && data.authenticated))
+      } catch {
+        setVisitaActiva(false)
+      }
+    }
+
+    void refreshVisitaEstado()
+  }, [pathname])
 
   useEffect(() => {
     const activo = esRutaMapaObra(pathname) && esViewportMovil
@@ -136,6 +153,17 @@ export function AppHeader() {
     }
   }
 
+  async function handleVisitaSalir() {
+    setLoadingVisitaSalir(true)
+    try {
+      await fetch("/api/visita/salir", { method: "POST" })
+      router.replace("/ingreso")
+      router.refresh()
+    } finally {
+      setLoadingVisitaSalir(false)
+    }
+  }
+
   return (
     <header
       ref={headerRef}
@@ -196,6 +224,16 @@ export function AppHeader() {
             className="h-9 shrink-0"
           >
             {loadingLogout ? "Saliendo..." : "Cerrar sesión"}
+          </Button>
+        ) : visitaActiva ? (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleVisitaSalir}
+            disabled={loadingVisitaSalir}
+            className="h-9 shrink-0"
+          >
+            {loadingVisitaSalir ? "Saliendo..." : "Salir"}
           </Button>
         ) : null}
       </div>
