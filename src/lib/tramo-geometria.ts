@@ -660,79 +660,44 @@ export function resolverPuntoEnlaceParaPunto(
   return ordenados[indexEnOrdenados - 1] ?? null
 }
 
-function geometriaEntreCoordenadasPuntos(
-  puntoInicio: TramoPuntoAvance,
-  puntoFin: TramoPuntoAvance
-): GeoJsonLineString {
-  return {
-    type: "LineString",
-    coordinates: [
-      [puntoInicio.lng, puntoInicio.lat],
-      [puntoFin.lng, puntoFin.lat],
-    ],
-  }
+/** Abscisa sobre el KMZ a partir del GPS confirmado (evita intervalos erróneos guardados). */
+export function abscisaEfectivaPuntoEnTramo(
+  tramo: Pick<CanalTramo, "geometria">,
+  punto: TramoPuntoAvance
+): number {
+  const proy = proyectarPuntoEnLinea(punto.lat, punto.lng, tramo.geometria)
+  if (proy) return proy.abscisa_m
+  return punto.abscisa_m
 }
 
-/** Minitramo con tramo largo en abscisa pero corto en GPS (rama o retroceso). */
-export function minitramoUsaGeometriaGps(
-  tramo: Pick<CanalTramo, "geometria"> | null | undefined,
+function geometriaMinitramoSobreKmz(
+  tramo: Pick<CanalTramo, "geometria">,
   puntoInicio: TramoPuntoAvance,
   puntoFin: TramoPuntoAvance
-): boolean {
-  const longitudGps = distanciaHaversineM(
-    puntoInicio.lat,
-    puntoInicio.lng,
-    puntoFin.lat,
-    puntoFin.lng
-  )
-  if (longitudGps < TOLERANCIA_CONTINUACION_M) return false
-
-  const absDiff = Math.abs(puntoFin.abscisa_m - puntoInicio.abscisa_m)
-  let longitudCanal = absDiff
-  const geometriaTramo = tramo?.geometria
-  if (geometriaTramo && geometriaTramo.coordinates.length >= 2) {
-    const geomCanal = geometriaEntreAbscisas(
-      geometriaTramo,
-      puntoInicio.abscisa_m,
-      puntoFin.abscisa_m
-    )
-    if (geomCanal) longitudCanal = longitudDesdeGeometria(geomCanal)
-  }
-
-  const umbralRama = Math.max(
-    TOLERANCIA_CONTINUACION_M,
-    longitudGps * 0.25 + TOLERANCIA_CONTINUACION_M
-  )
-  return longitudCanal > longitudGps + umbralRama
+): GeoJsonLineString | null {
+  if (tramo.geometria.coordinates.length < 2) return null
+  const absInicio = abscisaEfectivaPuntoEnTramo(tramo, puntoInicio)
+  const absFin = abscisaEfectivaPuntoEnTramo(tramo, puntoFin)
+  return geometriaEntreAbscisas(tramo.geometria, absInicio, absFin)
 }
 
-/** Longitud del minitramo enlace→fin (no acumulada desde el origen del tramo). */
+/** Longitud del minitramo enlace→fin sobre el trazado del canal (no cuerda GPS). */
 export function longitudMinitramoMetros(
   tramo: Pick<CanalTramo, "geometria"> | null | undefined,
   puntoInicio: TramoPuntoAvance,
   puntoFin: TramoPuntoAvance
 ): number {
-  if (minitramoUsaGeometriaGps(tramo, puntoInicio, puntoFin)) {
-    return distanciaHaversineM(
-      puntoInicio.lat,
-      puntoInicio.lng,
-      puntoFin.lat,
-      puntoFin.lng
-    )
-  }
-
-  const absDiff = Math.abs(puntoFin.abscisa_m - puntoInicio.abscisa_m)
   const geometriaTramo = tramo?.geometria
   if (geometriaTramo && geometriaTramo.coordinates.length >= 2) {
-    const geomCanal = geometriaEntreAbscisas(
-      geometriaTramo,
-      puntoInicio.abscisa_m,
-      puntoFin.abscisa_m
+    const geom = geometriaMinitramoSobreKmz(
+      { geometria: geometriaTramo },
+      puntoInicio,
+      puntoFin
     )
-    if (geomCanal) return longitudDesdeGeometria(geomCanal)
+    if (geom) return longitudDesdeGeometria(geom)
   }
 
-  return absDiff
+  return Math.abs(puntoFin.abscisa_m - puntoInicio.abscisa_m)
 }
 
 export function geometriaMinitramoEntrePuntos(
@@ -740,14 +705,7 @@ export function geometriaMinitramoEntrePuntos(
   puntoInicio: TramoPuntoAvance,
   puntoFin: TramoPuntoAvance
 ): GeoJsonLineString | null {
-  if (minitramoUsaGeometriaGps(tramo, puntoInicio, puntoFin)) {
-    return geometriaEntreCoordenadasPuntos(puntoInicio, puntoFin)
-  }
-  return geometriaEntreAbscisas(
-    tramo.geometria,
-    puntoInicio.abscisa_m,
-    puntoFin.abscisa_m
-  )
+  return geometriaMinitramoSobreKmz(tramo, puntoInicio, puntoFin)
 }
 
 export function minitramosDesdePuntos(
@@ -784,12 +742,20 @@ export function resumenMinitramos(
 ): ItemResumenMinitramo[] {
   const items: ItemResumenMinitramo[] = []
   for (const mt of minitramosDesdePuntos(puntos, tramoId, tramo)) {
+    const tieneGeometriaKmz =
+      tramo != null && tramo.geometria.coordinates.length >= 2
+    const abscisaInicio = tieneGeometriaKmz
+      ? abscisaEfectivaPuntoEnTramo(tramo, mt.puntoInicio)
+      : mt.puntoInicio.abscisa_m
+    const abscisaFin = tieneGeometriaKmz
+      ? abscisaEfectivaPuntoEnTramo(tramo, mt.puntoFin)
+      : mt.puntoFin.abscisa_m
     items.push({
       tipo: "completo",
       letraInicio: mt.letraInicio,
       letraFin: mt.letraFin,
-      abscisaInicio: mt.puntoInicio.abscisa_m,
-      abscisaFin: mt.puntoFin.abscisa_m,
+      abscisaInicio,
+      abscisaFin,
       longitud_m: mt.longitud_m,
       grupo_id: mt.grupo_id,
       puntoFinId: mt.puntoFin.id,
