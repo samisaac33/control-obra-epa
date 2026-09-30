@@ -8,7 +8,7 @@ import {
 import { longitudDesdeGeometria, sincronizarAvanceDesdeMetros } from "@/src/lib/tramos-avance"
 
 const EARTH_RADIUS_M = 6_371_000
-export const DISTANCIA_MAX_DETECCION_M = 25
+export const DISTANCIA_MAX_DETECCION_M = 50
 export const TOLERANCIA_CONTINUACION_M = 5
 
 export function abscisaLogicaDesdeNatural(tramo: CanalTramo, abscisaNatural: number): number {
