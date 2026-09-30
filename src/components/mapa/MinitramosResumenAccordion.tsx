@@ -19,10 +19,8 @@ import {
 } from "@/components/ui/select"
 import type { EstadoTramo } from "@/src/data/tramos/types"
 import { ESTADOS_TRAMO, colorEstadoTramo, etiquetaEstadoTramo } from "@/src/data/tramos/types"
+import { SELECT_CONTENT_POPPER_EN_MAPA } from "@/src/lib/mapa-capas-z"
 import { etiquetaLetra, type ItemResumenMinitramo } from "@/src/lib/tramo-geometria"
-
-const SELECT_EN_SHEET_CLASS =
-  "z-[90] max-h-[min(16rem,50dvh)] w-(--radix-select-trigger-width)"
 
 type MinitramoCompleto = Extract<ItemResumenMinitramo, { tipo: "completo" }>
 
@@ -118,7 +116,11 @@ export function MinitramosResumenAccordion({
                     <SelectTrigger id={`estado-minitramo-${item.puntoFinId}`} className="h-9 w-full">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent position="popper" side="bottom" className={SELECT_EN_SHEET_CLASS}>
+                    <SelectContent
+                      position="popper"
+                      side="bottom"
+                      className={SELECT_CONTENT_POPPER_EN_MAPA}
+                    >
                       {ESTADOS_TRAMO.map((estado) => (
                         <SelectItem key={estado.id} value={estado.id}>
                           {estado.label}

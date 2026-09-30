@@ -14,6 +14,7 @@ import {
   type CanalTramo,
   type EstadoOperativoMapa,
 } from "@/src/data/tramos/types"
+import { SELECT_CONTENT_POPPER_EN_MAPA } from "@/src/lib/mapa-capas-z"
 import { tramosOrdenadosPorCodigo } from "@/src/lib/tramos-avance"
 import { Label } from "@/components/ui/label"
 
@@ -33,8 +34,6 @@ type MapaTramosFiltrosProps = {
 }
 
 const INPUT_CLASS = "h-10 w-full min-w-0"
-
-const SELECT_SHEET_CLASS = "z-[90] max-h-[min(16rem,50dvh)] w-(--radix-select-trigger-width)"
 
 type FiltroTramoProps = {
   filtros: FiltrosTramos
@@ -62,7 +61,7 @@ export function MapaTramosFiltroTramo({
         <SelectTrigger id={selectId} className={INPUT_CLASS}>
           <SelectValue placeholder="Todos" />
         </SelectTrigger>
-        <SelectContent position="popper" side="bottom" className={SELECT_SHEET_CLASS}>
+        <SelectContent position="popper" side="bottom" className={SELECT_CONTENT_POPPER_EN_MAPA}>
           <SelectItem value="todos">Todos los tramos</SelectItem>
           {tramosOrdenados.map((tramo) => (
             <SelectItem key={tramo.id} value={tramo.id}>
@@ -135,7 +134,7 @@ export function MapaTramosFiltros({
           <SelectTrigger id="filtro-tramo" className={INPUT_CLASS}>
             <SelectValue placeholder="Todos" />
           </SelectTrigger>
-          <SelectContent position="popper" side="bottom" className={SELECT_SHEET_CLASS}>
+          <SelectContent position="popper" side="bottom" className={SELECT_CONTENT_POPPER_EN_MAPA}>
             <SelectItem value="todos">Todos los tramos</SelectItem>
             {tramosOrdenados.map((tramo) => (
               <SelectItem key={tramo.id} value={tramo.id}>
