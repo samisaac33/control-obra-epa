@@ -689,9 +689,10 @@ export function minitramoUsaGeometriaGps(
 
   const absDiff = Math.abs(puntoFin.abscisa_m - puntoInicio.abscisa_m)
   let longitudCanal = absDiff
-  if (tramo?.geometria?.coordinates?.length >= 2) {
+  const geometriaTramo = tramo?.geometria
+  if (geometriaTramo && geometriaTramo.coordinates.length >= 2) {
     const geomCanal = geometriaEntreAbscisas(
-      tramo.geometria,
+      geometriaTramo,
       puntoInicio.abscisa_m,
       puntoFin.abscisa_m
     )
@@ -721,9 +722,10 @@ export function longitudMinitramoMetros(
   }
 
   const absDiff = Math.abs(puntoFin.abscisa_m - puntoInicio.abscisa_m)
-  if (tramo?.geometria?.coordinates?.length >= 2) {
+  const geometriaTramo = tramo?.geometria
+  if (geometriaTramo && geometriaTramo.coordinates.length >= 2) {
     const geomCanal = geometriaEntreAbscisas(
-      tramo.geometria,
+      geometriaTramo,
       puntoInicio.abscisa_m,
       puntoFin.abscisa_m
     )
