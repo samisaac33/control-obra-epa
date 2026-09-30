@@ -1,29 +1,21 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useSyncExternalStore } from "react"
 
-function detectarViewportMovil(): boolean {
+const QUERY_MOVIL = "(max-width: 767px), (hover: none) and (pointer: coarse)"
+
+function suscribirViewportMovil(callback: () => void) {
+  if (typeof window === "undefined") return () => {}
+  const mq = window.matchMedia(QUERY_MOVIL)
+  mq.addEventListener("change", callback)
+  return () => mq.removeEventListener("change", callback)
+}
+
+function leerViewportMovil(): boolean {
   if (typeof window === "undefined") return false
-  const coarse = window.matchMedia("(pointer: coarse)").matches
-  const estrecho = window.matchMedia("(max-width: 767px)").matches
-  return coarse || estrecho
+  return window.matchMedia(QUERY_MOVIL).matches
 }
 
 export function useEsViewportMovil(): boolean {
-  const [esMovil, setEsMovil] = useState(() => detectarViewportMovil())
-
-  useEffect(() => {
-    setEsMovil(detectarViewportMovil())
-    const mqPointer = window.matchMedia("(pointer: coarse)")
-    const mqWidth = window.matchMedia("(max-width: 767px)")
-    const actualizar = () => setEsMovil(detectarViewportMovil())
-    mqPointer.addEventListener("change", actualizar)
-    mqWidth.addEventListener("change", actualizar)
-    return () => {
-      mqPointer.removeEventListener("change", actualizar)
-      mqWidth.removeEventListener("change", actualizar)
-    }
-  }, [])
-
-  return esMovil
+  return useSyncExternalStore(suscribirViewportMovil, leerViewportMovil, () => false)
 }

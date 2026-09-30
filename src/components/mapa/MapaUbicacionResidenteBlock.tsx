@@ -1,7 +1,14 @@
 "use client"
 
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react"
 import { Crosshair, LocateOff, MapPin } from "lucide-react"
-import { useEffect, useMemo, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -22,29 +29,49 @@ export type RequiereOrigenDesdeMapaPayload = {
   lng: number
 }
 
-type MapaUbicacionResidenteBlockProps = {
+type MapaUbicacionResidenteProviderProps = {
   tramos: CanalTramo[]
   puntosAvance: TramoPuntoAvance[]
-  className?: string
-  variant?: "default" | "barraMapa"
   onUbicacionChange: (ubicacion: UbicacionUsuario | null, seguir: boolean) => void
   onTramoDetectado?: (tramo: CanalTramo | null) => void
   onSolicitarConfirmacion: (propuesta: PropuestaPuntoMinitramo) => void
   onRequiereConfigurarOrigen: (payload: RequiereOrigenDesdeMapaPayload) => void
+  children: ReactNode
 }
 
-export function MapaUbicacionResidenteBlock({
+type UbicacionResidenteContextValue = {
+  estadoGps: ReturnType<typeof useGeolocalizacion>["estado"]
+  posicionGps: ReturnType<typeof useGeolocalizacion>["posicion"]
+  errorGps: string | null
+  gpsActivo: boolean
+  deteccion: ReturnType<typeof detectarTramoDesdeCoordenada>
+  puedeRegistrar: boolean
+  lineaEstado: string | null
+  mensajeLocal: string | null
+  handleToggleGps: () => void
+  handleRegistrarPunto: () => void
+}
+
+const UbicacionResidenteContext = createContext<UbicacionResidenteContextValue | null>(null)
+
+function useUbicacionResidenteContext() {
+  const ctx = useContext(UbicacionResidenteContext)
+  if (!ctx) {
+    throw new Error("MapaUbicacionResidente* debe usarse dentro de MapaUbicacionResidenteProvider")
+  }
+  return ctx
+}
+
+export function MapaUbicacionResidenteProvider({
   tramos,
   puntosAvance,
-  className,
-  variant = "default",
   onUbicacionChange,
   onTramoDetectado,
   onSolicitarConfirmacion,
   onRequiereConfigurarOrigen,
-}: MapaUbicacionResidenteBlockProps) {
+  children,
+}: MapaUbicacionResidenteProviderProps) {
   const [mensajeLocal, setMensajeLocal] = useState<string | null>(null)
-  const esBarraMapa = variant === "barraMapa"
 
   const {
     estado: estadoGps,
@@ -121,15 +148,37 @@ export function MapaUbicacionResidenteBlock({
     return `Sin tramo a ${DISTANCIA_MAX_DETECCION_M} m — acérquese al canal`
   })()
 
-  const botones = (
+  const value: UbicacionResidenteContextValue = {
+    estadoGps,
+    posicionGps,
+    errorGps,
+    gpsActivo,
+    deteccion,
+    puedeRegistrar,
+    lineaEstado,
+    mensajeLocal,
+    handleToggleGps,
+    handleRegistrarPunto,
+  }
+
+  return (
+    <UbicacionResidenteContext.Provider value={value}>{children}</UbicacionResidenteContext.Provider>
+  )
+}
+
+function BotonesUbicacionResidente({ barraMapa }: { barraMapa?: boolean }) {
+  const { gpsActivo, posicionGps, puedeRegistrar, handleToggleGps, handleRegistrarPunto } =
+    useUbicacionResidenteContext()
+
+  return (
     <div className="flex gap-2">
       <Button
         type="button"
         variant={gpsActivo ? "secondary" : "outline"}
-        size={esBarraMapa ? "default" : "sm"}
+        size={barraMapa ? "default" : "sm"}
         className={cn(
           "min-h-11 flex-1 text-xs shadow-sm",
-          esBarraMapa && "border-foreground/15 bg-background/95 backdrop-blur-sm"
+          barraMapa && "border-foreground/15 bg-background/95 backdrop-blur-sm"
         )}
         onClick={handleToggleGps}
       >
@@ -148,7 +197,7 @@ export function MapaUbicacionResidenteBlock({
       {gpsActivo && posicionGps ? (
         <Button
           type="button"
-          size={esBarraMapa ? "default" : "sm"}
+          size={barraMapa ? "default" : "sm"}
           className="min-h-11 flex-1 text-xs shadow-sm"
           disabled={!puedeRegistrar}
           onClick={handleRegistrarPunto}
@@ -159,29 +208,41 @@ export function MapaUbicacionResidenteBlock({
       ) : null}
     </div>
   )
+}
 
-  if (esBarraMapa) {
-    return (
-      <div className={cn("space-y-1.5", className)}>
-        {lineaEstado ? (
-          <p
-            className={cn(
-              "rounded-md px-2 py-1 text-center text-[11px] leading-snug shadow-sm backdrop-blur-sm",
-              errorGps || mensajeLocal
-                ? "border border-destructive/30 bg-destructive/10 text-destructive"
-                : deteccion
-                  ? "border border-foreground/10 bg-background/90 text-foreground"
-                  : "border border-amber-500/30 bg-amber-500/10 text-amber-950 dark:text-amber-100"
-            )}
-            role={errorGps || mensajeLocal ? "alert" : undefined}
-          >
-            {lineaEstado}
-          </p>
-        ) : null}
-        {botones}
-      </div>
-    )
-  }
+export function MapaUbicacionResidenteBarra({ className }: { className?: string }) {
+  const { lineaEstado, errorGps, mensajeLocal, deteccion } = useUbicacionResidenteContext()
+
+  return (
+    <div className={cn("space-y-1.5", className)}>
+      {lineaEstado ? (
+        <p
+          className={cn(
+            "rounded-md px-2 py-1 text-center text-[11px] leading-snug shadow-sm backdrop-blur-sm",
+            errorGps || mensajeLocal
+              ? "border border-destructive/30 bg-destructive/10 text-destructive"
+              : deteccion
+                ? "border border-foreground/10 bg-background/90 text-foreground"
+                : "border border-amber-500/30 bg-amber-500/10 text-amber-950 dark:text-amber-100"
+          )}
+          role={errorGps || mensajeLocal ? "alert" : undefined}
+        >
+          {lineaEstado}
+        </p>
+      ) : null}
+      <BotonesUbicacionResidente barraMapa />
+    </div>
+  )
+}
+
+export function MapaUbicacionResidentePanel({ className }: { className?: string }) {
+  const {
+    estadoGps,
+    posicionGps,
+    errorGps,
+    deteccion,
+    mensajeLocal,
+  } = useUbicacionResidenteContext()
 
   return (
     <div
@@ -191,7 +252,7 @@ export function MapaUbicacionResidenteBlock({
       )}
     >
       <p className="text-xs font-medium text-foreground">Ubicación en campo</p>
-      {botones}
+      <BotonesUbicacionResidente />
 
       {estadoGps === "solicitando" ? (
         <p className="text-xs text-muted-foreground">Obteniendo ubicación GPS…</p>
@@ -235,5 +296,24 @@ export function MapaUbicacionResidenteBlock({
         </p>
       ) : null}
     </div>
+  )
+}
+
+/** @deprecated Use Provider + Panel/Barra; kept for compatibility if imported elsewhere */
+export function MapaUbicacionResidenteBlock(
+  props: Omit<MapaUbicacionResidenteProviderProps, "children"> & {
+    className?: string
+    variant?: "default" | "barraMapa"
+  }
+) {
+  const { className, variant = "default", ...providerProps } = props
+  return (
+    <MapaUbicacionResidenteProvider {...providerProps}>
+      {variant === "barraMapa" ? (
+        <MapaUbicacionResidenteBarra className={className} />
+      ) : (
+        <MapaUbicacionResidentePanel className={className} />
+      )}
+    </MapaUbicacionResidenteProvider>
   )
 }
