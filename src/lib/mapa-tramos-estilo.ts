@@ -8,8 +8,10 @@ export const ALTURA_MAPA_VISITANTE_MOVIL = "min(78dvh, 640px)"
 export const MAX_ZOOM_MAPA_TRAMOS = 14
 /** A partir de este zoom se muestran números de tramo en el mapa. */
 export const ZOOM_MIN_ETIQUETAS_TRAMO = 13
-/** A partir de este zoom se muestran longitudes en cada minitramo. */
-export const ZOOM_MIN_ETIQUETAS_MINITRAMO = 14
+/** A partir de este zoom se muestran longitudes de tramos y minitramos en el mapa. */
+export const ZOOM_MIN_ETIQUETAS_LONGITUD = 14
+/** @deprecated Use ZOOM_MIN_ETIQUETAS_LONGITUD */
+export const ZOOM_MIN_ETIQUETAS_MINITRAMO = ZOOM_MIN_ETIQUETAS_LONGITUD
 
 /** Color turquesa único cuando la capa «Consolidado» está activa en el mapa. */
 export const COLOR_TRAMO_CONSOLIDADO = "#2ec4b0"
