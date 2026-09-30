@@ -15,8 +15,8 @@ export const FRACCION_MAX_ANCHO_ETIQUETA_SOBRE_MINITRAMO = 0.5
 /** @deprecated Use ZOOM_MIN_ETIQUETAS_LONGITUD */
 export const ZOOM_MIN_ETIQUETAS_MINITRAMO = ZOOM_MIN_ETIQUETAS_LONGITUD
 
-/** Color turquesa único cuando la capa «Consolidado» está activa en el mapa. */
-export const COLOR_TRAMO_CONSOLIDADO = "#2ec4b0"
+/** Color violeta cuando la capa «Consolidado» está activa (no aplica a MTT terminado visible). */
+export const COLOR_TRAMO_CONSOLIDADO = "#7c3aed"
 
 const PESO_NORMAL = 6
 const PESO_SELECCIONADO = 8
@@ -66,20 +66,29 @@ export function estiloSegmentoTramoEnMapa(
   mostrarMinitramosTerminados = true,
   mapaConsolidado = false
 ): PathOptions {
-  if (mapaConsolidado) {
+  const codigo = tramo?.codigo
+  const esSegmentoColoreado = tipo === "minitramo" || tipo === "ejecutado"
+  const segEstado = esSegmentoColoreado
+    ? (estadoSegmento ?? "en_ejecucion")
+    : (estadoSegmento ?? "pendiente")
+
+  const mttTerminadoVisible =
+    esSegmentoColoreado &&
+    segEstado === "terminado" &&
+    mostrarMinitramosTerminados
+
+  if (mapaConsolidado && !mttTerminadoVisible) {
     return estiloLineaTramo(COLOR_TRAMO_CONSOLIDADO, seleccionado, hover)
   }
-  const codigo = tramo?.codigo
-  if (tipo === "minitramo" || tipo === "ejecutado") {
-    const segEstado = estadoSegmento ?? "en_ejecucion"
+
+  if (esSegmentoColoreado) {
     const color =
       segEstado === "terminado" && !mostrarMinitramosTerminados
         ? colorEstadoTramoEnMapa("pendiente", codigo)
         : colorEstadoTramoEnMapa(segEstado, codigo)
     return estiloLineaTramo(color, seleccionado, hover)
   }
-  const estadoPendiente = estadoSegmento ?? "pendiente"
-  return estiloLineaTramo(colorEstadoTramoEnMapa(estadoPendiente, codigo), seleccionado, hover)
+  return estiloLineaTramo(colorEstadoTramoEnMapa(segEstado, codigo), seleccionado, hover)
 }
 
 export function estiloHaloBlancoTramo(seleccionado: boolean): PathOptions {
