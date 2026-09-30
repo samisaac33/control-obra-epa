@@ -4,26 +4,24 @@ import { useEffect, useMemo, useState } from "react"
 import L from "leaflet"
 import { Marker, useMap, useMapEvents } from "react-leaflet"
 
+import type { CanalTramo } from "@/src/data/tramos/types"
 import {
+  centroEtiquetaTramo,
   htmlEtiquetaDistanciaMinitramo,
   tamanoIconoDistanciaMinitramo,
 } from "@/src/lib/mapa-tramo-etiqueta"
 import { ZOOM_MIN_ETIQUETAS_LONGITUD } from "@/src/lib/mapa-tramos-estilo"
-import {
-  centroSegmentoEnMapa,
-  formatLongitudSegmentoMapa,
-  type SegmentoVisualTramo,
-} from "@/src/lib/tramo-geometria"
+import { formatLongitudSegmentoMapa } from "@/src/lib/tramo-geometria"
 
-type MapaEtiquetasMinitramoPorZoomProps = {
-  segmentos: SegmentoVisualTramo[]
+type MapaEtiquetasLongitudTramoPorZoomProps = {
+  tramos: CanalTramo[]
   activo?: boolean
 }
 
-export function MapaEtiquetasMinitramoPorZoom({
-  segmentos,
+export function MapaEtiquetasLongitudTramoPorZoom({
+  tramos,
   activo = true,
-}: MapaEtiquetasMinitramoPorZoomProps) {
+}: MapaEtiquetasLongitudTramoPorZoomProps) {
   const map = useMap()
   const [zoom, setZoom] = useState(() => map.getZoom())
 
@@ -48,25 +46,22 @@ export function MapaEtiquetasMinitramoPorZoom({
       texto: string
     }[] = []
 
-    for (const segmento of segmentos) {
-      if (segmento.tipo !== "minitramo") continue
-      if (segmento.longitud_m < 1) continue
+    for (const tramo of tramos) {
+      if (tramo.longitud_m < 1) continue
 
-      const centro = centroSegmentoEnMapa(segmento.geometria)
+      const centro = centroEtiquetaTramo(tramo)
       if (!centro) continue
 
-      const letraInicio = segmento.letraInicio ?? "?"
-      const letraFin = segmento.letraFin ?? "?"
       items.push({
-        id: `${segmento.tramo.id}-${letraInicio}-${letraFin}`,
+        id: tramo.id,
         lat: centro.lat,
         lng: centro.lng,
-        texto: formatLongitudSegmentoMapa(segmento.longitud_m),
+        texto: formatLongitudSegmentoMapa(tramo.longitud_m),
       })
     }
 
     return items
-  }, [segmentos, capaActiva])
+  }, [tramos, capaActiva])
 
   if (!capaActiva || etiquetas.length === 0) return null
 
@@ -76,10 +71,10 @@ export function MapaEtiquetasMinitramoPorZoom({
         const { width, height } = tamanoIconoDistanciaMinitramo(item.texto)
         return (
           <Marker
-            key={`etiqueta-minitramo-${item.id}`}
+            key={`etiqueta-tramo-longitud-${item.id}`}
             position={[item.lat, item.lng]}
             interactive={false}
-            zIndexOffset={1100}
+            zIndexOffset={1080}
             icon={L.divIcon({
               className: "mapa-minitramo-distancia-leaflet",
               html: htmlEtiquetaDistanciaMinitramo(item.texto),
