@@ -37,6 +37,7 @@ type TramoDetallePanelProps = {
     opciones?: SolicitarConfirmacionAvanceOptions
   ) => void
   onEliminarMinitramo?: (grupoId: string) => void
+  onEditarMinitramo?: (puntoFinId: string) => void
   onEliminarPuntoHuérfano?: (puntoId: string) => void
   onEstadoMinitramoChange?: (puntoFinId: string, estado: EstadoTramo) => void | Promise<void>
   onEstadoPuntoChange?: (puntoId: string, estado: EstadoTramo | null) => void | Promise<void>
@@ -69,6 +70,7 @@ export function TramoDetallePanel({
   onSubmit,
   onSolicitarConfirmacionAvance,
   onEliminarMinitramo,
+  onEditarMinitramo,
   onEliminarPuntoHuérfano,
   onEstadoMinitramoChange,
   onEstadoPuntoChange,
@@ -99,6 +101,7 @@ export function TramoDetallePanel({
     onSubmit,
     onSolicitarConfirmacionAvance,
     onEliminarMinitramo,
+    onEditarMinitramo,
     onEstadoMinitramoChange,
     onEstadoPuntoChange,
     onEvidenciaSubida,

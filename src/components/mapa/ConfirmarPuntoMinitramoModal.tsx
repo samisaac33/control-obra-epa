@@ -55,7 +55,7 @@ export type ConfirmarPuntoPayload = {
   orden: number
   estado: PropuestaPuntoMinitramo["estado_sugerido"]
   registro_foto_id?: string | null
-  modo?: "nuevo" | "corregir"
+  modo?: "nuevo" | "corregir" | "editar_minitramo"
   puntoId?: string
   jornada?: TramoRegistroMaquinariaInput | null
   puntoEnlaceId?: string
@@ -66,8 +66,10 @@ type ConfirmarPuntoMinitramoModalProps = {
   propuestaInicial: PropuestaPuntoMinitramo | null
   puntosPrevios: TramoPuntoAvance[]
   registroFotoId?: string | null
-  modo?: "nuevo" | "corregir"
+  modo?: "nuevo" | "corregir" | "editar_minitramo"
   puntoId?: string
+  etiquetaMinitramo?: string
+  estadoInicialMinitramo?: PropuestaPuntoMinitramo["estado_sugerido"]
   loading?: boolean
   mostrarRegistrarJornada?: boolean
   onConfirm: (payload: ConfirmarPuntoPayload) => Promise<void>
@@ -83,6 +85,8 @@ export function ConfirmarPuntoMinitramoModal({
   registroFotoId,
   modo = "nuevo",
   puntoId,
+  etiquetaMinitramo,
+  estadoInicialMinitramo,
   loading = false,
   mostrarRegistrarJornada = false,
   onConfirm,
@@ -101,11 +105,15 @@ export function ConfirmarPuntoMinitramoModal({
     if (!propuestaInicial) return
     setLat(propuestaInicial.punto.lat.toFixed(7))
     setLng(propuestaInicial.punto.lng.toFixed(7))
-    setEstado(propuestaInicial.estado_sugerido)
+    setEstado(
+      modo === "editar_minitramo" && estadoInicialMinitramo != null
+        ? estadoInicialMinitramo
+        : propuestaInicial.estado_sugerido
+    )
     setIncluirJornada(false)
     setJornadaForm(estadoInicialJornada())
     setErrorJornada(null)
-  }, [propuestaInicial])
+  }, [propuestaInicial, modo, estadoInicialMinitramo])
 
   useEffect(() => {
     if (!open) {
@@ -137,7 +145,9 @@ export function ConfirmarPuntoMinitramoModal({
 
   if (!open || !propuestaInicial) return null
 
-  const esCorreccion = modo === "corregir"
+  const esCorreccion = modo === "corregir" || modo === "editar_minitramo"
+  const esEditarMinitramo = modo === "editar_minitramo"
+  const mostrarJornada = mostrarRegistrarJornada && !esEditarMinitramo
 
   function sugerirMetrosJornada(): string {
     if (!propuesta?.cierraMinitramo) return ""
@@ -165,7 +175,7 @@ export function ConfirmarPuntoMinitramoModal({
     setErrorJornada(null)
 
     let jornada: TramoRegistroMaquinariaInput | null = null
-    if (mostrarRegistrarJornada && incluirJornada) {
+    if (mostrarJornada && incluirJornada) {
       const equipos =
         equiposCatalogo.length > 0
           ? equiposCatalogo
@@ -191,7 +201,7 @@ export function ConfirmarPuntoMinitramoModal({
       orden: propuesta.orden,
       estado,
       registro_foto_id: registroFotoId,
-      modo: esCorreccion ? "corregir" : "nuevo",
+      modo: esEditarMinitramo ? "editar_minitramo" : esCorreccion ? "corregir" : "nuevo",
       puntoId: esCorreccion ? puntoId : undefined,
       jornada,
       puntoEnlaceId: propuesta.puntoEnlaceId,
@@ -220,12 +230,21 @@ export function ConfirmarPuntoMinitramoModal({
       >
       <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl border border-foreground/10 bg-background p-5 shadow-xl">
         <h2 id="confirmar-punto-title" className="text-lg font-semibold">
-          {esCorreccion
-            ? `Corregir punto ${propuestaInicial.letra}`
-            : `Confirmar punto ${propuestaInicial.letra}`}
+          {esEditarMinitramo
+            ? "Editar minitramo"
+            : esCorreccion
+              ? `Corregir punto ${propuestaInicial.letra}`
+              : `Confirmar punto ${propuestaInicial.letra}`}
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Revise la posición proyectada sobre el trazado del tramo antes de guardar.
+          {esEditarMinitramo && etiquetaMinitramo ? (
+            <>
+              Minitramo {etiquetaMinitramo}. Revise la posición del punto{" "}
+              {propuestaInicial.letra} sobre el trazado antes de guardar.
+            </>
+          ) : (
+            "Revise la posición proyectada sobre el trazado del tramo antes de guardar."
+          )}
         </p>
 
         <div className="mt-4 space-y-4">
@@ -317,7 +336,7 @@ export function ConfirmarPuntoMinitramoModal({
             ) : null}
           </div>
 
-          {mostrarRegistrarJornada ? (
+          {mostrarJornada ? (
             <div className="space-y-3 rounded-lg border border-foreground/10 bg-muted/10 p-3">
               <label className="flex cursor-pointer items-start gap-2 text-sm">
                 <input
@@ -364,9 +383,11 @@ export function ConfirmarPuntoMinitramoModal({
           >
             {loading
               ? "Guardando..."
-              : esCorreccion
-                ? `Confirmar corrección ${propuestaInicial.letra}`
-                : `Confirmar punto ${propuestaInicial.letra}`}
+              : esEditarMinitramo
+                ? "Guardar cambios"
+                : esCorreccion
+                  ? `Confirmar corrección ${propuestaInicial.letra}`
+                  : `Confirmar punto ${propuestaInicial.letra}`}
           </Button>
         </div>
       </div>

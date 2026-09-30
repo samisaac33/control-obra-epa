@@ -62,6 +62,7 @@ type MarcarPuntoTramoBlockProps = {
   eliminandoId?: string | null
   onEstadoMinitramoChange?: (puntoFinId: string, estado: EstadoTramo) => void | Promise<void>
   onEliminarMinitramo?: (grupoId: string) => void
+  onEditarMinitramo?: (puntoFinId: string) => void
   onSolicitarConfirmacion: (
     propuesta: PropuestaPuntoMinitramo,
     opciones?: SolicitarConfirmacionMarcarOptions
@@ -77,6 +78,7 @@ export function MarcarPuntoTramoBlock({
   eliminandoId = null,
   onEstadoMinitramoChange,
   onEliminarMinitramo,
+  onEditarMinitramo,
   onSolicitarConfirmacion,
   onRenumerarPuntos,
 }: MarcarPuntoTramoBlockProps) {
@@ -416,6 +418,7 @@ export function MarcarPuntoTramoBlock({
             eliminandoId={eliminandoId}
             onEstadoChange={onEstadoMinitramoChange}
             onEliminar={onEliminarMinitramo}
+            onEditar={onEditarMinitramo}
             compact
           />
         )}

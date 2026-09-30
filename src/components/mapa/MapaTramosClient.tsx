@@ -59,7 +59,7 @@ import type {
   SegmentoVisualTramo,
   TramoPuntoAvance,
 } from "@/src/lib/tramo-geometria"
-import { evaluarPropuestaPuntoConAutoEnlace } from "@/src/lib/tramo-geometria"
+import { contextoEditarMinitramo, evaluarPropuestaPuntoConAutoEnlace } from "@/src/lib/tramo-geometria"
 import { crearRegistroMaquinariaTramo } from "@/src/lib/tramo-maquinaria-historial"
 import {
   calcularKpisTramos,
@@ -109,8 +109,10 @@ export function MapaTramosClient() {
   const [puntosRefreshKey, setPuntosRefreshKey] = useState(0)
   const [confirmModalAbierto, setConfirmModalAbierto] = useState(false)
   const [propuestaConfirm, setPropuestaConfirm] = useState<PropuestaPuntoMinitramo | null>(null)
-  const [confirmModo, setConfirmModo] = useState<"nuevo" | "corregir">("nuevo")
+  const [confirmModo, setConfirmModo] = useState<"nuevo" | "corregir" | "editar_minitramo">("nuevo")
   const [confirmPuntoId, setConfirmPuntoId] = useState<string | undefined>()
+  const [editarEtiquetaMinitramo, setEditarEtiquetaMinitramo] = useState<string | undefined>()
+  const [editarEstadoInicial, setEditarEstadoInicial] = useState<EstadoTramo | undefined>()
   const [confirmRegistroFotoId, setConfirmRegistroFotoId] = useState<string | null>(null)
   const [confirmandoAvance, setConfirmandoAvance] = useState(false)
   const [eliminandoId, setEliminandoId] = useState<string | null>(null)
@@ -269,6 +271,29 @@ export function MapaTramosClient() {
     setPropuestaConfirm(null)
     setConfirmPuntoId(undefined)
     setConfirmRegistroFotoId(null)
+    setConfirmModo("nuevo")
+    setEditarEtiquetaMinitramo(undefined)
+    setEditarEstadoInicial(undefined)
+  }
+
+  function handleSolicitarEditarMinitramo(puntoFinId: string) {
+    if (!tramoSeleccionado) return
+    const puntos = puntosAvance.filter(
+      (p) => p.tramo_id === tramoSeleccionado.id && p.confirmado
+    )
+    const ctx = contextoEditarMinitramo(tramoSeleccionado, puntos, puntoFinId)
+    if (!ctx) {
+      setPanelError("No se pudo abrir la edición de este minitramo.")
+      return
+    }
+    setPropuestaConfirm(ctx.propuestaInicial)
+    setConfirmModo("editar_minitramo")
+    setConfirmPuntoId(ctx.puntoFinId)
+    setEditarEtiquetaMinitramo(ctx.etiquetaMinitramo)
+    setEditarEstadoInicial(ctx.estadoActual)
+    setConfirmRegistroFotoId(null)
+    setConfirmModalAbierto(true)
+    setPanelError(null)
   }
 
   async function handleConfirmarPunto(payload: ConfirmarPuntoPayload) {
@@ -283,7 +308,10 @@ export function MapaTramosClient() {
         return
       }
 
-      if (payload.modo === "corregir" && payload.puntoId) {
+      if (
+        (payload.modo === "corregir" || payload.modo === "editar_minitramo") &&
+        payload.puntoId
+      ) {
         await corregirPuntoMinitramo(supabase, {
           tramo: payload.tramo,
           puntoId: payload.puntoId,
@@ -752,6 +780,7 @@ export function MapaTramosClient() {
         onSubmit={handleSubmitTramo}
         onSolicitarConfirmacionAvance={handleSolicitarConfirmacion}
         onEliminarMinitramo={isResident ? handleEliminarMinitramo : undefined}
+        onEditarMinitramo={isResident ? handleSolicitarEditarMinitramo : undefined}
         onEliminarPuntoHuérfano={isResident ? handleEliminarPuntoHuérfano : undefined}
         onEstadoMinitramoChange={isResident ? handleEstadoMinitramoChange : undefined}
         onEstadoPuntoChange={isResident ? handleEstadoPuntoChange : undefined}
@@ -796,8 +825,10 @@ export function MapaTramosClient() {
         registroFotoId={confirmRegistroFotoId}
         modo={confirmModo}
         puntoId={confirmPuntoId}
+        etiquetaMinitramo={editarEtiquetaMinitramo}
+        estadoInicialMinitramo={editarEstadoInicial}
         loading={confirmandoAvance}
-        mostrarRegistrarJornada={isResident}
+        mostrarRegistrarJornada={isResident && confirmModo !== "editar_minitramo"}
         onConfirm={handleConfirmarPunto}
         onCancel={cerrarConfirmacion}
       />

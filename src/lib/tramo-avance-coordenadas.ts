@@ -239,6 +239,7 @@ export async function corregirPuntoMinitramo(
 
   if (updateError) throw new Error(updateError.message)
 
+  await actualizarEstadoPuntoAvance(supabase, input.tramo.id, input.puntoId, input.estado)
   await renumerarRolesPuntosTramo(supabase, input.tramo)
 }
 

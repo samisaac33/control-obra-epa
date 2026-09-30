@@ -1,6 +1,6 @@
 "use client"
 
-import { Trash2 } from "lucide-react"
+import { Pencil, Trash2 } from "lucide-react"
 
 import {
   Accordion,
@@ -31,6 +31,7 @@ type MinitramosResumenAccordionProps = {
   eliminandoId?: string | null
   onEstadoChange?: (puntoFinId: string, estado: EstadoTramo) => void | Promise<void>
   onEliminar?: (grupoId: string) => void
+  onEditar?: (puntoFinId: string) => void
   compact?: boolean
 }
 
@@ -41,6 +42,7 @@ export function MinitramosResumenAccordion({
   eliminandoId = null,
   onEstadoChange,
   onEliminar,
+  onEditar,
   compact = false,
 }: MinitramosResumenAccordionProps) {
   const completos = items.filter((item): item is MinitramoCompleto => item.tipo === "completo")
@@ -78,6 +80,22 @@ export function MinitramosResumenAccordion({
                   {etiquetaEstadoTramo(item.estado)}
                 </span>
               </AccordionTrigger>
+              {isResident && onEditar ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="my-1 size-8 shrink-0 text-muted-foreground hover:text-foreground"
+                  aria-label={`Editar minitramo ${etiquetaMinitramo}`}
+                  onPointerDown={(event) => event.stopPropagation()}
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    onEditar(item.puntoFinId)
+                  }}
+                >
+                  <Pencil className="size-4" aria-hidden />
+                </Button>
+              ) : null}
               {isResident && onEliminar ? (
                 <Button
                   type="button"
