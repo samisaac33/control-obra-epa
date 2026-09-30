@@ -11,6 +11,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
+import { MapaOpcionesCapasMapa } from "@/src/components/mapa/MapaOpcionesCapasMapa"
 import { MapaTramosFiltros, type FiltrosTramos } from "@/src/components/mapa/MapaTramosFiltros"
 import { MapaTramosLeyenda } from "@/src/components/mapa/MapaTramosLeyenda"
 
@@ -19,6 +20,18 @@ type MapaTramosFiltrosSheetProps = {
   tramos: { id: string; codigo: string }[]
   semanas: string[]
   onChange: (filtros: FiltrosTramos) => void
+  triggerLabel?: string
+  camposFiltro?: Array<"estado" | "tramo" | "semana">
+  leyendaCompact?: boolean
+  capas?: {
+    vistaSoloTramos1a24: boolean
+    onVistaSoloTramos1a24Change: (value: boolean) => void
+    mostrarNumerosYPuntosAvance: boolean
+    onMostrarNumerosYPuntosAvanceChange: (value: boolean) => void
+    mostrarMinitramosTerminados: boolean
+    onMostrarMinitramosTerminadosChange: (value: boolean) => void
+    idPrefix: string
+  }
 }
 
 function filtrosActivos(filtros: FiltrosTramos): boolean {
@@ -29,20 +42,33 @@ function filtrosActivos(filtros: FiltrosTramos): boolean {
   )
 }
 
+function capasActivas(capas: MapaTramosFiltrosSheetProps["capas"]): boolean {
+  if (!capas) return false
+  return (
+    capas.vistaSoloTramos1a24 ||
+    capas.mostrarNumerosYPuntosAvance ||
+    capas.mostrarMinitramosTerminados
+  )
+}
+
 export function MapaTramosFiltrosSheet({
   filtros,
   tramos,
   semanas,
   onChange,
+  triggerLabel = "Filtros y leyenda",
+  camposFiltro = ["estado", "semana"],
+  leyendaCompact = false,
+  capas,
 }: MapaTramosFiltrosSheetProps) {
-  const activos = filtrosActivos(filtros)
+  const activos = filtrosActivos(filtros) || capasActivas(capas)
 
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button type="button" variant="outline" className="relative w-full gap-2">
+        <Button type="button" variant="outline" className="relative min-h-11 w-full gap-2">
           <SlidersHorizontal className="size-4" aria-hidden />
-          Filtros y leyenda
+          {triggerLabel}
           {activos ? (
             <span className="absolute right-3 top-1/2 size-2 -translate-y-1/2 rounded-full bg-primary" />
           ) : null}
@@ -51,7 +77,7 @@ export function MapaTramosFiltrosSheet({
       <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto" aria-label="Filtros del mapa">
         <SheetHeader>
           <SheetTitle>Filtros del mapa</SheetTitle>
-          <SheetDescription>Refine los tramos visibles y consulte la leyenda de colores.</SheetDescription>
+          <SheetDescription>Refine los tramos visibles, capas y leyenda de colores.</SheetDescription>
         </SheetHeader>
         <div className="mt-4 space-y-4">
           <MapaTramosFiltros
@@ -59,9 +85,20 @@ export function MapaTramosFiltrosSheet({
             tramos={tramos}
             semanas={semanas}
             onChange={onChange}
-            campos={["estado", "semana"]}
+            campos={camposFiltro}
           />
-          <MapaTramosLeyenda />
+          {capas ? (
+            <MapaOpcionesCapasMapa
+              vistaSoloTramos1a24={capas.vistaSoloTramos1a24}
+              onVistaSoloTramos1a24Change={capas.onVistaSoloTramos1a24Change}
+              mostrarNumerosYPuntosAvance={capas.mostrarNumerosYPuntosAvance}
+              onMostrarNumerosYPuntosAvanceChange={capas.onMostrarNumerosYPuntosAvanceChange}
+              mostrarMinitramosTerminados={capas.mostrarMinitramosTerminados}
+              onMostrarMinitramosTerminadosChange={capas.onMostrarMinitramosTerminadosChange}
+              idPrefix={capas.idPrefix}
+            />
+          ) : null}
+          <MapaTramosLeyenda compact={leyendaCompact} />
         </div>
       </SheetContent>
     </Sheet>

@@ -26,6 +26,8 @@ import { RegistrarPuntoOrigenDialog } from "@/src/components/mapa/RegistrarPunto
 import type { UbicacionUsuario } from "@/src/components/mapa/UbicacionUsuarioEnMapa"
 import { MapaTramosKpis } from "@/src/components/mapa/MapaTramosKpis"
 import { MapaTramosKpisBar } from "@/src/components/mapa/MapaTramosKpisBar"
+import { MapaTramosMapaConBarra } from "@/src/components/mapa/MapaTramosMapaConBarra"
+import { MapaTramosKpisBar } from "@/src/components/mapa/MapaTramosKpisBar"
 import { MapaTramosLeyenda } from "@/src/components/mapa/MapaTramosLeyenda"
 import { useEsViewportMovil } from "@/src/hooks/useEsViewportMovil"
 import {
@@ -490,6 +492,8 @@ export function MapaTramosClient() {
 
   const visitante = !isResident
   const visitanteMovil = visitante && esViewportMovil
+  const residenteMovil = isResident && esViewportMovil
+  const mapaAltoMovil = visitanteMovil || residenteMovil
 
   const mapaLeaflet = (
     <MapaTramosLeaflet
@@ -498,8 +502,8 @@ export function MapaTramosClient() {
       puntosAvance={puntosAvance}
       isResident={isResident}
       esViewportMovil={esViewportMovil}
-      modoMapaVisitanteMovil={visitanteMovil}
-      marcadoresCompactos={visitanteMovil}
+      modoMapaVisitanteMovil={mapaAltoMovil}
+      marcadoresCompactos={mapaAltoMovil}
       mostrarEtiquetasTramo={mostrarNumerosYPuntosAvance}
       mostrarPuntosAvance={mostrarNumerosYPuntosAvance}
       mostrarMinitramosTerminados={mostrarMinitramosTerminados}
@@ -517,18 +521,18 @@ export function MapaTramosClient() {
 
   return (
     <ProyectoModuloGuard modulo="mapaTramos">
-      <div className="p-4 sm:p-6">
-        <div className="mx-auto max-w-6xl space-y-6">
+      <div className="p-3 sm:p-6">
+        <div className="mx-auto max-w-6xl space-y-4 sm:space-y-6">
           <Card className="border-foreground/10">
             {isResident ? (
-              <CardHeader>
+              <CardHeader className={cn(residenteMovil && "pb-2")}>
                 <div className="flex items-start gap-3">
                   <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg border border-foreground/10 bg-muted/80">
                     <Map className="size-4" aria-hidden />
                   </div>
                   <div>
-                    <CardTitle>Mapa interactivo</CardTitle>
-                    <CardDescription>
+                    <CardTitle className={cn(residenteMovil && "text-base")}>Mapa interactivo</CardTitle>
+                    <CardDescription className={cn(residenteMovil && "hidden sm:block")}>
                       Haga clic en un tramo para ver detalle y registrar avance (residente). Los
                       colores indican el estado de desasolve.
                     </CardDescription>
@@ -536,7 +540,12 @@ export function MapaTramosClient() {
                 </div>
               </CardHeader>
             ) : null}
-            <CardContent className={cn("space-y-4", visitante && "pt-4")}>
+            <CardContent
+              className={cn(
+                residenteMovil ? "space-y-3 pt-0 sm:space-y-4" : "space-y-4",
+                visitante && "pt-4"
+              )}
+            >
               {error ? (
                 <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
                   {error}
@@ -594,6 +603,43 @@ export function MapaTramosClient() {
                       campos={["estado", "semana"]}
                     />
                   )}
+                </>
+              ) : residenteMovil ? (
+                <>
+                  <MapaTramosKpisBar kpis={kpis} modo="stack" chipsCarrusel compact />
+                  <MapaTramosMapaConBarra
+                    barraInferior={
+                      <MapaUbicacionResidenteBlock
+                        variant="barraMapa"
+                        tramos={tramos}
+                        puntosAvance={puntosAvance}
+                        onUbicacionChange={handleUbicacionResidenteChange}
+                        onTramoDetectado={handleTramoDetectadoDesdeGps}
+                        onSolicitarConfirmacion={handleSolicitarConfirmacion}
+                        onRequiereConfigurarOrigen={handleRequiereConfigurarOrigenDesdeMapa}
+                      />
+                    }
+                  >
+                    {mapaLeaflet}
+                  </MapaTramosMapaConBarra>
+                  <MapaTramosFiltrosSheet
+                    filtros={filtros}
+                    tramos={tramos}
+                    semanas={semanasProgramadasUnicas(tramos)}
+                    onChange={setFiltros}
+                    triggerLabel="Filtros y capas"
+                    camposFiltro={["estado", "tramo", "semana"]}
+                    leyendaCompact
+                    capas={{
+                      vistaSoloTramos1a24,
+                      onVistaSoloTramos1a24Change: setVistaSoloTramos1a24,
+                      mostrarNumerosYPuntosAvance,
+                      onMostrarNumerosYPuntosAvanceChange: setMostrarNumerosYPuntosAvance,
+                      mostrarMinitramosTerminados,
+                      onMostrarMinitramosTerminadosChange: setMostrarMinitramosTerminados,
+                      idPrefix: "residente-movil",
+                    }}
+                  />
                 </>
               ) : (
                 <>
