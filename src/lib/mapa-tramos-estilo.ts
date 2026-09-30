@@ -9,6 +9,9 @@ export const MAX_ZOOM_MAPA_TRAMOS = 14
 /** A partir de este zoom se muestran números de tramo en el mapa. */
 export const ZOOM_MIN_ETIQUETAS_TRAMO = 13
 
+/** Color único cuando la capa «Consolidado» está activa en el mapa. */
+export const COLOR_TRAMO_CONSOLIDADO = "#ffffff"
+
 const PESO_NORMAL = 6
 const PESO_SELECCIONADO = 8
 const PESO_HOVER_EXTRA = 1
@@ -54,8 +57,12 @@ export function estiloSegmentoTramoEnMapa(
   seleccionado: boolean,
   hover = false,
   estadoSegmento?: EstadoTramo,
-  mostrarMinitramosTerminados = true
+  mostrarMinitramosTerminados = true,
+  mapaConsolidado = false
 ): PathOptions {
+  if (mapaConsolidado) {
+    return estiloLineaTramo(COLOR_TRAMO_CONSOLIDADO, seleccionado, hover)
+  }
   const codigo = tramo?.codigo
   if (tipo === "minitramo" || tipo === "ejecutado") {
     const segEstado = estadoSegmento ?? "en_ejecucion"
