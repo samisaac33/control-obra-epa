@@ -29,6 +29,10 @@ import {
   pesoTramoEnMapa,
 } from "@/src/lib/mapa-tramos-estilo"
 import { MapaEtiquetasTramoPorZoom } from "@/src/components/mapa/MapaEtiquetasTramoPorZoom"
+import {
+  UbicacionUsuarioEnMapa,
+  type UbicacionUsuario,
+} from "@/src/components/mapa/UbicacionUsuarioEnMapa"
 import { htmlMarcadorPuntoAvance } from "@/src/lib/mapa-punto-marker"
 import { puntoEnEjecucionOperativo } from "@/src/lib/tramo-geometria"
 
@@ -47,6 +51,8 @@ type MapaTramosLeafletProps = {
   mostrarMinitramosTerminados?: boolean
   onTramoClick: (tramo: CanalTramo) => void
   onSegmentoVisitanteClick?: (segmento: SegmentoVisualTramo) => void
+  ubicacionUsuario?: UbicacionUsuario | null
+  seguirUbicacionUsuario?: boolean
 }
 
 type FeatureProps = {
@@ -190,6 +196,8 @@ export function MapaTramosLeaflet({
   mostrarMinitramosTerminados = false,
   onTramoClick,
   onSegmentoVisitanteClick,
+  ubicacionUsuario = null,
+  seguirUbicacionUsuario = false,
 }: MapaTramosLeafletProps) {
   const [pantallaCompleta, setPantallaCompleta] = useState(false)
   const alturaNormal = modoMapaVisitanteMovil ? ALTURA_MAPA_VISITANTE_MOVIL : ALTURA_MAPA_TRAMOS
@@ -305,6 +313,12 @@ export function MapaTramosLeaflet({
           mostrar={mostrarEtiquetasTramo}
         />
         <AjustarBounds tramos={tramos} />
+        {ubicacionUsuario ? (
+          <UbicacionUsuarioEnMapa
+            ubicacion={ubicacionUsuario}
+            seguir={seguirUbicacionUsuario}
+          />
+        ) : null}
         <GeoJSON
           key={`contorno-${layerKey}`}
           data={featureCollectionCompleta}
