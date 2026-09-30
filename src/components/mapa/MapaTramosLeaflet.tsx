@@ -28,6 +28,7 @@ import {
   MAX_ZOOM_MAPA_TRAMOS,
   pesoTramoEnMapa,
 } from "@/src/lib/mapa-tramos-estilo"
+import { MapaEtiquetasMinitramoPorZoom } from "@/src/components/mapa/MapaEtiquetasMinitramoPorZoom"
 import { MapaEtiquetasTramoPorZoom } from "@/src/components/mapa/MapaEtiquetasTramoPorZoom"
 import { useEsViewportMovil } from "@/src/hooks/useEsViewportMovil"
 import {
@@ -336,6 +337,7 @@ export function MapaTramosLeaflet({
           tramoSeleccionadoId={tramoSeleccionadoId}
           mostrar={mostrarEtiquetasTramo}
         />
+        <MapaEtiquetasMinitramoPorZoom segmentos={segmentosColoreados} />
         <AjustarBounds tramos={tramos} />
         {ubicacionUsuario ? (
           <UbicacionUsuarioEnMapa

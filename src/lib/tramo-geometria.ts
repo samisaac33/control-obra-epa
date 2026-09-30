@@ -352,6 +352,15 @@ export function formatLongitudSegmentoMapa(metros: number): string {
   return `${metros.toFixed(0)} m`
 }
 
+/** Punto medio del trazo de un segmento (p. ej. minitramo) para etiquetas en mapa. */
+export function centroSegmentoEnMapa(
+  geometria: GeoJsonLineString
+): { lat: number; lng: number } | null {
+  const len = longitudDesdeGeometria(geometria)
+  if (len <= 0) return null
+  return coordenadaDesdeAbscisa(geometria, len / 2)
+}
+
 export function infoSegmentoMapa(segmento: SegmentoVisualTramo): InfoSegmentoMapa {
   const esMinitramo = segmento.tipo === "minitramo"
   const estado =
