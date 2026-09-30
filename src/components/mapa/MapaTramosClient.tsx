@@ -121,7 +121,8 @@ export function MapaTramosClient() {
   } | null>(null)
   const esViewportMovil = useEsViewportMovil()
   const [vistaSoloTramos1a24, setVistaSoloTramos1a24] = useState(false)
-  const [mostrarNumerosYPuntosAvance, setMostrarNumerosYPuntosAvance] = useState(false)
+  const [mostrarNumerosTramo, setMostrarNumerosTramo] = useState(false)
+  const [mostrarPuntosAvance, setMostrarPuntosAvance] = useState(false)
   const [mostrarMinitramosTerminados, setMostrarMinitramosTerminados] = useState(false)
   const [ubicacionResidente, setUbicacionResidente] = useState<UbicacionUsuario | null>(null)
   const [seguirUbicacionResidente, setSeguirUbicacionResidente] = useState(false)
@@ -536,8 +537,8 @@ export function MapaTramosClient() {
       modoMapaVisitanteMovil={visitanteMovil}
       alturaResponsiveResidente={isResident}
       marcadoresCompactos={visitanteMovil}
-      mostrarEtiquetasTramo={mostrarNumerosYPuntosAvance}
-      mostrarPuntosAvance={mostrarNumerosYPuntosAvance}
+      mostrarEtiquetasTramo={mostrarNumerosTramo}
+      mostrarPuntosAvance={mostrarPuntosAvance}
       mostrarMinitramosTerminados={mostrarMinitramosTerminados}
       onTramoClick={handleTramoClick}
       onSegmentoVisitanteClick={
@@ -611,8 +612,10 @@ export function MapaTramosClient() {
                     <MapaOpcionesCapasMapa
                       vistaSoloTramos1a24={vistaSoloTramos1a24}
                       onVistaSoloTramos1a24Change={setVistaSoloTramos1a24}
-                      mostrarNumerosYPuntosAvance={mostrarNumerosYPuntosAvance}
-                      onMostrarNumerosYPuntosAvanceChange={setMostrarNumerosYPuntosAvance}
+                      mostrarNumerosTramo={mostrarNumerosTramo}
+                      onMostrarNumerosTramoChange={setMostrarNumerosTramo}
+                      mostrarPuntosAvance={mostrarPuntosAvance}
+                      onMostrarPuntosAvanceChange={setMostrarPuntosAvance}
                       mostrarMinitramosTerminados={mostrarMinitramosTerminados}
                       onMostrarMinitramosTerminadosChange={setMostrarMinitramosTerminados}
                       idPrefix="visitante"
@@ -646,8 +649,10 @@ export function MapaTramosClient() {
                     <MapaOpcionesCapasMapa
                       vistaSoloTramos1a24={vistaSoloTramos1a24}
                       onVistaSoloTramos1a24Change={setVistaSoloTramos1a24}
-                      mostrarNumerosYPuntosAvance={mostrarNumerosYPuntosAvance}
-                      onMostrarNumerosYPuntosAvanceChange={setMostrarNumerosYPuntosAvance}
+                      mostrarNumerosTramo={mostrarNumerosTramo}
+                      onMostrarNumerosTramoChange={setMostrarNumerosTramo}
+                      mostrarPuntosAvance={mostrarPuntosAvance}
+                      onMostrarPuntosAvanceChange={setMostrarPuntosAvance}
                       mostrarMinitramosTerminados={mostrarMinitramosTerminados}
                       onMostrarMinitramosTerminadosChange={setMostrarMinitramosTerminados}
                       idPrefix="residente"
@@ -687,8 +692,10 @@ export function MapaTramosClient() {
                       capas={{
                         vistaSoloTramos1a24,
                         onVistaSoloTramos1a24Change: setVistaSoloTramos1a24,
-                        mostrarNumerosYPuntosAvance,
-                        onMostrarNumerosYPuntosAvanceChange: setMostrarNumerosYPuntosAvance,
+                        mostrarNumerosTramo,
+                        onMostrarNumerosTramoChange: setMostrarNumerosTramo,
+                        mostrarPuntosAvance,
+                        onMostrarPuntosAvanceChange: setMostrarPuntosAvance,
                         mostrarMinitramosTerminados,
                         onMostrarMinitramosTerminadosChange: setMostrarMinitramosTerminados,
                         idPrefix: "residente-movil",

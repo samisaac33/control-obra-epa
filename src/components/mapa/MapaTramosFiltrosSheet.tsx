@@ -26,8 +26,10 @@ type MapaTramosFiltrosSheetProps = {
   capas?: {
     vistaSoloTramos1a24: boolean
     onVistaSoloTramos1a24Change: (value: boolean) => void
-    mostrarNumerosYPuntosAvance: boolean
-    onMostrarNumerosYPuntosAvanceChange: (value: boolean) => void
+    mostrarNumerosTramo: boolean
+    onMostrarNumerosTramoChange: (value: boolean) => void
+    mostrarPuntosAvance: boolean
+    onMostrarPuntosAvanceChange: (value: boolean) => void
     mostrarMinitramosTerminados: boolean
     onMostrarMinitramosTerminadosChange: (value: boolean) => void
     idPrefix: string
@@ -46,7 +48,8 @@ function capasActivas(capas: MapaTramosFiltrosSheetProps["capas"]): boolean {
   if (!capas) return false
   return (
     capas.vistaSoloTramos1a24 ||
-    capas.mostrarNumerosYPuntosAvance ||
+    capas.mostrarNumerosTramo ||
+    capas.mostrarPuntosAvance ||
     capas.mostrarMinitramosTerminados
   )
 }
@@ -91,8 +94,10 @@ export function MapaTramosFiltrosSheet({
             <MapaOpcionesCapasMapa
               vistaSoloTramos1a24={capas.vistaSoloTramos1a24}
               onVistaSoloTramos1a24Change={capas.onVistaSoloTramos1a24Change}
-              mostrarNumerosYPuntosAvance={capas.mostrarNumerosYPuntosAvance}
-              onMostrarNumerosYPuntosAvanceChange={capas.onMostrarNumerosYPuntosAvanceChange}
+              mostrarNumerosTramo={capas.mostrarNumerosTramo}
+              onMostrarNumerosTramoChange={capas.onMostrarNumerosTramoChange}
+              mostrarPuntosAvance={capas.mostrarPuntosAvance}
+              onMostrarPuntosAvanceChange={capas.onMostrarPuntosAvanceChange}
               mostrarMinitramosTerminados={capas.mostrarMinitramosTerminados}
               onMostrarMinitramosTerminadosChange={capas.onMostrarMinitramosTerminadosChange}
               idPrefix={capas.idPrefix}
