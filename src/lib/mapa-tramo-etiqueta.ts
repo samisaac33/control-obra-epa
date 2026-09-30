@@ -45,3 +45,24 @@ export function tamanoIconoEtiquetaTramo(etiqueta: string): { size: number; font
   if (len === 2) return { size: 26, fontSize: 11 }
   return { size: 22, fontSize: 12 }
 }
+
+function escapeHtmlEtiquetaMapa(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+}
+
+export function htmlEtiquetaDistanciaMinitramo(texto: string): string {
+  const safe = escapeHtmlEtiquetaMapa(texto)
+  return `<div class="mapa-minitramo-distancia-etiqueta" aria-hidden="true"><span>${safe}</span></div>`
+}
+
+/** Tamaño aproximado del divIcon según texto de longitud (p. ej. «125 m»). */
+export function tamanoIconoDistanciaMinitramo(texto: string): { width: number; height: number } {
+  const len = texto.length
+  if (len >= 9) return { width: 72, height: 20 }
+  if (len >= 7) return { width: 58, height: 20 }
+  return { width: 44, height: 20 }
+}
