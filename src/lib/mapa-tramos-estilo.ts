@@ -8,8 +8,10 @@ export const ALTURA_MAPA_VISITANTE_MOVIL = "min(78dvh, 640px)"
 export const MAX_ZOOM_MAPA_TRAMOS = 14
 /** A partir de este zoom se muestran números de tramo en el mapa. */
 export const ZOOM_MIN_ETIQUETAS_TRAMO = 13
-/** A partir de este zoom se muestran longitudes de tramos y minitramos en el mapa. */
+/** A partir de este zoom se muestran longitudes totales de tramos en el mapa. */
 export const ZOOM_MIN_ETIQUETAS_LONGITUD = 14
+/** Ancho máx. de la etiqueta de minitramo respecto al trazo visible (50% = no tapar más de la mitad). */
+export const FRACCION_MAX_ANCHO_ETIQUETA_SOBRE_MINITRAMO = 0.5
 /** @deprecated Use ZOOM_MIN_ETIQUETAS_LONGITUD */
 export const ZOOM_MIN_ETIQUETAS_MINITRAMO = ZOOM_MIN_ETIQUETAS_LONGITUD
 
