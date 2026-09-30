@@ -18,6 +18,12 @@ import {
 import { MapaSegmentoInfoModal } from "@/src/components/mapa/MapaSegmentoInfoModal"
 import { MapaTramosFiltrosSheet } from "@/src/components/mapa/MapaTramosFiltrosSheet"
 import { MapaOpcionesCapasMapa } from "@/src/components/mapa/MapaOpcionesCapasMapa"
+import {
+  MapaUbicacionResidenteBlock,
+  type RequiereOrigenDesdeMapaPayload,
+} from "@/src/components/mapa/MapaUbicacionResidenteBlock"
+import { RegistrarPuntoOrigenDialog } from "@/src/components/mapa/RegistrarPuntoOrigenDialog"
+import type { UbicacionUsuario } from "@/src/components/mapa/UbicacionUsuarioEnMapa"
 import { MapaTramosKpis } from "@/src/components/mapa/MapaTramosKpis"
 import { MapaTramosKpisBar } from "@/src/components/mapa/MapaTramosKpisBar"
 import { MapaTramosLeyenda } from "@/src/components/mapa/MapaTramosLeyenda"
@@ -48,6 +54,7 @@ import type {
   SegmentoVisualTramo,
   TramoPuntoAvance,
 } from "@/src/lib/tramo-geometria"
+import { evaluarPropuestaPunto } from "@/src/lib/tramo-geometria"
 import { crearRegistroMaquinariaTramo } from "@/src/lib/tramo-maquinaria-historial"
 import {
   calcularKpisTramos,
@@ -112,6 +119,15 @@ export function MapaTramosClient() {
   const [vistaSoloTramos1a24, setVistaSoloTramos1a24] = useState(false)
   const [mostrarNumerosYPuntosAvance, setMostrarNumerosYPuntosAvance] = useState(false)
   const [mostrarMinitramosTerminados, setMostrarMinitramosTerminados] = useState(false)
+  const [ubicacionResidente, setUbicacionResidente] = useState<UbicacionUsuario | null>(null)
+  const [seguirUbicacionResidente, setSeguirUbicacionResidente] = useState(false)
+  const [origenDesdeMapa, setOrigenDesdeMapa] = useState<RequiereOrigenDesdeMapaPayload | null>(
+    null
+  )
+  const [gpsPendienteTrasOrigen, setGpsPendienteTrasOrigen] = useState<{
+    lat: number
+    lng: number
+  } | null>(null)
 
   const cargarDatos = useCallback(async () => {
     setLoading(true)
@@ -321,9 +337,11 @@ export function MapaTramosClient() {
 
   async function handleGuardarOrigenInicio(
     origen: OrigenExtremoTramo,
-    opciones?: { marcarEnEjecucion?: boolean }
+    opciones?: { marcarEnEjecucion?: boolean },
+    tramoOverride?: CanalTramo
   ) {
-    if (!tramoSeleccionado) return
+    const tramo = tramoOverride ?? tramoSeleccionado
+    if (!tramo) return
     setGuardandoOrigen(true)
     setPanelError(null)
     try {
@@ -336,16 +354,19 @@ export function MapaTramosClient() {
       }
 
       await guardarOrigenTramoEInicio(supabase, {
-        tramo: tramoSeleccionado,
+        tramo,
         origen_extremo: origen,
         userId: user.id,
         marcarEnEjecucion: opciones?.marcarEnEjecucion,
       })
 
       await cargarDatos()
-      setTramoSeleccionado((prev) =>
-        prev ? { ...prev, origen_extremo: origen } : prev
-      )
+      setTramoSeleccionado((prev) => {
+        if (prev?.id === tramo.id) {
+          return { ...prev, origen_extremo: origen }
+        }
+        return prev ?? { ...tramo, origen_extremo: origen }
+      })
       setPuntosRefreshKey((k) => k + 1)
     } catch (err) {
       setPanelError(err instanceof Error ? err.message : "No se pudo configurar el inicio.")
@@ -353,6 +374,62 @@ export function MapaTramosClient() {
     } finally {
       setGuardandoOrigen(false)
     }
+  }
+
+  const handleUbicacionResidenteChange = useCallback(
+    (ubicacion: UbicacionUsuario | null, seguir: boolean) => {
+      setUbicacionResidente(ubicacion)
+      setSeguirUbicacionResidente(seguir)
+    },
+    []
+  )
+
+  const handleTramoDetectadoDesdeGps = useCallback((tramo: CanalTramo | null) => {
+    if (tramo) {
+      setTramoSeleccionado(tramo)
+    }
+  }, [])
+
+  function abrirConfirmacionDesdeGps(
+    tramo: CanalTramo,
+    lat: number,
+    lng: number,
+    puntosFuente: TramoPuntoAvance[] = puntosAvance
+  ) {
+    const puntosDelTramo = puntosFuente.filter((p) => p.tramo_id === tramo.id && p.confirmado)
+    const { propuesta, motivoBloqueo } = evaluarPropuestaPunto(tramo, puntosDelTramo, lat, lng)
+    if (!propuesta) {
+      setPanelError(motivoBloqueo ?? "No se pudo calcular el punto en este tramo.")
+      return
+    }
+    handleSolicitarConfirmacion(propuesta)
+  }
+
+  function handleRequiereConfigurarOrigenDesdeMapa(payload: RequiereOrigenDesdeMapaPayload) {
+    setTramoSeleccionado(payload.tramo)
+    setGpsPendienteTrasOrigen({ lat: payload.lat, lng: payload.lng })
+    setOrigenDesdeMapa(payload)
+    setPanelError(null)
+  }
+
+  async function handleConfirmarOrigenDesdeMapa(
+    origen: OrigenExtremoTramo,
+    opciones?: { marcarEnEjecucion?: boolean }
+  ) {
+    if (!origenDesdeMapa) return
+    const coords = gpsPendienteTrasOrigen ?? {
+      lat: origenDesdeMapa.lat,
+      lng: origenDesdeMapa.lng,
+    }
+    const tramoBase = origenDesdeMapa.tramo
+    await handleGuardarOrigenInicio(origen, opciones, tramoBase)
+    setOrigenDesdeMapa(null)
+    setGpsPendienteTrasOrigen(null)
+
+    const puntosFresh = await cargarPuntosAvancePorProyecto(supabase, proyectoId)
+    setPuntosAvance(puntosFresh)
+    const tramoActualizado = { ...tramoBase, origen_extremo: origen }
+    abrirConfirmacionDesdeGps(tramoActualizado, coords.lat, coords.lng, puntosFresh)
   }
 
   async function handleEstadoPuntoChange(puntoId: string, estado: EstadoTramo | null) {
@@ -433,6 +510,8 @@ export function MapaTramosClient() {
           : (segmento) =>
               setTramoVisitanteModal({ tramo: segmento.tramo, segmentoDestacado: segmento })
       }
+      ubicacionUsuario={isResident ? ubicacionResidente : null}
+      seguirUbicacionUsuario={isResident ? seguirUbicacionResidente : false}
     />
   )
 
@@ -527,6 +606,14 @@ export function MapaTramosClient() {
                     onMostrarMinitramosTerminadosChange={setMostrarMinitramosTerminados}
                     idPrefix="residente"
                   />
+                  <MapaUbicacionResidenteBlock
+                    tramos={tramos}
+                    puntosAvance={puntosAvance}
+                    onUbicacionChange={handleUbicacionResidenteChange}
+                    onTramoDetectado={handleTramoDetectadoDesdeGps}
+                    onSolicitarConfirmacion={handleSolicitarConfirmacion}
+                    onRequiereConfigurarOrigen={handleRequiereConfigurarOrigenDesdeMapa}
+                  />
                   <MapaTramosKpis kpis={kpis} />
                   <MapaTramosFiltros
                     filtros={filtros}
@@ -583,6 +670,17 @@ export function MapaTramosClient() {
           }}
         />
       ) : null}
+
+      <RegistrarPuntoOrigenDialog
+        open={origenDesdeMapa !== null}
+        tramo={origenDesdeMapa?.tramo ?? null}
+        loading={guardandoOrigen}
+        onConfirmar={handleConfirmarOrigenDesdeMapa}
+        onCancel={() => {
+          setOrigenDesdeMapa(null)
+          setGpsPendienteTrasOrigen(null)
+        }}
+      />
 
       <ConfirmarPuntoMinitramoModal
         open={confirmModalAbierto}
