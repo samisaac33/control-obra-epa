@@ -8,9 +8,11 @@ import {
   esRolValido,
   extremoInicioCoord,
   intervalosDesdePuntos,
+  letraDesdeOrden,
   metrosDesdeIntervalos,
   metrosMinitramosTerminadosTramo,
   ordenDesdeRol,
+  puntosOrdenadosPorAbscisaLogica,
   puntosOrdenadosTramo,
   type PuntoMarcado,
   type TramoPuntoAvance,
@@ -203,7 +205,7 @@ export async function confirmarPuntoMinitramo(
 
   if (insertError) throw new Error(insertError.message)
 
-  await recalcularAvanceTramoDesdePuntos(supabase, input.tramo)
+  await renumerarRolesPuntosTramo(supabase, input.tramo)
 
   if (input.registro_foto_id) {
     const { error: fotoError } = await supabase
@@ -237,7 +239,35 @@ export async function corregirPuntoMinitramo(
 
   if (updateError) throw new Error(updateError.message)
 
-  await recalcularAvanceTramoDesdePuntos(supabase, input.tramo)
+  await renumerarRolesPuntosTramo(supabase, input.tramo)
+}
+
+export async function renumerarRolesPuntosTramo(
+  supabase: SupabaseClient,
+  tramo: CanalTramo
+): Promise<void> {
+  const { data, error } = await supabase
+    .from("tramo_puntos_avance")
+    .select("*")
+    .eq("tramo_id", tramo.id)
+    .eq("confirmado", true)
+
+  if (error) throw new Error(error.message)
+
+  const puntos = (data ?? []).map((row) => normalizarPuntoAvance(row as Record<string, unknown>))
+  const cadena = puntosOrdenadosPorAbscisaLogica(tramo, puntos, tramo.id)
+
+  for (let i = 0; i < cadena.length; i++) {
+    const rol = letraDesdeOrden(i + 1)
+    const { error: updateError } = await supabase
+      .from("tramo_puntos_avance")
+      .update({ rol, punto_enlace_id: null })
+      .eq("id", cadena[i].id)
+
+    if (updateError) throw new Error(updateError.message)
+  }
+
+  await recalcularAvanceTramoDesdePuntos(supabase, tramo)
 }
 
 export async function eliminarMinitramo(
@@ -252,7 +282,7 @@ export async function eliminarMinitramo(
 
   if (deleteError) throw new Error(deleteError.message)
 
-  await recalcularAvanceTramoDesdePuntos(supabase, tramo)
+  await renumerarRolesPuntosTramo(supabase, tramo)
 }
 
 export type GuardarOrigenTramoEInicioInput = {

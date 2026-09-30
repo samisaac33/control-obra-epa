@@ -46,6 +46,7 @@ export type TramoDetalleResidenteContenidoProps = {
     opciones?: ConfirmarOrigenInicioOptions
   ) => Promise<void>
   onReiniciarOrigenTramo?: () => Promise<void>
+  onRenumerarPuntosTramo?: () => void | Promise<void>
 }
 
 export function TramoDetalleResidenteContenido({
@@ -69,6 +70,7 @@ export function TramoDetalleResidenteContenido({
   onEvidenciaSubida,
   onGuardarOrigenInicio,
   onReiniciarOrigenTramo,
+  onRenumerarPuntosTramo,
 }: TramoDetalleResidenteContenidoProps) {
   const [adminDatosAbierto, setAdminDatosAbierto] = useState(false)
 
@@ -135,6 +137,7 @@ export function TramoDetalleResidenteContenido({
           onSolicitarConfirmacion={(propuesta, opciones) =>
             onSolicitarConfirmacionAvance(propuesta, opciones)
           }
+          onRenumerarPuntos={onRenumerarPuntosTramo}
         />
       ) : null}
       <TramoEvidenciaUploadBlock

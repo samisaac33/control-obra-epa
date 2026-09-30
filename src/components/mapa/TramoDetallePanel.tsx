@@ -49,6 +49,7 @@ type TramoDetallePanelProps = {
   guardandoOrigen?: boolean
   onReiniciarOrigenTramo?: () => Promise<void>
   reiniciandoOrigen?: boolean
+  onRenumerarPuntosTramo?: () => void | Promise<void>
   /** Mapa en viewport móvil: bottom sheet fijo en lugar de Sheet lateral. */
   detalleEnBottomSheet?: boolean
 }
@@ -77,6 +78,7 @@ export function TramoDetallePanel({
   guardandoOrigen = false,
   onReiniciarOrigenTramo,
   reiniciandoOrigen = false,
+  onRenumerarPuntosTramo,
   detalleEnBottomSheet = false,
 }: TramoDetallePanelProps) {
   const handleOpenChange = (nextOpen: boolean) => {
@@ -102,6 +104,7 @@ export function TramoDetallePanel({
     onEvidenciaSubida,
     onGuardarOrigenInicio,
     onReiniciarOrigenTramo,
+    onRenumerarPuntosTramo,
   }
 
   if (detalleEnBottomSheet && !isResident) {
