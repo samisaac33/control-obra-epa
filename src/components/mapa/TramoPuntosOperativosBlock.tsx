@@ -14,6 +14,7 @@ import {
   colorEstadoTramo,
   type EstadoTramo,
 } from "@/src/data/tramos/types"
+import { SELECT_CONTENT_POPPER_EN_MAPA } from "@/src/lib/mapa-capas-z"
 import {
   etiquetaLetra,
   puntoEnEjecucionOperativo,
@@ -111,7 +112,7 @@ export function TramoPuntosOperativosBlock({
                     <SelectContent
                       position="popper"
                       side="bottom"
-                      className="z-[90] max-h-[min(16rem,50dvh)] w-(--radix-select-trigger-width)"
+                      className={SELECT_CONTENT_POPPER_EN_MAPA}
                     >
                       <SelectItem value="sin_asignar">Sin estado operativo</SelectItem>
                       {ESTADOS_TRAMO.map((estado) => (

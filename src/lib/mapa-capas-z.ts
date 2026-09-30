@@ -4,3 +4,6 @@ export const Z_MAPA_PANTALLA_COMPLETA = "z-[200]" as const
 export const Z_MAPA_OVERLAY = "z-[210]" as const
 export const Z_MAPA_DIALOG = "z-[220]" as const
 export const Z_MAPA_SELECT_EN_DIALOG = "z-[230]" as const
+
+/** SelectContent (Radix portal) por encima de bottom sheets del mapa (z 210). */
+export const SELECT_CONTENT_POPPER_EN_MAPA = `${Z_MAPA_SELECT_EN_DIALOG} max-h-[min(16rem,50dvh)] w-(--radix-select-trigger-width)` as const
