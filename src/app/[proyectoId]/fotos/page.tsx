@@ -489,6 +489,7 @@ function FotosPageContent() {
         estado: payload.estado,
         registro_foto_id: payload.registro_foto_id,
         userId: user.id,
+        punto_enlace_id: payload.puntoEnlaceId ?? null,
       })
 
       await cargarDatosDesasolve()

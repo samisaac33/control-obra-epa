@@ -5,15 +5,24 @@ import { Crosshair, Link2, LocateFixed, LocateOff } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 
 import { Button } from "@/components/ui/button"
+import { Label } from "@/components/ui/label"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { SELECT_CONTENT_POPPER_EN_MAPA } from "@/src/lib/mapa-capas-z"
 import type { CanalTramo } from "@/src/data/tramos/types"
 import { useGeolocalizacion } from "@/src/hooks/use-geolocalizacion"
 import { MinitramosResumenAccordion } from "@/src/components/mapa/MinitramosResumenAccordion"
 import type { EstadoTramo } from "@/src/data/tramos/types"
 import {
-  calcularPropuestaPunto,
   DISTANCIA_MAX_DETECCION_M,
   etiquetaLetra,
   evaluarPropuestaPunto,
+  evaluarPropuestaPuntoConAutoEnlace,
   intervalosDesdePuntos,
   metrosDesdeIntervalos,
   ordenDesdeRol,
@@ -104,6 +113,7 @@ export function MarcarPuntoTramoBlock({
   const [lat, setLat] = useState(() => posicionInicial.lat)
   const [lng, setLng] = useState(() => posicionInicial.lng)
   const [seguirEnMapa, setSeguirEnMapa] = useState(false)
+  const [desdePuntoId, setDesdePuntoId] = useState<string>("auto")
 
   const {
     estado: estadoGps,
@@ -116,7 +126,12 @@ export function MarcarPuntoTramoBlock({
 
   const propuestaEnlazarGps = useMemo(() => {
     if (!posicionGps || modoMarcado === "corregir") return null
-    return calcularPropuestaPunto(tramo, puntosDelTramo, posicionGps.lat, posicionGps.lng)
+    return evaluarPropuestaPuntoConAutoEnlace(
+      tramo,
+      puntosDelTramo,
+      posicionGps.lat,
+      posicionGps.lng
+    ).propuesta
   }, [tramo, puntosDelTramo, posicionGps, modoMarcado])
 
   const opcionesPropuesta = useMemo(
@@ -130,10 +145,16 @@ export function MarcarPuntoTramoBlock({
     [modoMarcado, ultimoPunto]
   )
 
-  const evaluacionPropuesta = useMemo(
-    () => evaluarPropuestaPunto(tramo, puntosDelTramo, lat, lng, opcionesPropuesta),
-    [tramo, puntosDelTramo, lat, lng, opcionesPropuesta]
-  )
+  const evaluacionPropuesta = useMemo(() => {
+    const opts =
+      desdePuntoId !== "auto"
+        ? { ...opcionesPropuesta, puntoEnlaceId: desdePuntoId }
+        : opcionesPropuesta
+    if (modoMarcado === "nuevo" && desdePuntoId === "auto") {
+      return evaluarPropuestaPuntoConAutoEnlace(tramo, puntosDelTramo, lat, lng, opts)
+    }
+    return evaluarPropuestaPunto(tramo, puntosDelTramo, lat, lng, opts)
+  }, [tramo, puntosDelTramo, lat, lng, opcionesPropuesta, modoMarcado, desdePuntoId])
 
   const propuestaEfectiva = evaluacionPropuesta.propuesta
   const motivoBloqueo = evaluacionPropuesta.motivoBloqueo
@@ -175,19 +196,6 @@ export function MarcarPuntoTramoBlock({
     setLng(posicionInicial.lng)
   }, [tramo.id, puntosDelTramo.length, modoMarcado, ultimoPunto?.id, posicionInicial.lat, posicionInicial.lng])
 
-  useEffect(() => {
-    if (modoMarcado !== "nuevo" || !posicionMinimaValida || propuestaEfectiva) return
-    if (!motivoBloqueo?.includes("hacia adelante")) return
-    setLat(posicionMinimaValida.lat)
-    setLng(posicionMinimaValida.lng)
-  }, [
-    modoMarcado,
-    posicionMinimaValida,
-    propuestaEfectiva,
-    motivoBloqueo,
-    tramo.id,
-    puntosDelTramo.length,
-  ])
 
   useEffect(() => {
     return () => detenerSeguimiento()
@@ -241,8 +249,8 @@ export function MarcarPuntoTramoBlock({
       <div>
         <h4 className="text-sm font-medium">Marcar minitramos en mapa</h4>
         <p className="mt-1 text-xs text-muted-foreground">
-          Confirme punto a punto (A, B, C, D…). Cada par consecutivo (A–B, B–C…) forma un segmento
-          GPS coloreado según su estado operativo (véase leyenda del mapa).
+          Confirme punto a punto (A, B, C, D…). Cada minitramo enlaza dos puntos (p. ej. A–B o B–D
+          si el avance retrocede). El modo automático elige el enlace, incluido sentido contrario.
         </p>
       </div>
 
@@ -273,6 +281,27 @@ export function MarcarPuntoTramoBlock({
           ? `Corrigiendo punto ${letraActual}`
           : `Próximo punto: ${letraActual}`}
       </p>
+
+      {modoMarcado === "nuevo" && puntosDelTramo.length >= 1 ? (
+        <div className="space-y-1.5">
+          <Label htmlFor="desde-punto-minitramo" className="text-xs">
+            Desde punto (inicio del minitramo)
+          </Label>
+          <Select value={desdePuntoId} onValueChange={setDesdePuntoId}>
+            <SelectTrigger id="desde-punto-minitramo" className="h-9 w-full text-xs">
+              <SelectValue placeholder="Automático" />
+            </SelectTrigger>
+            <SelectContent position="popper" side="bottom" className={SELECT_CONTENT_POPPER_EN_MAPA}>
+              <SelectItem value="auto">Automático (continuar o retroceder)</SelectItem>
+              {puntosDelTramo.map((p) => (
+                <SelectItem key={p.id} value={p.id}>
+                  Punto {p.rol ? etiquetaLetra(p.rol) : "?"}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      ) : null}
 
       <div className="flex flex-wrap gap-2">
         <Button

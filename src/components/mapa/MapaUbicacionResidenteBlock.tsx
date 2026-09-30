@@ -21,7 +21,7 @@ import type { PropuestaPuntoMinitramo, TramoPuntoAvance } from "@/src/lib/tramo-
 import {
   detectarTramoDesdeCoordenada,
   DISTANCIA_MAX_DETECCION_M,
-  evaluarPropuestaPunto,
+  evaluarPropuestaPuntoConAutoEnlace,
   tramoRequiereConfigurarOrigen,
 } from "@/src/lib/tramo-geometria"
 
@@ -124,6 +124,19 @@ export function MapaUbicacionResidenteProvider({
     onTramoDetectado?.(deteccion?.tramo ?? null)
   }, [deteccion, onTramoDetectado])
 
+  const evaluacionRegistro = useMemo(() => {
+    if (!posicionEfectiva || !deteccion) return null
+    const puntosDelTramo = puntosAvance.filter(
+      (p) => p.tramo_id === deteccion.tramo.id && p.confirmado
+    )
+    return evaluarPropuestaPuntoConAutoEnlace(
+      deteccion.tramo,
+      puntosDelTramo,
+      posicionEfectiva.lat,
+      posicionEfectiva.lng
+    )
+  }, [posicionEfectiva, deteccion, puntosAvance])
+
   const limpiarBusquedaCoordenadas = useCallback(() => {
     setPosicionManual(null)
   }, [])
@@ -168,7 +181,10 @@ export function MapaUbicacionResidenteProvider({
       return
     }
 
-    const { propuesta, motivoBloqueo } = evaluarPropuestaPunto(tramo, puntosDelTramo, lat, lng)
+    const { propuesta, motivoBloqueo } = evaluacionRegistro ?? {
+      propuesta: null,
+      motivoBloqueo: null,
+    }
     if (!propuesta) {
       setMensajeLocal(motivoBloqueo ?? "No se pudo calcular el punto en este tramo.")
       return
@@ -177,11 +193,15 @@ export function MapaUbicacionResidenteProvider({
     onSolicitarConfirmacion(propuesta)
   }
 
-  const puedeRegistrar = Boolean(posicionEfectiva && deteccion)
+  const puedeRegistrar = Boolean(evaluacionRegistro?.propuesta)
 
   const lineaEstado = (() => {
     if (posicionManual) {
       if (mensajeLocal) return mensajeLocal
+      if (evaluacionRegistro?.propuesta?.letraParInicio) {
+        return `${deteccion?.tramo.codigo ?? ""} · Minitramo ${evaluacionRegistro.propuesta.letraParInicio}–${evaluacionRegistro.propuesta.letra} · búsqueda`
+      }
+      if (evaluacionRegistro?.motivoBloqueo) return evaluacionRegistro.motivoBloqueo
       if (deteccion) {
         return `${deteccion.tramo.codigo} · ${deteccion.proyeccion.distancia_m.toFixed(0)} m · búsqueda`
       }
@@ -190,6 +210,10 @@ export function MapaUbicacionResidenteProvider({
     if (estadoGps === "solicitando") return "Obteniendo ubicación GPS…"
     if (errorGps) return errorGps
     if (mensajeLocal) return mensajeLocal
+    if (evaluacionRegistro?.propuesta?.letraParInicio) {
+      return `${deteccion?.tramo.codigo ?? ""} · Minitramo ${evaluacionRegistro.propuesta.letraParInicio}–${evaluacionRegistro.propuesta.letra} · ${deteccion?.proyeccion.distancia_m.toFixed(0) ?? "?"} m`
+    }
+    if (evaluacionRegistro?.motivoBloqueo) return evaluacionRegistro.motivoBloqueo
     if (!posicionEfectiva) return null
     if (deteccion) {
       return `${deteccion.tramo.codigo} · ${deteccion.proyeccion.distancia_m.toFixed(0)} m · ±${posicionEfectiva.precision_m.toFixed(0)} m`

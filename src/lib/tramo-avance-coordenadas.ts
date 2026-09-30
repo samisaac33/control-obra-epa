@@ -39,6 +39,7 @@ export function normalizarPuntoAvance(row: Record<string, unknown>): TramoPuntoA
     rol: esRolValido(rolRaw) ? rolRaw : null,
     grupo_id: row.grupo_id ? String(row.grupo_id) : null,
     estado_minitramo: parseEstadoMinitramo(row.estado_minitramo),
+    punto_enlace_id: row.punto_enlace_id ? String(row.punto_enlace_id) : null,
   }
 }
 
@@ -172,6 +173,7 @@ export type ConfirmarPuntoMinitramoInput = {
   estado: EstadoTramo
   registro_foto_id?: string | null
   userId: string
+  punto_enlace_id?: string | null
 }
 
 export async function confirmarPuntoMinitramo(
@@ -196,6 +198,7 @@ export async function confirmarPuntoMinitramo(
     rol: input.rol,
     grupo_id: null,
     estado_minitramo: estadoMinitramoInicial,
+    punto_enlace_id: input.punto_enlace_id ?? null,
   })
 
   if (insertError) throw new Error(insertError.message)
