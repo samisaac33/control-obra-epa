@@ -307,7 +307,8 @@ export function intervalosDesdePuntos(
 
   const tramoGeom = tramo as CanalTramo | null | undefined
   return minitramosDesdePuntos(puntos, tramoId, tramo).map((mt) => {
-    if (tramoGeom?.geometria?.coordinates?.length >= 2) {
+    const coords = tramoGeom?.geometria?.coordinates
+    if (tramoGeom && coords && coords.length >= 2) {
       const inicio = abscisaEfectivaPuntoEnTramo(tramoGeom, mt.puntoInicio)
       const fin = abscisaEfectivaPuntoEnTramo(tramoGeom, mt.puntoFin)
       return [Math.min(inicio, fin), Math.max(inicio, fin)] as IntervaloAbscisa
