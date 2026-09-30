@@ -11,8 +11,8 @@ export const ZOOM_MIN_ETIQUETAS_TRAMO = 13
 /** A partir de este zoom se muestran longitudes en cada minitramo. */
 export const ZOOM_MIN_ETIQUETAS_MINITRAMO = 14
 
-/** Color único cuando la capa «Consolidado» está activa en el mapa. */
-export const COLOR_TRAMO_CONSOLIDADO = "#ffffff"
+/** Color turquesa único cuando la capa «Consolidado» está activa en el mapa. */
+export const COLOR_TRAMO_CONSOLIDADO = "#2ec4b0"
 
 const PESO_NORMAL = 6
 const PESO_SELECCIONADO = 8
