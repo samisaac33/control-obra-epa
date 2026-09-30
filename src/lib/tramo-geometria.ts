@@ -812,6 +812,44 @@ export function resumenMinitramos(
   return items
 }
 
+export type ContextoEditarMinitramo = {
+  propuestaInicial: PropuestaPuntoMinitramo
+  puntoFinId: string
+  etiquetaMinitramo: string
+  estadoActual: EstadoTramo
+}
+
+/** Contexto para abrir el modal de edición de un minitramo ya confirmado (punto final). */
+export function contextoEditarMinitramo(
+  tramo: CanalTramo,
+  puntos: TramoPuntoAvance[],
+  puntoFinId: string
+): ContextoEditarMinitramo | null {
+  const minitramos = minitramosDesdePuntos(puntos, tramo.id, tramo)
+  const mt = minitramos.find((m) => m.puntoFin.id === puntoFinId)
+  if (!mt || !esRolValido(mt.puntoFin.rol)) return null
+
+  const propuestaInicial = calcularPropuestaPunto(
+    tramo,
+    puntos,
+    mt.puntoFin.lat,
+    mt.puntoFin.lng,
+    {
+      excluirPuntoId: puntoFinId,
+      orden: ordenDesdeRol(mt.puntoFin.rol),
+      puntoEnlaceId: mt.puntoInicio.id,
+    }
+  )
+  if (!propuestaInicial) return null
+
+  return {
+    propuestaInicial,
+    puntoFinId,
+    etiquetaMinitramo: `${etiquetaLetra(mt.letraInicio)}–${etiquetaLetra(mt.letraFin)}`,
+    estadoActual: estadoEfectivoMinitramo(mt.puntoFin),
+  }
+}
+
 /** Siguiente posición válida (mínimo avance lógico) después del último punto confirmado. */
 export function posicionMinimaDespuesUltimoPunto(
   tramo: CanalTramo,

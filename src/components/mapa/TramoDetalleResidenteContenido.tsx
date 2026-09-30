@@ -38,6 +38,7 @@ export type TramoDetalleResidenteContenidoProps = {
     opciones?: SolicitarConfirmacionAvanceOptions
   ) => void
   onEliminarMinitramo?: (grupoId: string) => void
+  onEditarMinitramo?: (puntoFinId: string) => void
   onEstadoMinitramoChange?: (puntoFinId: string, estado: EstadoTramo) => void | Promise<void>
   onEstadoPuntoChange?: (puntoId: string, estado: EstadoTramo | null) => void | Promise<void>
   onEvidenciaSubida?: () => void
@@ -65,6 +66,7 @@ export function TramoDetalleResidenteContenido({
   onSubmit,
   onSolicitarConfirmacionAvance,
   onEliminarMinitramo,
+  onEditarMinitramo,
   onEstadoMinitramoChange,
   onEstadoPuntoChange,
   onEvidenciaSubida,
@@ -134,6 +136,7 @@ export function TramoDetalleResidenteContenido({
           eliminandoId={eliminandoId}
           onEstadoMinitramoChange={onEstadoMinitramoChange}
           onEliminarMinitramo={onEliminarMinitramo}
+          onEditarMinitramo={onEditarMinitramo}
           onSolicitarConfirmacion={(propuesta, opciones) =>
             onSolicitarConfirmacionAvance(propuesta, opciones)
           }
@@ -160,6 +163,7 @@ export function TramoDetalleResidenteContenido({
         guardandoEstadoMinitramoId={guardandoEstadoMinitramoId}
         onEstadoMinitramoChange={onEstadoMinitramoChange}
         onEliminarMinitramo={onEliminarMinitramo}
+        onEditarMinitramo={onEditarMinitramo}
         eliminandoId={eliminandoId}
       />
 

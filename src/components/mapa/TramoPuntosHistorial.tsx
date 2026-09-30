@@ -17,6 +17,7 @@ type TramoPuntosHistorialProps = {
   guardandoEstadoMinitramoId?: string | null
   onEstadoMinitramoChange?: (puntoFinId: string, estado: EstadoTramo) => void | Promise<void>
   onEliminarMinitramo?: (grupoId: string) => void
+  onEditarMinitramo?: (puntoFinId: string) => void
   onEliminarPuntoHuérfano?: (puntoId: string) => void
   eliminandoId?: string | null
 }
@@ -29,6 +30,7 @@ export function TramoPuntosHistorial({
   guardandoEstadoMinitramoId = null,
   onEstadoMinitramoChange,
   onEliminarMinitramo,
+  onEditarMinitramo,
   eliminandoId = null,
 }: TramoPuntosHistorialProps) {
   const [puntos, setPuntos] = useState<TramoPuntoAvance[]>([])
@@ -80,6 +82,7 @@ export function TramoPuntosHistorial({
         guardandoEstadoId={guardandoEstadoMinitramoId}
         onEstadoChange={onEstadoMinitramoChange}
         onEliminar={onEliminarMinitramo}
+        onEditar={onEditarMinitramo}
         eliminandoId={eliminandoId}
       />
     </div>
