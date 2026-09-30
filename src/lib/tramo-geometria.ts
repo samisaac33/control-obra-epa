@@ -742,14 +742,14 @@ export function resumenMinitramos(
 ): ItemResumenMinitramo[] {
   const items: ItemResumenMinitramo[] = []
   for (const mt of minitramosDesdePuntos(puntos, tramoId, tramo)) {
-    const abscisaInicio =
-      tramo?.geometria?.coordinates?.length >= 2
-        ? abscisaEfectivaPuntoEnTramo(tramo, mt.puntoInicio)
-        : mt.puntoInicio.abscisa_m
-    const abscisaFin =
-      tramo?.geometria?.coordinates?.length >= 2
-        ? abscisaEfectivaPuntoEnTramo(tramo, mt.puntoFin)
-        : mt.puntoFin.abscisa_m
+    const tieneGeometriaKmz =
+      tramo != null && tramo.geometria.coordinates.length >= 2
+    const abscisaInicio = tieneGeometriaKmz
+      ? abscisaEfectivaPuntoEnTramo(tramo, mt.puntoInicio)
+      : mt.puntoInicio.abscisa_m
+    const abscisaFin = tieneGeometriaKmz
+      ? abscisaEfectivaPuntoEnTramo(tramo, mt.puntoFin)
+      : mt.puntoFin.abscisa_m
     items.push({
       tipo: "completo",
       letraInicio: mt.letraInicio,
