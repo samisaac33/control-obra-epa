@@ -26,6 +26,7 @@ type MapaUbicacionResidenteBlockProps = {
   tramos: CanalTramo[]
   puntosAvance: TramoPuntoAvance[]
   className?: string
+  variant?: "default" | "barraMapa"
   onUbicacionChange: (ubicacion: UbicacionUsuario | null, seguir: boolean) => void
   onTramoDetectado?: (tramo: CanalTramo | null) => void
   onSolicitarConfirmacion: (propuesta: PropuestaPuntoMinitramo) => void
@@ -36,12 +37,14 @@ export function MapaUbicacionResidenteBlock({
   tramos,
   puntosAvance,
   className,
+  variant = "default",
   onUbicacionChange,
   onTramoDetectado,
   onSolicitarConfirmacion,
   onRequiereConfigurarOrigen,
 }: MapaUbicacionResidenteBlockProps) {
   const [mensajeLocal, setMensajeLocal] = useState<string | null>(null)
+  const esBarraMapa = variant === "barraMapa"
 
   const {
     estado: estadoGps,
@@ -107,6 +110,79 @@ export function MapaUbicacionResidenteBlock({
 
   const puedeRegistrar = Boolean(posicionGps && deteccion)
 
+  const lineaEstado = (() => {
+    if (estadoGps === "solicitando") return "Obteniendo ubicación GPS…"
+    if (errorGps) return errorGps
+    if (mensajeLocal) return mensajeLocal
+    if (!posicionGps) return null
+    if (deteccion) {
+      return `${deteccion.tramo.codigo} · ${deteccion.proyeccion.distancia_m.toFixed(0)} m · ±${posicionGps.precision_m.toFixed(0)} m`
+    }
+    return `Sin tramo a ${DISTANCIA_MAX_DETECCION_M} m — acérquese al canal`
+  })()
+
+  const botones = (
+    <div className="flex gap-2">
+      <Button
+        type="button"
+        variant={gpsActivo ? "secondary" : "outline"}
+        size={esBarraMapa ? "default" : "sm"}
+        className={cn(
+          "min-h-11 flex-1 text-xs shadow-sm",
+          esBarraMapa && "border-foreground/15 bg-background/95 backdrop-blur-sm"
+        )}
+        onClick={handleToggleGps}
+      >
+        {gpsActivo ? (
+          <>
+            <LocateOff className="mr-1.5 size-4 shrink-0" aria-hidden />
+            Ocultar GPS
+          </>
+        ) : (
+          <>
+            <Crosshair className="mr-1.5 size-4 shrink-0" aria-hidden />
+            Mi ubicación
+          </>
+        )}
+      </Button>
+      {gpsActivo && posicionGps ? (
+        <Button
+          type="button"
+          size={esBarraMapa ? "default" : "sm"}
+          className="min-h-11 flex-1 text-xs shadow-sm"
+          disabled={!puedeRegistrar}
+          onClick={handleRegistrarPunto}
+        >
+          <MapPin className="mr-1.5 size-4 shrink-0" aria-hidden />
+          Registrar punto
+        </Button>
+      ) : null}
+    </div>
+  )
+
+  if (esBarraMapa) {
+    return (
+      <div className={cn("space-y-1.5", className)}>
+        {lineaEstado ? (
+          <p
+            className={cn(
+              "rounded-md px-2 py-1 text-center text-[11px] leading-snug shadow-sm backdrop-blur-sm",
+              errorGps || mensajeLocal
+                ? "border border-destructive/30 bg-destructive/10 text-destructive"
+                : deteccion
+                  ? "border border-foreground/10 bg-background/90 text-foreground"
+                  : "border border-amber-500/30 bg-amber-500/10 text-amber-950 dark:text-amber-100"
+            )}
+            role={errorGps || mensajeLocal ? "alert" : undefined}
+          >
+            {lineaEstado}
+          </p>
+        ) : null}
+        {botones}
+      </div>
+    )
+  }
+
   return (
     <div
       className={cn(
@@ -115,46 +191,17 @@ export function MapaUbicacionResidenteBlock({
       )}
     >
       <p className="text-xs font-medium text-foreground">Ubicación en campo</p>
-      <div className="flex flex-wrap gap-2">
-        <Button
-          type="button"
-          variant={gpsActivo ? "default" : "outline"}
-          size="sm"
-          className="h-9 flex-1 text-xs sm:flex-none"
-          onClick={handleToggleGps}
-        >
-          {gpsActivo ? (
-            <>
-              <LocateOff className="mr-1.5 size-3.5" aria-hidden />
-              Ocultar ubicación
-            </>
-          ) : (
-            <>
-              <Crosshair className="mr-1.5 size-3.5" aria-hidden />
-              Mostrar mi ubicación
-            </>
-          )}
-        </Button>
-        {gpsActivo && posicionGps ? (
-          <Button
-            type="button"
-            size="sm"
-            className="h-9 flex-1 text-xs sm:flex-none"
-            disabled={!puedeRegistrar}
-            onClick={handleRegistrarPunto}
-          >
-            <MapPin className="mr-1.5 size-3.5" aria-hidden />
-            Registrar punto
-          </Button>
-        ) : null}
-      </div>
+      {botones}
 
       {estadoGps === "solicitando" ? (
         <p className="text-xs text-muted-foreground">Obteniendo ubicación GPS…</p>
       ) : null}
 
       {errorGps ? (
-        <p className="rounded-md border border-destructive/30 bg-destructive/10 px-2 py-1.5 text-xs text-destructive" role="alert">
+        <p
+          className="rounded-md border border-destructive/30 bg-destructive/10 px-2 py-1.5 text-xs text-destructive"
+          role="alert"
+        >
           {errorGps}
         </p>
       ) : null}

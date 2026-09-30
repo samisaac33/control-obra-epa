@@ -10,6 +10,7 @@ type MapaTramosKpisBarProps = {
   kpis: KpisTramos
   modo: "stack" | "overlay"
   chipsCarrusel?: boolean
+  compact?: boolean
   className?: string
 }
 
