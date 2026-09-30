@@ -2,6 +2,7 @@
 
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -15,6 +16,7 @@ import { cn } from "@/lib/utils"
 import type { UbicacionUsuario } from "@/src/components/mapa/UbicacionUsuarioEnMapa"
 import type { CanalTramo } from "@/src/data/tramos/types"
 import { useGeolocalizacion } from "@/src/hooks/use-geolocalizacion"
+import { parseCoordenadasDesdeTexto } from "@/src/lib/coordenadas-evidencia"
 import type { PropuestaPuntoMinitramo, TramoPuntoAvance } from "@/src/lib/tramo-geometria"
 import {
   detectarTramoDesdeCoordenada,
@@ -36,12 +38,17 @@ type MapaUbicacionResidenteProviderProps = {
   onTramoDetectado?: (tramo: CanalTramo | null) => void
   onSolicitarConfirmacion: (propuesta: PropuestaPuntoMinitramo) => void
   onRequiereConfigurarOrigen: (payload: RequiereOrigenDesdeMapaPayload) => void
+  onCentrarMapaEnUbicacion?: () => void
   children: ReactNode
 }
+
+type BuscarCoordenadasResult = { ok: true } | { ok: false; error: string }
 
 type UbicacionResidenteContextValue = {
   estadoGps: ReturnType<typeof useGeolocalizacion>["estado"]
   posicionGps: ReturnType<typeof useGeolocalizacion>["posicion"]
+  posicionManual: UbicacionUsuario | null
+  posicionEfectiva: UbicacionUsuario | null
   errorGps: string | null
   gpsActivo: boolean
   deteccion: ReturnType<typeof detectarTramoDesdeCoordenada>
@@ -50,16 +57,22 @@ type UbicacionResidenteContextValue = {
   mensajeLocal: string | null
   handleToggleGps: () => void
   handleRegistrarPunto: () => void
+  buscarPorTextoCoordenadas: (texto: string) => BuscarCoordenadasResult
+  limpiarBusquedaCoordenadas: () => void
 }
 
 const UbicacionResidenteContext = createContext<UbicacionResidenteContextValue | null>(null)
 
-function useUbicacionResidenteContext() {
+export function useMapaUbicacionResidente() {
   const ctx = useContext(UbicacionResidenteContext)
   if (!ctx) {
-    throw new Error("MapaUbicacionResidente* debe usarse dentro de MapaUbicacionResidenteProvider")
+    throw new Error("useMapaUbicacionResidente debe usarse dentro de MapaUbicacionResidenteProvider")
   }
   return ctx
+}
+
+function useUbicacionResidenteContext() {
+  return useMapaUbicacionResidente()
 }
 
 export function MapaUbicacionResidenteProvider({
@@ -69,9 +82,11 @@ export function MapaUbicacionResidenteProvider({
   onTramoDetectado,
   onSolicitarConfirmacion,
   onRequiereConfigurarOrigen,
+  onCentrarMapaEnUbicacion,
   children,
 }: MapaUbicacionResidenteProviderProps) {
   const [mensajeLocal, setMensajeLocal] = useState<string | null>(null)
+  const [posicionManual, setPosicionManual] = useState<UbicacionUsuario | null>(null)
 
   const {
     estado: estadoGps,
@@ -82,11 +97,16 @@ export function MapaUbicacionResidenteProvider({
     detenerSeguimiento,
   } = useGeolocalizacion()
 
-  const seguirUbicacion = gpsActivo && Boolean(posicionGps)
+  const posicionEfectiva = useMemo(
+    () => posicionManual ?? (gpsActivo ? posicionGps : null),
+    [posicionManual, gpsActivo, posicionGps]
+  )
+
+  const seguirUbicacion = gpsActivo && Boolean(posicionGps) && !posicionManual
 
   useEffect(() => {
-    onUbicacionChange(posicionGps, seguirUbicacion)
-  }, [posicionGps, seguirUbicacion, onUbicacionChange])
+    onUbicacionChange(posicionEfectiva, seguirUbicacion)
+  }, [posicionEfectiva, seguirUbicacion, onUbicacionChange])
 
   useEffect(() => {
     return () => {
@@ -96,13 +116,35 @@ export function MapaUbicacionResidenteProvider({
   }, [detenerSeguimiento, onUbicacionChange])
 
   const deteccion = useMemo(() => {
-    if (!posicionGps) return null
-    return detectarTramoDesdeCoordenada(posicionGps.lat, posicionGps.lng, tramos)
-  }, [posicionGps, tramos])
+    if (!posicionEfectiva) return null
+    return detectarTramoDesdeCoordenada(posicionEfectiva.lat, posicionEfectiva.lng, tramos)
+  }, [posicionEfectiva, tramos])
 
   useEffect(() => {
     onTramoDetectado?.(deteccion?.tramo ?? null)
   }, [deteccion, onTramoDetectado])
+
+  const limpiarBusquedaCoordenadas = useCallback(() => {
+    setPosicionManual(null)
+  }, [])
+
+  const buscarPorTextoCoordenadas = useCallback(
+    (texto: string): BuscarCoordenadasResult => {
+      setMensajeLocal(null)
+      const parsed = parseCoordenadasDesdeTexto(texto)
+      if (!parsed.ok) {
+        return { ok: false, error: parsed.error }
+      }
+      setPosicionManual({
+        lat: parsed.lat,
+        lng: parsed.lng,
+        precision_m: parsed.precision_m,
+      })
+      onCentrarMapaEnUbicacion?.()
+      return { ok: true }
+    },
+    [onCentrarMapaEnUbicacion]
+  )
 
   function handleToggleGps() {
     setMensajeLocal(null)
@@ -115,10 +157,10 @@ export function MapaUbicacionResidenteProvider({
 
   function handleRegistrarPunto() {
     setMensajeLocal(null)
-    if (!posicionGps || !deteccion) return
+    if (!posicionEfectiva || !deteccion) return
 
     const { tramo } = deteccion
-    const { lat, lng } = posicionGps
+    const { lat, lng } = posicionEfectiva
     const puntosDelTramo = puntosAvance.filter((p) => p.tramo_id === tramo.id && p.confirmado)
 
     if (tramoRequiereConfigurarOrigen(tramo, puntosDelTramo)) {
@@ -135,15 +177,22 @@ export function MapaUbicacionResidenteProvider({
     onSolicitarConfirmacion(propuesta)
   }
 
-  const puedeRegistrar = Boolean(posicionGps && deteccion)
+  const puedeRegistrar = Boolean(posicionEfectiva && deteccion)
 
   const lineaEstado = (() => {
+    if (posicionManual) {
+      if (mensajeLocal) return mensajeLocal
+      if (deteccion) {
+        return `${deteccion.tramo.codigo} · ${deteccion.proyeccion.distancia_m.toFixed(0)} m · búsqueda`
+      }
+      return `Sin tramo a ${DISTANCIA_MAX_DETECCION_M} m — acérquese al canal`
+    }
     if (estadoGps === "solicitando") return "Obteniendo ubicación GPS…"
     if (errorGps) return errorGps
     if (mensajeLocal) return mensajeLocal
-    if (!posicionGps) return null
+    if (!posicionEfectiva) return null
     if (deteccion) {
-      return `${deteccion.tramo.codigo} · ${deteccion.proyeccion.distancia_m.toFixed(0)} m · ±${posicionGps.precision_m.toFixed(0)} m`
+      return `${deteccion.tramo.codigo} · ${deteccion.proyeccion.distancia_m.toFixed(0)} m · ±${posicionEfectiva.precision_m.toFixed(0)} m`
     }
     return `Sin tramo a ${DISTANCIA_MAX_DETECCION_M} m — acérquese al canal`
   })()
@@ -151,6 +200,8 @@ export function MapaUbicacionResidenteProvider({
   const value: UbicacionResidenteContextValue = {
     estadoGps,
     posicionGps,
+    posicionManual,
+    posicionEfectiva,
     errorGps,
     gpsActivo,
     deteccion,
@@ -159,6 +210,8 @@ export function MapaUbicacionResidenteProvider({
     mensajeLocal,
     handleToggleGps,
     handleRegistrarPunto,
+    buscarPorTextoCoordenadas,
+    limpiarBusquedaCoordenadas,
   }
 
   return (
@@ -167,7 +220,7 @@ export function MapaUbicacionResidenteProvider({
 }
 
 function BotonesUbicacionResidente({ barraMapa }: { barraMapa?: boolean }) {
-  const { gpsActivo, posicionGps, puedeRegistrar, handleToggleGps, handleRegistrarPunto } =
+  const { gpsActivo, posicionEfectiva, puedeRegistrar, handleToggleGps, handleRegistrarPunto } =
     useUbicacionResidenteContext()
 
   return (
@@ -194,7 +247,7 @@ function BotonesUbicacionResidente({ barraMapa }: { barraMapa?: boolean }) {
           </>
         )}
       </Button>
-      {gpsActivo && posicionGps ? (
+      {posicionEfectiva ? (
         <Button
           type="button"
           size={barraMapa ? "default" : "sm"}
@@ -213,19 +266,21 @@ function BotonesUbicacionResidente({ barraMapa }: { barraMapa?: boolean }) {
 export function MapaUbicacionResidenteBarra({ className }: { className?: string }) {
   const { lineaEstado, errorGps, mensajeLocal, deteccion } = useUbicacionResidenteContext()
 
+  const esAlerta = Boolean(errorGps || mensajeLocal)
+
   return (
     <div className={cn("space-y-1.5", className)}>
       {lineaEstado ? (
         <p
           className={cn(
             "rounded-md px-2 py-1 text-center text-[11px] leading-snug shadow-sm backdrop-blur-sm",
-            errorGps || mensajeLocal
+            esAlerta
               ? "border border-destructive/30 bg-destructive/10 text-destructive"
               : deteccion
                 ? "border border-foreground/10 bg-background/90 text-foreground"
                 : "border border-amber-500/30 bg-amber-500/10 text-amber-950 dark:text-amber-100"
           )}
-          role={errorGps || mensajeLocal ? "alert" : undefined}
+          role={esAlerta ? "alert" : undefined}
         >
           {lineaEstado}
         </p>
@@ -238,7 +293,8 @@ export function MapaUbicacionResidenteBarra({ className }: { className?: string 
 export function MapaUbicacionResidentePanel({ className }: { className?: string }) {
   const {
     estadoGps,
-    posicionGps,
+    posicionEfectiva,
+    posicionManual,
     errorGps,
     deteccion,
     mensajeLocal,
@@ -254,11 +310,11 @@ export function MapaUbicacionResidentePanel({ className }: { className?: string 
       <p className="text-xs font-medium text-foreground">Ubicación en campo</p>
       <BotonesUbicacionResidente />
 
-      {estadoGps === "solicitando" ? (
+      {estadoGps === "solicitando" && !posicionManual ? (
         <p className="text-xs text-muted-foreground">Obteniendo ubicación GPS…</p>
       ) : null}
 
-      {errorGps ? (
+      {errorGps && !posicionManual ? (
         <p
           className="rounded-md border border-destructive/30 bg-destructive/10 px-2 py-1.5 text-xs text-destructive"
           role="alert"
@@ -267,12 +323,14 @@ export function MapaUbicacionResidentePanel({ className }: { className?: string 
         </p>
       ) : null}
 
-      {posicionGps ? (
+      {posicionEfectiva ? (
         <div className="space-y-1 text-xs text-muted-foreground">
           <p>
-            Precisión GPS:{" "}
+            {posicionManual ? "Coordenadas buscadas" : "Precisión GPS"}:{" "}
             <span className="font-medium text-foreground">
-              ±{posicionGps.precision_m.toFixed(0)} m
+              {posicionManual
+                ? `${posicionEfectiva.lat.toFixed(6)}, ${posicionEfectiva.lng.toFixed(6)}`
+                : `±${posicionEfectiva.precision_m.toFixed(0)} m`}
             </span>
           </p>
           {deteccion ? (
