@@ -229,7 +229,13 @@ function KpisHero({
   )
 }
 
-export function MapaTramosKpisBar({ kpis, modo, chipsCarrusel, className }: MapaTramosKpisBarProps) {
+export function MapaTramosKpisBar({
+  kpis,
+  modo,
+  chipsCarrusel,
+  compact = false,
+  className,
+}: MapaTramosKpisBarProps) {
   if (modo === "overlay") {
     return (
       <div
@@ -247,7 +253,12 @@ export function MapaTramosKpisBar({ kpis, modo, chipsCarrusel, className }: Mapa
 
   return (
     <div className={className}>
-      <KpisHero kpis={kpis} mostrarChips chipsCarrusel={chipsCarrusel} />
+      <KpisHero
+        kpis={kpis}
+        compact={compact}
+        mostrarChips
+        chipsCarrusel={chipsCarrusel}
+      />
     </div>
   )
 }

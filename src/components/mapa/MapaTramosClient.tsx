@@ -19,7 +19,9 @@ import { MapaSegmentoInfoModal } from "@/src/components/mapa/MapaSegmentoInfoMod
 import { MapaTramosFiltrosSheet } from "@/src/components/mapa/MapaTramosFiltrosSheet"
 import { MapaOpcionesCapasMapa } from "@/src/components/mapa/MapaOpcionesCapasMapa"
 import {
-  MapaUbicacionResidenteBlock,
+  MapaUbicacionResidenteBarra,
+  MapaUbicacionResidentePanel,
+  MapaUbicacionResidenteProvider,
   type RequiereOrigenDesdeMapaPayload,
 } from "@/src/components/mapa/MapaUbicacionResidenteBlock"
 import { RegistrarPuntoOrigenDialog } from "@/src/components/mapa/RegistrarPuntoOrigenDialog"
@@ -27,7 +29,6 @@ import type { UbicacionUsuario } from "@/src/components/mapa/UbicacionUsuarioEnM
 import { MapaTramosKpis } from "@/src/components/mapa/MapaTramosKpis"
 import { MapaTramosKpisBar } from "@/src/components/mapa/MapaTramosKpisBar"
 import { MapaTramosMapaConBarra } from "@/src/components/mapa/MapaTramosMapaConBarra"
-import { MapaTramosKpisBar } from "@/src/components/mapa/MapaTramosKpisBar"
 import { MapaTramosLeyenda } from "@/src/components/mapa/MapaTramosLeyenda"
 import { useEsViewportMovil } from "@/src/hooks/useEsViewportMovil"
 import {
@@ -492,8 +493,15 @@ export function MapaTramosClient() {
 
   const visitante = !isResident
   const visitanteMovil = visitante && esViewportMovil
-  const residenteMovil = isResident && esViewportMovil
-  const mapaAltoMovil = visitanteMovil || residenteMovil
+
+  const ubicacionResidenteProps = {
+    tramos,
+    puntosAvance,
+    onUbicacionChange: handleUbicacionResidenteChange,
+    onTramoDetectado: handleTramoDetectadoDesdeGps,
+    onSolicitarConfirmacion: handleSolicitarConfirmacion,
+    onRequiereConfigurarOrigen: handleRequiereConfigurarOrigenDesdeMapa,
+  }
 
   const mapaLeaflet = (
     <MapaTramosLeaflet
@@ -502,8 +510,9 @@ export function MapaTramosClient() {
       puntosAvance={puntosAvance}
       isResident={isResident}
       esViewportMovil={esViewportMovil}
-      modoMapaVisitanteMovil={mapaAltoMovil}
-      marcadoresCompactos={mapaAltoMovil}
+      modoMapaVisitanteMovil={visitanteMovil}
+      alturaResponsiveResidente={isResident}
+      marcadoresCompactos={visitanteMovil}
       mostrarEtiquetasTramo={mostrarNumerosYPuntosAvance}
       mostrarPuntosAvance={mostrarNumerosYPuntosAvance}
       mostrarMinitramosTerminados={mostrarMinitramosTerminados}
@@ -525,14 +534,14 @@ export function MapaTramosClient() {
         <div className="mx-auto max-w-6xl space-y-4 sm:space-y-6">
           <Card className="border-foreground/10">
             {isResident ? (
-              <CardHeader className={cn(residenteMovil && "pb-2")}>
+              <CardHeader className="max-md:pb-2">
                 <div className="flex items-start gap-3">
                   <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg border border-foreground/10 bg-muted/80">
                     <Map className="size-4" aria-hidden />
                   </div>
                   <div>
-                    <CardTitle className={cn(residenteMovil && "text-base")}>Mapa interactivo</CardTitle>
-                    <CardDescription className={cn(residenteMovil && "hidden sm:block")}>
+                    <CardTitle className="max-md:text-base">Mapa interactivo</CardTitle>
+                    <CardDescription className="hidden md:block">
                       Haga clic en un tramo para ver detalle y registrar avance (residente). Los
                       colores indican el estado de desasolve.
                     </CardDescription>
@@ -542,7 +551,7 @@ export function MapaTramosClient() {
             ) : null}
             <CardContent
               className={cn(
-                residenteMovil ? "space-y-3 pt-0 sm:space-y-4" : "space-y-4",
+                isResident ? "max-md:space-y-3 max-md:pt-0 space-y-4" : "space-y-4",
                 visitante && "pt-4"
               )}
             >
@@ -604,72 +613,61 @@ export function MapaTramosClient() {
                     />
                   )}
                 </>
-              ) : residenteMovil ? (
-                <>
-                  <MapaTramosKpisBar kpis={kpis} modo="stack" chipsCarrusel compact />
+              ) : (
+                <MapaUbicacionResidenteProvider {...ubicacionResidenteProps}>
+                  <div className="md:hidden">
+                    <MapaTramosKpisBar kpis={kpis} modo="stack" chipsCarrusel compact />
+                  </div>
+                  <div className="hidden space-y-4 md:block">
+                    <MapaOpcionesCapasMapa
+                      vistaSoloTramos1a24={vistaSoloTramos1a24}
+                      onVistaSoloTramos1a24Change={setVistaSoloTramos1a24}
+                      mostrarNumerosYPuntosAvance={mostrarNumerosYPuntosAvance}
+                      onMostrarNumerosYPuntosAvanceChange={setMostrarNumerosYPuntosAvance}
+                      mostrarMinitramosTerminados={mostrarMinitramosTerminados}
+                      onMostrarMinitramosTerminadosChange={setMostrarMinitramosTerminados}
+                      idPrefix="residente"
+                    />
+                    <MapaUbicacionResidentePanel />
+                    <MapaTramosKpis kpis={kpis} />
+                    <MapaTramosFiltros
+                      filtros={filtros}
+                      tramos={tramos}
+                      semanas={semanasProgramadasUnicas(tramos)}
+                      onChange={setFiltros}
+                    />
+                    <MapaTramosLeyenda />
+                  </div>
                   <MapaTramosMapaConBarra
                     barraInferior={
-                      <MapaUbicacionResidenteBlock
-                        variant="barraMapa"
-                        tramos={tramos}
-                        puntosAvance={puntosAvance}
-                        onUbicacionChange={handleUbicacionResidenteChange}
-                        onTramoDetectado={handleTramoDetectadoDesdeGps}
-                        onSolicitarConfirmacion={handleSolicitarConfirmacion}
-                        onRequiereConfigurarOrigen={handleRequiereConfigurarOrigenDesdeMapa}
-                      />
+                      <div className="md:hidden">
+                        <MapaUbicacionResidenteBarra />
+                      </div>
                     }
                   >
                     {mapaLeaflet}
                   </MapaTramosMapaConBarra>
-                  <MapaTramosFiltrosSheet
-                    filtros={filtros}
-                    tramos={tramos}
-                    semanas={semanasProgramadasUnicas(tramos)}
-                    onChange={setFiltros}
-                    triggerLabel="Filtros y capas"
-                    camposFiltro={["estado", "tramo", "semana"]}
-                    leyendaCompact
-                    capas={{
-                      vistaSoloTramos1a24,
-                      onVistaSoloTramos1a24Change: setVistaSoloTramos1a24,
-                      mostrarNumerosYPuntosAvance,
-                      onMostrarNumerosYPuntosAvanceChange: setMostrarNumerosYPuntosAvance,
-                      mostrarMinitramosTerminados,
-                      onMostrarMinitramosTerminadosChange: setMostrarMinitramosTerminados,
-                      idPrefix: "residente-movil",
-                    }}
-                  />
-                </>
-              ) : (
-                <>
-                  <MapaOpcionesCapasMapa
-                    vistaSoloTramos1a24={vistaSoloTramos1a24}
-                    onVistaSoloTramos1a24Change={setVistaSoloTramos1a24}
-                    mostrarNumerosYPuntosAvance={mostrarNumerosYPuntosAvance}
-                    onMostrarNumerosYPuntosAvanceChange={setMostrarNumerosYPuntosAvance}
-                    mostrarMinitramosTerminados={mostrarMinitramosTerminados}
-                    onMostrarMinitramosTerminadosChange={setMostrarMinitramosTerminados}
-                    idPrefix="residente"
-                  />
-                  <MapaUbicacionResidenteBlock
-                    tramos={tramos}
-                    puntosAvance={puntosAvance}
-                    onUbicacionChange={handleUbicacionResidenteChange}
-                    onTramoDetectado={handleTramoDetectadoDesdeGps}
-                    onSolicitarConfirmacion={handleSolicitarConfirmacion}
-                    onRequiereConfigurarOrigen={handleRequiereConfigurarOrigenDesdeMapa}
-                  />
-                  <MapaTramosKpis kpis={kpis} />
-                  <MapaTramosFiltros
-                    filtros={filtros}
-                    tramos={tramos}
-                    semanas={semanasProgramadasUnicas(tramos)}
-                    onChange={setFiltros}
-                  />
-                  <MapaTramosLeyenda />
-                  {mapaLeaflet}
-                </>
+                  <div className="md:hidden">
+                    <MapaTramosFiltrosSheet
+                      filtros={filtros}
+                      tramos={tramos}
+                      semanas={semanasProgramadasUnicas(tramos)}
+                      onChange={setFiltros}
+                      triggerLabel="Filtros y capas"
+                      camposFiltro={["estado", "tramo", "semana"]}
+                      leyendaCompact
+                      capas={{
+                        vistaSoloTramos1a24,
+                        onVistaSoloTramos1a24Change: setVistaSoloTramos1a24,
+                        mostrarNumerosYPuntosAvance,
+                        onMostrarNumerosYPuntosAvanceChange: setMostrarNumerosYPuntosAvance,
+                        mostrarMinitramosTerminados,
+                        onMostrarMinitramosTerminadosChange: setMostrarMinitramosTerminados,
+                        idPrefix: "residente-movil",
+                      }}
+                    />
+                  </div>
+                </MapaUbicacionResidenteProvider>
               )}
             </CardContent>
           </Card>

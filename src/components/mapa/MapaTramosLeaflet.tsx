@@ -29,6 +29,7 @@ import {
   pesoTramoEnMapa,
 } from "@/src/lib/mapa-tramos-estilo"
 import { MapaEtiquetasTramoPorZoom } from "@/src/components/mapa/MapaEtiquetasTramoPorZoom"
+import { useEsViewportMovil } from "@/src/hooks/useEsViewportMovil"
 import {
   UbicacionUsuarioEnMapa,
   type UbicacionUsuario,
@@ -45,6 +46,8 @@ type MapaTramosLeafletProps = {
   isResident: boolean
   esViewportMovil: boolean
   modoMapaVisitanteMovil?: boolean
+  /** Altura del contenedor vía Tailwind (78dvh móvil / 65vh desktop) para residente */
+  alturaResponsiveResidente?: boolean
   marcadoresCompactos?: boolean
   mostrarEtiquetasTramo?: boolean
   mostrarPuntosAvance?: boolean
@@ -190,6 +193,7 @@ export function MapaTramosLeaflet({
   isResident,
   esViewportMovil,
   modoMapaVisitanteMovil = false,
+  alturaResponsiveResidente = false,
   marcadoresCompactos = false,
   mostrarEtiquetasTramo = true,
   mostrarPuntosAvance = true,
@@ -200,8 +204,16 @@ export function MapaTramosLeaflet({
   seguirUbicacionUsuario = false,
 }: MapaTramosLeafletProps) {
   const [pantallaCompleta, setPantallaCompleta] = useState(false)
+  const esViewportMovilHook = useEsViewportMovil()
   const alturaNormal = modoMapaVisitanteMovil ? ALTURA_MAPA_VISITANTE_MOVIL : ALTURA_MAPA_TRAMOS
-  const alturaMapaContenedor = pantallaCompleta ? "100%" : alturaNormal
+  const usaAlturaCssResidente = alturaResponsiveResidente && !pantallaCompleta
+  const alturaMapaContenedor = pantallaCompleta
+    ? "100%"
+    : usaAlturaCssResidente
+      ? "100%"
+      : alturaNormal
+  const marcadoresRealmenteCompactos =
+    marcadoresCompactos || (alturaResponsiveResidente && esViewportMovilHook)
 
   useEffect(() => {
     if (!pantallaCompleta) return
@@ -220,8 +232,8 @@ export function MapaTramosLeaflet({
     window.addEventListener("keydown", onKeyDown)
     return () => window.removeEventListener("keydown", onKeyDown)
   }, [pantallaCompleta])
-  const iconSize = marcadoresCompactos ? 16 : 20
-  const fontSize = marcadoresCompactos ? 9 : 10
+  const iconSize = marcadoresRealmenteCompactos ? 16 : 20
+  const fontSize = marcadoresRealmenteCompactos ? 9 : 10
   const featureCollectionCompleta = useMemo(
     () => featureCollectionDesdeTramos(tramos),
     [tramos]
@@ -252,8 +264,11 @@ export function MapaTramosLeaflet({
   if (tramos.length === 0) {
     return (
       <div
-        className="flex items-center justify-center rounded-xl border border-dashed border-foreground/15 bg-muted/20 text-sm text-muted-foreground"
-        style={{ height: alturaNormal }}
+        className={cn(
+          "flex items-center justify-center rounded-xl border border-dashed border-foreground/15 bg-muted/20 text-sm text-muted-foreground",
+          usaAlturaCssResidente && "h-[min(78dvh,640px)] md:h-[min(65vh,560px)]"
+        )}
+        style={usaAlturaCssResidente ? undefined : { height: alturaNormal }}
       >
         No hay tramos visibles con los filtros actuales.
       </div>
@@ -272,7 +287,10 @@ export function MapaTramosLeaflet({
               "fixed inset-0 flex h-dvh w-screen max-w-none flex-col overflow-hidden bg-background pt-[env(safe-area-inset-top,0px)] pb-[env(safe-area-inset-bottom,0px)]",
               Z_MAPA_PANTALLA_COMPLETA
             )
-          : "relative overflow-hidden rounded-xl border border-foreground/10 ring-1 ring-foreground/5"
+          : cn(
+              "relative overflow-hidden rounded-xl border border-foreground/10 ring-1 ring-foreground/5",
+              usaAlturaCssResidente && "h-[min(78dvh,640px)] md:h-[min(65vh,560px)]"
+            )
       )}
     >
       <Button
