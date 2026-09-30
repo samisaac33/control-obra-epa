@@ -1,5 +1,8 @@
 /** Capas z-index del mapa (Tailwind arbitrary values). */
 
+/** Barra GPS / controles flotantes sobre el canvas del mapa (no portales). */
+export const Z_MAPA_BARRA_CONTROLES = "z-[50]" as const
+
 export const Z_MAPA_PANTALLA_COMPLETA = "z-[200]" as const
 export const Z_MAPA_OVERLAY = "z-[210]" as const
 export const Z_MAPA_DIALOG = "z-[220]" as const

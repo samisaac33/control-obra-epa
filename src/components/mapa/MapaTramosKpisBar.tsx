@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 
+import { Z_MAPA_BARRA_CONTROLES } from "@/src/lib/mapa-capas-z"
 import { cn } from "@/lib/utils"
 import type { KpisTramos } from "@/src/lib/tramos-avance"
 import { formatearNumero } from "@/src/lib/maquinaria-resumen"
@@ -240,7 +241,8 @@ export function MapaTramosKpisBar({
     return (
       <div
         className={cn(
-          "pointer-events-none absolute inset-x-0 bottom-0 z-[400] flex flex-col gap-2 p-2 sm:p-3",
+          "pointer-events-none absolute inset-x-0 bottom-0 flex flex-col gap-2 p-2 sm:p-3",
+          Z_MAPA_BARRA_CONTROLES,
           className
         )}
       >

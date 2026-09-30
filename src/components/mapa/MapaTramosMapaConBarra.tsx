@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react"
 
+import { Z_MAPA_BARRA_CONTROLES } from "@/src/lib/mapa-capas-z"
 import { cn } from "@/lib/utils"
 
 type MapaTramosMapaConBarraProps = {
@@ -20,7 +21,10 @@ export function MapaTramosMapaConBarra({
       {children}
       {barraInferior ? (
         <div
-          className="pointer-events-none absolute inset-x-0 bottom-0 z-[500] p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
+          className={cn(
+            "pointer-events-none absolute inset-x-0 bottom-0 p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]",
+            Z_MAPA_BARRA_CONTROLES
+          )}
           aria-live="polite"
         >
           <div className="pointer-events-auto">{barraInferior}</div>
