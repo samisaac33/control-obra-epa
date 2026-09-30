@@ -1,5 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
 
+import { propagarRenombreEquipoEnHistorialTramo } from "@/src/lib/tramo-maquinaria-historial"
+
 export type ProyectoEquipoMaquinaria = {
   id: string
   proyecto_id: string
@@ -78,6 +80,21 @@ export async function actualizarEquipoMaquinaria(
   equipoId: string,
   input: ActualizarEquipoMaquinariaInput
 ): Promise<void> {
+  let nombreAnterior: string | null = null
+  let proyectoId: string | null = null
+
+  if (input.nombre !== undefined) {
+    const { data: actual, error: errorActual } = await supabase
+      .from("proyecto_equipos_maquinaria")
+      .select("proyecto_id, nombre")
+      .eq("id", equipoId)
+      .single()
+
+    if (errorActual) throw new Error(errorActual.message)
+    nombreAnterior = String(actual.nombre)
+    proyectoId = String(actual.proyecto_id)
+  }
+
   const payload: Record<string, unknown> = {
     updated_at: new Date().toISOString(),
   }
@@ -102,5 +119,17 @@ export async function actualizarEquipoMaquinaria(
       throw new Error("Ya existe un equipo con ese nombre en este proyecto.")
     }
     throw new Error(error.message)
+  }
+
+  if (input.nombre !== undefined && nombreAnterior != null && proyectoId != null) {
+    const nombreNuevo = input.nombre.trim()
+    if (nombreAnterior.trim().toLowerCase() !== nombreNuevo.toLowerCase()) {
+      await propagarRenombreEquipoEnHistorialTramo(supabase, {
+        equipoId,
+        proyectoId,
+        nombreAnterior,
+        nombreNuevo,
+      })
+    }
   }
 }
