@@ -56,6 +56,7 @@ type MapaTramosLeafletProps = {
   onSegmentoVisitanteClick?: (segmento: SegmentoVisualTramo) => void
   ubicacionUsuario?: UbicacionUsuario | null
   seguirUbicacionUsuario?: boolean
+  centrarUbicacionVersion?: number
 }
 
 type FeatureProps = {
@@ -202,6 +203,7 @@ export function MapaTramosLeaflet({
   onSegmentoVisitanteClick,
   ubicacionUsuario = null,
   seguirUbicacionUsuario = false,
+  centrarUbicacionVersion = 0,
 }: MapaTramosLeafletProps) {
   const [pantallaCompleta, setPantallaCompleta] = useState(false)
   const esViewportMovilHook = useEsViewportMovil()
@@ -335,6 +337,7 @@ export function MapaTramosLeaflet({
           <UbicacionUsuarioEnMapa
             ubicacion={ubicacionUsuario}
             seguir={seguirUbicacionUsuario}
+            centrarVersion={centrarUbicacionVersion}
           />
         ) : null}
         <GeoJSON

@@ -13,6 +13,8 @@ export type UbicacionUsuario = {
 type UbicacionUsuarioEnMapaProps = {
   ubicacion: UbicacionUsuario
   seguir?: boolean
+  /** Incrementar para centrar el mapa una vez (p. ej. búsqueda manual). */
+  centrarVersion?: number
 }
 
 const iconoUbicacionUsuario = L.divIcon({
@@ -41,9 +43,29 @@ function SeguirUbicacionEnMapa({
   return null
 }
 
+function CentrarUbicacionEnMapa({
+  lat,
+  lng,
+  centrarVersion,
+}: {
+  lat: number
+  lng: number
+  centrarVersion: number
+}) {
+  const map = useMap()
+
+  useEffect(() => {
+    if (centrarVersion <= 0) return
+    map.panTo([lat, lng], { animate: true, duration: 0.5 })
+  }, [map, lat, lng, centrarVersion])
+
+  return null
+}
+
 export function UbicacionUsuarioEnMapa({
   ubicacion,
   seguir = false,
+  centrarVersion = 0,
 }: UbicacionUsuarioEnMapaProps) {
   const { lat, lng, precision_m } = ubicacion
   const radioPrecision = Math.max(precision_m, 5)
@@ -81,6 +103,7 @@ export function UbicacionUsuarioEnMapa({
         }
       `}</style>
       <SeguirUbicacionEnMapa lat={lat} lng={lng} seguir={seguir} />
+      <CentrarUbicacionEnMapa lat={lat} lng={lng} centrarVersion={centrarVersion} />
       <Circle
         center={[lat, lng]}
         radius={radioPrecision}

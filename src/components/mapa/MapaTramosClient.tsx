@@ -18,6 +18,7 @@ import {
 import { MapaSegmentoInfoModal } from "@/src/components/mapa/MapaSegmentoInfoModal"
 import { MapaTramosFiltrosSheet } from "@/src/components/mapa/MapaTramosFiltrosSheet"
 import { MapaOpcionesCapasMapa } from "@/src/components/mapa/MapaOpcionesCapasMapa"
+import { MapaBuscarCoordenadasResidente } from "@/src/components/mapa/MapaBuscarCoordenadasResidente"
 import {
   MapaUbicacionResidenteBarra,
   MapaUbicacionResidentePanel,
@@ -131,6 +132,7 @@ export function MapaTramosClient() {
     lat: number
     lng: number
   } | null>(null)
+  const [centrarUbicacionKey, setCentrarUbicacionKey] = useState(0)
 
   const cargarDatos = useCallback(async () => {
     setLoading(true)
@@ -393,6 +395,10 @@ export function MapaTramosClient() {
     }
   }, [])
 
+  const handleCentrarMapaEnUbicacion = useCallback(() => {
+    setCentrarUbicacionKey((k) => k + 1)
+  }, [])
+
   function abrirConfirmacionDesdeGps(
     tramo: CanalTramo,
     lat: number,
@@ -494,14 +500,25 @@ export function MapaTramosClient() {
   const visitante = !isResident
   const visitanteMovil = visitante && esViewportMovil
 
-  const ubicacionResidenteProps = {
-    tramos,
-    puntosAvance,
-    onUbicacionChange: handleUbicacionResidenteChange,
-    onTramoDetectado: handleTramoDetectadoDesdeGps,
-    onSolicitarConfirmacion: handleSolicitarConfirmacion,
-    onRequiereConfigurarOrigen: handleRequiereConfigurarOrigenDesdeMapa,
-  }
+  const ubicacionResidenteProps = useMemo(
+    () => ({
+      tramos,
+      puntosAvance,
+      onUbicacionChange: handleUbicacionResidenteChange,
+      onTramoDetectado: handleTramoDetectadoDesdeGps,
+      onSolicitarConfirmacion: handleSolicitarConfirmacion,
+      onRequiereConfigurarOrigen: handleRequiereConfigurarOrigenDesdeMapa,
+      onCentrarMapaEnUbicacion: handleCentrarMapaEnUbicacion,
+    }),
+    [
+      tramos,
+      puntosAvance,
+      handleUbicacionResidenteChange,
+      handleTramoDetectadoDesdeGps,
+      handleRequiereConfigurarOrigenDesdeMapa,
+      handleCentrarMapaEnUbicacion,
+    ]
+  )
 
   const mapaLeaflet = (
     <MapaTramosLeaflet
@@ -525,6 +542,7 @@ export function MapaTramosClient() {
       }
       ubicacionUsuario={isResident ? ubicacionResidente : null}
       seguirUbicacionUsuario={isResident ? seguirUbicacionResidente : false}
+      centrarUbicacionVersion={isResident ? centrarUbicacionKey : 0}
     />
   )
 
@@ -629,6 +647,7 @@ export function MapaTramosClient() {
                       idPrefix="residente"
                     />
                     <MapaUbicacionResidentePanel />
+                    <MapaBuscarCoordenadasResidente />
                     <MapaTramosKpis kpis={kpis} />
                     <MapaTramosFiltros
                       filtros={filtros}
@@ -647,6 +666,9 @@ export function MapaTramosClient() {
                   >
                     {mapaLeaflet}
                   </MapaTramosMapaConBarra>
+                  <div className="md:hidden">
+                    <MapaBuscarCoordenadasResidente />
+                  </div>
                   <div className="md:hidden">
                     <MapaTramosFiltrosSheet
                       filtros={filtros}
