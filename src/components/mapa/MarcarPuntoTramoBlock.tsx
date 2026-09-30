@@ -66,6 +66,7 @@ type MarcarPuntoTramoBlockProps = {
     propuesta: PropuestaPuntoMinitramo,
     opciones?: SolicitarConfirmacionMarcarOptions
   ) => void
+  onRenumerarPuntos?: () => void | Promise<void>
 }
 
 export function MarcarPuntoTramoBlock({
@@ -77,6 +78,7 @@ export function MarcarPuntoTramoBlock({
   onEstadoMinitramoChange,
   onEliminarMinitramo,
   onSolicitarConfirmacion,
+  onRenumerarPuntos,
 }: MarcarPuntoTramoBlockProps) {
   const puntosDelTramo = useMemo(
     () => puntosPrevios.filter((p) => p.tramo_id === tramo.id && p.confirmado),
@@ -252,8 +254,8 @@ export function MarcarPuntoTramoBlock({
       <div>
         <h4 className="text-sm font-medium">Marcar minitramos en mapa</h4>
         <p className="mt-1 text-xs text-muted-foreground">
-          Confirme punto a punto (A, B, C, D…). Cada minitramo enlaza dos puntos (p. ej. A–B o B–D
-          si el avance retrocede). El modo automático elige el enlace, incluido sentido contrario.
+          Confirme punto a punto. Tras cada confirmación las letras A, B, C… se reordenan según la
+          posición en el canal; cada minitramo es el tramo entre dos puntos consecutivos en esa cadena.
         </p>
       </div>
 
@@ -418,8 +420,20 @@ export function MarcarPuntoTramoBlock({
           />
         )}
 
+        {onRenumerarPuntos && puntosDelTramo.length >= 2 ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="w-full"
+            onClick={() => void onRenumerarPuntos()}
+          >
+            Renumerar puntos (A, B, C… por posición en canal)
+          </Button>
+        ) : null}
+
         <p className="border-t border-foreground/10 pt-2 text-xs text-muted-foreground">
-          Avance acumulado (minitramos enlazados):{" "}
+          Avance acumulado (cadena por posición en canal):{" "}
           <span className="font-medium text-foreground">{avanceAcumulado.toFixed(1)}%</span>
         </p>
 

@@ -296,7 +296,7 @@ export function unirIntervalos(intervalos: IntervaloAbscisa[]): IntervaloAbscisa
 export function intervalosDesdePuntos(
   puntos: TramoPuntoAvance[],
   tramoId?: string,
-  tramo?: Pick<CanalTramo, "geometria"> | null
+  tramo?: Pick<CanalTramo, "geometria" | "origen_extremo"> | null
 ): IntervaloAbscisa[] {
   if (!tramoId) {
     const tramoIds = [
@@ -305,7 +305,13 @@ export function intervalosDesdePuntos(
     return unirIntervalos(tramoIds.flatMap((id) => intervalosDesdePuntos(puntos, id)))
   }
 
+  const tramoGeom = tramo as CanalTramo | null | undefined
   return minitramosDesdePuntos(puntos, tramoId, tramo).map((mt) => {
+    if (tramoGeom?.geometria?.coordinates?.length >= 2) {
+      const inicio = abscisaEfectivaPuntoEnTramo(tramoGeom, mt.puntoInicio)
+      const fin = abscisaEfectivaPuntoEnTramo(tramoGeom, mt.puntoFin)
+      return [Math.min(inicio, fin), Math.max(inicio, fin)] as IntervaloAbscisa
+    }
     const inicio = Math.min(mt.puntoInicio.abscisa_m, mt.puntoFin.abscisa_m)
     const fin = Math.max(mt.puntoInicio.abscisa_m, mt.puntoFin.abscisa_m)
     return [inicio, fin] as IntervaloAbscisa
@@ -617,6 +623,39 @@ export function puntosOrdenadosTramo(
     .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
 }
 
+/** Cadena A→B→C… por posición en el canal (abscisa lógica), no por fecha de confirmación. */
+export function puntosOrdenadosPorAbscisaLogica(
+  tramo: Pick<CanalTramo, "geometria" | "origen_extremo">,
+  puntos: TramoPuntoAvance[],
+  tramoId: string
+): TramoPuntoAvance[] {
+  const confirmados = puntos.filter((p) => p.confirmado && p.tramo_id === tramoId)
+  const tramoGeom = tramo as CanalTramo
+  return [...confirmados].sort((a, b) => {
+    const absA = abscisaLogicaDesdeNatural(
+      tramoGeom,
+      abscisaEfectivaPuntoEnTramo(tramoGeom, a)
+    )
+    const absB = abscisaLogicaDesdeNatural(
+      tramoGeom,
+      abscisaEfectivaPuntoEnTramo(tramoGeom, b)
+    )
+    if (Math.abs(absA - absB) > 0.01) return absA - absB
+    return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+  })
+}
+
+function cadenaMinitramosPuntos(
+  tramo: Pick<CanalTramo, "geometria" | "origen_extremo"> | null | undefined,
+  puntos: TramoPuntoAvance[],
+  tramoId: string
+): TramoPuntoAvance[] {
+  if (tramo != null && tramo.geometria.coordinates.length >= 2) {
+    return puntosOrdenadosPorAbscisaLogica(tramo, puntos, tramoId)
+  }
+  return puntosOrdenadosTramo(puntos, tramoId)
+}
+
 export function siguienteOrdenPunto(puntos: TramoPuntoAvance[], tramoId: string): number {
   return puntosOrdenadosTramo(puntos, tramoId).length + 1
 }
@@ -711,20 +750,18 @@ export function geometriaMinitramoEntrePuntos(
 export function minitramosDesdePuntos(
   puntos: TramoPuntoAvance[],
   tramoId: string,
-  tramo?: Pick<CanalTramo, "geometria"> | null
+  tramo?: Pick<CanalTramo, "geometria" | "origen_extremo"> | null
 ): MinitramoTramo[] {
-  const ordenados = puntosOrdenadosTramo(puntos, tramoId)
+  const cadena = cadenaMinitramosPuntos(tramo, puntos, tramoId)
   const minitramos: MinitramoTramo[] = []
 
-  for (let i = 0; i < ordenados.length; i++) {
-    const puntoFin = ordenados[i]
-    if (!puntoFin.rol || ordenDesdeRol(puntoFin.rol) <= 1) continue
-    const puntoInicio = resolverPuntoEnlaceParaPunto(puntoFin, ordenados, i)
-    if (!puntoInicio?.rol || !puntoFin.rol) continue
+  for (let i = 1; i < cadena.length; i++) {
+    const puntoInicio = cadena[i - 1]
+    const puntoFin = cadena[i]
     minitramos.push({
       grupo_id: puntoFin.id,
-      letraInicio: puntoInicio.rol,
-      letraFin: puntoFin.rol,
+      letraInicio: puntoInicio.rol ?? letraDesdeOrden(i),
+      letraFin: puntoFin.rol ?? letraDesdeOrden(i + 1),
       puntoInicio,
       puntoFin,
       longitud_m: longitudMinitramoMetros(tramo, puntoInicio, puntoFin),
@@ -738,7 +775,7 @@ export function minitramosDesdePuntos(
 export function resumenMinitramos(
   puntos: TramoPuntoAvance[],
   tramoId: string,
-  tramo?: Pick<CanalTramo, "geometria"> | null
+  tramo?: Pick<CanalTramo, "geometria" | "origen_extremo"> | null
 ): ItemResumenMinitramo[] {
   const items: ItemResumenMinitramo[] = []
   for (const mt of minitramosDesdePuntos(puntos, tramoId, tramo)) {
@@ -904,22 +941,45 @@ export function evaluarPropuestaPunto(
   }
 
   const cierraMinitramo = orden >= 2
-  let intervalosPropuestos = intervalosDesdePuntos(puntosBase, tramo.id, tramo)
-  if (cierraMinitramo && enlace) {
-    intervalosPropuestos = unirIntervalos([
-      ...intervalosPropuestos,
-      [Math.min(enlace.abscisa_m, abscisa), Math.max(enlace.abscisa_m, abscisa)],
-    ])
+  const puntoPropuesto: TramoPuntoAvance = {
+    id: "__propuesta__",
+    tramo_id: tramo.id,
+    registro_foto_id: null,
+    lat: proyeccion.lat,
+    lng: proyeccion.lng,
+    abscisa_m: abscisa,
+    confirmado: true,
+    created_at: new Date().toISOString(),
+    rol: rol,
   }
+  const intervalosPropuestos = intervalosDesdePuntos(
+    [...puntosBase, puntoPropuesto],
+    tramo.id,
+    tramo
+  )
 
   const metros = metrosDesdeIntervalos(intervalosPropuestos, tramo.longitud_m)
   const avancePct = sincronizarAvanceDesdeMetros(tramo.longitud_m, metros)
-  const letraParInicio = cierraMinitramo && enlace.rol ? etiquetaLetra(enlace.rol) : undefined
+
+  const cadenaPropuesta = puntosOrdenadosPorAbscisaLogica(
+    tramo,
+    [...puntosBase, puntoPropuesto],
+    tramo.id
+  )
+  const idxPropuesta = cadenaPropuesta.findIndex((p) => p.id === "__propuesta__")
+  const letraFinal =
+    idxPropuesta >= 0 ? etiquetaLetra(letraDesdeOrden(idxPropuesta + 1)) : letra
+  const letraParInicio =
+    idxPropuesta > 0
+      ? etiquetaLetra(letraDesdeOrden(idxPropuesta))
+      : cierraMinitramo && enlace.rol
+        ? etiquetaLetra(enlace.rol)
+        : undefined
 
   const abscisaLogica = abscisaLogicaDesdeNatural(tramo, abscisa)
-  let mensaje = `Punto ${letra} a ${abscisaLogica.toFixed(1)} m del inicio del tramo.`
+  let mensaje = `Punto en ${abscisaLogica.toFixed(1)} m del inicio del tramo. Tras confirmar se renumerarán A, B, C… según posición en el canal.`
   if (cierraMinitramo && letraParInicio) {
-    mensaje = `Al confirmar el punto ${letra} se enlazará el minitramo ${letraParInicio}–${letra}. Avance acumulado propuesto: ${avancePct.toFixed(1)}%.`
+    mensaje = `Al confirmar quedará el minitramo ${letraParInicio}–${letraFinal} (letras reordenadas por posición). Avance acumulado propuesto: ${avancePct.toFixed(1)}%.`
   }
 
   return {

@@ -46,6 +46,7 @@ import {
   actualizarEstadoPuntoAvance,
   cargarPuntosAvancePorProyecto,
   confirmarPuntoMinitramo,
+  renumerarRolesPuntosTramo,
   corregirPuntoMinitramo,
   eliminarMinitramo,
   eliminarPuntoHuérfano,
@@ -470,6 +471,24 @@ export function MapaTramosClient() {
     await handleEstadoPuntoChange(puntoFinId, estado)
   }
 
+  async function handleRenumerarPuntosTramo() {
+    if (!tramoSeleccionado) return
+    if (
+      !window.confirm(
+        "¿Renumerar A, B, C… según la posición de cada punto en el canal? Corrige minitramos y avance cuando hubo enlaces ramificados."
+      )
+    ) {
+      return
+    }
+    setPanelError(null)
+    try {
+      await renumerarRolesPuntosTramo(supabase, tramoSeleccionado)
+      await cargarDatos()
+    } catch (err) {
+      setPanelError(err instanceof Error ? err.message : "No se pudo renumerar los puntos.")
+    }
+  }
+
   async function handleEliminarMinitramo(segmentoPuntoFinId: string) {
     if (!tramoSeleccionado) return
     if (!window.confirm("¿Eliminar este minitramo (punto final)?")) return
@@ -734,6 +753,7 @@ export function MapaTramosClient() {
         guardandoOrigen={guardandoOrigen}
         onReiniciarOrigenTramo={isResident ? handleReiniciarOrigenTramo : undefined}
         reiniciandoOrigen={reiniciandoOrigen}
+        onRenumerarPuntosTramo={isResident ? handleRenumerarPuntosTramo : undefined}
       />
 
       {visitante ? (
