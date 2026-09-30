@@ -112,7 +112,7 @@ export function TramoDetalleResumen({
   tituloId,
 }: TramoDetalleResumenProps) {
   const avance = avanceDesasolveTramo(tramo, puntosAvance)
-  const minitramos = resumenMinitramos(puntosAvance, tramo.id)
+  const minitramos = resumenMinitramos(puntosAvance, tramo.id, tramo)
   const kmEjecutados = avance.metrosEjecutados / 1000
   const kmTotales = avance.metrosTotales / 1000
 

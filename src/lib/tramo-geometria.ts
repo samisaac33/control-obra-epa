@@ -295,7 +295,8 @@ export function unirIntervalos(intervalos: IntervaloAbscisa[]): IntervaloAbscisa
 
 export function intervalosDesdePuntos(
   puntos: TramoPuntoAvance[],
-  tramoId?: string
+  tramoId?: string,
+  tramo?: Pick<CanalTramo, "geometria"> | null
 ): IntervaloAbscisa[] {
   if (!tramoId) {
     const tramoIds = [
@@ -304,7 +305,7 @@ export function intervalosDesdePuntos(
     return unirIntervalos(tramoIds.flatMap((id) => intervalosDesdePuntos(puntos, id)))
   }
 
-  return minitramosDesdePuntos(puntos, tramoId).map((mt) => {
+  return minitramosDesdePuntos(puntos, tramoId, tramo).map((mt) => {
     const inicio = Math.min(mt.puntoInicio.abscisa_m, mt.puntoFin.abscisa_m)
     const fin = Math.max(mt.puntoInicio.abscisa_m, mt.puntoFin.abscisa_m)
     return [inicio, fin] as IntervaloAbscisa
@@ -424,14 +425,11 @@ export function metrosMinitramosTerminadosTramo(
   tramo: CanalTramo,
   puntosAvance: TramoPuntoAvance[]
 ): number {
-  const minitramos = minitramosDesdePuntos(puntosAvance, tramo.id)
+  const minitramos = minitramosDesdePuntos(puntosAvance, tramo.id, tramo)
   let total = 0
   for (const mt of minitramos) {
     if (estadoEfectivoMinitramo(mt.puntoFin) !== "terminado") continue
-    const inicio = Math.min(mt.puntoInicio.abscisa_m, mt.puntoFin.abscisa_m)
-    const fin = Math.max(mt.puntoInicio.abscisa_m, mt.puntoFin.abscisa_m)
-    const geometria = geometriaEntreAbscisas(tramo.geometria, inicio, fin)
-    if (geometria) total += longitudDesdeGeometria(geometria)
+    total += mt.longitud_m
   }
   return Math.min(tramo.longitud_m, total)
 }
@@ -442,7 +440,7 @@ export function segmentosVisualesTramo(
 ): SegmentoVisualTramo[] {
   const minitramos =
     puntosAvance && puntosAvance.some((p) => p.tramo_id === tramo.id)
-      ? minitramosDesdePuntos(puntosAvance, tramo.id)
+      ? minitramosDesdePuntos(puntosAvance, tramo.id, tramo)
       : []
 
   if (minitramos.length === 0) {
@@ -474,17 +472,16 @@ export function segmentosVisualesTramo(
   }
 
   for (const mt of minitramos) {
-    const inicio = Math.min(mt.puntoInicio.abscisa_m, mt.puntoFin.abscisa_m)
-    const fin = Math.max(mt.puntoInicio.abscisa_m, mt.puntoFin.abscisa_m)
-    const minitramo = geometriaEntreAbscisas(tramo.geometria, inicio, fin)
+    const minitramo = geometriaMinitramoEntrePuntos(tramo, mt.puntoInicio, mt.puntoFin)
     if (minitramo) {
-      segmentos.push(
-        segmentoVisualDesdeGeometria(tramo, "minitramo", minitramo, {
+      segmentos.push({
+        ...segmentoVisualDesdeGeometria(tramo, "minitramo", minitramo, {
           estadoSegmento: estadoEfectivoMinitramo(mt.puntoFin),
           letraInicio: mt.letraInicio,
           letraFin: mt.letraFin,
-        })
-      )
+        }),
+        longitud_m: mt.longitud_m,
+      })
     }
   }
 
@@ -663,9 +660,100 @@ export function resolverPuntoEnlaceParaPunto(
   return ordenados[indexEnOrdenados - 1] ?? null
 }
 
+function geometriaEntreCoordenadasPuntos(
+  puntoInicio: TramoPuntoAvance,
+  puntoFin: TramoPuntoAvance
+): GeoJsonLineString {
+  return {
+    type: "LineString",
+    coordinates: [
+      [puntoInicio.lng, puntoInicio.lat],
+      [puntoFin.lng, puntoFin.lat],
+    ],
+  }
+}
+
+/** Minitramo con tramo largo en abscisa pero corto en GPS (rama o retroceso). */
+export function minitramoUsaGeometriaGps(
+  tramo: Pick<CanalTramo, "geometria"> | null | undefined,
+  puntoInicio: TramoPuntoAvance,
+  puntoFin: TramoPuntoAvance
+): boolean {
+  const longitudGps = distanciaHaversineM(
+    puntoInicio.lat,
+    puntoInicio.lng,
+    puntoFin.lat,
+    puntoFin.lng
+  )
+  if (longitudGps < TOLERANCIA_CONTINUACION_M) return false
+
+  const absDiff = Math.abs(puntoFin.abscisa_m - puntoInicio.abscisa_m)
+  let longitudCanal = absDiff
+  const geometriaTramo = tramo?.geometria
+  if (geometriaTramo && geometriaTramo.coordinates.length >= 2) {
+    const geomCanal = geometriaEntreAbscisas(
+      geometriaTramo,
+      puntoInicio.abscisa_m,
+      puntoFin.abscisa_m
+    )
+    if (geomCanal) longitudCanal = longitudDesdeGeometria(geomCanal)
+  }
+
+  const umbralRama = Math.max(
+    TOLERANCIA_CONTINUACION_M,
+    longitudGps * 0.25 + TOLERANCIA_CONTINUACION_M
+  )
+  return longitudCanal > longitudGps + umbralRama
+}
+
+/** Longitud del minitramo enlace→fin (no acumulada desde el origen del tramo). */
+export function longitudMinitramoMetros(
+  tramo: Pick<CanalTramo, "geometria"> | null | undefined,
+  puntoInicio: TramoPuntoAvance,
+  puntoFin: TramoPuntoAvance
+): number {
+  if (minitramoUsaGeometriaGps(tramo, puntoInicio, puntoFin)) {
+    return distanciaHaversineM(
+      puntoInicio.lat,
+      puntoInicio.lng,
+      puntoFin.lat,
+      puntoFin.lng
+    )
+  }
+
+  const absDiff = Math.abs(puntoFin.abscisa_m - puntoInicio.abscisa_m)
+  const geometriaTramo = tramo?.geometria
+  if (geometriaTramo && geometriaTramo.coordinates.length >= 2) {
+    const geomCanal = geometriaEntreAbscisas(
+      geometriaTramo,
+      puntoInicio.abscisa_m,
+      puntoFin.abscisa_m
+    )
+    if (geomCanal) return longitudDesdeGeometria(geomCanal)
+  }
+
+  return absDiff
+}
+
+export function geometriaMinitramoEntrePuntos(
+  tramo: Pick<CanalTramo, "geometria">,
+  puntoInicio: TramoPuntoAvance,
+  puntoFin: TramoPuntoAvance
+): GeoJsonLineString | null {
+  if (minitramoUsaGeometriaGps(tramo, puntoInicio, puntoFin)) {
+    return geometriaEntreCoordenadasPuntos(puntoInicio, puntoFin)
+  }
+  return geometriaEntreAbscisas(
+    tramo.geometria,
+    puntoInicio.abscisa_m,
+    puntoFin.abscisa_m
+  )
+}
+
 export function minitramosDesdePuntos(
   puntos: TramoPuntoAvance[],
-  tramoId: string
+  tramoId: string,
+  tramo?: Pick<CanalTramo, "geometria"> | null
 ): MinitramoTramo[] {
   const ordenados = puntosOrdenadosTramo(puntos, tramoId)
   const minitramos: MinitramoTramo[] = []
@@ -675,15 +763,13 @@ export function minitramosDesdePuntos(
     if (!puntoFin.rol || ordenDesdeRol(puntoFin.rol) <= 1) continue
     const puntoInicio = resolverPuntoEnlaceParaPunto(puntoFin, ordenados, i)
     if (!puntoInicio?.rol || !puntoFin.rol) continue
-    const inicio = Math.min(puntoInicio.abscisa_m, puntoFin.abscisa_m)
-    const fin = Math.max(puntoInicio.abscisa_m, puntoFin.abscisa_m)
     minitramos.push({
       grupo_id: puntoFin.id,
       letraInicio: puntoInicio.rol,
       letraFin: puntoFin.rol,
       puntoInicio,
       puntoFin,
-      longitud_m: fin - inicio,
+      longitud_m: longitudMinitramoMetros(tramo, puntoInicio, puntoFin),
       created_at: puntoFin.created_at,
     })
   }
@@ -693,18 +779,17 @@ export function minitramosDesdePuntos(
 
 export function resumenMinitramos(
   puntos: TramoPuntoAvance[],
-  tramoId: string
+  tramoId: string,
+  tramo?: Pick<CanalTramo, "geometria"> | null
 ): ItemResumenMinitramo[] {
   const items: ItemResumenMinitramo[] = []
-  for (const mt of minitramosDesdePuntos(puntos, tramoId)) {
-    const inicio = Math.min(mt.puntoInicio.abscisa_m, mt.puntoFin.abscisa_m)
-    const fin = Math.max(mt.puntoInicio.abscisa_m, mt.puntoFin.abscisa_m)
+  for (const mt of minitramosDesdePuntos(puntos, tramoId, tramo)) {
     items.push({
       tipo: "completo",
       letraInicio: mt.letraInicio,
       letraFin: mt.letraFin,
-      abscisaInicio: inicio,
-      abscisaFin: fin,
+      abscisaInicio: mt.puntoInicio.abscisa_m,
+      abscisaFin: mt.puntoFin.abscisa_m,
       longitud_m: mt.longitud_m,
       grupo_id: mt.grupo_id,
       puntoFinId: mt.puntoFin.id,
@@ -853,7 +938,7 @@ export function evaluarPropuestaPunto(
   }
 
   const cierraMinitramo = orden >= 2
-  let intervalosPropuestos = intervalosDesdePuntos(puntosBase, tramo.id)
+  let intervalosPropuestos = intervalosDesdePuntos(puntosBase, tramo.id, tramo)
   if (cierraMinitramo && enlace) {
     intervalosPropuestos = unirIntervalos([
       ...intervalosPropuestos,

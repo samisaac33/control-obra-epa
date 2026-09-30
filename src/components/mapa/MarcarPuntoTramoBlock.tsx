@@ -165,10 +165,13 @@ export function MarcarPuntoTramoBlock({
     [modoMarcado, tramo, puntosDelTramo]
   )
 
-  const resumen = useMemo(() => resumenMinitramos(puntosDelTramo, tramo.id), [puntosDelTramo, tramo.id])
+  const resumen = useMemo(
+    () => resumenMinitramos(puntosDelTramo, tramo.id, tramo),
+    [puntosDelTramo, tramo.id, tramo]
+  )
 
   const avanceAcumulado = useMemo(() => {
-    const intervalos = intervalosDesdePuntos(puntosDelTramo, tramo.id)
+    const intervalos = intervalosDesdePuntos(puntosDelTramo, tramo.id, tramo)
     const metros = metrosDesdeIntervalos(intervalos, tramo.longitud_m)
     return tramo.longitud_m > 0 ? (metros / tramo.longitud_m) * 100 : 0
   }, [puntosDelTramo, tramo.id, tramo.longitud_m])
