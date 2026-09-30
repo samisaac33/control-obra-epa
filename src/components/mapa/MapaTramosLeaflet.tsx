@@ -52,6 +52,7 @@ type MapaTramosLeafletProps = {
   mostrarEtiquetasTramo?: boolean
   mostrarPuntosAvance?: boolean
   mostrarMinitramosTerminados?: boolean
+  mapaConsolidado?: boolean
   onTramoClick: (tramo: CanalTramo) => void
   onSegmentoVisitanteClick?: (segmento: SegmentoVisualTramo) => void
   ubicacionUsuario?: UbicacionUsuario | null
@@ -107,6 +108,7 @@ function registrarInteraccionTramo(
   isResident: boolean,
   esViewportMovil: boolean,
   mostrarMinitramosTerminados: boolean,
+  mapaConsolidado: boolean,
   onTramoClick: (tramo: CanalTramo) => void,
   onSegmentoVisitanteClick?: (segmento: SegmentoVisualTramo) => void
 ) {
@@ -150,7 +152,8 @@ function registrarInteraccionTramo(
           seleccionado,
           false,
           estadoSegmento,
-          mostrarMinitramosTerminados
+          mostrarMinitramosTerminados,
+          mapaConsolidado
         )
       )
     },
@@ -198,7 +201,8 @@ export function MapaTramosLeaflet({
   marcadoresCompactos = false,
   mostrarEtiquetasTramo = true,
   mostrarPuntosAvance = true,
-  mostrarMinitramosTerminados = false,
+  mostrarMinitramosTerminados = true,
+  mapaConsolidado = false,
   onTramoClick,
   onSegmentoVisitanteClick,
   ubicacionUsuario = null,
@@ -277,7 +281,7 @@ export function MapaTramosLeaflet({
     )
   }
 
-  const layerKey = `${isResident ? "r" : "v"}-${esViewportMovil ? "m" : "d"}-${mostrarMinitramosTerminados ? "mtt1" : "mtt0"}-${tramoSeleccionadoId ?? "none"}-${tramos
+  const layerKey = `${isResident ? "r" : "v"}-${esViewportMovil ? "m" : "d"}-${mostrarMinitramosTerminados ? "mtt1" : "mtt0"}-${mapaConsolidado ? "cons1" : "cons0"}-${tramoSeleccionadoId ?? "none"}-${tramos
     .map((t) => `${t.id}:${t.metros_ejecutados}:${t.estado}`)
     .join("|")}-${puntosVisibles.map((p) => `${p.id}:${p.estado_minitramo ?? ""}`).join(",")}`
 
@@ -372,7 +376,8 @@ export function MapaTramosLeaflet({
               seleccionado,
               false,
               props?.estadoSegmento,
-              mostrarMinitramosTerminados
+              mostrarMinitramosTerminados,
+              mapaConsolidado
             )
           }}
           onEachFeature={(feature, layer) => {
@@ -385,6 +390,7 @@ export function MapaTramosLeaflet({
               isResident,
               esViewportMovil,
               mostrarMinitramosTerminados,
+              mapaConsolidado,
               onTramoClick,
               onSegmentoVisitanteClick
             )

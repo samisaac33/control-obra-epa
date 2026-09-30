@@ -123,8 +123,9 @@ export function MapaTramosClient() {
   const esViewportMovil = useEsViewportMovil()
   const [vistaSoloTramos1a24, setVistaSoloTramos1a24] = useState(false)
   const [mostrarNumerosTramo, setMostrarNumerosTramo] = useState(false)
-  const [mostrarPuntosAvance, setMostrarPuntosAvance] = useState(false)
-  const [mostrarMinitramosTerminados, setMostrarMinitramosTerminados] = useState(false)
+  const [ocultarPuntosAvance, setOcultarPuntosAvance] = useState(false)
+  const [ocultarMinitramosTerminados, setOcultarMinitramosTerminados] = useState(false)
+  const [mapaConsolidado, setMapaConsolidado] = useState(false)
   const [ubicacionResidente, setUbicacionResidente] = useState<UbicacionUsuario | null>(null)
   const [seguirUbicacionResidente, setSeguirUbicacionResidente] = useState(false)
   const [origenDesdeMapa, setOrigenDesdeMapa] = useState<RequiereOrigenDesdeMapaPayload | null>(
@@ -557,8 +558,9 @@ export function MapaTramosClient() {
       alturaResponsiveResidente={isResident}
       marcadoresCompactos={visitanteMovil}
       mostrarEtiquetasTramo={mostrarNumerosTramo}
-      mostrarPuntosAvance={mostrarPuntosAvance}
-      mostrarMinitramosTerminados={mostrarMinitramosTerminados}
+      mostrarPuntosAvance={!ocultarPuntosAvance}
+      mostrarMinitramosTerminados={!ocultarMinitramosTerminados}
+      mapaConsolidado={mapaConsolidado}
       onTramoClick={handleTramoClick}
       onSegmentoVisitanteClick={
         isResident
@@ -633,10 +635,12 @@ export function MapaTramosClient() {
                       onVistaSoloTramos1a24Change={setVistaSoloTramos1a24}
                       mostrarNumerosTramo={mostrarNumerosTramo}
                       onMostrarNumerosTramoChange={setMostrarNumerosTramo}
-                      mostrarPuntosAvance={mostrarPuntosAvance}
-                      onMostrarPuntosAvanceChange={setMostrarPuntosAvance}
-                      mostrarMinitramosTerminados={mostrarMinitramosTerminados}
-                      onMostrarMinitramosTerminadosChange={setMostrarMinitramosTerminados}
+                      ocultarPuntosAvance={ocultarPuntosAvance}
+                      onOcultarPuntosAvanceChange={setOcultarPuntosAvance}
+                      ocultarMinitramosTerminados={ocultarMinitramosTerminados}
+                      onOcultarMinitramosTerminadosChange={setOcultarMinitramosTerminados}
+                      mapaConsolidado={mapaConsolidado}
+                      onMapaConsolidadoChange={setMapaConsolidado}
                       idPrefix="visitante"
                       className="sm:max-w-md sm:flex-1"
                     />
@@ -670,10 +674,12 @@ export function MapaTramosClient() {
                       onVistaSoloTramos1a24Change={setVistaSoloTramos1a24}
                       mostrarNumerosTramo={mostrarNumerosTramo}
                       onMostrarNumerosTramoChange={setMostrarNumerosTramo}
-                      mostrarPuntosAvance={mostrarPuntosAvance}
-                      onMostrarPuntosAvanceChange={setMostrarPuntosAvance}
-                      mostrarMinitramosTerminados={mostrarMinitramosTerminados}
-                      onMostrarMinitramosTerminadosChange={setMostrarMinitramosTerminados}
+                      ocultarPuntosAvance={ocultarPuntosAvance}
+                      onOcultarPuntosAvanceChange={setOcultarPuntosAvance}
+                      ocultarMinitramosTerminados={ocultarMinitramosTerminados}
+                      onOcultarMinitramosTerminadosChange={setOcultarMinitramosTerminados}
+                      mapaConsolidado={mapaConsolidado}
+                      onMapaConsolidadoChange={setMapaConsolidado}
                       idPrefix="residente"
                     />
                     <MapaUbicacionResidentePanel />
@@ -713,10 +719,12 @@ export function MapaTramosClient() {
                         onVistaSoloTramos1a24Change: setVistaSoloTramos1a24,
                         mostrarNumerosTramo,
                         onMostrarNumerosTramoChange: setMostrarNumerosTramo,
-                        mostrarPuntosAvance,
-                        onMostrarPuntosAvanceChange: setMostrarPuntosAvance,
-                        mostrarMinitramosTerminados,
-                        onMostrarMinitramosTerminadosChange: setMostrarMinitramosTerminados,
+                        ocultarPuntosAvance,
+                        onOcultarPuntosAvanceChange: setOcultarPuntosAvance,
+                        ocultarMinitramosTerminados,
+                        onOcultarMinitramosTerminadosChange: setOcultarMinitramosTerminados,
+                        mapaConsolidado,
+                        onMapaConsolidadoChange: setMapaConsolidado,
                         idPrefix: "residente-movil",
                       }}
                     />

@@ -28,10 +28,12 @@ type MapaTramosFiltrosSheetProps = {
     onVistaSoloTramos1a24Change: (value: boolean) => void
     mostrarNumerosTramo: boolean
     onMostrarNumerosTramoChange: (value: boolean) => void
-    mostrarPuntosAvance: boolean
-    onMostrarPuntosAvanceChange: (value: boolean) => void
-    mostrarMinitramosTerminados: boolean
-    onMostrarMinitramosTerminadosChange: (value: boolean) => void
+    ocultarPuntosAvance: boolean
+    onOcultarPuntosAvanceChange: (value: boolean) => void
+    ocultarMinitramosTerminados: boolean
+    onOcultarMinitramosTerminadosChange: (value: boolean) => void
+    mapaConsolidado: boolean
+    onMapaConsolidadoChange: (value: boolean) => void
     idPrefix: string
   }
 }
@@ -49,8 +51,9 @@ function capasActivas(capas: MapaTramosFiltrosSheetProps["capas"]): boolean {
   return (
     capas.vistaSoloTramos1a24 ||
     capas.mostrarNumerosTramo ||
-    capas.mostrarPuntosAvance ||
-    capas.mostrarMinitramosTerminados
+    capas.ocultarPuntosAvance ||
+    capas.ocultarMinitramosTerminados ||
+    capas.mapaConsolidado
   )
 }
 
@@ -96,10 +99,12 @@ export function MapaTramosFiltrosSheet({
               onVistaSoloTramos1a24Change={capas.onVistaSoloTramos1a24Change}
               mostrarNumerosTramo={capas.mostrarNumerosTramo}
               onMostrarNumerosTramoChange={capas.onMostrarNumerosTramoChange}
-              mostrarPuntosAvance={capas.mostrarPuntosAvance}
-              onMostrarPuntosAvanceChange={capas.onMostrarPuntosAvanceChange}
-              mostrarMinitramosTerminados={capas.mostrarMinitramosTerminados}
-              onMostrarMinitramosTerminadosChange={capas.onMostrarMinitramosTerminadosChange}
+              ocultarPuntosAvance={capas.ocultarPuntosAvance}
+              onOcultarPuntosAvanceChange={capas.onOcultarPuntosAvanceChange}
+              ocultarMinitramosTerminados={capas.ocultarMinitramosTerminados}
+              onOcultarMinitramosTerminadosChange={capas.onOcultarMinitramosTerminadosChange}
+              mapaConsolidado={capas.mapaConsolidado}
+              onMapaConsolidadoChange={capas.onMapaConsolidadoChange}
               idPrefix={capas.idPrefix}
             />
           ) : null}
