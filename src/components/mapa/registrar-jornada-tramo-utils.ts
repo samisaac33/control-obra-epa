@@ -68,10 +68,14 @@ export function jornadaInputDesdeFormState(
   const horasNum = state.horas.trim() ? Number(state.horas.replace(",", ".")) : null
   const equipo = resolverNombreEquipoJornada(state, equipos)
 
+  const equipoId =
+    state.equipoSeleccionId === EQUIPO_OTRO_VALUE ? null : state.equipoSeleccionId
+
   return {
     fecha: state.fecha,
     metros_desasolados: metrosNum,
     equipo,
+    equipo_id: equipoId,
     duracion_horas: horasNum,
     observaciones: state.observaciones.trim() || null,
   }

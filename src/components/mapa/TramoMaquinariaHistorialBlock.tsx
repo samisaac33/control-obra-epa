@@ -21,6 +21,8 @@ import {
   eliminarRegistroMaquinariaTramo,
   formatearFechaRegistro,
   formatearMetrosDesasolados,
+  mapaEquiposPorId,
+  nombreEquipoParaMostrar,
   type TramoRegistroMaquinaria,
 } from "@/src/lib/tramo-maquinaria-historial"
 import { createClient } from "@/src/lib/supabase/client"
@@ -49,6 +51,17 @@ export function TramoMaquinariaHistorialBlock({
   const [jornadaForm, setJornadaForm] = useState<RegistrarJornadaFormState>(() => estadoInicialJornada())
   const [equiposCatalogo, setEquiposCatalogo] = useState<ProyectoEquipoMaquinaria[]>([])
 
+  const equiposPorId = useMemo(() => mapaEquiposPorId(equiposCatalogo), [equiposCatalogo])
+
+  const cargarCatalogoEquipos = useCallback(async () => {
+    try {
+      const data = await cargarEquiposMaquinariaProyecto(supabase, proyectoId)
+      setEquiposCatalogo(data)
+    } catch {
+      setEquiposCatalogo([])
+    }
+  }, [proyectoId, supabase])
+
   const cargar = useCallback(async () => {
     setLoading(true)
     setError(null)
@@ -65,7 +78,8 @@ export function TramoMaquinariaHistorialBlock({
 
   useEffect(() => {
     void cargar()
-  }, [cargar, refreshKey])
+    void cargarCatalogoEquipos()
+  }, [cargar, cargarCatalogoEquipos, refreshKey])
 
   useEffect(() => {
     setFormularioRegistroAbierto(false)
@@ -170,7 +184,9 @@ export function TramoMaquinariaHistorialBlock({
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <p className="font-medium">{formatearFechaRegistro(registro.fecha)}</p>
-                  <p className="mt-0.5 text-foreground">{registro.equipo}</p>
+                  <p className="mt-0.5 text-foreground">
+                    {nombreEquipoParaMostrar(registro, equiposPorId)}
+                  </p>
                 </div>
                 <div className="shrink-0 text-right">
                   <p className="font-mono text-sm font-semibold tabular-nums">
