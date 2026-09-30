@@ -6,8 +6,10 @@ import { cn } from "@/lib/utils"
 type MapaOpcionesCapasMapaProps = {
   vistaSoloTramos1a24: boolean
   onVistaSoloTramos1a24Change: (value: boolean) => void
-  mostrarNumerosYPuntosAvance: boolean
-  onMostrarNumerosYPuntosAvanceChange: (value: boolean) => void
+  mostrarNumerosTramo: boolean
+  onMostrarNumerosTramoChange: (value: boolean) => void
+  mostrarPuntosAvance: boolean
+  onMostrarPuntosAvanceChange: (value: boolean) => void
   mostrarMinitramosTerminados: boolean
   onMostrarMinitramosTerminadosChange: (value: boolean) => void
   idPrefix: string
@@ -43,8 +45,10 @@ function OpcionCheckbox({ id, checked, onChange, titulo, ariaLabel }: OpcionChec
 export function MapaOpcionesCapasMapa({
   vistaSoloTramos1a24,
   onVistaSoloTramos1a24Change,
-  mostrarNumerosYPuntosAvance,
-  onMostrarNumerosYPuntosAvanceChange,
+  mostrarNumerosTramo,
+  onMostrarNumerosTramoChange,
+  mostrarPuntosAvance,
+  onMostrarPuntosAvanceChange,
   mostrarMinitramosTerminados,
   onMostrarMinitramosTerminadosChange,
   idPrefix,
@@ -64,10 +68,16 @@ export function MapaOpcionesCapasMapa({
         titulo="Vista tramos 1–24"
       />
       <OpcionCheckbox
-        id={`${idPrefix}-mostrar-numeros-puntos`}
-        checked={mostrarNumerosYPuntosAvance}
-        onChange={onMostrarNumerosYPuntosAvanceChange}
-        titulo="Mostrar números de tramos y puntos A, B, C…"
+        id={`${idPrefix}-mostrar-numeros-tramos`}
+        checked={mostrarNumerosTramo}
+        onChange={onMostrarNumerosTramoChange}
+        titulo="Mostrar números de tramos"
+      />
+      <OpcionCheckbox
+        id={`${idPrefix}-mostrar-puntos-avance`}
+        checked={mostrarPuntosAvance}
+        onChange={onMostrarPuntosAvanceChange}
+        titulo="Mostrar puntos A, B, C…"
       />
       <OpcionCheckbox
         id={`${idPrefix}-mtt`}
