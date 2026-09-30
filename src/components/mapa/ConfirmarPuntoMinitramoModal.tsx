@@ -58,6 +58,7 @@ export type ConfirmarPuntoPayload = {
   modo?: "nuevo" | "corregir"
   puntoId?: string
   jornada?: TramoRegistroMaquinariaInput | null
+  puntoEnlaceId?: string
 }
 
 type ConfirmarPuntoMinitramoModalProps = {
@@ -129,6 +130,7 @@ export function ConfirmarPuntoMinitramoModal({
     if (!propuestaInicial || !coordsValidas) return null
     return calcularPropuestaPunto(propuestaInicial.tramo, puntosPrevios, latNum, lngNum, {
       orden: propuestaInicial.orden,
+      puntoEnlaceId: propuestaInicial.puntoEnlaceId,
       ...(modo === "corregir" && puntoId ? { excluirPuntoId: puntoId } : {}),
     })
   }, [propuestaInicial, puntosPrevios, latNum, lngNum, coordsValidas, modo, puntoId])
@@ -192,6 +194,7 @@ export function ConfirmarPuntoMinitramoModal({
       modo: esCorreccion ? "corregir" : "nuevo",
       puntoId: esCorreccion ? puntoId : undefined,
       jornada,
+      puntoEnlaceId: propuesta.puntoEnlaceId,
     })
   }
 

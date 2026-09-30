@@ -450,23 +450,32 @@ export function segmentosVisualesTramo(
   }
 
   const segmentos: SegmentoVisualTramo[] = []
-  let cursor = 0
-
-  const ordenados = [...minitramos].sort((a, b) => {
-    const inicioA = Math.min(a.puntoInicio.abscisa_m, a.puntoFin.abscisa_m)
-    const inicioB = Math.min(b.puntoInicio.abscisa_m, b.puntoFin.abscisa_m)
-    return inicioA - inicioB
-  })
-
-  for (const mt of ordenados) {
+  const intervalosMt: IntervaloAbscisa[] = minitramos.map((mt) => {
     const inicio = Math.min(mt.puntoInicio.abscisa_m, mt.puntoFin.abscisa_m)
     const fin = Math.max(mt.puntoInicio.abscisa_m, mt.puntoFin.abscisa_m)
+    return [inicio, fin] as IntervaloAbscisa
+  })
+  const union = unirIntervalos(intervalosMt)
 
+  let cursor = 0
+  for (const [inicio, fin] of union) {
     if (inicio > cursor + 0.01) {
       const pendiente = geometriaEntreAbscisas(tramo.geometria, cursor, inicio)
       if (pendiente) segmentos.push(segmentoVisualDesdeGeometria(tramo, "pendiente", pendiente))
     }
+    cursor = Math.max(cursor, fin)
+  }
 
+  if (cursor < tramo.longitud_m - 0.01) {
+    const pendienteFinal = geometriaDesdeAbscisa(tramo.geometria, cursor)
+    if (pendienteFinal) {
+      segmentos.push(segmentoVisualDesdeGeometria(tramo, "pendiente", pendienteFinal))
+    }
+  }
+
+  for (const mt of minitramos) {
+    const inicio = Math.min(mt.puntoInicio.abscisa_m, mt.puntoFin.abscisa_m)
+    const fin = Math.max(mt.puntoInicio.abscisa_m, mt.puntoFin.abscisa_m)
     const minitramo = geometriaEntreAbscisas(tramo.geometria, inicio, fin)
     if (minitramo) {
       segmentos.push(
@@ -476,14 +485,6 @@ export function segmentosVisualesTramo(
           letraFin: mt.letraFin,
         })
       )
-    }
-    cursor = fin
-  }
-
-  if (cursor < tramo.longitud_m - 0.01) {
-    const pendienteFinal = geometriaDesdeAbscisa(tramo.geometria, cursor)
-    if (pendienteFinal) {
-      segmentos.push(segmentoVisualDesdeGeometria(tramo, "pendiente", pendienteFinal))
     }
   }
 
@@ -531,6 +532,8 @@ export type TramoPuntoAvance = {
   rol?: RolPuntoAvance | null
   grupo_id?: string | null
   estado_minitramo?: EstadoTramo | null
+  /** Vértice inicio del minitramo que cierra este punto; null = anterior cronológico. */
+  punto_enlace_id?: string | null
 }
 
 export type PuntoMarcado = {
@@ -577,6 +580,7 @@ export type PropuestaPuntoMinitramo = {
   distancia_m: number
   cierraMinitramo: boolean
   letraParInicio?: string
+  puntoEnlaceId: string
   metros_ejecutados_propuestos: number
   avance_pct_propuesto: number
   estado_sugerido: EstadoTramo
@@ -647,6 +651,18 @@ function estadoSugeridoDesdeAvance(avancePct: number, estadoActual: EstadoTramo)
   return estadoActual === "programado" ? "programado" : "pendiente"
 }
 
+export function resolverPuntoEnlaceParaPunto(
+  puntoFin: TramoPuntoAvance,
+  ordenados: TramoPuntoAvance[],
+  indexEnOrdenados: number
+): TramoPuntoAvance | null {
+  if (puntoFin.punto_enlace_id) {
+    return ordenados.find((p) => p.id === puntoFin.punto_enlace_id) ?? null
+  }
+  if (indexEnOrdenados <= 0) return null
+  return ordenados[indexEnOrdenados - 1] ?? null
+}
+
 export function minitramosDesdePuntos(
   puntos: TramoPuntoAvance[],
   tramoId: string
@@ -654,10 +670,11 @@ export function minitramosDesdePuntos(
   const ordenados = puntosOrdenadosTramo(puntos, tramoId)
   const minitramos: MinitramoTramo[] = []
 
-  for (let i = 1; i < ordenados.length; i++) {
-    const puntoInicio = ordenados[i - 1]
+  for (let i = 0; i < ordenados.length; i++) {
     const puntoFin = ordenados[i]
-    if (!puntoInicio.rol || !puntoFin.rol) continue
+    if (!puntoFin.rol || ordenDesdeRol(puntoFin.rol) <= 1) continue
+    const puntoInicio = resolverPuntoEnlaceParaPunto(puntoFin, ordenados, i)
+    if (!puntoInicio?.rol || !puntoFin.rol) continue
     const inicio = Math.min(puntoInicio.abscisa_m, puntoFin.abscisa_m)
     const fin = Math.max(puntoInicio.abscisa_m, puntoFin.abscisa_m)
     minitramos.push({
@@ -741,12 +758,30 @@ export type EvaluacionPropuestaPunto = {
   motivoBloqueo: string | null
 }
 
+export type OpcionesEvaluarPropuestaPunto = {
+  orden?: number
+  excluirPuntoId?: string
+  excluirGrupoId?: string
+  /** Vértice desde el que se cierra el minitramo (p. ej. B en lugar del último C). */
+  puntoEnlaceId?: string
+}
+
+function separacionAbscisaLogicaSuficiente(
+  tramo: CanalTramo,
+  abscisaA: number,
+  abscisaB: number
+): boolean {
+  const logA = abscisaLogicaDesdeNatural(tramo, abscisaA)
+  const logB = abscisaLogicaDesdeNatural(tramo, abscisaB)
+  return Math.abs(logB - logA) >= TOLERANCIA_CONTINUACION_M - 0.01
+}
+
 export function evaluarPropuestaPunto(
   tramo: CanalTramo,
   puntosPrevios: TramoPuntoAvance[],
   lat: number,
   lng: number,
-  opciones?: { orden?: number; excluirPuntoId?: string; excluirGrupoId?: string }
+  opciones?: OpcionesEvaluarPropuestaPunto
 ): EvaluacionPropuestaPunto {
   const proyeccion = proyectarPuntoEnLinea(lat, lng, tramo.geometria)
   if (!proyeccion) {
@@ -789,31 +824,46 @@ export function evaluarPropuestaPunto(
   }
 
   const ordenados = puntosOrdenadosTramo(puntosBase, tramo.id)
-  const anterior = ordenados.at(-1) ?? null
-  if (anterior) {
-    const logAnterior = abscisaLogicaDesdeNatural(tramo, anterior.abscisa_m)
-    const logNueva = abscisaLogicaDesdeNatural(tramo, abscisa)
-    if (logNueva < logAnterior + TOLERANCIA_CONTINUACION_M - 0.01) {
-      const letraAnterior = anterior.rol ? etiquetaLetra(anterior.rol) : "anterior"
+  const enlacePorDefecto = ordenados.at(-1) ?? null
+  const enlace =
+    (opciones?.puntoEnlaceId
+      ? ordenados.find((p) => p.id === opciones.puntoEnlaceId)
+      : enlacePorDefecto) ?? null
+
+  if (!enlace) {
+    return {
+      propuesta: null,
+      motivoBloqueo: "No hay punto de enlace previo para registrar avance.",
+    }
+  }
+
+  if (!separacionAbscisaLogicaSuficiente(tramo, enlace.abscisa_m, abscisa)) {
+    const letraEnlace = enlace.rol ? etiquetaLetra(enlace.rol) : "enlace"
+    const esUltimoCronologico = enlace.id === enlacePorDefecto?.id
+    if (esUltimoCronologico && !opciones?.puntoEnlaceId) {
       return {
         propuesta: null,
-        motivoBloqueo: `Mueva el punto ${letra} hacia adelante en la dirección del desasolve (al menos ${TOLERANCIA_CONTINUACION_M} m después del punto ${letraAnterior} en abscisa lógica). Use «Corregir último punto» si el ${letraAnterior} está mal ubicado, o «Restablecer todo» para elegir el otro extremo.`,
+        motivoBloqueo: `Mueva el punto ${letra} al menos ${TOLERANCIA_CONTINUACION_M} m respecto al punto ${letraEnlace} (sentido del avance o retroceso). Si continúa desde otro punto (p. ej. ${letraEnlace} hacia atrás), use «Desde punto» en el panel del tramo o registre desde el detalle del tramo.`,
       }
+    }
+    return {
+      propuesta: null,
+      motivoBloqueo: `El punto ${letra} debe estar al menos ${TOLERANCIA_CONTINUACION_M} m del punto ${letraEnlace} sobre el trazado.`,
     }
   }
 
   const cierraMinitramo = orden >= 2
   let intervalosPropuestos = intervalosDesdePuntos(puntosBase, tramo.id)
-  if (cierraMinitramo && anterior) {
+  if (cierraMinitramo && enlace) {
     intervalosPropuestos = unirIntervalos([
       ...intervalosPropuestos,
-      [Math.min(anterior.abscisa_m, abscisa), Math.max(anterior.abscisa_m, abscisa)],
+      [Math.min(enlace.abscisa_m, abscisa), Math.max(enlace.abscisa_m, abscisa)],
     ])
   }
 
   const metros = metrosDesdeIntervalos(intervalosPropuestos, tramo.longitud_m)
   const avancePct = sincronizarAvanceDesdeMetros(tramo.longitud_m, metros)
-  const letraParInicio = cierraMinitramo ? etiquetaLetra(letraDesdeOrden(orden - 1)) : undefined
+  const letraParInicio = cierraMinitramo && enlace.rol ? etiquetaLetra(enlace.rol) : undefined
 
   const abscisaLogica = abscisaLogicaDesdeNatural(tramo, abscisa)
   let mensaje = `Punto ${letra} a ${abscisaLogica.toFixed(1)} m del inicio del tramo.`
@@ -831,6 +881,7 @@ export function evaluarPropuestaPunto(
       distancia_m: proyeccion.distancia_m,
       cierraMinitramo,
       letraParInicio,
+      puntoEnlaceId: enlace.id,
       metros_ejecutados_propuestos: metros,
       avance_pct_propuesto: avancePct,
       estado_sugerido: estadoSugeridoDesdeAvance(avancePct, tramo.estado),
@@ -840,12 +891,62 @@ export function evaluarPropuestaPunto(
   }
 }
 
+/** Prueba enlace por defecto (último punto) y candidatos anteriores para avance en sentido contrario. */
+export function evaluarPropuestaPuntoConAutoEnlace(
+  tramo: CanalTramo,
+  puntosPrevios: TramoPuntoAvance[],
+  lat: number,
+  lng: number,
+  opciones?: OpcionesEvaluarPropuestaPunto
+): EvaluacionPropuestaPunto {
+  if (opciones?.puntoEnlaceId) {
+    return evaluarPropuestaPunto(tramo, puntosPrevios, lat, lng, opciones)
+  }
+
+  const directa = evaluarPropuestaPunto(tramo, puntosPrevios, lat, lng, opciones)
+  if (directa.propuesta) return directa
+
+  const confirmados = puntosPrevios.filter((p) => p.confirmado && p.tramo_id === tramo.id)
+  const ordenados = puntosOrdenadosTramo(confirmados, tramo.id)
+  if (ordenados.length < 2) return directa
+
+  const proyeccion = proyectarPuntoEnLinea(lat, lng, tramo.geometria)
+  const abscisaNueva = proyeccion
+    ? Math.min(tramo.longitud_m, Math.max(0, proyeccion.abscisa_m))
+    : null
+
+  const alternativas = [...ordenados.slice(0, -1)].reverse()
+
+  let mejor: EvaluacionPropuestaPunto | null = null
+  for (const enlace of alternativas) {
+    const evaluado = evaluarPropuestaPunto(tramo, puntosPrevios, lat, lng, {
+      ...opciones,
+      puntoEnlaceId: enlace.id,
+    })
+    if (!evaluado.propuesta) continue
+    if (!mejor?.propuesta) {
+      mejor = evaluado
+      continue
+    }
+    if (abscisaNueva !== null) {
+      const dNuevo = Math.abs(abscisaNueva - enlace.abscisa_m)
+      const enlacePrevio = confirmados.find((p) => p.id === mejor!.propuesta!.puntoEnlaceId)
+      const dPrev = enlacePrevio
+        ? Math.abs(abscisaNueva - enlacePrevio.abscisa_m)
+        : Number.POSITIVE_INFINITY
+      if (dNuevo < dPrev) mejor = evaluado
+    }
+  }
+
+  return mejor ?? directa
+}
+
 export function calcularPropuestaPunto(
   tramo: CanalTramo,
   puntosPrevios: TramoPuntoAvance[],
   lat: number,
   lng: number,
-  opciones?: { orden?: number; excluirPuntoId?: string; excluirGrupoId?: string }
+  opciones?: OpcionesEvaluarPropuestaPunto
 ): PropuestaPuntoMinitramo | null {
   return evaluarPropuestaPunto(tramo, puntosPrevios, lat, lng, opciones).propuesta
 }
@@ -857,5 +958,5 @@ export function calcularPropuestaPuntoDesdeGps(
   lat: number,
   lng: number
 ): PropuestaPuntoMinitramo | null {
-  return calcularPropuestaPunto(tramo, puntosPrevios, lat, lng)
+  return evaluarPropuestaPuntoConAutoEnlace(tramo, puntosPrevios, lat, lng).propuesta
 }

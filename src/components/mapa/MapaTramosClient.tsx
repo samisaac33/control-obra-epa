@@ -58,7 +58,7 @@ import type {
   SegmentoVisualTramo,
   TramoPuntoAvance,
 } from "@/src/lib/tramo-geometria"
-import { evaluarPropuestaPunto } from "@/src/lib/tramo-geometria"
+import { evaluarPropuestaPuntoConAutoEnlace } from "@/src/lib/tramo-geometria"
 import { crearRegistroMaquinariaTramo } from "@/src/lib/tramo-maquinaria-historial"
 import {
   calcularKpisTramos,
@@ -296,6 +296,7 @@ export function MapaTramosClient() {
           estado: payload.estado,
           registro_foto_id: payload.registro_foto_id,
           userId: user.id,
+          punto_enlace_id: payload.puntoEnlaceId ?? null,
         })
       }
 
@@ -406,7 +407,12 @@ export function MapaTramosClient() {
     puntosFuente: TramoPuntoAvance[] = puntosAvance
   ) {
     const puntosDelTramo = puntosFuente.filter((p) => p.tramo_id === tramo.id && p.confirmado)
-    const { propuesta, motivoBloqueo } = evaluarPropuestaPunto(tramo, puntosDelTramo, lat, lng)
+    const { propuesta, motivoBloqueo } = evaluarPropuestaPuntoConAutoEnlace(
+      tramo,
+      puntosDelTramo,
+      lat,
+      lng
+    )
     if (!propuesta) {
       setPanelError(motivoBloqueo ?? "No se pudo calcular el punto en este tramo.")
       return
