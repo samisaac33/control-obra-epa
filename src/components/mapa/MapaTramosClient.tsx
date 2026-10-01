@@ -66,7 +66,7 @@ import type {
   TramoPuntoAvance,
 } from "@/src/lib/tramo-geometria"
 import { contextoEditarMinitramo, evaluarPropuestaPuntoConAutoEnlace } from "@/src/lib/tramo-geometria"
-import { crearRegistroMaquinariaTramo } from "@/src/lib/tramo-maquinaria-historial"
+import { guardarJornadaMinitramo } from "@/src/lib/tramo-maquinaria-historial"
 import {
   calcularKpisTramos,
   filtrarTramos,
@@ -319,6 +319,8 @@ export function MapaTramosClient() {
         return
       }
 
+      let nuevoPuntoIdConfirmado: string | undefined
+
       if (
         (payload.modo === "corregir" || payload.modo === "editar_minitramo") &&
         payload.puntoId
@@ -330,7 +332,7 @@ export function MapaTramosClient() {
           estado: payload.estado,
         })
       } else {
-        await confirmarPuntoMinitramo(supabase, {
+        nuevoPuntoIdConfirmado = await confirmarPuntoMinitramo(supabase, {
           tramo: payload.tramo,
           punto: payload.punto,
           rol: payload.rol,
@@ -342,9 +344,21 @@ export function MapaTramosClient() {
         })
       }
 
-      if (payload.jornada) {
+      const puntoJornada =
+        payload.puntoAvanceIdJornada ??
+        payload.puntoId ??
+        nuevoPuntoIdConfirmado ??
+        null
+
+      if (payload.jornada && puntoJornada) {
         try {
-          await crearRegistroMaquinariaTramo(supabase, payload.tramo.id, payload.jornada)
+          await guardarJornadaMinitramo(
+            supabase,
+            payload.tramo.id,
+            puntoJornada,
+            payload.jornada,
+            payload.registroJornadaId
+          )
         } catch (jornadaErr) {
           await cargarDatos()
           const prefijoGuardado =
