@@ -96,10 +96,9 @@ export function InfimaInformeVista({ informe }: InfimaInformeVistaProps) {
       {informe.anexosFotograficos.length > 0 ? (
         <section className="mt-8 space-y-6">
           <h2 className="text-center text-sm font-bold">7. ANEXO: REGISTRO FOTOGRÁFICO</h2>
-          <p className="text-justify">
-            A continuación, se presenta el registro fotográfico de las actividades ejecutadas
-            durante la rehabilitación integral de la compuerta Leopoldo Cedeño.
-          </p>
+          {informe.introAnexoFotografico ? (
+            <p className="text-justify">{informe.introAnexoFotografico}</p>
+          ) : null}
           <div className="space-y-8">
             {informe.anexosFotograficos.map((anexo) => (
               <figure key={anexo.numero} className="space-y-2">
