@@ -39,10 +39,8 @@ import {
 import type { TramoFormValues } from "@/src/components/mapa/TramoEditorForm"
 import { ProyectoModuloGuard } from "@/src/components/ProyectoModuloGuard"
 import { useProyecto } from "@/src/contexts/ProyectoContext"
-import { PROYECTO_DESASOLVE_CANALES } from "@/src/data/proyectos/catalog"
 import type { CanalTramo, EstadoTramo, OrigenExtremoTramo } from "@/src/data/tramos/types"
-import { esTramoExcluidoDesasolve } from "@/src/data/tramos/tramos-excluidos"
-import { normalizarTramo } from "@/src/lib/canal-tramos-normalize"
+import { cargarTramosMapaProyecto } from "@/src/lib/cargar-tramos-mapa-proyecto"
 import {
   actualizarFrenteParpadeoTramo,
   frenteParpadeoPorTramoDesdeTramos,
@@ -151,23 +149,10 @@ export function MapaTramosClient() {
     setLoading(true)
     setError(null)
     try {
-      const [{ data: tramosData, error: tramosError }, puntos] = await Promise.all([
-        supabase
-          .from("canal_tramos")
-          .select("*")
-          .eq("proyecto_id", proyectoId)
-          .order("codigo", { ascending: true }),
-        cargarPuntosAvancePorProyecto(supabase, proyectoId),
-      ])
-
-      if (tramosError) throw new Error(tramosError.message)
-
-      const tramosNormalizados = (tramosData ?? [])
-        .map((row) => normalizarTramo(row as Record<string, unknown>))
-        .filter(
-          (t) =>
-            proyectoId !== PROYECTO_DESASOLVE_CANALES || !esTramoExcluidoDesasolve(t.codigo)
-        )
+      const { tramos: tramosNormalizados, puntosAvance: puntos } = await cargarTramosMapaProyecto(
+        supabase,
+        proyectoId
+      )
       setTramos(tramosNormalizados)
       setPuntosAvance(puntos)
       setPuntosRefreshKey((k) => k + 1)
