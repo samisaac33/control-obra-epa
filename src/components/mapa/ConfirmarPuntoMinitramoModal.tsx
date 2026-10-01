@@ -20,7 +20,9 @@ import {
 } from "@/components/ui/select"
 import { RegistrarJornadaTramoFields } from "@/src/components/mapa/RegistrarJornadaTramoFields"
 import {
+  buscarRegistroJornadaLegacyParaPunto,
   estadoInicialJornada,
+  jornadaFormDesdeRegistro,
   jornadaInputDesdeFormState,
   type RegistrarJornadaFormState,
   validarJornadaFormState,
@@ -29,7 +31,11 @@ import type { CanalTramo } from "@/src/data/tramos/types"
 import { ESTADOS_TRAMO_MAPA, etiquetaEstadoTramo } from "@/src/data/tramos/types"
 import type { TramoRegistroMaquinariaInput } from "@/src/lib/tramo-maquinaria-historial"
 import type { PropuestaPuntoMinitramo, TramoPuntoAvance } from "@/src/lib/tramo-geometria"
-import { calcularPropuestaPunto } from "@/src/lib/tramo-geometria"
+import { calcularPropuestaPunto, minitramosDesdePuntos } from "@/src/lib/tramo-geometria"
+import {
+  cargarRegistroMaquinariaPorPuntoAvance,
+  cargarRegistrosMaquinariaTramo,
+} from "@/src/lib/tramo-maquinaria-historial"
 import {
   cargarEquiposMaquinariaProyecto,
   type ProyectoEquipoMaquinaria,
@@ -58,6 +64,8 @@ export type ConfirmarPuntoPayload = {
   modo?: "nuevo" | "corregir" | "editar_minitramo"
   puntoId?: string
   jornada?: TramoRegistroMaquinariaInput | null
+  registroJornadaId?: string
+  puntoAvanceIdJornada?: string
   puntoEnlaceId?: string
 }
 
@@ -99,6 +107,7 @@ export function ConfirmarPuntoMinitramoModal({
   const [incluirJornada, setIncluirJornada] = useState(false)
   const [jornadaForm, setJornadaForm] = useState<RegistrarJornadaFormState>(() => estadoInicialJornada())
   const [equiposCatalogo, setEquiposCatalogo] = useState<ProyectoEquipoMaquinaria[]>([])
+  const [registroJornadaId, setRegistroJornadaId] = useState<string | undefined>()
   const [errorJornada, setErrorJornada] = useState<string | null>(null)
 
   useEffect(() => {
@@ -110,8 +119,6 @@ export function ConfirmarPuntoMinitramoModal({
         ? estadoInicialMinitramo
         : propuestaInicial.estado_sugerido
     )
-    setIncluirJornada(false)
-    setJornadaForm(estadoInicialJornada())
     setErrorJornada(null)
   }, [propuestaInicial, modo, estadoInicialMinitramo])
 
@@ -119,9 +126,87 @@ export function ConfirmarPuntoMinitramoModal({
     if (!open) {
       setIncluirJornada(false)
       setJornadaForm(estadoInicialJornada())
+      setRegistroJornadaId(undefined)
       setErrorJornada(null)
     }
   }, [open])
+
+  useEffect(() => {
+    if (!open || !mostrarRegistrarJornada || !propuestaInicial) return
+
+    const cargarJornadaExistente =
+      (modo === "corregir" || modo === "editar_minitramo") && Boolean(puntoId)
+
+    if (!cargarJornadaExistente) {
+      setRegistroJornadaId(undefined)
+      setIncluirJornada(false)
+      setJornadaForm(estadoInicialJornada())
+      return
+    }
+
+    let cancelado = false
+
+    void (async () => {
+      const proyectoId = propuestaInicial.tramo.proyecto_id
+      const equipos = await cargarEquiposMaquinariaProyecto(supabase, proyectoId, {
+        soloActivos: false,
+      })
+      if (cancelado) return
+      setEquiposCatalogo(equipos)
+
+      const puntoAvanceId = puntoId!
+      let registro = await cargarRegistroMaquinariaPorPuntoAvance(supabase, puntoAvanceId)
+
+      if (!registro) {
+        const registros = await cargarRegistrosMaquinariaTramo(
+          supabase,
+          propuestaInicial.tramo.id
+        )
+        const puntosConfirmados = puntosPrevios.filter(
+          (p) => p.tramo_id === propuestaInicial.tramo.id && p.confirmado
+        )
+        const minitramos = minitramosDesdePuntos(
+          puntosConfirmados,
+          propuestaInicial.tramo.id,
+          propuestaInicial.tramo
+        )
+        const minitramo = minitramos.find((m) => m.puntoFin.id === puntoAvanceId)
+        if (minitramo) {
+          registro =
+            buscarRegistroJornadaLegacyParaPunto(
+              propuestaInicial.tramo,
+              minitramo.puntoFin,
+              registros,
+              minitramo.longitud_m
+            ) ?? null
+        }
+      }
+
+      if (cancelado) return
+
+      if (registro) {
+        setRegistroJornadaId(registro.id)
+        setIncluirJornada(true)
+        setJornadaForm(jornadaFormDesdeRegistro(registro, equipos))
+      } else {
+        setRegistroJornadaId(undefined)
+        setIncluirJornada(false)
+        setJornadaForm(estadoInicialJornada())
+      }
+    })()
+
+    return () => {
+      cancelado = true
+    }
+  }, [
+    open,
+    mostrarRegistrarJornada,
+    propuestaInicial,
+    modo,
+    puntoId,
+    puntosPrevios,
+    supabase,
+  ])
 
   useEffect(() => {
     if (!open || !mostrarRegistrarJornada || !incluirJornada || !propuestaInicial) return
@@ -139,7 +224,9 @@ export function ConfirmarPuntoMinitramoModal({
     return calcularPropuestaPunto(propuestaInicial.tramo, puntosPrevios, latNum, lngNum, {
       orden: propuestaInicial.orden,
       puntoEnlaceId: propuestaInicial.puntoEnlaceId,
-      ...(modo === "corregir" && puntoId ? { excluirPuntoId: puntoId } : {}),
+      ...((modo === "corregir" || modo === "editar_minitramo") && puntoId
+        ? { excluirPuntoId: puntoId }
+        : {}),
     })
   }, [propuestaInicial, puntosPrevios, latNum, lngNum, coordsValidas, modo, puntoId])
 
@@ -160,12 +247,16 @@ export function ConfirmarPuntoMinitramoModal({
     setIncluirJornada(checked)
     setErrorJornada(null)
     if (checked) {
-      const metrosSugeridos = sugerirMetrosJornada()
-      setJornadaForm({
-        ...estadoInicialJornada(),
-        metros: metrosSugeridos,
+      setJornadaForm((prev) => {
+        if (prev.metros.trim() || prev.equipoSeleccionId.trim()) return prev
+        const metrosSugeridos = sugerirMetrosJornada()
+        return {
+          ...estadoInicialJornada(),
+          metros: metrosSugeridos,
+        }
       })
     } else {
+      setRegistroJornadaId(undefined)
       setJornadaForm(estadoInicialJornada())
     }
   }
@@ -204,6 +295,8 @@ export function ConfirmarPuntoMinitramoModal({
       modo: esEditarMinitramo ? "editar_minitramo" : esCorreccion ? "corregir" : "nuevo",
       puntoId: esCorreccion ? puntoId : undefined,
       jornada,
+      registroJornadaId,
+      puntoAvanceIdJornada: esCorreccion ? puntoId : undefined,
       puntoEnlaceId: propuesta.puntoEnlaceId,
     })
   }
