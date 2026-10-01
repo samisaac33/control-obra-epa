@@ -18,7 +18,11 @@ import {
   type TramoPuntoAvance,
 } from "@/src/lib/tramo-geometria"
 import { boundsDesdeTramos } from "@/src/lib/tramos-avance"
-import { Z_MAPA_PANTALLA_COMPLETA } from "@/src/lib/mapa-capas-z"
+import {
+  Z_MAPA_MARCADOR_FRENTE_PARPADEO,
+  Z_MAPA_MARCADOR_PUNTO,
+  Z_MAPA_PANTALLA_COMPLETA,
+} from "@/src/lib/mapa-capas-z"
 import {
   ALTURA_MAPA_TRAMOS,
   ALTURA_MAPA_VISITANTE_MOVIL,
@@ -403,40 +407,51 @@ export function MapaTramosLeaflet({
           }}
         />
         {mostrarPuntosAvance
-          ? puntosVisibles.map((punto) => {
-          const parpadeoFrente = idsParpadeoFrente.has(punto.id)
-          const html = htmlMarcadorPuntoAvance(punto, iconSize, fontSize, parpadeoFrente)
+          ? (() => {
+              const puntosFrente = puntosVisibles.filter((p) => idsParpadeoFrente.has(p.id))
+              const puntosResto = puntosVisibles.filter((p) => !idsParpadeoFrente.has(p.id))
 
-          if (punto.rol || parpadeoFrente) {
-            return (
-              <Marker
-                key={punto.id}
-                position={[punto.lat, punto.lng]}
-                icon={L.divIcon({
-                  className: "",
-                  html,
-                  iconSize: [iconSize, iconSize],
-                  iconAnchor: [iconSize / 2, iconSize / 2],
-                })}
-              />
-            )
-          }
+              const renderMarcadorDiv = (punto: TramoPuntoAvance, parpadeoFrente: boolean) => (
+                <Marker
+                  key={punto.id}
+                  position={[punto.lat, punto.lng]}
+                  zIndexOffset={
+                    parpadeoFrente ? Z_MAPA_MARCADOR_FRENTE_PARPADEO : Z_MAPA_MARCADOR_PUNTO
+                  }
+                  icon={L.divIcon({
+                    className: "",
+                    html: htmlMarcadorPuntoAvance(punto, iconSize, fontSize, parpadeoFrente),
+                    iconSize: [iconSize, iconSize],
+                    iconAnchor: [iconSize / 2, iconSize / 2],
+                  })}
+                />
+              )
 
-          const seleccionado = punto.tramo_id === tramoSeleccionadoId
-          return (
-            <CircleMarker
-              key={punto.id}
-              center={[punto.lat, punto.lng]}
-              radius={marcadoresCompactos ? 5 : 6}
-              pathOptions={{
-                color: "#ffffff",
-                weight: 2,
-                fillColor: seleccionado ? "#2563eb" : "#16a34a",
-                fillOpacity: 0.95,
-              }}
-            />
-          )
-        })
+              return (
+                <>
+                  {puntosResto.map((punto) => {
+                    if (punto.rol) {
+                      return renderMarcadorDiv(punto, false)
+                    }
+                    const seleccionado = punto.tramo_id === tramoSeleccionadoId
+                    return (
+                      <CircleMarker
+                        key={punto.id}
+                        center={[punto.lat, punto.lng]}
+                        radius={marcadoresCompactos ? 5 : 6}
+                        pathOptions={{
+                          color: "#ffffff",
+                          weight: 2,
+                          fillColor: seleccionado ? "#2563eb" : "#16a34a",
+                          fillOpacity: 0.95,
+                        }}
+                      />
+                    )
+                  })}
+                  {puntosFrente.map((punto) => renderMarcadorDiv(punto, true))}
+                </>
+              )
+            })()
           : null}
       </MapContainer>
     </div>
