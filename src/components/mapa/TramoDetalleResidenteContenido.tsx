@@ -41,6 +41,8 @@ export type TramoDetalleResidenteContenidoProps = {
   onEditarMinitramo?: (puntoFinId: string) => void
   onEstadoMinitramoChange?: (puntoFinId: string, estado: EstadoTramo) => void | Promise<void>
   onEstadoPuntoChange?: (puntoId: string, estado: EstadoTramo | null) => void | Promise<void>
+  puntoFrenteParpadeoId?: string | null
+  onFrenteTrabajoParpadeo?: (puntoId: string) => void
   onEvidenciaSubida?: () => void
   onGuardarOrigenInicio?: (
     origen: OrigenExtremoTramo,
@@ -69,6 +71,8 @@ export function TramoDetalleResidenteContenido({
   onEditarMinitramo,
   onEstadoMinitramoChange,
   onEstadoPuntoChange,
+  puntoFrenteParpadeoId = null,
+  onFrenteTrabajoParpadeo,
   onEvidenciaSubida,
   onGuardarOrigenInicio,
   onReiniciarOrigenTramo,
@@ -124,6 +128,8 @@ export function TramoDetalleResidenteContenido({
           tramoId={tramo.id}
           puntos={puntosDelTramo}
           guardandoPuntoId={guardandoEstadoMinitramoId}
+          puntoFrenteParpadeoId={puntoFrenteParpadeoId}
+          onFrenteTrabajoParpadeo={onFrenteTrabajoParpadeo}
           onEstadoPuntoChange={onEstadoPuntoChange}
         />
       ) : null}

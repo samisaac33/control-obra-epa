@@ -138,6 +138,9 @@ export function MapaTramosClient() {
     lng: number
   } | null>(null)
   const [centrarUbicacionKey, setCentrarUbicacionKey] = useState(0)
+  const [puntoFrenteParpadeoPorTramo, setPuntoFrenteParpadeoPorTramo] = useState<
+    Record<string, string>
+  >({})
 
   const cargarDatos = useCallback(async () => {
     setLoading(true)
@@ -500,6 +503,22 @@ export function MapaTramosClient() {
     await handleEstadoPuntoChange(puntoFinId, estado)
   }
 
+  const handleFrenteTrabajoParpadeo = useCallback((tramoId: string, puntoId: string) => {
+    setPuntoFrenteParpadeoPorTramo((prev) => {
+      const next = { ...prev }
+      if (prev[tramoId] === puntoId) {
+        delete next[tramoId]
+      } else {
+        next[tramoId] = puntoId
+      }
+      return next
+    })
+  }, [])
+
+  const puntoIdsParpadeoFrente = useMemo(() => {
+    return new Set(Object.values(puntoFrenteParpadeoPorTramo))
+  }, [puntoFrenteParpadeoPorTramo])
+
   async function handleRenumerarPuntosTramo() {
     if (!tramoSeleccionado) return
     if (
@@ -599,6 +618,7 @@ export function MapaTramosClient() {
       ubicacionUsuario={isResident ? ubicacionResidente : null}
       seguirUbicacionUsuario={isResident ? seguirUbicacionResidente : false}
       centrarUbicacionVersion={isResident ? centrarUbicacionKey : 0}
+      puntoIdsParpadeoFrente={puntoIdsParpadeoFrente}
     />
   )
 
@@ -784,6 +804,14 @@ export function MapaTramosClient() {
         onEliminarPuntoHuérfano={isResident ? handleEliminarPuntoHuérfano : undefined}
         onEstadoMinitramoChange={isResident ? handleEstadoMinitramoChange : undefined}
         onEstadoPuntoChange={isResident ? handleEstadoPuntoChange : undefined}
+        puntoFrenteParpadeoId={
+          tramoSeleccionado ? (puntoFrenteParpadeoPorTramo[tramoSeleccionado.id] ?? null) : null
+        }
+        onFrenteTrabajoParpadeo={
+          isResident && tramoSeleccionado
+            ? (puntoId) => handleFrenteTrabajoParpadeo(tramoSeleccionado.id, puntoId)
+            : undefined
+        }
         guardandoEstadoMinitramoId={guardandoEstadoMinitramoId}
         onEvidenciaSubida={() => void cargarDatos()}
         onGuardarOrigenInicio={isResident ? handleGuardarOrigenInicio : undefined}
