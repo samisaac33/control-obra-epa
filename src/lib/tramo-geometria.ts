@@ -424,7 +424,7 @@ export function estadoEfectivoMinitramo(punto: TramoPuntoAvance): EstadoTramo {
   return punto.estado_minitramo ?? "en_ejecucion"
 }
 
-/** Punto marcado explícitamente en ejecución (parpadeo en mapa). */
+/** Estado operativo del minitramo en el desplegable (no define KPI/filtro «En ejecución» del mapa). */
 export function puntoEnEjecucionOperativo(punto: TramoPuntoAvance): boolean {
   return punto.estado_minitramo === "en_ejecucion"
 }

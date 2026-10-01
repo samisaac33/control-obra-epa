@@ -3,6 +3,16 @@ import type { SupabaseClient } from "@supabase/supabase-js"
 import type { CanalTramo } from "@/src/data/tramos/types"
 import type { TramoPuntoAvance } from "@/src/lib/tramo-geometria"
 
+/** Tramo con frente parpadeante persistido y punto válido entre los cargados. */
+export function tramoTieneFrenteParpadeoEnMapa(
+  tramo: CanalTramo,
+  puntos: TramoPuntoAvance[]
+): boolean {
+  const puntoId = tramo.punto_frente_mapa_id
+  if (!puntoId) return false
+  return puntos.some((p) => p.tramo_id === tramo.id && p.id === puntoId)
+}
+
 /** Mapa tramoId → puntoId con frente parpadeante, validado contra puntos cargados. */
 export function frenteParpadeoPorTramoDesdeTramos(
   tramos: CanalTramo[],

@@ -64,7 +64,7 @@ import type {
   TramoPuntoAvance,
 } from "@/src/lib/tramo-geometria"
 import { contextoEditarMinitramo, evaluarPropuestaPuntoConAutoEnlace } from "@/src/lib/tramo-geometria"
-import { crearRegistroMaquinariaTramo } from "@/src/lib/tramo-maquinaria-historial"
+import { guardarJornadaMinitramo } from "@/src/lib/tramo-maquinaria-historial"
 import {
   calcularKpisTramos,
   filtrarTramos,
@@ -132,7 +132,7 @@ export function MapaTramosClient() {
   const esViewportMovil = useEsViewportMovil()
   const [vistaSoloTramos1a24, setVistaSoloTramos1a24] = useState(false)
   const [mostrarNumerosTramo, setMostrarNumerosTramo] = useState(false)
-  const [ocultarPuntosAvance, setOcultarPuntosAvance] = useState(false)
+  const [mostrarPuntosAvance, setMostrarPuntosAvance] = useState(true)
   const [ocultarMinitramosTerminados, setOcultarMinitramosTerminados] = useState(false)
   const [mapaConsolidado, setMapaConsolidado] = useState(false)
   const [ubicacionResidente, setUbicacionResidente] = useState<UbicacionUsuario | null>(null)
@@ -304,6 +304,8 @@ export function MapaTramosClient() {
         return
       }
 
+      let nuevoPuntoIdConfirmado: string | undefined
+
       if (
         (payload.modo === "corregir" || payload.modo === "editar_minitramo") &&
         payload.puntoId
@@ -315,7 +317,7 @@ export function MapaTramosClient() {
           estado: payload.estado,
         })
       } else {
-        await confirmarPuntoMinitramo(supabase, {
+        nuevoPuntoIdConfirmado = await confirmarPuntoMinitramo(supabase, {
           tramo: payload.tramo,
           punto: payload.punto,
           rol: payload.rol,
@@ -327,9 +329,21 @@ export function MapaTramosClient() {
         })
       }
 
-      if (payload.jornada) {
+      const puntoJornada =
+        payload.puntoAvanceIdJornada ??
+        payload.puntoId ??
+        nuevoPuntoIdConfirmado ??
+        null
+
+      if (payload.jornada && puntoJornada) {
         try {
-          await crearRegistroMaquinariaTramo(supabase, payload.tramo.id, payload.jornada)
+          await guardarJornadaMinitramo(
+            supabase,
+            payload.tramo.id,
+            puntoJornada,
+            payload.jornada,
+            payload.registroJornadaId
+          )
         } catch (jornadaErr) {
           await cargarDatos()
           const prefijoGuardado =
@@ -631,7 +645,7 @@ export function MapaTramosClient() {
       alturaResponsiveResidente={isResident}
       marcadoresCompactos={visitanteMovil}
       mostrarEtiquetasTramo={mostrarNumerosTramo}
-      mostrarPuntosAvance={!ocultarPuntosAvance}
+      mostrarPuntosAvance={mostrarPuntosAvance}
       mostrarMinitramosTerminados={!ocultarMinitramosTerminados}
       mapaConsolidado={mapaConsolidado}
       onTramoClick={handleTramoClick}
@@ -709,8 +723,8 @@ export function MapaTramosClient() {
                       onVistaSoloTramos1a24Change={setVistaSoloTramos1a24}
                       mostrarNumerosTramo={mostrarNumerosTramo}
                       onMostrarNumerosTramoChange={setMostrarNumerosTramo}
-                      ocultarPuntosAvance={ocultarPuntosAvance}
-                      onOcultarPuntosAvanceChange={setOcultarPuntosAvance}
+                      mostrarPuntosAvance={mostrarPuntosAvance}
+                      onMostrarPuntosAvanceChange={setMostrarPuntosAvance}
                       ocultarMinitramosTerminados={ocultarMinitramosTerminados}
                       onOcultarMinitramosTerminadosChange={setOcultarMinitramosTerminados}
                       mapaConsolidado={mapaConsolidado}
@@ -748,8 +762,8 @@ export function MapaTramosClient() {
                       onVistaSoloTramos1a24Change={setVistaSoloTramos1a24}
                       mostrarNumerosTramo={mostrarNumerosTramo}
                       onMostrarNumerosTramoChange={setMostrarNumerosTramo}
-                      ocultarPuntosAvance={ocultarPuntosAvance}
-                      onOcultarPuntosAvanceChange={setOcultarPuntosAvance}
+                      mostrarPuntosAvance={mostrarPuntosAvance}
+                      onMostrarPuntosAvanceChange={setMostrarPuntosAvance}
                       ocultarMinitramosTerminados={ocultarMinitramosTerminados}
                       onOcultarMinitramosTerminadosChange={setOcultarMinitramosTerminados}
                       mapaConsolidado={mapaConsolidado}
@@ -793,8 +807,8 @@ export function MapaTramosClient() {
                         onVistaSoloTramos1a24Change: setVistaSoloTramos1a24,
                         mostrarNumerosTramo,
                         onMostrarNumerosTramoChange: setMostrarNumerosTramo,
-                        ocultarPuntosAvance,
-                        onOcultarPuntosAvanceChange: setOcultarPuntosAvance,
+                        mostrarPuntosAvance,
+                        onMostrarPuntosAvanceChange: setMostrarPuntosAvance,
                         ocultarMinitramosTerminados,
                         onOcultarMinitramosTerminadosChange: setOcultarMinitramosTerminados,
                         mapaConsolidado,

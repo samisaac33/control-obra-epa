@@ -28,8 +28,8 @@ type MapaTramosFiltrosSheetProps = {
     onVistaSoloTramos1a24Change: (value: boolean) => void
     mostrarNumerosTramo: boolean
     onMostrarNumerosTramoChange: (value: boolean) => void
-    ocultarPuntosAvance: boolean
-    onOcultarPuntosAvanceChange: (value: boolean) => void
+    mostrarPuntosAvance: boolean
+    onMostrarPuntosAvanceChange: (value: boolean) => void
     ocultarMinitramosTerminados: boolean
     onOcultarMinitramosTerminadosChange: (value: boolean) => void
     mapaConsolidado: boolean
@@ -51,7 +51,7 @@ function capasActivas(capas: MapaTramosFiltrosSheetProps["capas"]): boolean {
   return (
     capas.vistaSoloTramos1a24 ||
     capas.mostrarNumerosTramo ||
-    capas.ocultarPuntosAvance ||
+    !capas.mostrarPuntosAvance ||
     capas.ocultarMinitramosTerminados ||
     capas.mapaConsolidado
   )
@@ -99,8 +99,8 @@ export function MapaTramosFiltrosSheet({
               onVistaSoloTramos1a24Change={capas.onVistaSoloTramos1a24Change}
               mostrarNumerosTramo={capas.mostrarNumerosTramo}
               onMostrarNumerosTramoChange={capas.onMostrarNumerosTramoChange}
-              ocultarPuntosAvance={capas.ocultarPuntosAvance}
-              onOcultarPuntosAvanceChange={capas.onOcultarPuntosAvanceChange}
+              mostrarPuntosAvance={capas.mostrarPuntosAvance}
+              onMostrarPuntosAvanceChange={capas.onMostrarPuntosAvanceChange}
               ocultarMinitramosTerminados={capas.ocultarMinitramosTerminados}
               onOcultarMinitramosTerminadosChange={capas.onOcultarMinitramosTerminadosChange}
               mapaConsolidado={capas.mapaConsolidado}

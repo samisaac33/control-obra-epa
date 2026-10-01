@@ -9,6 +9,7 @@ export type TramoRegistroMaquinaria = {
   metros_desasolados: number
   equipo: string
   equipo_id: string | null
+  punto_avance_id: string | null
   duracion_horas: number | null
   observaciones: string | null
   created_at: string
@@ -32,6 +33,7 @@ function normalizar(row: Record<string, unknown>): TramoRegistroMaquinaria {
     metros_desasolados: Number(row.metros_desasolados),
     equipo: String(row.equipo),
     equipo_id: row.equipo_id != null ? String(row.equipo_id) : null,
+    punto_avance_id: row.punto_avance_id != null ? String(row.punto_avance_id) : null,
     duracion_horas: row.duracion_horas != null ? Number(row.duracion_horas) : null,
     observaciones: row.observaciones ? String(row.observaciones) : null,
     created_at: String(row.created_at),
@@ -71,10 +73,26 @@ export async function cargarRegistrosMaquinariaTramo(
   return (data ?? []).map((row) => normalizar(row as Record<string, unknown>))
 }
 
+export async function cargarRegistroMaquinariaPorPuntoAvance(
+  supabase: SupabaseClient,
+  puntoAvanceId: string
+): Promise<TramoRegistroMaquinaria | null> {
+  const { data, error } = await supabase
+    .from("tramo_registros_maquinaria")
+    .select("*")
+    .eq("punto_avance_id", puntoAvanceId)
+    .maybeSingle()
+
+  if (error) throw new Error(error.message)
+  if (!data) return null
+  return normalizar(data as Record<string, unknown>)
+}
+
 export async function crearRegistroMaquinariaTramo(
   supabase: SupabaseClient,
   tramoId: string,
-  input: TramoRegistroMaquinariaInput
+  input: TramoRegistroMaquinariaInput,
+  options?: { punto_avance_id?: string | null }
 ): Promise<void> {
   const { error } = await supabase.from("tramo_registros_maquinaria").insert({
     tramo_id: tramoId,
@@ -82,12 +100,67 @@ export async function crearRegistroMaquinariaTramo(
     metros_desasolados: input.metros_desasolados,
     equipo: input.equipo.trim(),
     equipo_id: input.equipo_id ?? null,
+    punto_avance_id: options?.punto_avance_id ?? null,
     duracion_horas: input.duracion_horas ?? null,
     observaciones: input.observaciones?.trim() || null,
     updated_at: new Date().toISOString(),
   })
 
   if (error) throw new Error(error.message)
+}
+
+export async function actualizarRegistroMaquinariaTramo(
+  supabase: SupabaseClient,
+  registroId: string,
+  input: TramoRegistroMaquinariaInput,
+  options?: { punto_avance_id?: string | null }
+): Promise<void> {
+  const payload: Record<string, unknown> = {
+    fecha: input.fecha,
+    metros_desasolados: input.metros_desasolados,
+    equipo: input.equipo.trim(),
+    equipo_id: input.equipo_id ?? null,
+    duracion_horas: input.duracion_horas ?? null,
+    observaciones: input.observaciones?.trim() || null,
+    updated_at: new Date().toISOString(),
+  }
+
+  if (options?.punto_avance_id !== undefined) {
+    payload.punto_avance_id = options.punto_avance_id
+  }
+
+  const { error } = await supabase
+    .from("tramo_registros_maquinaria")
+    .update(payload)
+    .eq("id", registroId)
+
+  if (error) throw new Error(error.message)
+}
+
+export async function guardarJornadaMinitramo(
+  supabase: SupabaseClient,
+  tramoId: string,
+  puntoAvanceId: string,
+  input: TramoRegistroMaquinariaInput,
+  registroExistenteId?: string | null
+): Promise<void> {
+  let registroId = registroExistenteId ?? null
+
+  if (!registroId) {
+    const porPunto = await cargarRegistroMaquinariaPorPuntoAvance(supabase, puntoAvanceId)
+    registroId = porPunto?.id ?? null
+  }
+
+  if (registroId) {
+    await actualizarRegistroMaquinariaTramo(supabase, registroId, input, {
+      punto_avance_id: puntoAvanceId,
+    })
+    return
+  }
+
+  await crearRegistroMaquinariaTramo(supabase, tramoId, input, {
+    punto_avance_id: puntoAvanceId,
+  })
 }
 
 export async function propagarRenombreEquipoEnHistorialTramo(
