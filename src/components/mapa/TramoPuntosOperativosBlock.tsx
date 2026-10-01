@@ -15,17 +15,14 @@ import {
   type EstadoTramo,
 } from "@/src/data/tramos/types"
 import { SELECT_CONTENT_POPPER_EN_MAPA } from "@/src/lib/mapa-capas-z"
-import {
-  etiquetaLetra,
-  puntoEnEjecucionOperativo,
-  puntosOrdenadosTramo,
-  type TramoPuntoAvance,
-} from "@/src/lib/tramo-geometria"
+import { etiquetaLetra, puntosOrdenadosTramo, type TramoPuntoAvance } from "@/src/lib/tramo-geometria"
 
 type TramoPuntosOperativosBlockProps = {
   tramoId: string
   puntos: TramoPuntoAvance[]
   guardandoPuntoId?: string | null
+  puntoFrenteParpadeoId?: string | null
+  onFrenteTrabajoParpadeo?: (puntoId: string) => void
   onEstadoPuntoChange?: (
     puntoId: string,
     estado: EstadoTramo | null
@@ -36,24 +33,27 @@ export function TramoPuntosOperativosBlock({
   tramoId,
   puntos,
   guardandoPuntoId = null,
+  puntoFrenteParpadeoId = null,
+  onFrenteTrabajoParpadeo,
   onEstadoPuntoChange,
 }: TramoPuntosOperativosBlockProps) {
   const ordenados = puntosOrdenadosTramo(puntos, tramoId)
-  if (ordenados.length === 0 || !onEstadoPuntoChange) return null
+  if (ordenados.length === 0 || !onEstadoPuntoChange || !onFrenteTrabajoParpadeo) return null
 
   return (
     <div className="space-y-3 rounded-lg border border-foreground/10 bg-muted/10 p-4">
       <div>
         <h4 className="text-sm font-medium">Estado operativo por punto</h4>
         <p className="mt-1 text-xs text-muted-foreground">
-          Cualquier punto (A, B, C…) puede quedar en ejecución sin enlazar otro. Solo un punto por
-          tramo parpadea como frente de trabajo activo.
+          El botón «En ejecución» solo resalta el frente de trabajo en el mapa (parpadeo), sin
+          cambiar el estado del minitramo. El estado operativo se define en el desplegable. Solo un
+          punto por tramo parpadea a la vez.
         </p>
       </div>
       <ul className="space-y-2">
         {ordenados.map((punto) => {
           const letra = punto.rol ? etiquetaLetra(punto.rol) : "?"
-          const enEjecucion = puntoEnEjecucionOperativo(punto)
+          const frenteParpadeo = punto.id === puntoFrenteParpadeoId
           const guardando = guardandoPuntoId === punto.id
           const selectValue = punto.estado_minitramo ?? "sin_asignar"
 
@@ -64,9 +64,9 @@ export function TramoPuntosOperativosBlock({
             >
               <div className="flex items-center gap-2">
                 <span
-                  className={`flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white${enEjecucion ? " mapa-punto-en-ejecucion" : ""}`}
+                  className={`flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white${frenteParpadeo ? " mapa-punto-en-ejecucion" : ""}`}
                   style={{
-                    backgroundColor: enEjecucion
+                    backgroundColor: frenteParpadeo
                       ? colorEstadoTramo("en_ejecucion")
                       : "#64748b",
                   }}
@@ -74,9 +74,9 @@ export function TramoPuntosOperativosBlock({
                   {letra}
                 </span>
                 <span className="text-sm font-medium">Punto {letra}</span>
-                {enEjecucion ? (
+                {frenteParpadeo ? (
                   <span className="text-xs font-medium text-amber-700 dark:text-amber-400">
-                    En ejecución
+                    Frente en mapa
                   </span>
                 ) : null}
               </div>
@@ -84,16 +84,16 @@ export function TramoPuntosOperativosBlock({
                 <Button
                   type="button"
                   size="sm"
-                  variant={enEjecucion ? "default" : "outline"}
+                  variant={frenteParpadeo ? "default" : "outline"}
                   className="h-9 text-xs"
-                  disabled={guardando || enEjecucion}
-                  onClick={() => void onEstadoPuntoChange(punto.id, "en_ejecucion")}
+                  disabled={guardando}
+                  onClick={() => onFrenteTrabajoParpadeo(punto.id)}
                 >
-                  {guardando ? "Guardando…" : "En ejecución"}
+                  {frenteParpadeo ? "Quitar frente en mapa" : "En ejecución"}
                 </Button>
                 <div className="min-w-[10rem] space-y-1">
                   <Label htmlFor={`estado-punto-${punto.id}`} className="sr-only">
-                    Estado punto {letra}
+                    Estado minitramo punto {letra}
                   </Label>
                   <Select
                     value={selectValue}

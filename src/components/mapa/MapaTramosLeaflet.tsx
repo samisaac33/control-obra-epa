@@ -37,7 +37,6 @@ import {
   type UbicacionUsuario,
 } from "@/src/components/mapa/UbicacionUsuarioEnMapa"
 import { htmlMarcadorPuntoAvance } from "@/src/lib/mapa-punto-marker"
-import { puntoEnEjecucionOperativo } from "@/src/lib/tramo-geometria"
 
 import "leaflet/dist/leaflet.css"
 
@@ -60,6 +59,7 @@ type MapaTramosLeafletProps = {
   ubicacionUsuario?: UbicacionUsuario | null
   seguirUbicacionUsuario?: boolean
   centrarUbicacionVersion?: number
+  puntoIdsParpadeoFrente?: ReadonlySet<string>
 }
 
 type FeatureProps = {
@@ -210,7 +210,9 @@ export function MapaTramosLeaflet({
   ubicacionUsuario = null,
   seguirUbicacionUsuario = false,
   centrarUbicacionVersion = 0,
+  puntoIdsParpadeoFrente,
 }: MapaTramosLeafletProps) {
+  const idsParpadeoFrente = puntoIdsParpadeoFrente ?? new Set<string>()
   const [pantallaCompleta, setPantallaCompleta] = useState(false)
   const esViewportMovilHook = useEsViewportMovil()
   const alturaNormal = modoMapaVisitanteMovil ? ALTURA_MAPA_VISITANTE_MOVIL : ALTURA_MAPA_TRAMOS
@@ -285,7 +287,7 @@ export function MapaTramosLeaflet({
 
   const layerKey = `${isResident ? "r" : "v"}-${esViewportMovil ? "m" : "d"}-${mostrarMinitramosTerminados ? "mtt1" : "mtt0"}-${mapaConsolidado ? "cons1" : "cons0"}-${tramoSeleccionadoId ?? "none"}-${tramos
     .map((t) => `${t.id}:${t.metros_ejecutados}:${t.estado}`)
-    .join("|")}-${puntosVisibles.map((p) => `${p.id}:${p.estado_minitramo ?? ""}`).join(",")}`
+    .join("|")}-${puntosVisibles.map((p) => `${p.id}:${p.estado_minitramo ?? ""}`).join(",")}-${[...idsParpadeoFrente].sort().join(",")}`
 
   const mapaShell = (
     <div
@@ -402,10 +404,10 @@ export function MapaTramosLeaflet({
         />
         {mostrarPuntosAvance
           ? puntosVisibles.map((punto) => {
-          const enEjecucion = puntoEnEjecucionOperativo(punto)
-          const html = htmlMarcadorPuntoAvance(punto, iconSize, fontSize)
+          const parpadeoFrente = idsParpadeoFrente.has(punto.id)
+          const html = htmlMarcadorPuntoAvance(punto, iconSize, fontSize, parpadeoFrente)
 
-          if (punto.rol || enEjecucion) {
+          if (punto.rol || parpadeoFrente) {
             return (
               <Marker
                 key={punto.id}
