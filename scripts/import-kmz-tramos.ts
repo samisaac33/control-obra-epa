@@ -20,6 +20,7 @@ import JSZip from "jszip"
 import { createClient } from "@supabase/supabase-js"
 
 import { PROYECTO_DESASOLVE_CANALES } from "../src/data/proyectos/catalog"
+import { esTramoExcluidoDesasolve } from "../src/data/tramos/tramos-excluidos"
 import { longitudDesdeGeometria } from "../src/lib/tramos-avance"
 import type { GeoJsonLineString } from "../src/data/tramos/types"
 
@@ -194,6 +195,7 @@ async function main() {
       pickProperty(props, ["Name", "name"]) ??
       `TR-${String(index + 1).padStart(3, "0")}`
     const codigo = normalizarCodigoTramo(codigoRaw)
+    if (esTramoExcluidoDesasolve(codigo)) continue
     const canal = pickProperty(props, PROPERTY_ALIASES.canal) ?? CANAL_DEFAULT
 
     let geometria: GeoJsonLineString | null = null
@@ -242,6 +244,22 @@ async function main() {
 
     if (error) {
       throw new Error(error.message)
+    }
+
+    const { data: existentes } = await supabase
+      .from("canal_tramos")
+      .select("id, codigo")
+      .eq("proyecto_id", PROYECTO_DESASOLVE_CANALES)
+
+    const idsExcluidos = (existentes ?? [])
+      .filter((row) => esTramoExcluidoDesasolve(String(row.codigo)))
+      .map((row) => String(row.id))
+
+    if (idsExcluidos.length > 0) {
+      await supabase.from("registros_fotograficos").update({ tramo_id: null }).in("tramo_id", idsExcluidos)
+      const { error: delExcluidos } = await supabase.from("canal_tramos").delete().in("id", idsExcluidos)
+      if (delExcluidos) throw new Error(delExcluidos.message)
+      console.log(`Tramos excluidos eliminados de BD: ${idsExcluidos.length}`)
     }
   } else if (sqlOut) {
     console.log("Modo --sql-out: no se ejecutó upsert remoto.")
