@@ -45,9 +45,9 @@ export function TramoPuntosOperativosBlock({
       <div>
         <h4 className="text-sm font-medium">Estado operativo por punto</h4>
         <p className="mt-1 text-xs text-muted-foreground">
-          El botón «En ejecución» solo resalta el frente de trabajo en el mapa (parpadeo), sin
-          cambiar el estado del minitramo. El estado operativo se define en el desplegable. Solo un
-          punto por tramo parpadea a la vez.
+          El botón «En ejecución» resalta el frente en el mapa (parpadeo) y se guarda hasta que
+          pulses «Quitar frente en mapa», sin cambiar el estado del minitramo. El estado operativo
+          se define en el desplegable. Solo un punto por tramo parpadea a la vez.
         </p>
       </div>
       <ul className="space-y-2">

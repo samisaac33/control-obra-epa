@@ -21,6 +21,7 @@ export function normalizarTramo(row: Record<string, unknown>): CanalTramo {
     semana_programada: row.semana_programada ? String(row.semana_programada) : null,
     maquinaria_asignada: row.maquinaria_asignada ? String(row.maquinaria_asignada) : null,
     observaciones: row.observaciones ? String(row.observaciones) : null,
+    punto_frente_mapa_id: row.punto_frente_mapa_id ? String(row.punto_frente_mapa_id) : null,
     created_at: row.created_at ? String(row.created_at) : undefined,
     updated_at: row.updated_at ? String(row.updated_at) : undefined,
   }

@@ -43,6 +43,10 @@ import { PROYECTO_DESASOLVE_CANALES } from "@/src/data/proyectos/catalog"
 import type { CanalTramo, EstadoTramo, OrigenExtremoTramo } from "@/src/data/tramos/types"
 import { esTramoExcluidoDesasolve } from "@/src/data/tramos/tramos-excluidos"
 import { normalizarTramo } from "@/src/lib/canal-tramos-normalize"
+import {
+  actualizarFrenteParpadeoTramo,
+  frenteParpadeoPorTramoDesdeTramos,
+} from "@/src/lib/tramo-frente-mapa"
 import { createClient } from "@/src/lib/supabase/client"
 import {
   actualizarEstadoPuntoAvance,
@@ -119,6 +123,9 @@ export function MapaTramosClient() {
   const [confirmandoAvance, setConfirmandoAvance] = useState(false)
   const [eliminandoId, setEliminandoId] = useState<string | null>(null)
   const [guardandoEstadoMinitramoId, setGuardandoEstadoMinitramoId] = useState<string | null>(null)
+  const [guardandoFrenteParpadeoPuntoId, setGuardandoFrenteParpadeoPuntoId] = useState<
+    string | null
+  >(null)
   const [panelError, setPanelError] = useState<string | null>(null)
   const [tramoVisitanteModal, setTramoVisitanteModal] = useState<{
     tramo: CanalTramo
@@ -140,10 +147,6 @@ export function MapaTramosClient() {
     lng: number
   } | null>(null)
   const [centrarUbicacionKey, setCentrarUbicacionKey] = useState(0)
-  const [puntoFrenteParpadeoPorTramo, setPuntoFrenteParpadeoPorTramo] = useState<
-    Record<string, string>
-  >({})
-
   const cargarDatos = useCallback(async () => {
     setLoading(true)
     setError(null)
@@ -508,17 +511,44 @@ export function MapaTramosClient() {
     await handleEstadoPuntoChange(puntoFinId, estado)
   }
 
-  const handleFrenteTrabajoParpadeo = useCallback((tramoId: string, puntoId: string) => {
-    setPuntoFrenteParpadeoPorTramo((prev) => {
-      const next = { ...prev }
-      if (prev[tramoId] === puntoId) {
-        delete next[tramoId]
-      } else {
-        next[tramoId] = puntoId
+  const puntoFrenteParpadeoPorTramo = useMemo(
+    () => frenteParpadeoPorTramoDesdeTramos(tramos, puntosAvance),
+    [tramos, puntosAvance]
+  )
+
+  const handleFrenteTrabajoParpadeo = useCallback(
+    async (tramoId: string, puntoId: string) => {
+      const tramo = tramos.find((t) => t.id === tramoId)
+      if (!tramo) return
+
+      const activo = tramo.punto_frente_mapa_id === puntoId
+      const nextPuntoId = activo ? null : puntoId
+
+      setGuardandoFrenteParpadeoPuntoId(puntoId)
+      setPanelError(null)
+      const tramosSnapshot = tramos
+      const tramoSeleccionadoSnapshot = tramoSeleccionado
+
+      const patchFrente = (t: CanalTramo): CanalTramo =>
+        t.id === tramoId ? { ...t, punto_frente_mapa_id: nextPuntoId } : t
+
+      setTramos((prev) => prev.map(patchFrente))
+      setTramoSeleccionado((prev) => (prev?.id === tramoId ? patchFrente(prev) : prev))
+
+      try {
+        await actualizarFrenteParpadeoTramo(supabase, tramoId, nextPuntoId)
+      } catch (err) {
+        setTramos(tramosSnapshot)
+        setTramoSeleccionado(tramoSeleccionadoSnapshot)
+        setPanelError(
+          err instanceof Error ? err.message : "No se pudo guardar el frente en el mapa."
+        )
+      } finally {
+        setGuardandoFrenteParpadeoPuntoId(null)
       }
-      return next
-    })
-  }, [])
+    },
+    [tramos, tramoSeleccionado, supabase]
+  )
 
   const puntoIdsParpadeoFrente = useMemo(() => {
     return new Set(Object.values(puntoFrenteParpadeoPorTramo))
@@ -814,10 +844,10 @@ export function MapaTramosClient() {
         }
         onFrenteTrabajoParpadeo={
           isResident && tramoSeleccionado
-            ? (puntoId) => handleFrenteTrabajoParpadeo(tramoSeleccionado.id, puntoId)
+            ? (puntoId) => void handleFrenteTrabajoParpadeo(tramoSeleccionado.id, puntoId)
             : undefined
         }
-        guardandoEstadoMinitramoId={guardandoEstadoMinitramoId}
+        guardandoEstadoMinitramoId={guardandoEstadoMinitramoId ?? guardandoFrenteParpadeoPuntoId}
         onEvidenciaSubida={() => void cargarDatos()}
         onGuardarOrigenInicio={isResident ? handleGuardarOrigenInicio : undefined}
         guardandoOrigen={guardandoOrigen}

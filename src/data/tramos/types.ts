@@ -28,6 +28,8 @@ export type CanalTramo = {
   semana_programada: string | null
   maquinaria_asignada: string | null
   observaciones: string | null
+  /** Punto A/B/C con parpadeo de frente en mapa (no es estado_minitramo). */
+  punto_frente_mapa_id?: string | null
   created_at?: string
   updated_at?: string
 }
