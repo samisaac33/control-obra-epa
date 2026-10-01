@@ -8,8 +8,8 @@ type MapaOpcionesCapasMapaProps = {
   onVistaSoloTramos1a24Change: (value: boolean) => void
   mostrarNumerosTramo: boolean
   onMostrarNumerosTramoChange: (value: boolean) => void
-  ocultarPuntosAvance: boolean
-  onOcultarPuntosAvanceChange: (value: boolean) => void
+  mostrarPuntosAvance: boolean
+  onMostrarPuntosAvanceChange: (value: boolean) => void
   ocultarMinitramosTerminados: boolean
   onOcultarMinitramosTerminadosChange: (value: boolean) => void
   mapaConsolidado: boolean
@@ -49,8 +49,8 @@ export function MapaOpcionesCapasMapa({
   onVistaSoloTramos1a24Change,
   mostrarNumerosTramo,
   onMostrarNumerosTramoChange,
-  ocultarPuntosAvance,
-  onOcultarPuntosAvanceChange,
+  mostrarPuntosAvance,
+  onMostrarPuntosAvanceChange,
   ocultarMinitramosTerminados,
   onOcultarMinitramosTerminadosChange,
   mapaConsolidado,
@@ -78,11 +78,11 @@ export function MapaOpcionesCapasMapa({
         titulo="Mostrar números de tramos"
       />
       <OpcionCheckbox
-        id={`${idPrefix}-ocultar-puntos-avance`}
-        checked={ocultarPuntosAvance}
-        onChange={onOcultarPuntosAvanceChange}
-        titulo="Ocultar puntos A, B, C…"
-        ariaLabel="Ocultar marcadores de avance"
+        id={`${idPrefix}-mostrar-puntos-avance`}
+        checked={mostrarPuntosAvance}
+        onChange={onMostrarPuntosAvanceChange}
+        titulo="Mostrar puntos A, B, C…"
+        ariaLabel="Mostrar marcadores de avance; siempre visibles: frente en mapa con parpadeo"
       />
       <OpcionCheckbox
         id={`${idPrefix}-ocultar-mtt`}

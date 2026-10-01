@@ -45,7 +45,9 @@ export function HomeProyectoDesasolve() {
     const [{ data }, puntos] = await Promise.all([
       supabase
         .from("canal_tramos")
-        .select("id, longitud_m, metros_ejecutados, estado, codigo, canal, geometria, avance_pct")
+        .select(
+          "id, longitud_m, metros_ejecutados, estado, codigo, canal, geometria, avance_pct, punto_frente_mapa_id"
+        )
         .eq("proyecto_id", PROYECTO_DESASOLVE_CANALES),
       cargarPuntosAvancePorProyecto(supabase, PROYECTO_DESASOLVE_CANALES),
     ])
@@ -68,6 +70,7 @@ export function HomeProyectoDesasolve() {
           semana_programada: null,
           maquinaria_asignada: null,
           observaciones: null,
+          punto_frente_mapa_id: row.punto_frente_mapa_id ? String(row.punto_frente_mapa_id) : null,
         }) satisfies CanalTramo
     )
 

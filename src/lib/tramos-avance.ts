@@ -5,9 +5,9 @@ import type {
   GeoJsonLineString,
 } from "@/src/data/tramos/types"
 import { numeroTramoDesdeCodigo } from "@/src/lib/mapa-tramo-etiqueta"
+import { tramoTieneFrenteParpadeoEnMapa } from "@/src/lib/tramo-frente-mapa"
 import {
   metrosMinitramosTerminadosTramo,
-  puntoEnEjecucionOperativo,
   type TramoPuntoAvance,
 } from "@/src/lib/tramo-geometria"
 
@@ -141,10 +141,7 @@ export function estadoOperativoMapa(
 
   if (avancePct >= 100) return "terminado"
 
-  const tieneFrenteActivo = puntosConfirmados.some(
-    (p) => p.tramo_id === tramo.id && puntoEnEjecucionOperativo(p)
-  )
-  if (tieneFrenteActivo) return "en_ejecucion"
+  if (tramoTieneFrenteParpadeoEnMapa(tramo, puntosConfirmados)) return "en_ejecucion"
 
   return "pendiente"
 }
