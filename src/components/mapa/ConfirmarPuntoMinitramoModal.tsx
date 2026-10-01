@@ -147,7 +147,7 @@ export function ConfirmarPuntoMinitramoModal({
 
   const esCorreccion = modo === "corregir" || modo === "editar_minitramo"
   const esEditarMinitramo = modo === "editar_minitramo"
-  const mostrarJornada = mostrarRegistrarJornada && !esEditarMinitramo
+  const mostrarJornada = mostrarRegistrarJornada
 
   function sugerirMetrosJornada(): string {
     if (!propuesta?.cierraMinitramo) return ""
@@ -349,7 +349,9 @@ export function ConfirmarPuntoMinitramoModal({
                 <span>
                   <span className="font-medium">Registrar jornada (opcional)</span>
                   <span className="mt-0.5 block text-xs text-muted-foreground">
-                    Maquinaria desasolada en esta confirmación de punto.
+                    {esEditarMinitramo
+                      ? "Maquinaria desasolada asociada a esta edición del minitramo."
+                      : "Maquinaria desasolada en esta confirmación de punto."}
                   </span>
                 </span>
               </label>

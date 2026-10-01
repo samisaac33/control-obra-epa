@@ -347,10 +347,16 @@ export function MapaTramosClient() {
           await crearRegistroMaquinariaTramo(supabase, payload.tramo.id, payload.jornada)
         } catch (jornadaErr) {
           await cargarDatos()
+          const prefijoGuardado =
+            payload.modo === "editar_minitramo"
+              ? "Cambios guardados, pero la jornada no se registró"
+              : "Punto guardado, pero la jornada no se registró"
           setPanelError(
             jornadaErr instanceof Error
-              ? `Punto guardado, pero la jornada no se registró: ${jornadaErr.message}`
-              : "Punto guardado, pero no se pudo registrar la jornada."
+              ? `${prefijoGuardado}: ${jornadaErr.message}`
+              : payload.modo === "editar_minitramo"
+                ? "Cambios guardados, pero no se pudo registrar la jornada."
+                : "Punto guardado, pero no se pudo registrar la jornada."
           )
           cerrarConfirmacion()
           setPuntosRefreshKey((k) => k + 1)
@@ -891,7 +897,7 @@ export function MapaTramosClient() {
         etiquetaMinitramo={editarEtiquetaMinitramo}
         estadoInicialMinitramo={editarEstadoInicial}
         loading={confirmandoAvance}
-        mostrarRegistrarJornada={isResident && confirmModo !== "editar_minitramo"}
+        mostrarRegistrarJornada={isResident}
         onConfirm={handleConfirmarPunto}
         onCancel={cerrarConfirmacion}
       />
