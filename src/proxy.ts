@@ -50,6 +50,12 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(homeUrl)
   }
 
+  if (pathname === "/infima") {
+    const url = request.nextUrl.clone()
+    url.pathname = "/infimas"
+    return NextResponse.redirect(url)
+  }
+
   if (pathname === "/mapa") {
     const url = request.nextUrl.clone()
     url.pathname = rutaObra(PROYECTO_DESASOLVE_CANALES, "mapa")
