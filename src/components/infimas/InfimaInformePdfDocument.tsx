@@ -195,10 +195,12 @@ function PaginaAnexoFigura({
   anexo,
   resolverImagen,
   mostrarEncabezado,
+  introAnexoFotografico,
 }: {
   anexo: InfimaAnexoFotografico
   resolverImagen?: (archivo: string) => string
   mostrarEncabezado: boolean
+  introAnexoFotografico?: string
 }) {
   const src = resolverImagen ? resolverImagen(anexo.archivo) : anexo.archivo
 
@@ -207,10 +209,9 @@ function PaginaAnexoFigura({
       {mostrarEncabezado ? (
         <>
           <Text style={styles.heading1}>7. ANEXO: REGISTRO FOTOGRÁFICO</Text>
-          <Text style={styles.anexoIntro}>
-            A continuación, se presenta el registro fotográfico de las actividades ejecutadas
-            durante la rehabilitación integral de la compuerta Leopoldo Cedeño.
-          </Text>
+          {introAnexoFotografico ? (
+            <Text style={styles.anexoIntro}>{introAnexoFotografico}</Text>
+          ) : null}
         </>
       ) : null}
       <Image src={src} style={styles.figuraImage} />
@@ -281,6 +282,7 @@ export function InfimaInformePdfDocument({
           anexo={anexo}
           resolverImagen={resolverImagen}
           mostrarEncabezado={index === 0}
+          introAnexoFotografico={informe.introAnexoFotografico}
         />
       ))}
 

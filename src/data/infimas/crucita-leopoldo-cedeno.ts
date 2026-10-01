@@ -77,19 +77,20 @@ export const ANEXOS_FOTOGRAFICOS_CRUCITA_LEOPOLDO_CEDENO: InfimaAnexoFotografico
   },
 ]
 
+const OBJETO_CONTRACTUAL_CRUCITA =
+  'Provisión e Instalación de Materiales para el Mantenimiento Integral de la Compuerta "Leopoldo Cedeño"'
+
 export const INFORME_CRUCITA_LEOPOLDO_CEDENO: InfimaInformeData = {
   titulo: "INFORME TÉCNICO DEFINITIVO DE FINALIZACIÓN DE SERVICIO",
   fecha: "08 de septiembre del 2026",
   para: "Ing. Carlos Alberto Pino Pinargote – Administrador de la Orden de Compra No. IC-EPA EP-052-2026",
   de: "Zambrano Mendoza Milton Joseph",
-  asunto:
-    "Informe Técnico de Finalización de Obra y Recepción Definitiva del Servicio de Rehabilitación Integral de la Compuerta \"Leopoldo Cedeño\".",
+  asunto: `Informe Técnico de Finalización de Obra y Recepción Definitiva ${OBJETO_CONTRACTUAL_CRUCITA}.`,
   datosGenerales: [
     { etiqueta: "Entidad Contratante", valor: "Empresa Pública del Agua (EPA-EP)" },
     {
       etiqueta: "Objeto Contractual",
-      valor:
-        'Provisión e Instalación de Materiales para el Mantenimiento Integral de la Compuerta "Leopoldo Cedeño", conforme el detalle de la Orden de Compra IC-EPA EP-052-2026.',
+      valor: OBJETO_CONTRACTUAL_CRUCITA,
     },
     {
       etiqueta: "Ubicación",
@@ -111,14 +112,14 @@ export const INFORME_CRUCITA_LEOPOLDO_CEDENO: InfimaInformeData = {
     {
       titulo: "INTRODUCCIÓN Y ANTECEDENTES",
       parrafos: [
-        "Mediante Orden de Compra No. IC-EPA EP-052-2026, emitida el 19 de agosto de 2026, la Empresa Pública del Agua EPA-EP contrató el servicio de rehabilitación integral de la compuerta Leopoldo Cedeño en Crucita. El objetivo primordial del proyecto era recuperar la funcionalidad del sistema de control hídrico, el cual se encontraba deshabilitado por el avanzado deterioro corrosivo de las pantallas y el desgaste del mecanismo de izamiento, comprometiendo la operación técnica de los canales de aducción.",
+        `Mediante Orden de Compra No. IC-EPA EP-052-2026, emitida el 19 de agosto de 2026, la Empresa Pública del Agua EPA-EP contrató la ${OBJETO_CONTRACTUAL_CRUCITA}. El objetivo primordial del proyecto era recuperar la funcionalidad del sistema de control hídrico, el cual se encontraba deshabilitado por el avanzado deterioro corrosivo de las pantallas y el desgaste del mecanismo de izamiento, comprometiendo la operación técnica de los canales de aducción.`,
         "Este Informe Técnico tiene como finalidad dejar constancia de la culminación del 100% de las actividades contratadas, de acuerdo con los Términos de Referencia (TDRs) aprobados, las especificaciones técnicas detalladas en el Catálogo Provisional de Productos (CPC) de la orden de compra y los cronogramas vigentes, garantizando la operatividad hídrica del sistema.",
       ],
     },
     {
       titulo: "DESCRIPCIÓN TÉCNICA DE LOS SERVICIOS EJECUTADOS",
       parrafos: [
-        "A continuación, se detallan las actividades ejecutadas para la rehabilitación integral de la compuerta Leopoldo Cedeño:",
+        `A continuación, se detallan las actividades ejecutadas para la ${OBJETO_CONTRACTUAL_CRUCITA}:`,
       ],
       subsecciones: [
         {
@@ -178,11 +179,12 @@ export const INFORME_CRUCITA_LEOPOLDO_CEDENO: InfimaInformeData = {
     {
       titulo: "CONCLUSIÓN Y RECOMENDACIÓN",
       parrafos: [
-        "Con base en la revisión técnica detallada, la fiscalización de campo y las pruebas funcionales realizadas en sitio, se concluye que el servicio de rehabilitación integral de la compuerta Leopoldo Cedeño ha sido ejecutado satisfactoriamente por el proveedor Zambrano Mendoza Milton Joseph, cumpliendo al 100% con los TDRs, las especificaciones técnicas CPC y las condiciones contractuales de la Orden de Compra No. IC-EPA EP-052-2026. La compuerta es ahora plenamente operativa, funcional y estanca, logrando el rango de apertura total requerido.",
-        "Por lo tanto, se recomienda a la Administración del Contrato, Ing. Carlos Alberto Pino Pinargote, proceder con la recepción definitiva y formal del servicio, dejando constancia de su entrega en correcto estado y funcionamiento.",
+        `Con base en la revisión técnica detallada, la fiscalización de campo y las pruebas funcionales realizadas en sitio, se concluye que la ${OBJETO_CONTRACTUAL_CRUCITA} ha sido ejecutada satisfactoriamente por el proveedor Zambrano Mendoza Milton Joseph, cumpliendo al 100% con los TDRs, las especificaciones técnicas CPC y las condiciones contractuales de la Orden de Compra No. IC-EPA EP-052-2026. La compuerta es ahora plenamente operativa, funcional y estanca, logrando el rango de apertura total requerido.`,
+        "Por lo tanto, se recomienda a la Administración del Contrato, Ing. Carlos Alberto Pino Pinargote, proceder con la recepción definitiva y formal de la obra, dejando constancia de su entrega en correcto estado y funcionamiento.",
       ],
     },
   ],
+  introAnexoFotografico: `A continuación, se presenta el registro fotográfico de las actividades ejecutadas para la ${OBJETO_CONTRACTUAL_CRUCITA}.`,
   anexosFotograficos: ANEXOS_FOTOGRAFICOS_CRUCITA_LEOPOLDO_CEDENO,
   firma: {
     nombre: "Zambrano Mendoza Milton Joseph",

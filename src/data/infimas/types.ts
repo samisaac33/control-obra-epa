@@ -30,6 +30,7 @@ export type InfimaInformeData = {
   asunto: string
   datosGenerales: InfimaDatoGeneral[]
   secciones: InfimaSeccion[]
+  introAnexoFotografico?: string
   anexosFotograficos: InfimaAnexoFotografico[]
   firma: {
     nombre: string
