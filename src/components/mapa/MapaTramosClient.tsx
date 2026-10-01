@@ -39,7 +39,9 @@ import {
 import type { TramoFormValues } from "@/src/components/mapa/TramoEditorForm"
 import { ProyectoModuloGuard } from "@/src/components/ProyectoModuloGuard"
 import { useProyecto } from "@/src/contexts/ProyectoContext"
+import { PROYECTO_DESASOLVE_CANALES } from "@/src/data/proyectos/catalog"
 import type { CanalTramo, EstadoTramo, OrigenExtremoTramo } from "@/src/data/tramos/types"
+import { esTramoExcluidoDesasolve } from "@/src/data/tramos/tramos-excluidos"
 import { normalizarTramo } from "@/src/lib/canal-tramos-normalize"
 import { createClient } from "@/src/lib/supabase/client"
 import {
@@ -157,9 +159,12 @@ export function MapaTramosClient() {
 
       if (tramosError) throw new Error(tramosError.message)
 
-      const tramosNormalizados = (tramosData ?? []).map((row) =>
-        normalizarTramo(row as Record<string, unknown>)
-      )
+      const tramosNormalizados = (tramosData ?? [])
+        .map((row) => normalizarTramo(row as Record<string, unknown>))
+        .filter(
+          (t) =>
+            proyectoId !== PROYECTO_DESASOLVE_CANALES || !esTramoExcluidoDesasolve(t.codigo)
+        )
       setTramos(tramosNormalizados)
       setPuntosAvance(puntos)
       setPuntosRefreshKey((k) => k + 1)

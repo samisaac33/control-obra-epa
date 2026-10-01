@@ -14,6 +14,8 @@
     "import:kmz:sql": "tsx scripts/import-kmz-tramos.ts --sql-out supabase/seed/canal_tramos_desasolve.sql",
     "reset:tramos-gps": "tsx scripts/reset-tramos-avance-gps.ts",
     "reset:tramos-gps:dry-run": "tsx scripts/reset-tramos-avance-gps.ts --dry-run",
+    "delete:tramos": "tsx scripts/delete-tramos.ts --proyecto desasolve-canales --codigos 4,21",
+    "delete:tramos:dry-run": "tsx scripts/delete-tramos.ts --proyecto desasolve-canales --codigos 4,21 --dry-run",
     "postinstall": "node scripts/patch-hyphenate.mjs"
   },
   "dependencies": {
