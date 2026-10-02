@@ -15,6 +15,7 @@ import {
   INFORME_GARANTIA_CRUCITA_LEOPOLDO_CEDENO,
 } from "../src/data/infimas/crucita-leopoldo-cedeno-garantia"
 import type { InfimaInformeData } from "../src/data/infimas/types"
+import { generateRelojPublicoPdfs } from "./generate-reloj-publico-pdf"
 
 const DOCUMENTOS: { informe: InfimaInformeData; archivo: string; conImagenes: boolean }[] = [
   {
@@ -54,6 +55,8 @@ async function main() {
 
     console.log(`PDF generado: ${outPath}`)
   }
+
+  await generateRelojPublicoPdfs()
 }
 
 main().catch((error) => {

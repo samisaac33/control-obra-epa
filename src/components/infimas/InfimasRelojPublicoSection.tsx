@@ -1,0 +1,156 @@
+"use client"
+
+import { Clock, Download, FileText } from "lucide-react"
+import { useMemo, useState } from "react"
+
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  BUNDLES_RELOJ_PUBLICO,
+  CONTRATO_RELOJ_PUBLICO_PORTOVIEJO,
+} from "@/src/data/infimas/reloj-publico-portoviejo"
+import type { RelojPublicoDocumento } from "@/src/data/infimas/reloj-publico-types"
+import { RelojInformeActividadesVista } from "@/src/components/infimas/reloj-publico/RelojInformeActividadesVista"
+import { RelojOficioEntregaVista } from "@/src/components/infimas/reloj-publico/RelojOficioEntregaVista"
+import { RelojOficioNotificacionVista } from "@/src/components/infimas/reloj-publico/RelojOficioNotificacionVista"
+import { construirCartaData } from "@/src/components/infimas/reloj-publico/relojPublicoPreviewData"
+
+function VistaDocumento({
+  documento,
+  periodoId,
+}: {
+  documento: RelojPublicoDocumento
+  periodoId: string
+}) {
+  const bundle = BUNDLES_RELOJ_PUBLICO.find((b) => b.periodo.id === periodoId)
+  if (!bundle) return null
+
+  const data = construirCartaData(bundle.periodo, documento.tipo)
+
+  switch (documento.tipo) {
+    case "notificacion":
+      return <RelojOficioNotificacionVista data={data} />
+    case "entrega":
+      return <RelojOficioEntregaVista data={data} />
+    case "informe":
+      return <RelojInformeActividadesVista data={data} />
+    default:
+      return null
+  }
+}
+
+export function InfimasRelojPublicoSection() {
+  const bundles = BUNDLES_RELOJ_PUBLICO
+  const [periodoId, setPeriodoId] = useState(bundles[0]?.periodo.id ?? "")
+  const [vistaSlug, setVistaSlug] = useState<string | null>(null)
+
+  const bundleActual = useMemo(
+    () => bundles.find((b) => b.periodo.id === periodoId) ?? bundles[0],
+    [bundles, periodoId]
+  )
+
+  if (!bundleActual) {
+    return null
+  }
+
+  const { periodo, documentos } = bundleActual
+
+  return (
+    <section className="space-y-4">
+      <div className="rounded-xl border border-foreground/10 bg-card/60 p-4 sm:p-5">
+        <div className="flex min-w-0 items-start gap-3">
+          <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg border border-foreground/10 bg-muted/80">
+            <Clock className="size-4" strokeWidth={1.75} aria-hidden />
+          </div>
+          <div className="min-w-0 space-y-1">
+            <h2 className="font-heading text-base font-semibold tracking-tight">
+              Contrato: reloj público — GPM Portoviejo
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              {CONTRATO_RELOJ_PUBLICO_PORTOVIEJO.codigo}. Ciclo mensual: actividades del{" "}
+              <strong className="font-medium text-foreground">7</strong> al{" "}
+              <strong className="font-medium text-foreground">6</strong> del mes siguiente;
+              oficio de notificación el día <strong className="font-medium text-foreground">4</strong>;
+              oficio de entrega e informe el día{" "}
+              <strong className="font-medium text-foreground">6</strong> de cierre.
+            </p>
+          </div>
+        </div>
+
+        {bundles.length > 1 ? (
+          <div className="mt-4 flex flex-wrap gap-2">
+            {bundles.map((b) => (
+              <Button
+                key={b.periodo.id}
+                type="button"
+                size="sm"
+                variant={b.periodo.id === periodoId ? "default" : "outline"}
+                onClick={() => {
+                  setPeriodoId(b.periodo.id)
+                  setVistaSlug(null)
+                }}
+              >
+                Periodo {b.periodo.etiqueta}
+              </Button>
+            ))}
+          </div>
+        ) : (
+          <p className="mt-3 text-sm text-muted-foreground">
+            Periodo {periodo.etiqueta} ({periodo.fechasTexto.periodoCorto})
+          </p>
+        )}
+      </div>
+
+      <div className="grid gap-4">
+        {documentos.map((doc) => (
+          <Card key={doc.id}>
+            <CardHeader className="pb-3">
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg border border-foreground/10 bg-muted/80">
+                  <FileText className="size-4" strokeWidth={1.75} aria-hidden />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <CardTitle className="text-base leading-snug">{doc.titulo}</CardTitle>
+                  <CardDescription className="mt-1">{doc.descripcion}</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="flex flex-wrap items-center gap-3 pt-0">
+              <p className="text-sm text-muted-foreground">
+                {CONTRATO_RELOJ_PUBLICO_PORTOVIEJO.codigo} · {doc.fecha}
+              </p>
+              <div className="ml-auto flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setVistaSlug(vistaSlug === doc.slug ? null : doc.slug)}
+                >
+                  {vistaSlug === doc.slug ? "Ocultar vista previa" : "Vista previa"}
+                </Button>
+                <Button asChild size="sm">
+                  <a href={doc.archivoPdf} download>
+                    <Download className="size-4" aria-hidden />
+                    Descargar PDF
+                  </a>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {vistaSlug ? (
+        <section className="space-y-3">
+          <h3 className="text-sm font-semibold text-muted-foreground">Vista previa del documento</h3>
+          <div className="overflow-x-auto rounded-lg border border-foreground/10 bg-neutral-100 p-4 sm:p-6">
+            <VistaDocumento
+              documento={documentos.find((d) => d.slug === vistaSlug)!}
+              periodoId={periodo.id}
+            />
+          </div>
+        </section>
+      ) : null}
+    </section>
+  )
+}
