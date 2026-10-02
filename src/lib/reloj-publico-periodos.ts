@@ -118,8 +118,8 @@ function etiquetaSemana(inicio: Date, fin: Date): string {
   return `${inicio.getDate()} ${iniMes} - ${fin.getDate()} ${finMes}`
 }
 
-const ACTIVIDAD_BASE = `Limpieza total del reloj (ruedas, engranajes, cuerdas, pesas).
-Suministro de cuerda a las pesas, campanas y reloj.`
+const ACTIVIDAD_BASE = `Mantenimiento preventivo semanal (OC ítem 1): limpieza general del reloj (ruedas dentadas, engranajes, mecanismo de disparo, campanas, cuerdas y pesas).
+Engrasamiento de cuerdas en los tres rollos y carretes; suministro de cuerda a pesas, campanas y reloj con aceites técnicos.`
 
 function diaSemana(fecha: Date): number {
   return fecha.getDay()

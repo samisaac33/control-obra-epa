@@ -4,6 +4,7 @@ import type {
   RelojPublicoPeriodo,
   RelojPublicoPeriodoBundle,
 } from "@/src/data/infimas/reloj-publico-types"
+import { ORDEN_COMPRA_RELOJ_PUBLICO } from "@/src/data/infimas/reloj-publico-orden-compra"
 import {
   construirTextosPeriodo,
   formatearFechaCarta,
@@ -11,16 +12,23 @@ import {
 } from "@/src/lib/reloj-publico-periodos"
 
 export const CONTRATO_RELOJ_PUBLICO_PORTOVIEJO: RelojPublicoContratoConfig = {
-  codigo: "IC-GADPDM-2025-025",
+  codigo: ORDEN_COMPRA_RELOJ_PUBLICO.codigo,
   objetoContractual:
-    "SERVICIO DE MANTENIMIENTO PREVENTIVO Y CORRECTIVO DEL RELOJ PÚBLICO UBICADO EN LA TERRAZA DEL EDIFICIO CENTRAL DEL GOBIERNO PROVINCIAL DE MANABÍ",
+    "SERVICIO DE MANTENIMIENTO PREVENTIVO Y CORRECTIVO DEL RELOJ PÚBLICO UBICADO EN LA TERRAZA DEL EDIFICIO CENTRAL DEL GOBIERNO AUTÓNOMO DESCENTRALIZADO PROVINCIAL DE MANABÍ",
   ciudad: "Portoviejo",
+  ordenCompra: {
+    codigo: ORDEN_COMPRA_RELOJ_PUBLICO.codigo,
+    fecha: ORDEN_COMPRA_RELOJ_PUBLICO.fecha,
+    areaRequirente: ORDEN_COMPRA_RELOJ_PUBLICO.areaRequirente,
+    certificacionPresupuestaria: ORDEN_COMPRA_RELOJ_PUBLICO.certificacionPresupuestaria,
+    archivoPdf: ORDEN_COMPRA_RELOJ_PUBLICO.archivoPdf,
+  },
   administrador: {
-    nombre: "Denessis Briones Intriago",
+    nombre: "Denessis Michelle Briones Intriago",
     cargoLineas: [
       "ADMINISTRADOR",
-      "DEL CONTRATO",
-      "IC-GADPDM-2025-025",
+      "DE LA ORDEN DE COMPRA",
+      ORDEN_COMPRA_RELOJ_PUBLICO.codigo,
       "DEL",
       "GOBIERNO PROVINCIAL",
       "DE",
@@ -46,11 +54,11 @@ function construirPeriodo(anioInicio: number, mesInicio: number, overrides?: Par
   }
 }
 
-/** Periodo feb–mar 2026 (actividades del 7 feb al 6 mar 2026). */
-export const PERIODO_RELOJ_2026_02 = construirPeriodo(2026, 2, {
+/** Periodo jul–ago 2026 (actividades del 7 jul al 6 ago 2026), alineado a la OC. */
+export const PERIODO_RELOJ_2026_07 = construirPeriodo(2026, 7, {
   3: {
     observacion:
-      "Limpieza y engrasada de cuerdas aceradas en cada carrete actividad que se realizó durante los días martes 25, miércoles 26 y jueves 27.\nAceitada de ruedas lunes 23 y viernes 27.",
+      "Limpieza y engrasada de cuerdas aceradas en cada carrete actividad que se realizó durante los días martes 28, miércoles 29 y jueves 30.\nAceitada de ruedas lunes 27 y viernes 31.",
   },
 })
 
@@ -87,12 +95,12 @@ function documentosDePeriodo(periodo: RelojPublicoPeriodo): RelojPublicoDocument
       periodoId: periodo.id,
       fecha: periodo.fechasTexto.entregaInforme,
       archivoPdf: `${prefix}/informe-actividades.pdf`,
-      descripcion: `Registro semanal de mantenimiento — contrato ${codigo}.`,
+      descripcion: `Registro semanal de mantenimiento — orden de compra ${codigo}.`,
     },
   ]
 }
 
-export const PERIODOS_RELOJ_PUBLICO: RelojPublicoPeriodo[] = [PERIODO_RELOJ_2026_02]
+export const PERIODOS_RELOJ_PUBLICO: RelojPublicoPeriodo[] = [PERIODO_RELOJ_2026_07]
 
 export const BUNDLES_RELOJ_PUBLICO: RelojPublicoPeriodoBundle[] = PERIODOS_RELOJ_PUBLICO.map(
   (periodo) => ({
