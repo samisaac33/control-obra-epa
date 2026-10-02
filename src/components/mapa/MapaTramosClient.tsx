@@ -709,37 +709,53 @@ export function MapaTramosClient() {
                     </p>
                   )}
                   <MapaTramosLeyenda compact={visitanteMovil} />
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                    <div className="min-w-0 sm:flex-1">
-                      <MapaTramosFiltroTramo
-                        filtros={filtros}
-                        tramos={tramos}
-                        onChange={setFiltros}
-                        selectId="filtro-tramo-visitante-inline"
+                  {visitanteMovil ? null : (
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                      <div className="min-w-0 sm:flex-1">
+                        <MapaTramosFiltroTramo
+                          filtros={filtros}
+                          tramos={tramos}
+                          onChange={setFiltros}
+                          selectId="filtro-tramo-visitante-inline"
+                        />
+                      </div>
+                      <MapaOpcionesCapasMapa
+                        vistaSoloTramos1a24={vistaSoloTramos1a24}
+                        onVistaSoloTramos1a24Change={setVistaSoloTramos1a24}
+                        mostrarNumerosTramo={mostrarNumerosTramo}
+                        onMostrarNumerosTramoChange={setMostrarNumerosTramo}
+                        mostrarPuntosAvance={mostrarPuntosAvance}
+                        onMostrarPuntosAvanceChange={setMostrarPuntosAvance}
+                        ocultarMinitramosTerminados={ocultarMinitramosTerminados}
+                        onOcultarMinitramosTerminadosChange={setOcultarMinitramosTerminados}
+                        mapaConsolidado={mapaConsolidado}
+                        onMapaConsolidadoChange={setMapaConsolidado}
+                        idPrefix="visitante"
+                        className="sm:max-w-md sm:flex-1"
                       />
                     </div>
-                    <MapaOpcionesCapasMapa
-                      vistaSoloTramos1a24={vistaSoloTramos1a24}
-                      onVistaSoloTramos1a24Change={setVistaSoloTramos1a24}
-                      mostrarNumerosTramo={mostrarNumerosTramo}
-                      onMostrarNumerosTramoChange={setMostrarNumerosTramo}
-                      mostrarPuntosAvance={mostrarPuntosAvance}
-                      onMostrarPuntosAvanceChange={setMostrarPuntosAvance}
-                      ocultarMinitramosTerminados={ocultarMinitramosTerminados}
-                      onOcultarMinitramosTerminadosChange={setOcultarMinitramosTerminados}
-                      mapaConsolidado={mapaConsolidado}
-                      onMapaConsolidadoChange={setMapaConsolidado}
-                      idPrefix="visitante"
-                      className="sm:max-w-md sm:flex-1"
-                    />
-                  </div>
+                  )}
                   {mapaLeaflet}
                   {visitanteMovil ? (
                     <MapaTramosFiltrosSheet
+                      variant="visitanteTramoCapas"
                       filtros={filtros}
                       tramos={tramos}
                       semanas={semanasProgramadasUnicas(tramos)}
                       onChange={setFiltros}
+                      capas={{
+                        vistaSoloTramos1a24,
+                        onVistaSoloTramos1a24Change: setVistaSoloTramos1a24,
+                        mostrarNumerosTramo,
+                        onMostrarNumerosTramoChange: setMostrarNumerosTramo,
+                        mostrarPuntosAvance,
+                        onMostrarPuntosAvanceChange: setMostrarPuntosAvance,
+                        ocultarMinitramosTerminados,
+                        onOcultarMinitramosTerminadosChange: setOcultarMinitramosTerminados,
+                        mapaConsolidado,
+                        onMapaConsolidadoChange: setMapaConsolidado,
+                        idPrefix: "visitante-movil",
+                      }}
                     />
                   ) : (
                     <MapaTramosFiltros
