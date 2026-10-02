@@ -1,8 +1,9 @@
 "use client"
 
-import { Download, FileText } from "lucide-react"
+import { CalendarClock, Download, FileText } from "lucide-react"
 import { useMemo, useState } from "react"
 
+import { resolverFechaCartaEmision } from "@/lib/infimas/reloj-publico-pdf/render-reloj-publico-pdf"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -26,19 +27,43 @@ import type { RelojPublicoDocumento } from "@/src/data/infimas/reloj-publico-typ
 import { RelojInformeActividadesVista } from "@/src/components/infimas/reloj-publico/RelojInformeActividadesVista"
 import { RelojOficioEntregaVista } from "@/src/components/infimas/reloj-publico/RelojOficioEntregaVista"
 import { RelojOficioNotificacionVista } from "@/src/components/infimas/reloj-publico/RelojOficioNotificacionVista"
-import { construirCartaData } from "@/src/components/infimas/reloj-publico/relojPublicoPreviewData"
+import {
+  construirCartaData,
+  isoFechaLocalHoy,
+} from "@/src/components/infimas/reloj-publico/relojPublicoPreviewData"
+
+async function descargarPdfDinamico(
+  periodoId: string,
+  tipo: "entrega" | "informe",
+  fechaIso?: string | null
+) {
+  const params = new URLSearchParams({ periodo: periodoId, tipo })
+  if (fechaIso) params.set("fecha", fechaIso)
+  const response = await fetch(`/api/infimas/reloj-publico/pdf?${params.toString()}`)
+  if (!response.ok) throw new Error("No se pudo generar el PDF")
+  const blob = await response.blob()
+  const url = URL.createObjectURL(blob)
+  const anchor = document.createElement("a")
+  anchor.href = url
+  anchor.download =
+    tipo === "entrega" ? `oficio-entrega-${periodoId}.pdf` : `informe-actividades-${periodoId}.pdf`
+  anchor.click()
+  URL.revokeObjectURL(url)
+}
 
 function VistaDocumento({
   documento,
   periodoId,
+  fechaEmisionIso,
 }: {
   documento: RelojPublicoDocumento
   periodoId: string
+  fechaEmisionIso?: string | null
 }) {
   const bundle = BUNDLES_RELOJ_PUBLICO.find((b) => b.periodo.id === periodoId)
   if (!bundle) return null
 
-  const data = construirCartaData(bundle.periodo, documento.tipo)
+  const data = construirCartaData(bundle.periodo, documento.tipo, fechaEmisionIso)
 
   switch (documento.tipo) {
     case "notificacion":
@@ -56,6 +81,10 @@ export function InfimasRelojPublicoSection() {
   const bundles = BUNDLES_RELOJ_PUBLICO
   const [periodoId, setPeriodoId] = useState(bundles[0]?.periodo.id ?? "")
   const [vistaSlug, setVistaSlug] = useState<string | null>(null)
+  const [fechaEmisionOverride, setFechaEmisionOverride] = useState<Record<string, string>>({})
+  const [descargandoSlug, setDescargandoSlug] = useState<string | null>(null)
+
+  const fechaEmisionPeriodo = fechaEmisionOverride[periodoId] ?? null
 
   const bundleActual = useMemo(
     () => bundles.find((b) => b.periodo.id === periodoId) ?? bundles[0],
@@ -67,6 +96,21 @@ export function InfimasRelojPublicoSection() {
   }
 
   const { periodo, documentos } = bundleActual
+
+  function fechaEmisionVisible(doc: RelojPublicoDocumento): string {
+    if (doc.tipo === "entrega" || doc.tipo === "informe") {
+      if (fechaEmisionPeriodo) {
+        return (
+          resolverFechaCartaEmision(doc.tipo, periodo.id, fechaEmisionPeriodo) ?? doc.fecha
+        )
+      }
+    }
+    return doc.fecha
+  }
+
+  function aplicarFechaHoy() {
+    setFechaEmisionOverride((prev) => ({ ...prev, [periodoId]: isoFechaLocalHoy() }))
+  }
 
   return (
     <section className="space-y-6">
@@ -176,9 +220,15 @@ export function InfimasRelojPublicoSection() {
             </CardHeader>
             <CardContent className="flex flex-wrap items-center gap-3 pt-0">
               <p className="text-sm text-muted-foreground">
-                {CONTRATO_RELOJ_PUBLICO_PORTOVIEJO.codigo} · {doc.fecha}
+                {CONTRATO_RELOJ_PUBLICO_PORTOVIEJO.codigo} · {fechaEmisionVisible(doc)}
               </p>
               <div className="ml-auto flex flex-wrap gap-2">
+                {doc.tipo === "entrega" || doc.tipo === "informe" ? (
+                  <Button type="button" variant="secondary" size="sm" onClick={aplicarFechaHoy}>
+                    <CalendarClock className="size-4" aria-hidden />
+                    Usar fecha de hoy
+                  </Button>
+                ) : null}
                 <Button
                   type="button"
                   variant="outline"
@@ -187,12 +237,31 @@ export function InfimasRelojPublicoSection() {
                 >
                   {vistaSlug === doc.slug ? "Ocultar vista previa" : "Vista previa"}
                 </Button>
-                <Button asChild size="sm">
-                  <a href={doc.archivoPdf} download>
+                {doc.tipo === "entrega" || doc.tipo === "informe" ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={descargandoSlug === doc.slug}
+                    onClick={async () => {
+                      setDescargandoSlug(doc.slug)
+                      try {
+                        await descargarPdfDinamico(periodo.id, doc.tipo as "entrega" | "informe", fechaEmisionPeriodo)
+                      } finally {
+                        setDescargandoSlug(null)
+                      }
+                    }}
+                  >
                     <Download className="size-4" aria-hidden />
-                    Descargar PDF
-                  </a>
-                </Button>
+                    {descargandoSlug === doc.slug ? "Generando…" : "Descargar PDF"}
+                  </Button>
+                ) : (
+                  <Button asChild size="sm">
+                    <a href={doc.archivoPdf} download>
+                      <Download className="size-4" aria-hidden />
+                      Descargar PDF
+                    </a>
+                  </Button>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -206,6 +275,11 @@ export function InfimasRelojPublicoSection() {
             <VistaDocumento
               documento={documentos.find((d) => d.slug === vistaSlug)!}
               periodoId={periodo.id}
+              fechaEmisionIso={
+                documentos.find((d) => d.slug === vistaSlug)?.tipo === "notificacion"
+                  ? null
+                  : fechaEmisionPeriodo
+              }
             />
           </div>
         </section>
