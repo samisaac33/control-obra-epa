@@ -59,7 +59,7 @@ export function MapaTramosFiltroTramo({
         onValueChange={(value) => onChange({ ...filtros, tramoId: value })}
       >
         <SelectTrigger id={selectId} className={INPUT_CLASS}>
-          <SelectValue placeholder="Todos" />
+          <SelectValue placeholder="Todos los tramos" />
         </SelectTrigger>
         <SelectContent position="popper" side="bottom" className={SELECT_CONTENT_POPPER_EN_MAPA}>
           <SelectItem value="todos">Todos los tramos</SelectItem>
