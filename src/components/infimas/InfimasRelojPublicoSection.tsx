@@ -6,6 +6,11 @@ import { useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
+  ORDEN_COMPRA_RELOJ_PUBLICO,
+  PRESUPUESTO_MENSUAL_RELOJ,
+  RUBROS_ORDEN_COMPRA_RELOJ,
+} from "@/src/data/infimas/reloj-publico-orden-compra"
+import {
   BUNDLES_RELOJ_PUBLICO,
   CONTRATO_RELOJ_PUBLICO_PORTOVIEJO,
 } from "@/src/data/infimas/reloj-publico-portoviejo"
@@ -64,10 +69,11 @@ export function InfimasRelojPublicoSection() {
           </div>
           <div className="min-w-0 space-y-1">
             <h2 className="font-heading text-base font-semibold tracking-tight">
-              Contrato: reloj público — GPM Portoviejo
+              Ínfima cuantía: reloj público — GPM Portoviejo
             </h2>
             <p className="text-sm text-muted-foreground">
-              {CONTRATO_RELOJ_PUBLICO_PORTOVIEJO.codigo}. Ciclo mensual: actividades del{" "}
+              Orden de compra {CONTRATO_RELOJ_PUBLICO_PORTOVIEJO.codigo} ({ORDEN_COMPRA_RELOJ_PUBLICO.fecha}).
+              Ciclo mensual: actividades del{" "}
               <strong className="font-medium text-foreground">7</strong> al{" "}
               <strong className="font-medium text-foreground">6</strong> del mes siguiente;
               oficio de notificación el día <strong className="font-medium text-foreground">4</strong>;
@@ -100,6 +106,63 @@ export function InfimasRelojPublicoSection() {
           </p>
         )}
       </div>
+
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Orden de compra y presupuesto mensual</CardTitle>
+          <CardDescription>
+            Rubros extraídos de la OC. Valores anuales divididos entre 12 meses de ejecución (
+            {ORDEN_COMPRA_RELOJ_PUBLICO.plazoEjecucionDias} días).
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4 pt-0">
+          <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-muted-foreground">
+            <span>Certificación: {ORDEN_COMPRA_RELOJ_PUBLICO.certificacionPresupuestaria}</span>
+            <span>Área requirente: {ORDEN_COMPRA_RELOJ_PUBLICO.areaRequirente}</span>
+          </div>
+          <div className="overflow-x-auto rounded-lg border border-foreground/10">
+            <table className="w-full min-w-[640px] border-collapse text-sm">
+              <thead>
+                <tr className="border-b border-foreground/10 bg-muted/50 text-left">
+                  <th className="p-2 font-medium">Ítem</th>
+                  <th className="p-2 font-medium">Descripción</th>
+                  <th className="p-2 font-medium text-right">Cant./mes</th>
+                  <th className="p-2 font-medium text-right">P. unit.</th>
+                  <th className="p-2 font-medium text-right">Valor/mes (USD)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {RUBROS_ORDEN_COMPRA_RELOJ.map((rubro) => (
+                  <tr key={rubro.item} className="border-b border-foreground/10 align-top">
+                    <td className="p-2">{rubro.item}</td>
+                    <td className="p-2">
+                      <p className="font-medium text-foreground">{rubro.titulo}</p>
+                      <p className="mt-1 text-muted-foreground">{rubro.descripcionResumen}</p>
+                    </td>
+                    <td className="p-2 text-right tabular-nums">
+                      {rubro.cantidadMensual} {rubro.unidad}
+                    </td>
+                    <td className="p-2 text-right tabular-nums">{rubro.precioUnitario.toFixed(2)}</td>
+                    <td className="p-2 text-right tabular-nums">{rubro.valorMensual.toFixed(2)}</td>
+                  </tr>
+                ))}
+                <tr className="bg-muted/30 font-medium">
+                  <td className="p-2" colSpan={4}>
+                    Total mensual estimado
+                  </td>
+                  <td className="p-2 text-right tabular-nums">{PRESUPUESTO_MENSUAL_RELOJ.toFixed(2)}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <Button asChild variant="outline" size="sm">
+            <a href={CONTRATO_RELOJ_PUBLICO_PORTOVIEJO.ordenCompra.archivoPdf} download>
+              <Download className="size-4" aria-hidden />
+              Descargar orden de compra (PDF)
+            </a>
+          </Button>
+        </CardContent>
+      </Card>
 
       <div className="grid gap-4">
         {documentos.map((doc) => (

@@ -20,7 +20,7 @@ export function RelojOficioNotificacionVista({ data }: Props) {
       <p className="mb-4 text-justify">
         Por medio del presente documento notifico que procederé a ejecutar las actividades de
         mantenimiento preventivo y correctivo del reloj público, correspondientes al periodo{" "}
-        {periodo.fechasTexto.periodoLargo}, en el marco del contrato {contrato.codigo}. Informo
+        {periodo.fechasTexto.periodoLargo}, en el marco de la orden de compra {contrato.codigo}. Informo
         que, una vez culminado dicho periodo, remitiré la documentación respectiva solicitando
         que se reciba el servicio entregado a conformidad.
       </p>
