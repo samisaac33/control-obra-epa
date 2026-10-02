@@ -1,0 +1,16 @@
+Bienvenidos. Este mapa muestra el avance del Desasolve de canales.
+Arriba ven el avance global en porcentaje y los kilómetros ejecutados respecto al total; el cálculo es por longitud de canal, no por contar tramos.
+Los indicadores resumen kilómetros totales, cantidad de tramos, cuántos están terminados y cuántos en ejecución.
+Ustedes ingresan como visitantes: solo consultan. El residente de obra controla todo el registro: avance GPS, estados, horas y jornadas de maquinaria, y la actualización del frente de trabajo en el mapa.
+En el filtro Tramos, la opción Todos los tramos permite ver toda la red del proyecto en un solo mapa.
+La casilla Vista tramos 1 a 24 muestra solo el primer levantamiento topográfico del topógrafo.
+Al desactivarla, aparecen todos los tramos de los canales ya conectados: en total 31 tramos y alrededor de 65,33 kilómetros en el proyecto.
+La leyenda define tres estados: Pendiente, en violeta; En ejecución, en naranja con icono parpadeante; y Terminado, en verde.
+Por defecto muchos trazos se ven en violeta consolidado: es una vista simplificada.
+Marque No consolidado para ver violeta, naranja y verde según el avance real de cada segmento.
+Cada tramo se divide en minitramos con GPS.
+Acercando el mapa aparece la longitud en metros sobre cada minitramo: ahí se ve la distancia de avance de la jornada o tramo que el residente confirmó.
+El punto que parpadea en naranja indica dónde está trabajando la máquina en este momento.
+Es información que el residente actualiza en campo, en tiempo casi real.
+Pueden hacer clic en un tramo para ver su resumen.
+Recapitulando: 31 tramos, 65,33 kilómetros, leyenda violeta, naranja parpadeante y verde, zoom para longitudes, y el residente registra mientras ustedes supervisan. Gracias.
