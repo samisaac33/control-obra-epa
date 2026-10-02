@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { FileArchive } from "lucide-react"
 
 import { InfimasDocumentoLista } from "@/src/components/infimas/InfimasDocumentoLista"
+import { InfimasRelojPublicoSection } from "@/src/components/infimas/InfimasRelojPublicoSection"
 import { DOCUMENTOS_INFIMAS } from "@/src/data/infimas/catalog"
 
 export const metadata: Metadata = {
@@ -34,8 +35,20 @@ export default function InfimasPage() {
         </div>
       </header>
 
-      <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col space-y-6 px-4 py-6 sm:space-y-8 sm:px-6 sm:py-8 lg:px-8">
-        <InfimasDocumentoLista documentos={DOCUMENTOS_INFIMAS} />
+      <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col space-y-10 px-4 py-6 sm:space-y-12 sm:px-6 sm:py-8 lg:px-8">
+        <section className="space-y-4">
+          <div>
+            <h2 className="font-heading text-base font-semibold tracking-tight">
+              Informes de ínfima cuantía (obras)
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Informes técnicos puntuales y documentos asociados a órdenes de compra.
+            </p>
+          </div>
+          <InfimasDocumentoLista documentos={DOCUMENTOS_INFIMAS} />
+        </section>
+
+        <InfimasRelojPublicoSection />
       </main>
     </div>
   )
