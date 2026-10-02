@@ -5,10 +5,12 @@ import type {
   RelojPublicoPeriodoBundle,
 } from "@/src/data/infimas/reloj-publico-types"
 import { ORDEN_COMPRA_RELOJ_PUBLICO } from "@/src/data/infimas/reloj-publico-orden-compra"
+import { generarFilasInformeEncadenado } from "@/src/lib/reloj-publico-informe"
 import {
+  calcularFechasPeriodo,
   construirTextosPeriodo,
   formatearFechaCarta,
-  generarFilasInformePlantilla,
+  mesInicioPeriodoDesdeIndice,
 } from "@/src/lib/reloj-publico-periodos"
 
 export const CONTRATO_RELOJ_PUBLICO_PORTOVIEJO: RelojPublicoContratoConfig = {
@@ -42,25 +44,26 @@ export const CONTRATO_RELOJ_PUBLICO_PORTOVIEJO: RelojPublicoContratoConfig = {
 }
 
 const BASE_PDF = "/infimas/reloj-publico-portoviejo"
+const CANTIDAD_PERIODOS = 12
 
-function construirPeriodo(anioInicio: number, mesInicio: number, overrides?: Parameters<typeof generarFilasInformePlantilla>[2]): RelojPublicoPeriodo {
-  const meta = construirTextosPeriodo(anioInicio, mesInicio)
-  return {
+function construirPeriodosReloj(): RelojPublicoPeriodo[] {
+  const metas = Array.from({ length: CANTIDAD_PERIODOS }, (_, i) => {
+    const { anio, mes } = mesInicioPeriodoDesdeIndice(i)
+    return construirTextosPeriodo(anio, mes)
+  })
+
+  const { filasPorPeriodo } = generarFilasInformeEncadenado(
+    metas.map((m) => ({ inicio: m.fechas.inicio, fin: m.fechas.fin }))
+  )
+
+  return metas.map((meta, index) => ({
     id: meta.id,
     etiqueta: meta.etiqueta,
     fechas: meta.fechas,
     fechasTexto: meta.fechasTexto,
-    filasInforme: generarFilasInformePlantilla(meta.fechas.inicio, meta.fechas.fin, overrides),
-  }
+    filasInforme: filasPorPeriodo[index] ?? [],
+  }))
 }
-
-/** Periodo jul–ago 2026 (actividades del 7 jul al 6 ago 2026), alineado a la OC. */
-export const PERIODO_RELOJ_2026_07 = construirPeriodo(2026, 7, {
-  3: {
-    observacion:
-      "Limpieza y engrasada de cuerdas aceradas en cada carrete actividad que se realizó durante los días martes 28, miércoles 29 y jueves 30.\nAceitada de ruedas lunes 27 y viernes 31.",
-  },
-})
 
 function documentosDePeriodo(periodo: RelojPublicoPeriodo): RelojPublicoDocumento[] {
   const prefix = `${BASE_PDF}/${periodo.id}`
@@ -100,7 +103,7 @@ function documentosDePeriodo(periodo: RelojPublicoPeriodo): RelojPublicoDocument
   ]
 }
 
-export const PERIODOS_RELOJ_PUBLICO: RelojPublicoPeriodo[] = [PERIODO_RELOJ_2026_07]
+export const PERIODOS_RELOJ_PUBLICO: RelojPublicoPeriodo[] = construirPeriodosReloj()
 
 export const BUNDLES_RELOJ_PUBLICO: RelojPublicoPeriodoBundle[] = PERIODOS_RELOJ_PUBLICO.map(
   (periodo) => ({
@@ -131,4 +134,14 @@ export function fechaCartaDocumento(tipo: RelojPublicoDocumento["tipo"], periodo
     return formatearFechaCarta(periodo.fechas.notificacion, CONTRATO_RELOJ_PUBLICO_PORTOVIEJO.ciudad)
   }
   return formatearFechaCarta(periodo.fechas.entregaInforme, CONTRATO_RELOJ_PUBLICO_PORTOVIEJO.ciudad)
+}
+
+export function opcionSelectPeriodo(periodo: RelojPublicoPeriodo): string {
+  return `${periodo.fechasTexto.periodoCorto} (${periodo.etiqueta})`
+}
+
+/** Expuesto para pruebas: fechas del periodo por índice 0..11 */
+export function fechasPeriodoPorIndice(indice: number) {
+  const { anio, mes } = mesInicioPeriodoDesdeIndice(indice)
+  return calcularFechasPeriodo(anio, mes)
 }

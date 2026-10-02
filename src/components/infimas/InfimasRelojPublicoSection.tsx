@@ -1,10 +1,17 @@
 "use client"
 
-import { Clock, Download, FileText } from "lucide-react"
+import { Download, FileText } from "lucide-react"
 import { useMemo, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import {
   ORDEN_COMPRA_RELOJ_PUBLICO,
   PRESUPUESTO_MENSUAL_RELOJ,
@@ -13,6 +20,7 @@ import {
 import {
   BUNDLES_RELOJ_PUBLICO,
   CONTRATO_RELOJ_PUBLICO_PORTOVIEJO,
+  opcionSelectPeriodo,
 } from "@/src/data/infimas/reloj-publico-portoviejo"
 import type { RelojPublicoDocumento } from "@/src/data/infimas/reloj-publico-types"
 import { RelojInformeActividadesVista } from "@/src/components/infimas/reloj-publico/RelojInformeActividadesVista"
@@ -61,58 +69,46 @@ export function InfimasRelojPublicoSection() {
   const { periodo, documentos } = bundleActual
 
   return (
-    <section className="space-y-4">
+    <section className="space-y-6">
       <div className="rounded-xl border border-foreground/10 bg-card/60 p-4 sm:p-5">
-        <div className="flex min-w-0 items-start gap-3">
-          <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg border border-foreground/10 bg-muted/80">
-            <Clock className="size-4" strokeWidth={1.75} aria-hidden />
-          </div>
-          <div className="min-w-0 space-y-1">
-            <h2 className="font-heading text-base font-semibold tracking-tight">
-              Ínfima cuantía: reloj público — GPM Portoviejo
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              Orden de compra {CONTRATO_RELOJ_PUBLICO_PORTOVIEJO.codigo} ({ORDEN_COMPRA_RELOJ_PUBLICO.fecha}).
-              Ciclo mensual: actividades del{" "}
-              <strong className="font-medium text-foreground">7</strong> al{" "}
-              <strong className="font-medium text-foreground">6</strong> del mes siguiente;
-              oficio de notificación el día <strong className="font-medium text-foreground">4</strong>;
-              oficio de entrega e informe el día{" "}
-              <strong className="font-medium text-foreground">6</strong> de cierre.
-            </p>
-          </div>
-        </div>
+        <p className="text-sm text-muted-foreground">
+          Ciclo mensual: actividades del <strong className="font-medium text-foreground">7</strong> al{" "}
+          <strong className="font-medium text-foreground">6</strong> del mes siguiente; oficio de notificación el día{" "}
+          <strong className="font-medium text-foreground">4</strong>; oficio de entrega e informe el día{" "}
+          <strong className="font-medium text-foreground">6</strong> de cierre. Doce periodos (jul 2026 – jun 2027).
+        </p>
 
-        {bundles.length > 1 ? (
-          <div className="mt-4 flex flex-wrap gap-2">
-            {bundles.map((b) => (
-              <Button
-                key={b.periodo.id}
-                type="button"
-                size="sm"
-                variant={b.periodo.id === periodoId ? "default" : "outline"}
-                onClick={() => {
-                  setPeriodoId(b.periodo.id)
-                  setVistaSlug(null)
-                }}
-              >
-                Periodo {b.periodo.etiqueta}
-              </Button>
-            ))}
-          </div>
-        ) : (
-          <p className="mt-3 text-sm text-muted-foreground">
-            Periodo {periodo.etiqueta} ({periodo.fechasTexto.periodoCorto})
-          </p>
-        )}
+        <div className="mt-4 space-y-2">
+          <label htmlFor="periodo-reloj" className="text-sm font-medium">
+            Periodo de actividades
+          </label>
+          <Select
+            value={periodoId}
+            onValueChange={(value) => {
+              setPeriodoId(value)
+              setVistaSlug(null)
+            }}
+          >
+            <SelectTrigger id="periodo-reloj" className="w-full max-w-xl">
+              <SelectValue placeholder="Seleccione un periodo" />
+            </SelectTrigger>
+            <SelectContent>
+              {bundles.map((b) => (
+                <SelectItem key={b.periodo.id} value={b.periodo.id}>
+                  {opcionSelectPeriodo(b.periodo)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base">Orden de compra y presupuesto mensual</CardTitle>
           <CardDescription>
-            Rubros extraídos de la OC. Valores anuales divididos entre 12 meses de ejecución (
-            {ORDEN_COMPRA_RELOJ_PUBLICO.plazoEjecucionDias} días).
+            Rubros de la OC {CONTRATO_RELOJ_PUBLICO_PORTOVIEJO.codigo} ({ORDEN_COMPRA_RELOJ_PUBLICO.fecha}). Valores
+            anuales ÷ 12 meses.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4 pt-0">
@@ -205,7 +201,7 @@ export function InfimasRelojPublicoSection() {
 
       {vistaSlug ? (
         <section className="space-y-3">
-          <h3 className="text-sm font-semibold text-muted-foreground">Vista previa del documento</h3>
+          <h3 className="text-sm font-semibold text-muted-foreground">Vista previa — {periodo.etiqueta}</h3>
           <div className="overflow-x-auto rounded-lg border border-foreground/10 bg-neutral-100 p-4 sm:p-6">
             <VistaDocumento
               documento={documentos.find((d) => d.slug === vistaSlug)!}
