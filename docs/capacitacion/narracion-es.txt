@@ -1,0 +1,12 @@
+Este video explica cómo interpretar el mapa de avance del proyecto Desasolve de canales.
+Ustedes ven la misma pantalla que un visitante autorizado: consulta de avance sin registrar cambios.
+Arriba están los kilómetros totales, los ejecutados y el porcentaje global por longitud.
+La leyenda muestra tres estados: pendiente en índigo, en ejecución en ámbar, y terminado en verde.
+En tramos 25 a 34 los tonos son más cálidos pero el significado es el mismo.
+Al abrir el mapa, el violeta es la vista consolidada: una imagen simplificada, no significa pendiente.
+Marque No consolidado para ver colores reales por estado en cada segmento.
+Al acercar el zoom aparecen números de tramo y longitudes de minitramos GPS.
+Los puntos A, B y C marcan el avance; el que parpadea en ámbar es el frente de trabajo actual.
+Puede pasar el cursor, hacer clic para el resumen, filtrar por estado o semana, y usar pantalla completa.
+Violeta consolidado, verde terminado, ámbar en ejecución, parpadeo frente actual, zoom para minitramos.
+Gracias por su atención.
