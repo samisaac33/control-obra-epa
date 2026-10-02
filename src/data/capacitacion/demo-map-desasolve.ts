@@ -1,0 +1,138 @@
+import type { CanalTramo } from "@/src/data/tramos/types"
+import { PROYECTO_DESASOLVE_CANALES } from "@/src/data/proyectos/catalog"
+import type { TramoPuntoAvance } from "@/src/lib/tramo-geometria"
+
+/** Geometría recortada del tramo 25 (KMZ) — solo para demo visual de capacitación. */
+const GEOM_TRAMO_DEMO: CanalTramo["geometria"] = {
+  type: "LineString",
+  coordinates: [
+    [-80.47046639252055, -0.9220075682827559],
+    [-80.46988833658001, -0.9216871993759428],
+    [-80.46945826815747, -0.9209160096022121],
+    [-80.46863348646765, -0.9204074866509828],
+    [-80.46763630909035, -0.9194637764108345],
+    [-80.46633794261405, -0.918480124845287],
+    [-80.46537267454526, -0.9176681030480303],
+    [-80.46410167018945, -0.9165835249326786],
+    [-80.46308047204077, -0.9158528924453506],
+    [-80.46140053111903, -0.915157218233468],
+    [-80.45983437623715, -0.9145836133254065],
+    [-80.45819062869853, -0.913728611076275],
+    [-80.45601640901647, -0.9124698620985807],
+    [-80.45440741844324, -0.9120409051972425],
+  ],
+}
+
+const GEOM_TRAMO_PENDIENTE: CanalTramo["geometria"] = {
+  type: "LineString",
+  coordinates: [
+    [-80.453, -0.9115],
+    [-80.451, -0.9108],
+    [-80.449, -0.9102],
+    [-80.447, -0.9095],
+  ],
+}
+
+export const DEMO_TRAMOS_CAPACITACION: CanalTramo[] = [
+  {
+    id: "demo-tramo-8",
+    proyecto_id: PROYECTO_DESASOLVE_CANALES,
+    codigo: "tramo 8",
+    canal: "Canal principal (demo)",
+    longitud_m: 1850,
+    geometria: GEOM_TRAMO_DEMO,
+    origen_extremo: "geometria_inicio",
+    estado: "en_ejecucion",
+    avance_pct: 42,
+    metros_ejecutados: 777,
+    fecha_inicio: "2025-08-01",
+    fecha_fin: null,
+    semana_programada: "2025-W38",
+    maquinaria_asignada: "Excavadora (demo)",
+    observaciones: null,
+    punto_frente_mapa_id: "demo-punto-c",
+  },
+  {
+    id: "demo-tramo-3",
+    proyecto_id: PROYECTO_DESASOLVE_CANALES,
+    codigo: "tramo 3",
+    canal: "Canal norte (demo)",
+    longitud_m: 920,
+    geometria: GEOM_TRAMO_PENDIENTE,
+    origen_extremo: "geometria_inicio",
+    estado: "pendiente",
+    avance_pct: 0,
+    metros_ejecutados: 0,
+    fecha_inicio: null,
+    fecha_fin: null,
+    semana_programada: "2025-W40",
+    maquinaria_asignada: null,
+    observaciones: null,
+    punto_frente_mapa_id: null,
+  },
+  {
+    id: "demo-tramo-28",
+    proyecto_id: PROYECTO_DESASOLVE_CANALES,
+    codigo: "tramo 28",
+    canal: "Zona 25–34 (demo tonos cálidos)",
+    longitud_m: 1100,
+    geometria: {
+      type: "LineString",
+      coordinates: [
+        [-80.446, -0.909],
+        [-80.444, -0.9085],
+        [-80.442, -0.908],
+        [-80.44, -0.9074],
+      ],
+    },
+    origen_extremo: "geometria_inicio",
+    estado: "terminado",
+    avance_pct: 100,
+    metros_ejecutados: 1100,
+    fecha_inicio: "2025-07-01",
+    fecha_fin: "2025-08-15",
+    semana_programada: "2025-W32",
+    maquinaria_asignada: null,
+    observaciones: null,
+    punto_frente_mapa_id: null,
+  },
+]
+
+export const DEMO_PUNTOS_CAPACITACION: TramoPuntoAvance[] = [
+  {
+    id: "demo-punto-a",
+    tramo_id: "demo-tramo-8",
+    registro_foto_id: null,
+    lat: -0.9220075682827559,
+    lng: -80.47046639252055,
+    abscisa_m: 0,
+    confirmado: true,
+    created_at: "2025-08-01T10:00:00Z",
+    rol: "a",
+    estado_minitramo: null,
+  },
+  {
+    id: "demo-punto-b",
+    tramo_id: "demo-tramo-8",
+    registro_foto_id: null,
+    lat: -0.918480124845287,
+    lng: -80.46633794261405,
+    abscisa_m: 520,
+    confirmado: true,
+    created_at: "2025-08-10T10:00:00Z",
+    rol: "b",
+    estado_minitramo: "terminado",
+  },
+  {
+    id: "demo-punto-c",
+    tramo_id: "demo-tramo-8",
+    registro_foto_id: null,
+    lat: -0.915157218233468,
+    lng: -80.46140053111903,
+    abscisa_m: 980,
+    confirmado: true,
+    created_at: "2025-08-20T10:00:00Z",
+    rol: "c",
+    estado_minitramo: "en_ejecucion",
+  },
+]
