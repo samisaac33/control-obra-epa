@@ -132,9 +132,9 @@ export function MapaTramosClient() {
   const esViewportMovil = useEsViewportMovil()
   const [vistaSoloTramos1a24, setVistaSoloTramos1a24] = useState(false)
   const [mostrarNumerosTramo, setMostrarNumerosTramo] = useState(false)
-  const [mostrarPuntosAvance, setMostrarPuntosAvance] = useState(true)
+  const [mostrarPuntosAvance, setMostrarPuntosAvance] = useState(false)
   const [ocultarMinitramosTerminados, setOcultarMinitramosTerminados] = useState(false)
-  const [mapaConsolidado, setMapaConsolidado] = useState(false)
+  const [mapaConsolidado, setMapaConsolidado] = useState(true)
   const [ubicacionResidente, setUbicacionResidente] = useState<UbicacionUsuario | null>(null)
   const [seguirUbicacionResidente, setSeguirUbicacionResidente] = useState(false)
   const [origenDesdeMapa, setOrigenDesdeMapa] = useState<RequiereOrigenDesdeMapaPayload | null>(
