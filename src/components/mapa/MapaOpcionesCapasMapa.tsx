@@ -93,10 +93,10 @@ export function MapaOpcionesCapasMapa({
       />
       <OpcionCheckbox
         id={`${idPrefix}-consolidado`}
-        checked={mapaConsolidado}
-        onChange={onMapaConsolidadoChange}
-        titulo="Consolidado"
-        ariaLabel="Vista consolidada: todos los tramos del mismo color"
+        checked={!mapaConsolidado}
+        onChange={(checked) => onMapaConsolidadoChange(!checked)}
+        titulo="No consolidado"
+        ariaLabel="Vista por colores de estado; desmarcado muestra tramos consolidados en violeta"
       />
     </div>
   )

@@ -51,9 +51,9 @@ function capasActivas(capas: MapaTramosFiltrosSheetProps["capas"]): boolean {
   return (
     capas.vistaSoloTramos1a24 ||
     capas.mostrarNumerosTramo ||
-    !capas.mostrarPuntosAvance ||
+    capas.mostrarPuntosAvance ||
     capas.ocultarMinitramosTerminados ||
-    capas.mapaConsolidado
+    !capas.mapaConsolidado
   )
 }
 

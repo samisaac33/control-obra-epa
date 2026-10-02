@@ -15,7 +15,7 @@ export const FRACCION_MAX_ANCHO_ETIQUETA_SOBRE_MINITRAMO = 0.5
 /** @deprecated Use ZOOM_MIN_ETIQUETAS_LONGITUD */
 export const ZOOM_MIN_ETIQUETAS_MINITRAMO = ZOOM_MIN_ETIQUETAS_LONGITUD
 
-/** Color violeta cuando la capa «Consolidado» está activa (no aplica a MTT terminado visible). */
+/** Color violeta en vista consolidada (modo por defecto del mapa; no aplica a MTT terminado visible). */
 export const COLOR_TRAMO_CONSOLIDADO = "#7c3aed"
 
 const PESO_NORMAL = 6
