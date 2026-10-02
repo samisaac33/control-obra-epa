@@ -2,7 +2,7 @@
 
 **Duración objetivo:** 4–6 minutos  
 **Público:** técnicos de la empresa contratante (vista visitante)  
-**Grabación:** producción `https://control-obra-epa.vercel.app/desasolve-canales/mapa` (ingreso visitante con PIN; no documentar PIN en repo)  
+**Grabación:** producción `https://control-obra-epa.vercel.app/desasolve-canales/mapa` (ingreso visitante; PIN solo vía variable de entorno `CAPACITACION_PIN` al automatizar, nunca en repo)  
 **Formato:** escritorio ≥1280×720, zoom navegador 100 %
 
 ---
