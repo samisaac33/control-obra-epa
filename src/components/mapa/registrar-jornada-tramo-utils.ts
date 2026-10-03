@@ -123,14 +123,18 @@ function registroCoincideLegacy(
   puntoFin: TramoPuntoAvance,
   longitudMinitramo_m: number
 ): boolean {
-  if (registro.punto_avance_id && registro.punto_avance_id !== puntoFin.id) return false
-
-  const fechaPunto = fechaIsoDesdeCreatedAt(puntoFin.created_at)
-  if (registro.fecha === fechaPunto) return true
+  if (registro.punto_avance_id) {
+    return registro.punto_avance_id === puntoFin.id
+  }
 
   if (longitudMinitramo_m <= 0) return false
   const tolerancia = Math.max(1, longitudMinitramo_m * 0.05)
-  return Math.abs(registro.metros_desasolados - longitudMinitramo_m) <= tolerancia
+  const metrosCoinciden =
+    Math.abs(registro.metros_desasolados - longitudMinitramo_m) <= tolerancia
+  if (!metrosCoinciden) return false
+
+  const fechaPunto = fechaIsoDesdeCreatedAt(puntoFin.created_at)
+  return registro.fecha === fechaPunto
 }
 
 /** Busca jornada antigua sin punto_avance_id vinculado a este punto final. */
@@ -138,10 +142,13 @@ export function buscarRegistroJornadaLegacyParaPunto(
   _tramo: Pick<CanalTramo, "id">,
   puntoFin: TramoPuntoAvance,
   registrosTramo: TramoRegistroMaquinaria[],
-  longitudMinitramo_m: number
+  longitudMinitramo_m: number,
+  options?: { excluirRegistroIds?: ReadonlySet<string> }
 ): TramoRegistroMaquinaria | null {
+  const excluir = options?.excluirRegistroIds
   const candidatos = registrosTramo.filter(
     (r) =>
+      !(excluir?.has(r.id) ?? false) &&
       !r.punto_avance_id &&
       registroCoincideLegacy(r, puntoFin, longitudMinitramo_m)
   )

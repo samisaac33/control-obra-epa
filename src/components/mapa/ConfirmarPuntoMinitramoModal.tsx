@@ -31,7 +31,11 @@ import type { CanalTramo } from "@/src/data/tramos/types"
 import { ESTADOS_TRAMO_MAPA, etiquetaEstadoTramo } from "@/src/data/tramos/types"
 import type { TramoRegistroMaquinariaInput } from "@/src/lib/tramo-maquinaria-historial"
 import type { PropuestaPuntoMinitramo, TramoPuntoAvance } from "@/src/lib/tramo-geometria"
-import { calcularPropuestaPunto, minitramosDesdePuntos } from "@/src/lib/tramo-geometria"
+import {
+  calcularPropuestaPunto,
+  longitudMinitramoMetros,
+  minitramosDesdePuntos,
+} from "@/src/lib/tramo-geometria"
 import {
   cargarRegistroMaquinariaPorPuntoAvance,
   cargarRegistrosMaquinariaTramo,
@@ -238,9 +242,21 @@ export function ConfirmarPuntoMinitramoModal({
 
   function sugerirMetrosJornada(): string {
     if (!propuesta?.cierraMinitramo) return ""
-    const delta = propuesta.metros_ejecutados_propuestos - propuesta.tramo.metros_ejecutados
-    if (delta <= 0) return ""
-    return String(Math.round(delta * 10) / 10)
+    const enlace = puntosPrevios.find((p) => p.id === propuesta.puntoEnlaceId)
+    if (!enlace) return ""
+    const longitud = longitudMinitramoMetros(propuesta.tramo, enlace, {
+      id: "__propuesta__",
+      tramo_id: propuesta.tramo.id,
+      registro_foto_id: null,
+      lat: propuesta.punto.lat,
+      lng: propuesta.punto.lng,
+      abscisa_m: propuesta.punto.abscisa_m,
+      confirmado: true,
+      created_at: new Date().toISOString(),
+      rol: propuesta.rol,
+    })
+    if (longitud <= 0) return ""
+    return String(Math.round(longitud * 10) / 10)
   }
 
   function toggleIncluirJornada(checked: boolean) {

@@ -16,23 +16,31 @@ function registroCoincideLegacyJornada(
   puntoFin: TramoPuntoAvance,
   longitudMinitramo_m: number
 ): boolean {
-  if (registro.punto_avance_id && registro.punto_avance_id !== puntoFin.id) return false
-
-  const fechaPunto = puntoFin.created_at.slice(0, 10)
-  if (registro.fecha === fechaPunto) return true
+  if (registro.punto_avance_id) {
+    return registro.punto_avance_id === puntoFin.id
+  }
 
   if (longitudMinitramo_m <= 0) return false
   const tolerancia = Math.max(1, longitudMinitramo_m * 0.05)
-  return Math.abs(registro.metros_desasolados - longitudMinitramo_m) <= tolerancia
+  const metrosCoinciden =
+    Math.abs(registro.metros_desasolados - longitudMinitramo_m) <= tolerancia
+  if (!metrosCoinciden) return false
+
+  const fechaPunto = puntoFin.created_at.slice(0, 10)
+  return registro.fecha === fechaPunto
 }
 
 function buscarRegistroJornadaLegacyParaPunto(
   puntoFin: TramoPuntoAvance,
   registrosTramo: TramoRegistroMaquinaria[],
-  longitudMinitramo_m: number
+  longitudMinitramo_m: number,
+  excluirRegistroIds?: ReadonlySet<string>
 ): TramoRegistroMaquinaria | null {
   const candidatos = registrosTramo.filter(
-    (r) => !r.punto_avance_id && registroCoincideLegacyJornada(r, puntoFin, longitudMinitramo_m)
+    (r) =>
+      !(excluirRegistroIds?.has(r.id) ?? false) &&
+      !r.punto_avance_id &&
+      registroCoincideLegacyJornada(r, puntoFin, longitudMinitramo_m)
   )
   if (candidatos.length === 1) return candidatos[0]!
   return null
@@ -90,18 +98,25 @@ export function indiceJornadaMinitramoPorPuntoFin(
   for (const tramo of tramos) {
     const regsTramo = porTramo.get(tramo.id) ?? []
     const minitramos = minitramosDesdePuntos(puntos, tramo.id, tramo)
+    const registrosUsados = new Set<string>()
     for (const mt of minitramos) {
       let registro =
         regsTramo.find((r) => r.punto_avance_id === mt.puntoFin.id) ?? null
       if (!registro) {
         registro =
-          buscarRegistroJornadaLegacyParaPunto(mt.puntoFin, regsTramo, mt.longitud_m) ?? null
+          buscarRegistroJornadaLegacyParaPunto(
+            mt.puntoFin,
+            regsTramo,
+            mt.longitud_m,
+            registrosUsados
+          ) ?? null
       }
       if (!registro) continue
+      registrosUsados.add(registro.id)
 
       indice.set(mt.puntoFin.id, {
         fecha: formatearFechaRegistro(registro.fecha),
-        metros_desasolados: registro.metros_desasolados,
+        metros_desasolados: mt.longitud_m,
         equipoNombre: nombreEquipoParaMostrar(registro, equiposPorId),
         duracion_horas: registro.duracion_horas,
       })
