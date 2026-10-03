@@ -1,6 +1,7 @@
 "use client"
 
 import dynamic from "next/dynamic"
+import Link from "next/link"
 import { useMemo, useState } from "react"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -126,7 +127,14 @@ export function MapaCapacitacionDesasolveClient() {
             <CardDescription>
               Vista equivalente a visitante en{" "}
               <span className="font-medium">/desasolve-canales/mapa</span>. Datos de demostración
-              para grabación; en producción los tramos provienen de Supabase.
+              para grabación; en producción los tramos provienen de Supabase.{" "}
+              <Link
+                href="/capacitacion/mapa-desasolve/video"
+                className="font-medium text-primary underline-offset-4 hover:underline"
+              >
+                Ver video de capacitación (MP4)
+              </Link>
+              .
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 pt-4">
