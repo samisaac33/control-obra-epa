@@ -25,6 +25,14 @@ export type TramoRegistroMaquinariaInput = {
   observaciones?: string | null
 }
 
+/** Datos de jornada resumidos para tooltip de minitramo en mapa visitante. */
+export type JornadaMinitramoMapa = {
+  fecha: string
+  metros_desasolados: number
+  equipoNombre: string
+  duracion_horas: number | null
+}
+
 function normalizar(row: Record<string, unknown>): TramoRegistroMaquinaria {
   return {
     id: String(row.id),

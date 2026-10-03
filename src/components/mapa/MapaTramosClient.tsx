@@ -1,7 +1,7 @@
 "use client"
 
 import dynamic from "next/dynamic"
-import { Map } from "lucide-react"
+import { Map as MapIcon } from "lucide-react"
 import { useCallback, useEffect, useMemo, useState } from "react"
 
 import { cn } from "@/lib/utils"
@@ -64,6 +64,12 @@ import type {
   TramoPuntoAvance,
 } from "@/src/lib/tramo-geometria"
 import { contextoEditarMinitramo, evaluarPropuestaPuntoConAutoEnlace } from "@/src/lib/tramo-geometria"
+import {
+  cargarRegistrosMaquinariaPorTramoIds,
+  indiceJornadaMinitramoPorPuntoFin,
+  type JornadaMinitramoMapa,
+} from "@/src/lib/mapa-jornada-minitramo"
+import { cargarEquiposMaquinariaProyecto } from "@/src/lib/proyecto-equipos-maquinaria"
 import { guardarJornadaMinitramo } from "@/src/lib/tramo-maquinaria-historial"
 import { tramosMapaDesasolveSinExcluidos } from "@/src/data/tramos/tramos-excluidos"
 import {
@@ -146,6 +152,9 @@ export function MapaTramosClient() {
     lng: number
   } | null>(null)
   const [centrarUbicacionKey, setCentrarUbicacionKey] = useState(0)
+  const [jornadaPorPuntoFin, setJornadaPorPuntoFin] = useState(
+    () => new Map<string, JornadaMinitramoMapa>()
+  )
   const cargarDatos = useCallback(async () => {
     setLoading(true)
     setError(null)
@@ -174,6 +183,36 @@ export function MapaTramosClient() {
   useEffect(() => {
     void cargarDatos()
   }, [cargarDatos])
+
+  useEffect(() => {
+    if (isResident || tramos.length === 0) {
+      setJornadaPorPuntoFin(new Map())
+      return
+    }
+
+    let cancelado = false
+
+    async function cargarJornadasMapa() {
+      try {
+        const tramoIds = tramos.map((t) => t.id)
+        const [registros, equipos] = await Promise.all([
+          cargarRegistrosMaquinariaPorTramoIds(supabase, tramoIds),
+          cargarEquiposMaquinariaProyecto(supabase, proyectoId, { soloActivos: false }),
+        ])
+        if (cancelado) return
+        setJornadaPorPuntoFin(
+          indiceJornadaMinitramoPorPuntoFin(tramos, puntosAvance, registros, equipos)
+        )
+      } catch {
+        if (!cancelado) setJornadaPorPuntoFin(new Map())
+      }
+    }
+
+    void cargarJornadasMapa()
+    return () => {
+      cancelado = true
+    }
+  }, [isResident, tramos, puntosAvance, proyectoId, supabase])
 
   useEffect(() => {
     async function checkResident() {
@@ -661,6 +700,7 @@ export function MapaTramosClient() {
       seguirUbicacionUsuario={isResident ? seguirUbicacionResidente : false}
       centrarUbicacionVersion={isResident ? centrarUbicacionKey : 0}
       puntoIdsParpadeoFrente={puntoIdsParpadeoFrente}
+      jornadaPorPuntoFin={jornadaPorPuntoFin}
     />
   )
 
@@ -673,7 +713,7 @@ export function MapaTramosClient() {
               <CardHeader className="max-md:pb-2">
                 <div className="flex items-start gap-3">
                   <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg border border-foreground/10 bg-muted/80">
-                    <Map className="size-4" aria-hidden />
+                    <MapIcon className="size-4" aria-hidden />
                   </div>
                   <div>
                     <CardTitle className="max-md:text-base">Mapa interactivo</CardTitle>
@@ -706,8 +746,9 @@ export function MapaTramosClient() {
                   />
                   {visitanteMovil ? null : (
                     <p className="text-sm text-muted-foreground">
-                      Pase el cursor sobre un tramo coloreado para ver minitramos, o haga clic para
-                      abrir el resumen.
+                      Pase el cursor sobre un tramo para ver avance del tramo; active «Mostrar puntos
+                      A, B, C…» para consultar jornada y maquinaria por minitramo. Clic abre el
+                      resumen.
                     </p>
                   )}
                   <MapaTramosLeyenda compact={visitanteMovil} />
