@@ -1,5 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
 
+import { cargarTramosMapaProyecto } from "@/src/lib/cargar-tramos-mapa-proyecto"
+import { mapaLongitudMinitramoPorPuntoFin } from "@/src/lib/mapa-jornada-minitramo"
 import type { TramoRegistroMaquinaria } from "@/src/lib/tramo-maquinaria-historial"
 import { formatearFechaRegistro } from "@/src/lib/tramo-maquinaria-historial"
 
@@ -53,25 +55,29 @@ export function periodoDesdeJornadas(jornadas: JornadaMaquinariaProyecto[]): Per
   return { inicio, fin, etiqueta }
 }
 
+function metrosDesasoladosEfectivosJornada(
+  jornada: TramoRegistroMaquinaria,
+  longitudPorPuntoFin: ReadonlyMap<string, number>
+): number {
+  if (jornada.punto_avance_id) {
+    const longitudGps = longitudPorPuntoFin.get(jornada.punto_avance_id)
+    if (longitudGps != null && longitudGps > 0) return longitudGps
+  }
+  return jornada.metros_desasolados
+}
+
 export async function cargarJornadasMaquinariaProyecto(
   supabase: SupabaseClient,
   proyectoId: string
 ): Promise<JornadaMaquinariaProyecto[]> {
-  const { data: tramos, error: errorTramos } = await supabase
-    .from("canal_tramos")
-    .select("id, codigo, canal")
-    .eq("proyecto_id", proyectoId)
-
-  if (errorTramos) throw new Error(errorTramos.message)
-  if (!tramos?.length) return []
+  const { tramos, puntosAvance } = await cargarTramosMapaProyecto(supabase, proyectoId)
+  if (!tramos.length) return []
 
   const tramoPorId = new Map(
-    tramos.map((t) => [
-      String(t.id),
-      { codigo: String(t.codigo), canal: String(t.canal) },
-    ])
+    tramos.map((t) => [t.id, { codigo: t.codigo, canal: t.canal }])
   )
   const tramoIds = [...tramoPorId.keys()]
+  const longitudPorPuntoFin = mapaLongitudMinitramoPorPuntoFin(tramos, puntosAvance)
 
   const { data, error } = await supabase
     .from("tramo_registros_maquinaria")
@@ -86,7 +92,11 @@ export async function cargarJornadasMaquinariaProyecto(
     .map((row) => {
       const tramo = tramoPorId.get(String((row as Record<string, unknown>).tramo_id))
       if (!tramo) return null
-      return normalizarJornada(row as Record<string, unknown>, tramo)
+      const jornada = normalizarJornada(row as Record<string, unknown>, tramo)
+      return {
+        ...jornada,
+        metros_desasolados: metrosDesasoladosEfectivosJornada(jornada, longitudPorPuntoFin),
+      }
     })
     .filter((j): j is JornadaMaquinariaProyecto => j != null)
 }

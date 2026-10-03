@@ -11,6 +11,20 @@ import {
 
 export type { JornadaMinitramoMapa }
 
+/** Longitud GPS (m) de cada minitramo indexada por id del punto final. */
+export function mapaLongitudMinitramoPorPuntoFin(
+  tramos: CanalTramo[],
+  puntos: TramoPuntoAvance[]
+): Map<string, number> {
+  const indice = new Map<string, number>()
+  for (const tramo of tramos) {
+    for (const mt of minitramosDesdePuntos(puntos, tramo.id, tramo)) {
+      indice.set(mt.puntoFin.id, mt.longitud_m)
+    }
+  }
+  return indice
+}
+
 function registroCoincideLegacyJornada(
   registro: TramoRegistroMaquinaria,
   puntoFin: TramoPuntoAvance,
