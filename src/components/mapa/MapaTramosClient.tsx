@@ -70,7 +70,10 @@ import {
   type JornadaMinitramoMapa,
 } from "@/src/lib/mapa-jornada-minitramo"
 import { cargarEquiposMaquinariaProyecto } from "@/src/lib/proyecto-equipos-maquinaria"
-import { guardarJornadaMinitramo } from "@/src/lib/tramo-maquinaria-historial"
+import {
+  eliminarRegistroMaquinariaTramo,
+  guardarJornadaMinitramo,
+} from "@/src/lib/tramo-maquinaria-historial"
 import { tramosMapaDesasolveSinExcluidos } from "@/src/data/tramos/tramos-excluidos"
 import {
   calcularKpisTramos,
@@ -95,6 +98,19 @@ const MapaTramosLeaflet = dynamic(
 function trimOrNull(value: string): string | null {
   const trimmed = value.trim()
   return trimmed || null
+}
+
+function coordsPuntoSinCambio(
+  puntoActual: TramoPuntoAvance | undefined,
+  propuesto: { lat: number; lng: number; abscisa_m: number }
+): boolean {
+  if (!puntoActual) return false
+  const tolCoord = 1e-5
+  return (
+    Math.abs(puntoActual.lat - propuesto.lat) < tolCoord &&
+    Math.abs(puntoActual.lng - propuesto.lng) < tolCoord &&
+    Math.abs(puntoActual.abscisa_m - propuesto.abscisa_m) < 0.05
+  )
 }
 
 export function MapaTramosClient() {
@@ -126,6 +142,8 @@ export function MapaTramosClient() {
   const [editarEstadoInicial, setEditarEstadoInicial] = useState<EstadoTramo | undefined>()
   const [confirmRegistroFotoId, setConfirmRegistroFotoId] = useState<string | null>(null)
   const [confirmandoAvance, setConfirmandoAvance] = useState(false)
+  const [confirmLoadingDetalle, setConfirmLoadingDetalle] = useState<string | null>(null)
+  const [errorConfirmacion, setErrorConfirmacion] = useState<string | null>(null)
   const [eliminandoId, setEliminandoId] = useState<string | null>(null)
   const [guardandoEstadoMinitramoId, setGuardandoEstadoMinitramoId] = useState<string | null>(null)
   const [guardandoFrenteParpadeoPuntoId, setGuardandoFrenteParpadeoPuntoId] = useState<
@@ -183,6 +201,17 @@ export function MapaTramosClient() {
   useEffect(() => {
     void cargarDatos()
   }, [cargarDatos])
+
+  useEffect(() => {
+    if (!confirmandoAvance || confirmModo !== "editar_minitramo") {
+      setConfirmLoadingDetalle(null)
+      return
+    }
+    const timer = window.setTimeout(() => {
+      setConfirmLoadingDetalle("Renumerando puntos del tramo…")
+    }, 1000)
+    return () => window.clearTimeout(timer)
+  }, [confirmandoAvance, confirmModo])
 
   useEffect(() => {
     if (isResident || tramos.length === 0) {
@@ -301,6 +330,7 @@ export function MapaTramosClient() {
     setConfirmRegistroFotoId(opciones?.registroFotoId ?? null)
     setConfirmModalAbierto(true)
     setPanelError(null)
+    setErrorConfirmacion(null)
   }
 
   function cerrarConfirmacion() {
@@ -311,6 +341,8 @@ export function MapaTramosClient() {
     setConfirmModo("nuevo")
     setEditarEtiquetaMinitramo(undefined)
     setEditarEstadoInicial(undefined)
+    setErrorConfirmacion(null)
+    setConfirmLoadingDetalle(null)
   }
 
   function handleSolicitarEditarMinitramo(puntoFinId: string) {
@@ -331,17 +363,21 @@ export function MapaTramosClient() {
     setConfirmRegistroFotoId(null)
     setConfirmModalAbierto(true)
     setPanelError(null)
+    setErrorConfirmacion(null)
   }
 
   async function handleConfirmarPunto(payload: ConfirmarPuntoPayload) {
     setConfirmandoAvance(true)
     setPanelError(null)
+    setErrorConfirmacion(null)
     try {
       const {
         data: { user },
       } = await supabase.auth.getUser()
       if (!user) {
-        setPanelError("Sesión no válida.")
+        const msg = "Sesión no válida."
+        setPanelError(msg)
+        setErrorConfirmacion(msg)
         return
       }
 
@@ -351,11 +387,17 @@ export function MapaTramosClient() {
         (payload.modo === "corregir" || payload.modo === "editar_minitramo") &&
         payload.puntoId
       ) {
+        const puntoActual = puntosAvance.find((p) => p.id === payload.puntoId)
+        const omitirRenumerarRoles =
+          payload.modo === "editar_minitramo" &&
+          coordsPuntoSinCambio(puntoActual, payload.punto)
+
         await corregirPuntoMinitramo(supabase, {
           tramo: payload.tramo,
           puntoId: payload.puntoId,
           punto: payload.punto,
           estado: payload.estado,
+          omitirRenumerarRoles,
         })
       } else {
         nuevoPuntoIdConfirmado = await confirmarPuntoMinitramo(supabase, {
@@ -376,7 +418,28 @@ export function MapaTramosClient() {
         nuevoPuntoIdConfirmado ??
         null
 
-      if (payload.jornada && puntoJornada) {
+      if (payload.eliminarRegistroJornadaId) {
+        try {
+          await eliminarRegistroMaquinariaTramo(supabase, payload.eliminarRegistroJornadaId)
+        } catch (jornadaErr) {
+          await cargarDatos()
+          const prefijoGuardado =
+            payload.modo === "editar_minitramo"
+              ? "Cambios guardados, pero la jornada no se eliminó"
+              : "Punto guardado, pero la jornada no se eliminó"
+          const msg =
+            jornadaErr instanceof Error
+              ? `${prefijoGuardado}: ${jornadaErr.message}`
+              : payload.modo === "editar_minitramo"
+                ? "Cambios guardados, pero no se pudo eliminar la jornada."
+                : "Punto guardado, pero no se pudo eliminar la jornada."
+          setPanelError(msg)
+          setErrorConfirmacion(msg)
+          cerrarConfirmacion()
+          setPuntosRefreshKey((k) => k + 1)
+          return
+        }
+      } else if (payload.jornada && puntoJornada) {
         try {
           await guardarJornadaMinitramo(
             supabase,
@@ -391,13 +454,14 @@ export function MapaTramosClient() {
             payload.modo === "editar_minitramo"
               ? "Cambios guardados, pero la jornada no se registró"
               : "Punto guardado, pero la jornada no se registró"
-          setPanelError(
+          const msg =
             jornadaErr instanceof Error
               ? `${prefijoGuardado}: ${jornadaErr.message}`
               : payload.modo === "editar_minitramo"
                 ? "Cambios guardados, pero no se pudo registrar la jornada."
                 : "Punto guardado, pero no se pudo registrar la jornada."
-          )
+          setPanelError(msg)
+          setErrorConfirmacion(msg)
           cerrarConfirmacion()
           setPuntosRefreshKey((k) => k + 1)
           return
@@ -408,9 +472,12 @@ export function MapaTramosClient() {
       cerrarConfirmacion()
       setPuntosRefreshKey((k) => k + 1)
     } catch (err) {
-      setPanelError(err instanceof Error ? err.message : "No se pudo confirmar el punto.")
+      const msg = err instanceof Error ? err.message : "No se pudo confirmar el punto."
+      setPanelError(msg)
+      setErrorConfirmacion(msg)
     } finally {
       setConfirmandoAvance(false)
+      setConfirmLoadingDetalle(null)
     }
   }
 
@@ -948,6 +1015,8 @@ export function MapaTramosClient() {
         etiquetaMinitramo={editarEtiquetaMinitramo}
         estadoInicialMinitramo={editarEstadoInicial}
         loading={confirmandoAvance}
+        loadingDetalle={confirmLoadingDetalle}
+        errorExterno={errorConfirmacion}
         mostrarRegistrarJornada={isResident}
         onConfirm={handleConfirmarPunto}
         onCancel={cerrarConfirmacion}

@@ -65,6 +65,7 @@ export type ConfirmarPuntoPayload = {
   puntoId?: string
   jornada?: TramoRegistroMaquinariaInput | null
   registroJornadaId?: string
+  eliminarRegistroJornadaId?: string | null
   puntoAvanceIdJornada?: string
   puntoEnlaceId?: string
 }
@@ -79,6 +80,8 @@ type ConfirmarPuntoMinitramoModalProps = {
   etiquetaMinitramo?: string
   estadoInicialMinitramo?: PropuestaPuntoMinitramo["estado_sugerido"]
   loading?: boolean
+  loadingDetalle?: string | null
+  errorExterno?: string | null
   mostrarRegistrarJornada?: boolean
   onConfirm: (payload: ConfirmarPuntoPayload) => Promise<void>
   onCancel: () => void
@@ -96,6 +99,8 @@ export function ConfirmarPuntoMinitramoModal({
   etiquetaMinitramo,
   estadoInicialMinitramo,
   loading = false,
+  loadingDetalle = null,
+  errorExterno = null,
   mostrarRegistrarJornada = false,
   onConfirm,
   onCancel,
@@ -108,6 +113,7 @@ export function ConfirmarPuntoMinitramoModal({
   const [jornadaForm, setJornadaForm] = useState<RegistrarJornadaFormState>(() => estadoInicialJornada())
   const [equiposCatalogo, setEquiposCatalogo] = useState<ProyectoEquipoMaquinaria[]>([])
   const [registroJornadaId, setRegistroJornadaId] = useState<string | undefined>()
+  const [registroJornadaIdInicial, setRegistroJornadaIdInicial] = useState<string | undefined>()
   const [errorJornada, setErrorJornada] = useState<string | null>(null)
 
   useEffect(() => {
@@ -127,6 +133,7 @@ export function ConfirmarPuntoMinitramoModal({
       setIncluirJornada(false)
       setJornadaForm(estadoInicialJornada())
       setRegistroJornadaId(undefined)
+      setRegistroJornadaIdInicial(undefined)
       setErrorJornada(null)
     }
   }, [open])
@@ -139,6 +146,7 @@ export function ConfirmarPuntoMinitramoModal({
 
     if (!cargarJornadaExistente) {
       setRegistroJornadaId(undefined)
+      setRegistroJornadaIdInicial(undefined)
       setIncluirJornada(false)
       setJornadaForm(estadoInicialJornada())
       return
@@ -186,10 +194,12 @@ export function ConfirmarPuntoMinitramoModal({
 
       if (registro) {
         setRegistroJornadaId(registro.id)
+        setRegistroJornadaIdInicial(registro.id)
         setIncluirJornada(true)
         setJornadaForm(jornadaFormDesdeRegistro(registro, equipos))
       } else {
         setRegistroJornadaId(undefined)
+        setRegistroJornadaIdInicial(undefined)
         setIncluirJornada(false)
         setJornadaForm(estadoInicialJornada())
       }
@@ -247,6 +257,9 @@ export function ConfirmarPuntoMinitramoModal({
     setIncluirJornada(checked)
     setErrorJornada(null)
     if (checked) {
+      if (registroJornadaIdInicial) {
+        setRegistroJornadaId(registroJornadaIdInicial)
+      }
       setJornadaForm((prev) => {
         if (prev.metros.trim() || prev.equipoSeleccionId.trim()) return prev
         const metrosSugeridos = sugerirMetrosJornada()
@@ -255,8 +268,7 @@ export function ConfirmarPuntoMinitramoModal({
           metros: metrosSugeridos,
         }
       })
-    } else {
-      setRegistroJornadaId(undefined)
+    } else if (!registroJornadaIdInicial) {
       setJornadaForm(estadoInicialJornada())
     }
   }
@@ -285,6 +297,14 @@ export function ConfirmarPuntoMinitramoModal({
       }
     }
 
+    const registroIdParaActualizar =
+      incluirJornada && registroJornadaIdInicial ? registroJornadaIdInicial : registroJornadaId
+
+    const eliminarRegistroJornadaId =
+      mostrarJornada && !incluirJornada && registroJornadaIdInicial
+        ? registroJornadaIdInicial
+        : null
+
     await onConfirm({
       tramo: propuesta.tramo,
       punto: propuesta.punto,
@@ -295,7 +315,8 @@ export function ConfirmarPuntoMinitramoModal({
       modo: esEditarMinitramo ? "editar_minitramo" : esCorreccion ? "corregir" : "nuevo",
       puntoId: esCorreccion ? puntoId : undefined,
       jornada,
-      registroJornadaId,
+      registroJornadaId: registroIdParaActualizar,
+      eliminarRegistroJornadaId,
       puntoAvanceIdJornada: esCorreccion ? puntoId : undefined,
       puntoEnlaceId: propuesta.puntoEnlaceId,
     })
@@ -467,23 +488,36 @@ export function ConfirmarPuntoMinitramoModal({
           ) : null}
         </div>
 
+        {errorExterno ? (
+          <p className="mt-4 text-sm text-destructive" role="alert">
+            {errorExterno}
+          </p>
+        ) : null}
+
         <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <Button type="button" variant="outline" onClick={onCancel} disabled={loading}>
             Cancelar
           </Button>
-          <Button
-            type="button"
-            onClick={() => void handleConfirmar()}
-            disabled={loading || !propuesta}
-          >
-            {loading
-              ? "Guardando..."
-              : esEditarMinitramo
-                ? "Guardar cambios"
-                : esCorreccion
-                  ? `Confirmar corrección ${propuestaInicial.letra}`
-                  : `Confirmar punto ${propuestaInicial.letra}`}
-          </Button>
+          <div className="flex flex-col items-stretch gap-1 sm:items-end">
+            <Button
+              type="button"
+              onClick={() => void handleConfirmar()}
+              disabled={loading || !propuesta}
+            >
+              {loading
+                ? "Guardando..."
+                : esEditarMinitramo
+                  ? "Guardar cambios"
+                  : esCorreccion
+                    ? `Confirmar corrección ${propuestaInicial.letra}`
+                    : `Confirmar punto ${propuestaInicial.letra}`}
+            </Button>
+            {loading && loadingDetalle ? (
+              <p className="text-center text-xs text-muted-foreground sm:text-right">
+                {loadingDetalle}
+              </p>
+            ) : null}
+          </div>
         </div>
       </div>
     </div>
