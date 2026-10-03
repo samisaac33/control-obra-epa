@@ -404,20 +404,6 @@ export function MapaTramosLeaflet({
     return [(minLat + maxLat) / 2, (minLng + maxLng) / 2]
   }, [tramos])
 
-  if (tramos.length === 0) {
-    return (
-      <div
-        className={cn(
-          "flex items-center justify-center rounded-xl border border-dashed border-foreground/15 bg-muted/20 text-sm text-muted-foreground",
-          usaAlturaCssResidente && "h-[min(78dvh,640px)] md:h-[min(65vh,560px)]"
-        )}
-        style={usaAlturaCssResidente ? undefined : { height: alturaNormal }}
-      >
-        No hay tramos visibles con los filtros actuales.
-      </div>
-    )
-  }
-
   const layerKey = `${isResident ? "r" : "v"}-${esViewportMovil ? "m" : "d"}-${mostrarPuntosAvance ? "pts1" : "pts0"}-${mostrarMinitramosTerminados ? "mtt1" : "mtt0"}-${mapaConsolidado ? "cons1" : "cons0"}-${tramoSeleccionadoId ?? "none"}-${tramos
     .map((t) => `${t.id}:${t.metros_ejecutados}:${t.estado}`)
     .join("|")}-${puntosVisibles.map((p) => `${p.id}:${p.estado_minitramo ?? ""}`).join(",")}-${[...idsParpadeoFrente].sort().join(",")}`
@@ -453,6 +439,20 @@ export function MapaTramosLeaflet({
     mapaConsolidado,
     mostrarPuntosAvance,
   ])
+
+  if (tramos.length === 0) {
+    return (
+      <div
+        className={cn(
+          "flex items-center justify-center rounded-xl border border-dashed border-foreground/15 bg-muted/20 text-sm text-muted-foreground",
+          usaAlturaCssResidente && "h-[min(78dvh,640px)] md:h-[min(65vh,560px)]"
+        )}
+        style={usaAlturaCssResidente ? undefined : { height: alturaNormal }}
+      >
+        No hay tramos visibles con los filtros actuales.
+      </div>
+    )
+  }
 
   const mapaShell = (
     <div
