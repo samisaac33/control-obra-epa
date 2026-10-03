@@ -75,9 +75,9 @@ export async function zoomInClicks(page, times) {
   const btn = page.locator(".leaflet-control-zoom-in").first()
   if (!(await btn.count())) return
   for (let i = 0; i < times; i++) {
-    if (await btn.getAttribute("aria-disabled")) break
+    if ((await btn.getAttribute("aria-disabled")) === "true") break
     await btn.click()
-    await page.waitForTimeout(380)
+    await page.waitForTimeout(700)
   }
 }
 
@@ -85,7 +85,7 @@ export async function zoomOutClicks(page, times) {
   const btn = page.locator(".leaflet-control-zoom-out").first()
   if (!(await btn.count())) return
   for (let i = 0; i < times; i++) {
-    if (await btn.getAttribute("aria-disabled")) break
+    if ((await btn.getAttribute("aria-disabled")) === "true") break
     await btn.click()
     await page.waitForTimeout(380)
   }
@@ -102,7 +102,7 @@ export async function restablecerVistaRedCompleta(page) {
 }
 
 /** Acerca hasta etiquetas XXX m (flyTo calibrado o clics +). */
-export async function acercarMinitramosTerminados(page, targets) {
+export async function acercarMinitramosTerminados(page, targets, { resetBeforeZoom = false } = {}) {
   const fly = targets.flyToMinitramosTerminados
   const ui = targets.uiFallbackZoomInFromRed
   const flew = await flyToMinitramos(page, fly)
@@ -110,19 +110,27 @@ export async function acercarMinitramosTerminados(page, targets) {
     await page.waitForTimeout(1200)
     return
   }
-  await restablecerVistaRedCompleta(page)
+  if (resetBeforeZoom) await restablecerVistaRedCompleta(page)
   await zoomInClicks(page, ui?.zoomInClicks ?? 3)
-  await page.waitForTimeout(800)
+  await page
+    .waitForFunction(
+      () => document.querySelectorAll(".mapa-minitramo-distancia-etiqueta").length >= 2,
+      { timeout: 8000 }
+    )
+    .catch(() => {})
+  await page.waitForTimeout(600)
 }
 
-export async function alejarVistaRedCompleta(page, targets) {
+export async function alejarVistaRedCompleta(page, targets, { soloZoomOut = false } = {}) {
   const ui = targets.uiFallbackZoomInFromRed
-  const ok = await fitBoundsRed(page)
-  if (ok) {
-    await page.waitForTimeout(900)
-    return
+  if (!soloZoomOut) {
+    const ok = await fitBoundsRed(page)
+    if (ok) {
+      await page.waitForTimeout(900)
+      return
+    }
   }
   await zoomOutClicks(page, ui?.zoomOutClicks ?? 3)
   await page.waitForTimeout(600)
-  await restablecerVistaRedCompleta(page)
+  if (!soloZoomOut) await restablecerVistaRedCompleta(page)
 }

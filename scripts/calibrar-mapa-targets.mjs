@@ -101,7 +101,7 @@ async function zoomInClicks(page, times) {
   const btn = page.locator(".leaflet-control-zoom-in").first()
   if (!(await btn.count())) return
   for (let i = 0; i < times; i++) {
-    if (await btn.getAttribute("aria-disabled")) return
+    if ((await btn.getAttribute("aria-disabled")) === "true") return
     await btn.click()
     await sleep(350)
   }
@@ -126,7 +126,7 @@ async function zoomOutClicks(page, times) {
   const btn = page.locator(".leaflet-control-zoom-out").first()
   if (!(await btn.count())) return
   for (let i = 0; i < times; i++) {
-    if (await btn.getAttribute("aria-disabled")) return
+    if ((await btn.getAttribute("aria-disabled")) === "true") return
     await btn.click()
     await sleep(350)
   }

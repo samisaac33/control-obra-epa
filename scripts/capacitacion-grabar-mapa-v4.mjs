@@ -147,8 +147,9 @@ async function main() {
 
   // --- 1:42–1:58 zoom minitramos (etiquetas m) en vista normal ---
   if (await puntos.count()) await puntos.check()
-  await restablecerVistaRedCompleta(page)
-  await acercarMinitramosTerminados(page, targets)
+  if (await vista124.isChecked()) await vista124.uncheck()
+  await sleep(500)
+  await acercarMinitramosTerminados(page, targets, { resetBeforeZoom: false })
   const labels1 = await countMinitramoLabels(page)
   console.log(`Etiquetas minitramo (vista página): ${labels1}`)
   await sleep(4500)
@@ -163,12 +164,14 @@ async function main() {
   await waitUntil(syncStart, 126_071)
 
   // --- 2:06–2:16 pantalla completa + zoom in/out acotado ---
-  await alejarVistaRedCompleta(page, targets)
+  await alejarVistaRedCompleta(page, targets, { soloZoomOut: true })
   await expandirPantallaCompleta(page)
   await sleep(1800)
-  await acercarMinitramosTerminados(page, targets)
+  await acercarMinitramosTerminados(page, targets, { resetBeforeZoom: false })
+  const labelsFs = await countMinitramoLabels(page)
+  console.log(`Etiquetas minitramo (pantalla completa): ${labelsFs}`)
   await sleep(3500)
-  await alejarVistaRedCompleta(page, targets)
+  await alejarVistaRedCompleta(page, targets, { soloZoomOut: true })
   await sleep(2000)
   await waitUntil(syncStart, 136_326)
 
