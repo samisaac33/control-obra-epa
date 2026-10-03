@@ -728,11 +728,12 @@ export function MapaTramosClient() {
                         onMostrarPuntosAvanceChange={setMostrarPuntosAvance}
                         ocultarMinitramosTerminados={ocultarMinitramosTerminados}
                         onOcultarMinitramosTerminadosChange={setOcultarMinitramosTerminados}
-                        mapaConsolidado={mapaConsolidado}
-                        onMapaConsolidadoChange={setMapaConsolidado}
-                        idPrefix="visitante"
-                        className="sm:max-w-md sm:flex-1"
-                      />
+                      mapaConsolidado={mapaConsolidado}
+                      onMapaConsolidadoChange={setMapaConsolidado}
+                      idPrefix="visitante"
+                      perfil="visitante"
+                      className="sm:max-w-md sm:flex-1"
+                    />
                     </div>
                   )}
                   {mapaLeaflet}
