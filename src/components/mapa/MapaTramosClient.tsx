@@ -561,6 +561,14 @@ export function MapaTramosClient() {
     return new Set(Object.values(puntoFrenteParpadeoPorTramo))
   }, [puntoFrenteParpadeoPorTramo])
 
+  const mostrarMinitramosTerminadosEnMapa =
+    !ocultarMinitramosTerminados && !vistaSoloTramos1a24
+
+  const puntoIdsParpadeoFrenteEnMapa = useMemo(() => {
+    if (vistaSoloTramos1a24) return new Set<string>()
+    return puntoIdsParpadeoFrente
+  }, [vistaSoloTramos1a24, puntoIdsParpadeoFrente])
+
   async function handleRenumerarPuntosTramo() {
     if (!tramoSeleccionado) return
     if (
@@ -648,7 +656,7 @@ export function MapaTramosClient() {
       marcadoresCompactos={visitanteMovil}
       mostrarEtiquetasTramo={mostrarNumerosTramo}
       mostrarPuntosAvance={mostrarPuntosAvance}
-      mostrarMinitramosTerminados={!ocultarMinitramosTerminados}
+      mostrarMinitramosTerminados={mostrarMinitramosTerminadosEnMapa}
       mapaConsolidado={mapaConsolidado}
       onTramoClick={handleTramoClick}
       onSegmentoVisitanteClick={
@@ -660,7 +668,7 @@ export function MapaTramosClient() {
       ubicacionUsuario={isResident ? ubicacionResidente : null}
       seguirUbicacionUsuario={isResident ? seguirUbicacionResidente : false}
       centrarUbicacionVersion={isResident ? centrarUbicacionKey : 0}
-      puntoIdsParpadeoFrente={puntoIdsParpadeoFrente}
+      puntoIdsParpadeoFrente={puntoIdsParpadeoFrenteEnMapa}
     />
   )
 

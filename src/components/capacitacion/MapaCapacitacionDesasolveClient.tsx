@@ -92,6 +92,14 @@ export function MapaCapacitacionDesasolveClient() {
     return new Set(Object.values(puntoFrenteParpadeoPorTramo))
   }, [puntoFrenteParpadeoPorTramo])
 
+  const mostrarMinitramosTerminadosEnMapa =
+    !ocultarMinitramosTerminados && !vistaSoloTramos1a24
+
+  const puntoIdsParpadeoFrenteEnMapa = useMemo(() => {
+    if (vistaSoloTramos1a24) return new Set<string>()
+    return puntoIdsParpadeoFrente
+  }, [vistaSoloTramos1a24, puntoIdsParpadeoFrente])
+
   function handleTramoClick(tramo: CanalTramo) {
     setTramoSeleccionado(tramo)
     setPanelAbierto(true)
@@ -108,13 +116,13 @@ export function MapaCapacitacionDesasolveClient() {
       marcadoresCompactos={false}
       mostrarEtiquetasTramo={mostrarNumerosTramo}
       mostrarPuntosAvance={mostrarPuntosAvance}
-      mostrarMinitramosTerminados={!ocultarMinitramosTerminados}
+      mostrarMinitramosTerminados={mostrarMinitramosTerminadosEnMapa}
       mapaConsolidado={mapaConsolidado}
       onTramoClick={handleTramoClick}
       onSegmentoVisitanteClick={(segmento) =>
         setTramoVisitanteModal({ tramo: segmento.tramo, segmentoDestacado: segmento })
       }
-      puntoIdsParpadeoFrente={puntoIdsParpadeoFrente}
+      puntoIdsParpadeoFrente={puntoIdsParpadeoFrenteEnMapa}
     />
   )
 
