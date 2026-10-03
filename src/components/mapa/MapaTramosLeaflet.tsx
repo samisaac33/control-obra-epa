@@ -61,8 +61,6 @@ type MapaTramosLeafletProps = {
   mostrarEtiquetasTramo?: boolean
   /** Etiquetas fijas de longitud total en tramos (desactivado: solo tooltip al hover). */
   mostrarLongitudTramosEnMapa?: boolean
-  /** Etiquetas fijas de longitud en minitramos (desactivado: solo tooltip al hover). */
-  mostrarLongitudMinitramosEnMapa?: boolean
   mostrarPuntosAvance?: boolean
   mostrarMinitramosTerminados?: boolean
   mapaConsolidado?: boolean
