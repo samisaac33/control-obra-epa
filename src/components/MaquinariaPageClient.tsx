@@ -7,36 +7,41 @@ import { KpiCard } from "@/src/components/KpiCard"
 import { MaquinariaAccionistaChip } from "@/src/components/MaquinariaRegistroBadge"
 import { MaquinariaCronologia } from "@/src/components/MaquinariaCronologia"
 import { MaquinariaCatalogoEquipos } from "@/src/components/MaquinariaCatalogoEquipos"
+import { MaquinariaDesasolvePageClient } from "@/src/components/MaquinariaDesasolvePageClient"
 import { MaquinariaExportClient } from "@/src/components/MaquinariaExportClient"
 import { MaquinariaMatrizCalendario } from "@/src/components/MaquinariaMatrizCalendario"
 import { MaquinariaResumenTabla } from "@/src/components/MaquinariaResumenTabla"
 import { ProyectoModuloGuard } from "@/src/components/ProyectoModuloGuard"
 import { useProyecto } from "@/src/contexts/ProyectoContext"
 import { PROYECTO_DESASOLVE_CANALES } from "@/src/data/proyectos/catalog"
-import { useEsViewportMovil } from "@/src/hooks/useEsViewportMovil"
-import { cn } from "@/lib/utils"
 import { ACCIONISTA_META } from "@/src/data/registro-maquinaria"
 import { useRegistroMaquinariaProyecto } from "@/src/hooks/use-registro-maquinaria-proyecto"
 import { formatearNumero, kpisMaquinaria } from "@/src/lib/maquinaria-resumen"
 
 export function MaquinariaPageClient() {
   const { proyectoActivo } = useProyecto()
+
+  if (proyectoActivo.id === PROYECTO_DESASOLVE_CANALES) {
+    return (
+      <ProyectoModuloGuard modulo="maquinaria">
+        <MaquinariaDesasolvePageClient />
+      </ProyectoModuloGuard>
+    )
+  }
+
+  return <MaquinariaEmergenciaPageClient />
+}
+
+function MaquinariaEmergenciaPageClient() {
+  const { proyectoActivo } = useProyecto()
   const { registros, periodo } = useRegistroMaquinariaProyecto()
   const kpis = kpisMaquinaria(registros)
   const generadoEn = new Date().toISOString()
-  const esDesasolve = proyectoActivo.id === PROYECTO_DESASOLVE_CANALES
-  const esViewportMovil = useEsViewportMovil()
-  const kpiCompact = esDesasolve && esViewportMovil
 
   return (
     <ProyectoModuloGuard modulo="maquinaria">
       <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-[oklch(0.98_0.002_264)] text-foreground">
-        <header
-          className={cn(
-            "shrink-0 border-b border-foreground/10 bg-card/80 shadow-sm ring-1 ring-foreground/5 backdrop-blur-sm print:hidden",
-            esDesasolve && "hidden md:block"
-          )}
-        >
+        <header className="shrink-0 border-b border-foreground/10 bg-card/80 shadow-sm ring-1 ring-foreground/5 backdrop-blur-sm print:hidden">
           <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-5 sm:px-6 lg:px-8">
             <div className="flex min-w-0 items-start gap-3">
               <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg border border-foreground/10 bg-muted/80 text-foreground/80">
@@ -61,21 +66,7 @@ export function MaquinariaPageClient() {
           </div>
         </header>
 
-        <main
-          className={cn(
-            "mx-auto flex w-full max-w-6xl flex-1 flex-col space-y-6 sm:space-y-8 sm:px-6 sm:py-8 lg:px-8",
-            esDesasolve ? "px-4 py-5" : "px-4 py-6"
-          )}
-        >
-          {esDesasolve ? (
-            <div className="flex items-center gap-2 overflow-x-auto pb-0.5 md:hidden [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Accionistas
-              </span>
-              <MaquinariaAccionistaChip accionista="consorcio" />
-              <MaquinariaAccionistaChip accionista="mauricio" />
-            </div>
-          ) : null}
+        <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col space-y-6 px-4 py-6 sm:space-y-8 sm:px-6 sm:py-8 lg:px-8">
           <MaquinariaCatalogoEquipos />
 
           <section aria-labelledby="generar-documento-title">
@@ -87,57 +78,39 @@ export function MaquinariaPageClient() {
 
           <div className="maquinaria-dashboard space-y-6 sm:space-y-8 print:hidden">
             <section aria-labelledby="kpis-maquinaria-title">
-              <div className="mb-3">
-                {esDesasolve ? (
-                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground md:hidden">
-                    Período {periodo.etiqueta}
-                  </p>
-                ) : null}
-                <h2 id="kpis-maquinaria-title" className="text-base font-semibold tracking-tight">
-                  Resumen del período
-                </h2>
-              </div>
-              <div
-                className={cn(
-                  "grid gap-3",
-                  esDesasolve ? "grid-cols-2 gap-2.5 sm:grid-cols-2 lg:grid-cols-3" : "sm:grid-cols-2 lg:grid-cols-3"
-                )}
-              >
+              <h2 id="kpis-maquinaria-title" className="mb-3 text-base font-semibold tracking-tight">
+                Resumen del período
+              </h2>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 <KpiCard
                   label="Días con actividad"
                   valor={String(kpis.diasConActividad)}
                   detalle="Jornadas con registro de equipos en obra"
-                  compact={kpiCompact}
                 />
                 <KpiCard
                   label="Días sin trabajo"
                   valor={String(kpis.diasSinTrabajo)}
                   detalle="Paradas registradas en el período"
-                  compact={kpiCompact}
                 />
                 <KpiCard
                   label={`Días-equipo ${ACCIONISTA_META.consorcio.label}`}
                   valor={formatearNumero(kpis.diasEquipoConsorcio)}
                   detalle="Suma normalizada de uso (día completo = 1)"
-                  compact={kpiCompact}
                 />
                 <KpiCard
                   label="Días-equipo Mauricio"
                   valor={formatearNumero(kpis.diasEquipoMauricio)}
                   detalle="Equipos y volquetas del accionista Mauricio"
-                  compact={kpiCompact}
                 />
                 <KpiCard
                   label="Viajes de material"
                   valor={String(kpis.totalViajesArena)}
                   detalle="Transporte de material registrado"
-                  compact={kpiCompact}
                 />
                 <KpiCard
                   label="Eventos destacados"
                   valor={String(kpis.eventosDestacados.length)}
                   detalle={kpis.eventosDestacados.join(" · ") || "Sin eventos especiales"}
-                  compact={kpiCompact}
                 />
               </div>
             </section>
