@@ -427,9 +427,7 @@ export function htmlTooltipVisitanteMinitramo(
     ? `Minitramo ${info.etiquetaMinitramo}`
     : tituloTramoMapa(segmento.tramo.codigo)
 
-  const longitudTrabajada = jornada
-    ? formatearMetrosDesasolados(jornada.metros_desasolados)
-    : info.longitudTexto
+  const longitudTrabajada = info.longitudTexto
   const fecha = jornada?.fecha ?? "—"
   const maquinaria = jornada?.equipoNombre?.trim() ? jornada.equipoNombre : "—"
   const horas =
