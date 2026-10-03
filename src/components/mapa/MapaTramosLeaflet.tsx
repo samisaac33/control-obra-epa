@@ -59,6 +59,10 @@ type MapaTramosLeafletProps = {
   alturaResponsiveResidente?: boolean
   marcadoresCompactos?: boolean
   mostrarEtiquetasTramo?: boolean
+  /** Etiquetas fijas de longitud total en tramos (desactivado: solo tooltip al hover). */
+  mostrarLongitudTramosEnMapa?: boolean
+  /** Etiquetas fijas de longitud en minitramos (desactivado: solo tooltip al hover). */
+  mostrarLongitudMinitramosEnMapa?: boolean
   mostrarPuntosAvance?: boolean
   mostrarMinitramosTerminados?: boolean
   mapaConsolidado?: boolean
@@ -329,7 +333,9 @@ export function MapaTramosLeaflet({
   modoMapaVisitanteMovil = false,
   alturaResponsiveResidente = false,
   marcadoresCompactos = false,
-  mostrarEtiquetasTramo = true,
+  mostrarEtiquetasTramo = false,
+  mostrarLongitudTramosEnMapa = false,
+  mostrarLongitudMinitramosEnMapa = false,
   mostrarPuntosAvance = false,
   mostrarMinitramosTerminados = true,
   mapaConsolidado = true,
@@ -504,9 +510,16 @@ export function MapaTramosLeaflet({
           tramos={tramos}
           tramoSeleccionadoId={tramoSeleccionadoId}
           mostrar={mostrarEtiquetasTramo}
+          etiquetasSiempre={mostrarEtiquetasTramo}
         />
-        <MapaEtiquetasLongitudTramoPorZoom tramos={tramos} />
-        <MapaEtiquetasMinitramoPorZoom segmentos={segmentosColoreados} />
+        <MapaEtiquetasLongitudTramoPorZoom
+          tramos={tramos}
+          activo={mostrarLongitudTramosEnMapa}
+        />
+        <MapaEtiquetasMinitramoPorZoom
+          segmentos={segmentosColoreados}
+          activo={mostrarLongitudMinitramosEnMapa}
+        />
         <AjustarBounds tramos={tramos} />
         <ExponerMapaCapacitacion tramos={tramos} />
         {ubicacionUsuario ? (
