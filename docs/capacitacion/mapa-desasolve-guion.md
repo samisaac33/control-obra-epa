@@ -1,3 +1,27 @@
+# Guion — Video: interpretación del mapa Desasolve
+
+## v4 (narración sincronizada ~154 s)
+
+**Fuente de verdad:** [`narracion-es-v4.txt`](./narracion-es-v4.txt) (audio/VTT v4 generados con `edge-tts`, voz `es-MX-JorgeNeural`, `--rate=-2%`).
+
+**Automatización:** [`scripts/capacitacion-grabar-mapa-v4.mjs`](../../scripts/capacitacion-grabar-mapa-v4.mjs) — timeline según VTT; zoom con `window.__mapaTramosLeaflet` / `__mapaCapacitacionFitBoundsRed` cuando esté desplegado, o fallback [`capacitacion-mapa-targets.json`](../../scripts/capacitacion-mapa-targets.json) (`zoomInClicks: 3` desde red operativa).
+
+| Tiempo (aprox.) | Acción en pantalla |
+|-----------------|-------------------|
+| 0:00–0:30 | KPIs y avance global |
+| 0:33–0:44 | Rol visitante vs residente |
+| 0:44–0:49 | Filtro **Todos los tramos** |
+| 0:49–1:11 | **Primer levantamiento** ON — topógrafo 1–24, incl. tramos 4 y 21 históricos |
+| 1:11–1:30 | **Primer levantamiento** OFF — residente, 10 tramos nuevos, sin 4/21 en vista operativa |
+| 1:30–1:36 | KPI **31 tramos**, **~65,33 km** |
+| 1:36–1:43 | Leyenda violeta / naranja parpadeante / verde |
+| 1:43–1:58 | Acercar mapa; etiquetas **XXX m** en minitramos terminados |
+| 1:58–2:06 | Frente naranja parpadeante |
+| 2:06–2:16 | Pantalla completa; acercar/alejar sin superar vista de red completa |
+| 2:16–2:33 | Clic tramo, modal, cierre |
+
+---
+
 # Guion v2 — Video: interpretación del mapa Desasolve
 
 **Duración objetivo:** 4–6 minutos  

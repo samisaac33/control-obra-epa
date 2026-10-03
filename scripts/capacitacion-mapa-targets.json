@@ -1,0 +1,21 @@
+{
+  "flyToMinitramosTerminados": {
+    "lat": -0.9124,
+    "lng": -80.4542,
+    "zoom": 14,
+    "labelCountAtCalibration": 39,
+    "note": "Producción sin hook: usar uiFallbackZoomInFromRed. Recalibrar lat/lng tras desplegar ExponerMapaCapacitacion."
+  },
+  "fitBounds": {
+    "padding": [24, 24],
+    "maxZoom": 14
+  },
+  "uiFallbackZoomInFromRed": {
+    "zoomInClicks": 3,
+    "zoomOutClicks": 3,
+    "preconditions": [
+      "visitante-vista-tramos-1-24 unchecked",
+      "visitante-mostrar-puntos-avance checked"
+    ]
+  }
+}

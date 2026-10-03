@@ -1,0 +1,15 @@
+Bienvenidos. Este panel muestra el avance del desasolve de los canales de riego: limpieza y recuperación de la sección hidráulica con maquinaria en campo.
+En la parte superior, el avance global expresa el porcentaje ejecutado y los kilómetros desasolvidos respecto al total. El cálculo es por longitud de canal, no por número de tramos.
+Los indicadores resumen kilómetros totales, tramos visibles, terminados y en ejecución.
+Ustedes acceden como visitantes y solo consultan. El residente de obra concentra el control operativo: avance georreferenciado, estados de minitramo, jornadas de maquinaria y frente de trabajo en el mapa.
+En el filtro Tramos, Todos los tramos muestra la red según la vista activa.
+Al marcar Primer levantamiento, el mapa reproduce el primer y único levantamiento topográfico del topógrafo: la geometría original numerada del uno al veinticuatro, incluidos los tramos cuatro y veintiuno, aunque hoy no formen parte de la vista operativa.
+Ese levantamiento no incorpora los tramos nuevos trazados después en verificación de campo.
+Al quitar Primer levantamiento, se muestra la red operativa validada por el residente: recorridos en sitio por todos los canales, trazado de diez tramos nuevos para enlazar tramos que en el primer levantamiento quedaban sin conectar, y retiro de los tramos cuatro y veintiuno por trazado incorrecto sin canal existente.
+En total son treinta y un tramos conectados y sesenta y cinco coma treinta y tres kilómetros.
+La leyenda distingue pendiente en violeta, en ejecución en naranja con parpadeo, y terminado en verde.
+Cada tramo se subdivide en minitramos con GPS. Al acercar el mapa sobre un tramo con avance terminado, las etiquetas en metros muestran la longitud desasolvida de cada minitramo, asociada a la jornada confirmada por el residente.
+El marcador naranja parpadeante indica dónde opera la máquina ahora; el residente lo actualiza en tiempo casi real.
+Ampliamos el mapa a pantalla completa para inspeccionar detalle, acercamos y alejamos sin perder la escala de la red completa, y volvemos a la vista de página.
+Pueden hacer clic en un tramo para ver el resumen técnico.
+En síntesis: primer levantamiento del topógrafo versus red operativa de treinta y un tramos, lectura de minitramos al zoom, y supervisión contratista sobre el registro del residente. Gracias.
