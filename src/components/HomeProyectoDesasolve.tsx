@@ -12,6 +12,7 @@ import { MapaTramosLeyenda } from "@/src/components/mapa/MapaTramosLeyenda"
 import { useProyecto } from "@/src/contexts/ProyectoContext"
 import { PROYECTO_DESASOLVE_CANALES } from "@/src/data/proyectos/catalog"
 import { useEsViewportMovil } from "@/src/hooks/useEsViewportMovil"
+import { tramosMapaDesasolveSinExcluidos } from "@/src/data/tramos/tramos-excluidos"
 import { cargarTramosMapaProyecto } from "@/src/lib/cargar-tramos-mapa-proyecto"
 import { rutaObra } from "@/src/lib/rutas-proyecto"
 import { createClient } from "@/src/lib/supabase/client"
@@ -52,7 +53,9 @@ export function HomeProyectoDesasolve() {
     setErrorKpis(null)
     try {
       const { tramos, puntosAvance } = await cargarTramosMapaProyecto(supabase, proyectoId)
-      setKpis(calcularKpisTramos(tramos, puntosAvance))
+      setKpis(
+        calcularKpisTramos(tramosMapaDesasolveSinExcluidos(tramos), puntosAvance)
+      )
     } catch (err) {
       setKpis(calcularKpisTramos([]))
       setErrorKpis(err instanceof Error ? err.message : "No se pudieron cargar los indicadores.")

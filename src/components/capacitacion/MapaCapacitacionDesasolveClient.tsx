@@ -18,6 +18,7 @@ import {
   DEMO_PUNTOS_CAPACITACION,
   DEMO_TRAMOS_CAPACITACION,
 } from "@/src/data/capacitacion/demo-map-desasolve"
+import { tramosMapaDesasolveSinExcluidos } from "@/src/data/tramos/tramos-excluidos"
 import type { CanalTramo } from "@/src/data/tramos/types"
 import { frenteParpadeoPorTramoDesdeTramos } from "@/src/lib/tramo-frente-mapa"
 import type { SegmentoVisualTramo } from "@/src/lib/tramo-geometria"
@@ -64,11 +65,12 @@ export function MapaCapacitacionDesasolveClient() {
   const [ocultarMinitramosTerminados, setOcultarMinitramosTerminados] = useState(false)
   const [mapaConsolidado, setMapaConsolidado] = useState(true)
 
-  const tramosParaVista = useMemo(
-    () =>
-      vistaSoloTramos1a24 ? filtrarTramosPorRangoNumerico(tramos, 1, 24) : tramos,
-    [tramos, vistaSoloTramos1a24]
-  )
+  const tramosParaVista = useMemo(() => {
+    if (vistaSoloTramos1a24) {
+      return filtrarTramosPorRangoNumerico(tramos, 1, 24)
+    }
+    return tramosMapaDesasolveSinExcluidos(tramos)
+  }, [tramos, vistaSoloTramos1a24])
 
   const tramosFiltrados = useMemo(
     () => filtrarTramos(tramosParaVista, filtros, puntosAvance),
@@ -138,7 +140,7 @@ export function MapaCapacitacionDesasolveClient() {
               <div className="min-w-0 sm:flex-1">
                 <MapaTramosFiltroTramo
                   filtros={filtros}
-                  tramos={tramos}
+                  tramos={tramosParaVista}
                   onChange={setFiltros}
                   selectId="filtro-tramo-capacitacion"
                 />
@@ -161,7 +163,7 @@ export function MapaCapacitacionDesasolveClient() {
             {mapaLeaflet}
             <MapaTramosFiltros
               filtros={filtros}
-              tramos={tramos}
+              tramos={tramosParaVista}
               semanas={semanasProgramadasUnicas(tramos)}
               onChange={setFiltros}
               campos={["estado", "semana"]}
