@@ -443,8 +443,8 @@ export function ConfirmarPuntoMinitramoModal({
                   <span className="font-medium">Registrar jornada (opcional)</span>
                   <span className="mt-0.5 block text-xs text-muted-foreground">
                     {esEditarMinitramo
-                      ? "Maquinaria desasolada asociada a esta edición del minitramo."
-                      : "Maquinaria desasolada en esta confirmación de punto."}
+                      ? "Maquinaria desazolvada asociada a esta edición del minitramo."
+                      : "Maquinaria desazolvada en esta confirmación de punto."}
                   </span>
                 </span>
               </label>
