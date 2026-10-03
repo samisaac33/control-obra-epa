@@ -89,6 +89,30 @@ function AjustarBounds({ tramos }: { tramos: CanalTramo[] }) {
   return null
 }
 
+/** Referencia global para scripts de grabación de capacitación (flyTo / fitBounds). */
+function ExponerMapaCapacitacion({ tramos }: { tramos: CanalTramo[] }) {
+  const map = useMap()
+
+  useEffect(() => {
+    window.__mapaTramosLeaflet = map
+    window.__mapaCapacitacionFitBoundsRed = () => {
+      const bounds = boundsDesdeTramos(tramos)
+      if (!bounds) return false
+      map.fitBounds(bounds, {
+        padding: [24, 24],
+        maxZoom: MAX_ZOOM_MAPA_TRAMOS,
+      })
+      return true
+    }
+    return () => {
+      delete window.__mapaTramosLeaflet
+      delete window.__mapaCapacitacionFitBoundsRed
+    }
+  }, [map, tramos])
+
+  return null
+}
+
 /** Leaflet no detecta cambios de tamaño del contenedor al pasar a pantalla completa. */
 function InvalidarTamanoMapa({ pantallaCompleta }: { pantallaCompleta: boolean }) {
   const map = useMap()
@@ -347,6 +371,7 @@ export function MapaTramosLeaflet({
         <MapaEtiquetasLongitudTramoPorZoom tramos={tramos} />
         <MapaEtiquetasMinitramoPorZoom segmentos={segmentosColoreados} />
         <AjustarBounds tramos={tramos} />
+        <ExponerMapaCapacitacion tramos={tramos} />
         {ubicacionUsuario ? (
           <UbicacionUsuarioEnMapa
             ubicacion={ubicacionUsuario}
