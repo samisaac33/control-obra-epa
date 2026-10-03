@@ -1,8 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import { Map, Printer, Truck } from "lucide-react"
-import { useMemo } from "react"
+import { Map, Printer, Trash2, Truck } from "lucide-react"
+import { useEffect, useMemo, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -28,11 +28,13 @@ import {
 import { formatearNumero } from "@/src/lib/maquinaria-resumen"
 import { rutaObra } from "@/src/lib/rutas-proyecto"
 import {
+  eliminarRegistroMaquinariaTramo,
   formatearFechaRegistro,
   formatearMetrosDesasolados,
   mapaEquiposPorId,
   nombreEquipoParaMostrar,
 } from "@/src/lib/tramo-maquinaria-historial"
+import { createClient } from "@/src/lib/supabase/client"
 import { cn } from "@/lib/utils"
 
 function SeccionTitulo({ etiqueta, titulo }: { etiqueta: string; titulo: string }) {
@@ -48,8 +50,38 @@ export function MaquinariaDesasolvePageClient() {
   const { proyectoActivo, proyectoId } = useProyecto()
   const esViewportMovil = useEsViewportMovil()
   const kpiCompact = esViewportMovil
-  const { jornadas, periodo, loading, error } = useJornadasMaquinariaProyecto()
+  const supabase = useMemo(() => createClient(), [])
+  const residentEmail = process.env.NEXT_PUBLIC_RESIDENTE_EMAIL?.trim().toLowerCase()
+  const [isResident, setIsResident] = useState(false)
+  const [eliminandoId, setEliminandoId] = useState<string | null>(null)
+  const [errorEliminar, setErrorEliminar] = useState<string | null>(null)
+  const { jornadas, periodo, loading, error, recargar } = useJornadasMaquinariaProyecto()
   const { equipos } = useEquiposMaquinariaProyecto()
+
+  useEffect(() => {
+    async function checkResident() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      setIsResident(Boolean(user?.email && user.email.toLowerCase() === residentEmail))
+    }
+    void checkResident()
+  }, [supabase, residentEmail])
+
+  async function handleEliminarJornada(id: string) {
+    if (!isResident) return
+    if (!window.confirm("¿Eliminar este registro de jornada de maquinaria?")) return
+    setEliminandoId(id)
+    setErrorEliminar(null)
+    try {
+      await eliminarRegistroMaquinariaTramo(supabase, id)
+      await recargar()
+    } catch (err) {
+      setErrorEliminar(err instanceof Error ? err.message : "No se pudo eliminar la jornada.")
+    } finally {
+      setEliminandoId(null)
+    }
+  }
 
   const kpis = useMemo(() => kpisMaquinariaDesasolve(jornadas), [jornadas])
   const porEquipo = useMemo(() => resumenPorEquipoDesasolve(jornadas, equipos), [jornadas, equipos])
@@ -92,6 +124,13 @@ export function MaquinariaDesasolvePageClient() {
               </Link>{" "}
               al confirmar minitramos GPS o en el historial de maquinaria de cada tramo. Esta página
               consolida y detalla esos registros.
+              {isResident ? (
+                <>
+                  {" "}
+                  Como residente puede eliminar jornadas erróneas con el botón de papelera en cada
+                  fila del detalle.
+                </>
+              ) : null}
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-0">
@@ -139,6 +178,11 @@ export function MaquinariaDesasolvePageClient() {
           {error ? (
             <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
               {error}
+            </p>
+          ) : null}
+          {errorEliminar ? (
+            <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {errorEliminar}
             </p>
           ) : null}
 
@@ -322,6 +366,21 @@ export function MaquinariaDesasolvePageClient() {
                                 </div>
                               ) : null}
                             </dl>
+                          ) : null}
+                          {isResident ? (
+                            <div className="mt-2 flex justify-end border-t border-foreground/5 pt-2">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 gap-1.5 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                                disabled={eliminandoId === j.id}
+                                onClick={() => void handleEliminarJornada(j.id)}
+                              >
+                                <Trash2 className="size-3.5" aria-hidden />
+                                {eliminandoId === j.id ? "Eliminando…" : "Eliminar jornada"}
+                              </Button>
+                            </div>
                           ) : null}
                         </article>
                       ))}
