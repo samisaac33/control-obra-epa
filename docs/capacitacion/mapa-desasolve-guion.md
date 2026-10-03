@@ -116,7 +116,7 @@ Pausar **2–3 s** tras cada acción.
 **Narración:**
 
 > Cada tramo se divide en **minitramos** con GPS.  
-> **Acercando el mapa** aparece la **longitud en metros** sobre cada minitramo: ahí se ve la **distancia de avance** registrada en ese tramo de obra, en la práctica el avance de la **jornada** o del tramo desasolvado que el residente confirmó.
+> **Acercando el mapa** aparece la **longitud en metros** sobre cada minitramo: ahí se ve la **distancia de avance** registrada en ese tramo de obra, en la práctica el avance de la **jornada** o del tramo desazolvado que el residente confirmó.
 
 ---
 

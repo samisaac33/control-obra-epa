@@ -48,7 +48,7 @@ export function validarJornadaFormState(
     return "Complete fecha y equipo de la jornada."
   }
   if (!Number.isFinite(metrosNum) || metrosNum < 0) {
-    return "Indique metros desasolados válidos."
+    return "Indique metros desazolvados válidos."
   }
 
   const horasNum = state.horas.trim() ? Number(state.horas.replace(",", ".")) : null

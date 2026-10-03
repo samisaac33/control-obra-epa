@@ -1,5 +1,5 @@
 Bienvenidos. Este panel muestra el avance del desasolve de los canales de riego: la limpieza y recuperación de la sección hidráulica mediante maquinaria en campo.
-En la parte superior, el avance global expresa el porcentaje ejecutado y los kilómetros desasolvidos respecto al total del proyecto. El cálculo es por longitud de canal, no por número de tramos.
+En la parte superior, el avance global expresa el porcentaje ejecutado y los kilómetros desazolvidos respecto al total del proyecto. El cálculo es por longitud de canal, no por número de tramos.
 Los indicadores resumen kilómetros totales, cantidad de tramos, tramos terminados y tramos en ejecución.
 Ustedes acceden como visitantes: solo consultan información. El residente de obra concentra el control operativo: registro de avance georreferenciado, estados de minitramo, horas y jornadas de maquinaria, y la ubicación del frente de trabajo en el mapa.
 En el filtro Tramos, la opción Todos los tramos permite visualizar la red completa en una sola vista.
@@ -7,7 +7,7 @@ Al activar Vista tramos uno a veinticuatro, el mapa se limita al primer levantam
 Al desactivar esa vista, reaparecen todos los tramos de los canales ya conectados: treinta y un tramos y sesenta y cinco coma treinta y tres kilómetros en total.
 La leyenda operativa distingue tres estados. Pendiente, color violeta. En ejecución, color naranja, con indicador parpadeante. Terminado, color verde.
 En vista consolidada, el trazo violeta simplifica la red. Active No consolidado para ver violeta, naranja y verde según el avance real de cada segmento.
-Cada tramo se subdivide en minitramos registrados con GPS. Al acercar el mapa, las etiquetas en metros muestran la longitud desasolvida en cada tramo de avance, habitualmente asociada a la jornada que confirma el residente.
+Cada tramo se subdivide en minitramos registrados con GPS. Al acercar el mapa, las etiquetas en metros muestran la longitud desazolvida en cada tramo de avance, habitualmente asociada a la jornada que confirma el residente.
 El marcador naranja parpadeante señala dónde opera la máquina en este instante. Es información que el residente actualiza en campo, en tiempo casi real.
 Puede ampliar el mapa a pantalla completa para inspeccionar detalle, acercar y alejar, y volver a la vista general de la página.
 Al hacer clic en un tramo se abre un resumen técnico del segmento.
