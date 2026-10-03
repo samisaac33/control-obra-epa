@@ -16,6 +16,8 @@ type MapaOpcionesCapasMapaProps = {
   onMapaConsolidadoChange: (value: boolean) => void
   idPrefix: string
   className?: string
+  /** Visitante: oculta MTT y No consolidado; renombra filtro 1–24. */
+  perfil?: "completo" | "visitante"
 }
 
 type OpcionCheckboxProps = {
@@ -57,7 +59,10 @@ export function MapaOpcionesCapasMapa({
   onMapaConsolidadoChange,
   idPrefix,
   className,
+  perfil = "completo",
 }: MapaOpcionesCapasMapaProps) {
+  const esVisitante = perfil === "visitante"
+
   return (
     <div
       className={cn(
@@ -69,7 +74,12 @@ export function MapaOpcionesCapasMapa({
         id={`${idPrefix}-vista-tramos-1-24`}
         checked={vistaSoloTramos1a24}
         onChange={onVistaSoloTramos1a24Change}
-        titulo="Vista tramos 1–24"
+        titulo={esVisitante ? "Primer levantamiento" : "Vista tramos 1–24"}
+        ariaLabel={
+          esVisitante
+            ? "Mostrar solo tramos del primer levantamiento (1–24)"
+            : undefined
+        }
       />
       <OpcionCheckbox
         id={`${idPrefix}-mostrar-numeros-tramos`}
@@ -84,20 +94,24 @@ export function MapaOpcionesCapasMapa({
         titulo="Mostrar puntos A, B, C…"
         ariaLabel="Mostrar marcadores de avance; siempre visibles: frente en mapa con parpadeo"
       />
-      <OpcionCheckbox
-        id={`${idPrefix}-ocultar-mtt`}
-        checked={ocultarMinitramosTerminados}
-        onChange={onOcultarMinitramosTerminadosChange}
-        titulo="Ocultar MTT"
-        ariaLabel="Ocultar resaltado de minitramos terminados"
-      />
-      <OpcionCheckbox
-        id={`${idPrefix}-consolidado`}
-        checked={!mapaConsolidado}
-        onChange={(checked) => onMapaConsolidadoChange(!checked)}
-        titulo="No consolidado"
-        ariaLabel="Vista por colores de estado; desmarcado muestra tramos consolidados en violeta"
-      />
+      {esVisitante ? null : (
+        <>
+          <OpcionCheckbox
+            id={`${idPrefix}-ocultar-mtt`}
+            checked={ocultarMinitramosTerminados}
+            onChange={onOcultarMinitramosTerminadosChange}
+            titulo="Ocultar MTT"
+            ariaLabel="Ocultar resaltado de minitramos terminados"
+          />
+          <OpcionCheckbox
+            id={`${idPrefix}-consolidado`}
+            checked={!mapaConsolidado}
+            onChange={(checked) => onMapaConsolidadoChange(!checked)}
+            titulo="No consolidado"
+            ariaLabel="Vista por colores de estado; desmarcado muestra tramos consolidados en violeta"
+          />
+        </>
+      )}
     </div>
   )
 }

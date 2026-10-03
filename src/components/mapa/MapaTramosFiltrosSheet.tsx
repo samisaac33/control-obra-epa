@@ -127,6 +127,7 @@ export function MapaTramosFiltrosSheet({
                   mapaConsolidado={capas.mapaConsolidado}
                   onMapaConsolidadoChange={capas.onMapaConsolidadoChange}
                   idPrefix={capas.idPrefix}
+                  perfil="visitante"
                 />
               ) : null}
             </>
