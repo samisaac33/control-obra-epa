@@ -333,7 +333,6 @@ export function MapaTramosLeaflet({
   marcadoresCompactos = false,
   mostrarEtiquetasTramo = false,
   mostrarLongitudTramosEnMapa = false,
-  mostrarLongitudMinitramosEnMapa = false,
   mostrarPuntosAvance = false,
   mostrarMinitramosTerminados = true,
   mapaConsolidado = true,
@@ -514,10 +513,7 @@ export function MapaTramosLeaflet({
           tramos={tramos}
           activo={mostrarLongitudTramosEnMapa}
         />
-        <MapaEtiquetasMinitramoPorZoom
-          segmentos={segmentosColoreados}
-          activo={mostrarLongitudMinitramosEnMapa}
-        />
+        <MapaEtiquetasMinitramoPorZoom segmentos={segmentosColoreados} />
         <AjustarBounds tramos={tramos} />
         <ExponerMapaCapacitacion tramos={tramos} />
         {ubicacionUsuario ? (
