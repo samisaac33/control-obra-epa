@@ -65,6 +65,7 @@ import type {
 } from "@/src/lib/tramo-geometria"
 import { contextoEditarMinitramo, evaluarPropuestaPuntoConAutoEnlace } from "@/src/lib/tramo-geometria"
 import { guardarJornadaMinitramo } from "@/src/lib/tramo-maquinaria-historial"
+import { tramosMapaDesasolveSinExcluidos } from "@/src/data/tramos/tramos-excluidos"
 import {
   calcularKpisTramos,
   filtrarTramos,
@@ -184,11 +185,12 @@ export function MapaTramosClient() {
     void checkResident()
   }, [supabase, residentEmail])
 
-  const tramosParaVista = useMemo(
-    () =>
-      vistaSoloTramos1a24 ? filtrarTramosPorRangoNumerico(tramos, 1, 24) : tramos,
-    [tramos, vistaSoloTramos1a24]
-  )
+  const tramosParaVista = useMemo(() => {
+    if (vistaSoloTramos1a24) {
+      return filtrarTramosPorRangoNumerico(tramos, 1, 24)
+    }
+    return tramosMapaDesasolveSinExcluidos(tramos)
+  }, [tramos, vistaSoloTramos1a24])
 
   const tramosFiltrados = useMemo(
     () => filtrarTramos(tramosParaVista, filtros, puntosAvance),
@@ -714,7 +716,7 @@ export function MapaTramosClient() {
                       <div className="min-w-0 sm:flex-1">
                         <MapaTramosFiltroTramo
                           filtros={filtros}
-                          tramos={tramos}
+                          tramos={tramosParaVista}
                           onChange={setFiltros}
                           selectId="filtro-tramo-visitante-inline"
                         />
@@ -741,7 +743,7 @@ export function MapaTramosClient() {
                     <MapaTramosFiltrosSheet
                       variant="visitanteTramoCapas"
                       filtros={filtros}
-                      tramos={tramos}
+                      tramos={tramosParaVista}
                       semanas={semanasProgramadasUnicas(tramos)}
                       onChange={setFiltros}
                       capas={{
@@ -761,7 +763,7 @@ export function MapaTramosClient() {
                   ) : (
                     <MapaTramosFiltros
                       filtros={filtros}
-                      tramos={tramos}
+                      tramos={tramosParaVista}
                       semanas={semanasProgramadasUnicas(tramos)}
                       onChange={setFiltros}
                       campos={["estado", "semana"]}
@@ -792,7 +794,7 @@ export function MapaTramosClient() {
                     <MapaTramosKpis kpis={kpis} />
                     <MapaTramosFiltros
                       filtros={filtros}
-                      tramos={tramos}
+                      tramos={tramosParaVista}
                       semanas={semanasProgramadasUnicas(tramos)}
                       onChange={setFiltros}
                     />
@@ -813,7 +815,7 @@ export function MapaTramosClient() {
                   <div className="md:hidden">
                     <MapaTramosFiltrosSheet
                       filtros={filtros}
-                      tramos={tramos}
+                      tramos={tramosParaVista}
                       semanas={semanasProgramadasUnicas(tramos)}
                       onChange={setFiltros}
                       triggerLabel="Filtros y capas"
