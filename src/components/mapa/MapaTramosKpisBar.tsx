@@ -11,18 +11,31 @@ type MapaTramosKpisBarProps = {
   kpis: KpisTramos
   modo: "stack" | "overlay"
   chipsCarrusel?: boolean
+  /** Cuando es "grid", muestra los chips en 2 columnas (p. ej. inicio móvil). */
+  chipsLayout?: "scroll" | "grid"
   compact?: boolean
   className?: string
 }
 
-function KpiChip({ label, value, integrado }: { label: string; value: string; integrado?: boolean }) {
+function KpiChip({
+  label,
+  value,
+  integrado,
+  className,
+}: {
+  label: string
+  value: string
+  integrado?: boolean
+  className?: string
+}) {
   return (
     <div
       className={cn(
         "flex w-[7.25rem] shrink-0 snap-start flex-col rounded-lg px-3 py-2 sm:w-auto sm:min-w-[6.5rem]",
         integrado
           ? "border border-foreground/10 bg-muted/40"
-          : "border border-foreground/10 bg-card/95 shadow-sm backdrop-blur-sm"
+          : "border border-foreground/10 bg-card/95 shadow-sm backdrop-blur-sm",
+        className
       )}
     >
       <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
@@ -47,13 +60,31 @@ function chipsDesdeKpis(kpis: KpisTramos) {
 function KpisChips({
   kpis,
   integrado,
+  layout = "scroll",
 }: {
   kpis: KpisTramos
   integrado?: boolean
+  layout?: "scroll" | "grid"
 }) {
+  const chips = chipsDesdeKpis(kpis)
+  if (layout === "grid") {
+    return (
+      <div className="grid grid-cols-2 gap-2">
+        {chips.map((chip) => (
+          <KpiChip
+            key={chip.label}
+            label={chip.label}
+            value={chip.value}
+            integrado={integrado}
+            className="w-full min-w-0 sm:w-auto"
+          />
+        ))}
+      </div>
+    )
+  }
   return (
     <div className="flex gap-2 overflow-x-auto overscroll-x-contain pb-0.5 snap-x snap-mandatory touch-pan-x [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-      {chipsDesdeKpis(kpis).map((chip) => (
+      {chips.map((chip) => (
         <KpiChip key={chip.label} label={chip.label} value={chip.value} integrado={integrado} />
       ))}
     </div>
@@ -159,13 +190,15 @@ function KpisChipsRow({
   kpis,
   carrusel,
   integrado,
+  layout = "scroll",
 }: {
   kpis: KpisTramos
   carrusel?: boolean
   integrado?: boolean
+  layout?: "scroll" | "grid"
 }) {
   if (carrusel) return <KpisChipsCarrusel kpis={kpis} integrado={integrado} />
-  return <KpisChips kpis={kpis} integrado={integrado} />
+  return <KpisChips kpis={kpis} integrado={integrado} layout={layout} />
 }
 
 function KpisHero({
@@ -173,11 +206,13 @@ function KpisHero({
   compact,
   mostrarChips,
   chipsCarrusel,
+  chipsLayout = "scroll",
 }: {
   kpis: KpisTramos
   compact?: boolean
   mostrarChips?: boolean
   chipsCarrusel?: boolean
+  chipsLayout?: "scroll" | "grid"
 }) {
   const pct = Math.min(100, Math.max(0, kpis.avanceGlobalPct))
   return (
@@ -223,7 +258,12 @@ function KpisHero({
       </div>
       {mostrarChips ? (
         <div className="mt-3 border-t border-foreground/10 pt-3">
-          <KpisChipsRow kpis={kpis} carrusel={chipsCarrusel} integrado />
+          <KpisChipsRow
+            kpis={kpis}
+            carrusel={chipsCarrusel}
+            integrado
+            layout={chipsLayout}
+          />
         </div>
       ) : null}
     </div>
@@ -234,6 +274,7 @@ export function MapaTramosKpisBar({
   kpis,
   modo,
   chipsCarrusel,
+  chipsLayout = "scroll",
   compact = false,
   className,
 }: MapaTramosKpisBarProps) {
@@ -247,7 +288,13 @@ export function MapaTramosKpisBar({
         )}
       >
         <div className="pointer-events-auto">
-          <KpisHero kpis={kpis} compact mostrarChips chipsCarrusel={chipsCarrusel} />
+          <KpisHero
+            kpis={kpis}
+            compact
+            mostrarChips
+            chipsCarrusel={chipsCarrusel}
+            chipsLayout={chipsLayout}
+          />
         </div>
       </div>
     )
@@ -260,6 +307,7 @@ export function MapaTramosKpisBar({
         compact={compact}
         mostrarChips
         chipsCarrusel={chipsCarrusel}
+        chipsLayout={chipsLayout}
       />
     </div>
   )

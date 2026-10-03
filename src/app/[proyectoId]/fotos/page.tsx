@@ -45,6 +45,7 @@ import {
   getSectorLabelPorProyecto,
   isFiltroTodosLosSectoresPorProyecto,
 } from "@/src/lib/sectores-por-proyecto"
+import { cn } from "@/lib/utils"
 
 type RegistroFoto = RegistroFotoBase
 
@@ -544,9 +545,20 @@ function FotosPageContent() {
   }
 
   return (
-    <div className="p-4 sm:p-6">
+    <div className={cn(esDesasolve ? "px-4 py-5 sm:p-6" : "p-4 sm:p-6")}>
       <div className="mx-auto max-w-6xl">
         <Card className="border-foreground/10">
+          {esDesasolve ? (
+            <CardHeader className="md:hidden">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Control de evidencias
+              </p>
+              <CardTitle className="text-base">Registro fotográfico</CardTitle>
+              <CardDescription>
+                Consulta evidencias georreferenciadas y registra nuevas cuando corresponda.
+              </CardDescription>
+            </CardHeader>
+          ) : null}
           <CardHeader className="hidden md:block">
             <CardTitle>Registro fotografico</CardTitle>
             <CardDescription>Consulta evidencias recientes y registra nuevas cuando corresponda.</CardDescription>
@@ -625,7 +637,7 @@ function FotosPageContent() {
                       className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm"
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className={cn("grid gap-3", esDesasolve ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-2")}>
                     <div className="space-y-1.5">
                       <label htmlFor="lat" className="text-sm font-medium">
                         Latitud <span className="font-normal text-muted-foreground">(opcional)</span>
@@ -774,9 +786,23 @@ function FotosPageContent() {
                 <p className="text-sm text-muted-foreground">Ultimas imagenes registradas con su ubicacion.</p>
               </div>
 
-              <div className="rounded-xl border-2 border-primary/25 bg-primary/5 p-4 shadow-sm ring-1 ring-primary/10">
+              <div
+                className={cn(
+                  "rounded-xl p-4 shadow-sm ring-1",
+                  esDesasolve
+                    ? "border border-foreground/10 bg-card ring-foreground/5"
+                    : "border-2 border-primary/25 bg-primary/5 ring-primary/10"
+                )}
+              >
                 <div className="mb-3 flex items-start gap-3">
-                  <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
+                  <div
+                    className={cn(
+                      "flex size-10 shrink-0 items-center justify-center rounded-lg",
+                      esDesasolve
+                        ? "border border-foreground/10 bg-muted/60 text-foreground/80"
+                        : "bg-primary/15 text-primary"
+                    )}
+                  >
                     <MapPin className="size-5" aria-hidden />
                   </div>
                   <div className="min-w-0">
