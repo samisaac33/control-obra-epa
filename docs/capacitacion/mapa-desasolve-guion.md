@@ -2,6 +2,11 @@
 
 ## v4 (narración sincronizada ~154 s)
 
+**Publicación en la app (sin PIN):**
+
+- Página: `https://control-obra-epa.vercel.app/capacitacion/mapa-desasolve/video`
+- Descarga directa: `https://control-obra-epa.vercel.app/capacitacion/mapa-desasolve.mp4`
+
 **Fuente de verdad:** [`narracion-es-v4.txt`](./narracion-es-v4.txt) (audio/VTT v4 generados con `edge-tts`, voz `es-MX-JorgeNeural`, `--rate=-2%`).
 
 **Automatización:** [`scripts/capacitacion-grabar-mapa-v4.mjs`](../../scripts/capacitacion-grabar-mapa-v4.mjs) — timeline según VTT; zoom con `window.__mapaTramosLeaflet` / `__mapaCapacitacionFitBoundsRed` cuando esté desplegado, o fallback [`capacitacion-mapa-targets.json`](../../scripts/capacitacion-mapa-targets.json) (`zoomInClicks: 3` desde red operativa).
