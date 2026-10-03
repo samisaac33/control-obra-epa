@@ -21,6 +21,8 @@ export const COLOR_TRAMO_CONSOLIDADO = "#7c3aed"
 const PESO_NORMAL = 6
 const PESO_SELECCIONADO = 8
 const PESO_HOVER_EXTRA = 1
+/** Opacidad de tramos no resaltados al pasar el cursor (visitante, escritorio). */
+export const OPACIDAD_TRAMO_ATENUADO_MAPA = 0.32
 const HALO_BLANCO_EXTRA = 4
 const CONTORNO_OSCURO_EXTRA = 6
 

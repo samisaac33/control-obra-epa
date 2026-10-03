@@ -5,7 +5,10 @@ import {
   type GeoJsonLineString,
   type OrigenExtremoTramo,
 } from "@/src/data/tramos/types"
-import { longitudDesdeGeometria, sincronizarAvanceDesdeMetros } from "@/src/lib/tramos-avance"
+import { formatearNumero } from "@/src/lib/maquinaria-resumen"
+import { tituloTramoMapa } from "@/src/lib/tramo-display"
+import { formatearMetrosDesasolados, type JornadaMinitramoMapa } from "@/src/lib/tramo-maquinaria-historial"
+import { avanceDesasolveTramo, longitudDesdeGeometria, sincronizarAvanceDesdeMetros } from "@/src/lib/tramos-avance"
 
 const EARTH_RADIUS_M = 6_371_000
 export const DISTANCIA_MAX_DETECCION_M = 50
@@ -335,6 +338,8 @@ export type SegmentoVisualTramo = {
   longitud_m: number
   letraInicio?: string
   letraFin?: string
+  /** Punto final del minitramo (para jornada / maquinaria en mapa visitante). */
+  puntoFinId?: string
 }
 
 export type InfoSegmentoMapa = {
@@ -389,6 +394,59 @@ function escapeHtmlTexto(value: string): string {
     .replace(/"/g, "&quot;")
 }
 
+function filaTooltipMapa(label: string, valor: string): string {
+  return `<p class="mapa-segmento-tooltip__row"><span class="mapa-segmento-tooltip__label">${escapeHtmlTexto(label)}</span> ${escapeHtmlTexto(valor)}</p>`
+}
+
+/** Tooltip de tramo completo (filtro «Mostrar puntos A, B, C…» desactivado). */
+export function htmlTooltipVisitanteTramo(
+  tramo: CanalTramo,
+  puntosAvance: TramoPuntoAvance[]
+): string {
+  const avance = avanceDesasolveTramo(tramo, puntosAvance)
+  const kmEjecutados = avance.metrosEjecutados / 1000
+  const kmTotales = avance.metrosTotales / 1000
+  const longitudTotal = formatLongitudSegmentoMapa(tramo.longitud_m)
+  const avanceKm = `${formatearNumero(kmEjecutados, 2)} km de ${formatearNumero(kmTotales, 2)} km`
+
+  return `<div class="mapa-segmento-tooltip__inner">
+    <p class="mapa-segmento-tooltip__title">${escapeHtmlTexto(tituloTramoMapa(tramo.codigo))}</p>
+    ${filaTooltipMapa("Longitud total", longitudTotal)}
+    ${filaTooltipMapa("Avance", `${formatearNumero(avance.avancePct, 1)}%`)}
+    ${filaTooltipMapa("Ejecutado", avanceKm)}
+  </div>`
+}
+
+/** Tooltip de minitramo (filtro «Mostrar puntos A, B, C…» activado). */
+export function htmlTooltipVisitanteMinitramo(
+  segmento: SegmentoVisualTramo,
+  jornada: JornadaMinitramoMapa | null | undefined
+): string {
+  const info = infoSegmentoMapa(segmento)
+  const tituloMinitramo = info.etiquetaMinitramo
+    ? `Minitramo ${info.etiquetaMinitramo}`
+    : tituloTramoMapa(segmento.tramo.codigo)
+
+  const longitudTrabajada = jornada
+    ? formatearMetrosDesasolados(jornada.metros_desasolados)
+    : info.longitudTexto
+  const fecha = jornada?.fecha ?? "—"
+  const maquinaria = jornada?.equipoNombre?.trim() ? jornada.equipoNombre : "—"
+  const horas =
+    jornada?.duracion_horas != null && Number.isFinite(jornada.duracion_horas)
+      ? `${formatearNumero(jornada.duracion_horas, 1)} h`
+      : "—"
+
+  return `<div class="mapa-segmento-tooltip__inner">
+    <p class="mapa-segmento-tooltip__title">${escapeHtmlTexto(tituloMinitramo)}</p>
+    ${filaTooltipMapa("Fecha jornada", fecha)}
+    ${filaTooltipMapa("Longitud trabajada", longitudTrabajada)}
+    ${filaTooltipMapa("Maquinaria", maquinaria)}
+    ${filaTooltipMapa("Horas", horas)}
+  </div>`
+}
+
+/** @deprecated Use htmlTooltipVisitanteTramo o htmlTooltipVisitanteMinitramo según capa del mapa. */
 export function htmlTooltipVisitanteSegmento(segmento: SegmentoVisualTramo): string {
   const info = infoSegmentoMapa(segmento)
   const minitramoLine = info.etiquetaMinitramo
@@ -400,6 +458,14 @@ export function htmlTooltipVisitanteSegmento(segmento: SegmentoVisualTramo): str
     <p class="mapa-segmento-tooltip__row"><span class="mapa-segmento-tooltip__label">Estado</span> ${escapeHtmlTexto(info.estadoLabel)}</p>
     <p class="mapa-segmento-tooltip__row"><span class="mapa-segmento-tooltip__label">Longitud</span> ${escapeHtmlTexto(info.longitudTexto)}</p>
   </div>`
+}
+
+export function claveSegmentoMapaHover(segmento: SegmentoVisualTramo): string {
+  if (segmento.tipo === "minitramo" && segmento.puntoFinId) {
+    return `mt-${segmento.puntoFinId}`
+  }
+  const [lng, lat] = segmento.geometria.coordinates[0] ?? [0, 0]
+  return `pd-${segmento.longitud_m.toFixed(1)}-${lat.toFixed(5)}-${lng.toFixed(5)}`
 }
 
 function segmentoVisualDesdeGeometria(
@@ -497,6 +563,7 @@ export function segmentosVisualesTramo(
           letraFin: mt.letraFin,
         }),
         longitud_m: mt.longitud_m,
+        puntoFinId: mt.puntoFin.id,
       })
     }
   }
