@@ -801,15 +801,7 @@ export function MapaTramosClient() {
                         idPrefix: "visitante-movil",
                       }}
                     />
-                  ) : (
-                    <MapaTramosFiltros
-                      filtros={filtros}
-                      tramos={tramosParaVista}
-                      semanas={semanasProgramadasUnicas(tramos)}
-                      onChange={setFiltros}
-                      campos={["estado", "semana"]}
-                    />
-                  )}
+                  ) : null}
                 </>
               ) : (
                 <MapaUbicacionResidenteProvider {...ubicacionResidenteProps}>
