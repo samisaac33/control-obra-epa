@@ -230,6 +230,8 @@ export type CorregirPuntoMinitramoInput = {
   puntoId: string
   punto: PuntoMarcado
   estado: EstadoTramo
+  /** Si true, solo recalcula avance del tramo (p. ej. edición sin mover coordenadas). */
+  omitirRenumerarRoles?: boolean
 }
 
 export async function corregirPuntoMinitramo(
@@ -248,7 +250,11 @@ export async function corregirPuntoMinitramo(
   if (updateError) throw new Error(updateError.message)
 
   await actualizarEstadoPuntoAvance(supabase, input.tramo.id, input.puntoId, input.estado)
-  await renumerarRolesPuntosTramo(supabase, input.tramo)
+  if (input.omitirRenumerarRoles) {
+    await recalcularAvanceTramoDesdePuntos(supabase, input.tramo)
+  } else {
+    await renumerarRolesPuntosTramo(supabase, input.tramo)
+  }
 }
 
 export async function renumerarRolesPuntosTramo(
