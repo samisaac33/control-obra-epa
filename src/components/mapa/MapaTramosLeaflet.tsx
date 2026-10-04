@@ -23,6 +23,7 @@ import {
 import type { GeoJsonLineString } from "@/src/data/tramos/types"
 import { boundsDesdeGeometria, boundsDesdeTramos } from "@/src/lib/tramos-avance"
 import {
+  Z_MAPA_BARRA_CONTROLES,
   Z_MAPA_MARCADOR_FRENTE_PARPADEO,
   Z_MAPA_MARCADOR_PUNTO,
   Z_MAPA_PANTALLA_COMPLETA,
@@ -558,7 +559,10 @@ export function MapaTramosLeaflet({
         type="button"
         variant="secondary"
         size="icon"
-        className="absolute top-2 right-2 z-[1000] size-9 border border-foreground/15 bg-background/95 shadow-md backdrop-blur-sm touch-manipulation"
+        className={cn(
+          "absolute top-2 right-2 size-9 border border-foreground/15 bg-background/95 shadow-md backdrop-blur-sm touch-manipulation",
+          pantallaCompleta ? "z-[1000]" : Z_MAPA_BARRA_CONTROLES
+        )}
         aria-label={pantallaCompleta ? "Salir de pantalla completa" : "Expandir mapa a pantalla completa"}
         aria-pressed={pantallaCompleta}
         onClick={() => setPantallaCompleta((prev) => !prev)}
