@@ -815,7 +815,7 @@ export function MapaTramosClient() {
       atenuarTramosNoSeleccionados={atenuarTramosNoSeleccionadosEnMapa}
       encuadrarSeleccionToken={previewTramoMovilVisible ? encuadrarSeleccionToken : 0}
       encuadrarGeometria={segmentoDestacadoMovil?.geometria ?? null}
-      encuadrarPaddingInferior={previewTramoMovilVisible ? (isResident ? 112 : 64) : 0}
+      encuadrarPaddingInferior={previewTramoMovilVisible ? (isResident ? 168 : 140) : 0}
       ubicacionUsuario={isResident ? ubicacionResidente : null}
       seguirUbicacionUsuario={isResident ? seguirUbicacionResidente : false}
       centrarUbicacionVersion={isResident ? centrarUbicacionKey : 0}
