@@ -201,25 +201,42 @@ export function semanasProgramadasUnicas(tramos: CanalTramo[]): string[] {
   return [...new Set(tramos.map((t) => t.semana_programada).filter(Boolean) as string[])].sort()
 }
 
-export function boundsDesdeTramos(tramos: CanalTramo[]): [[number, number], [number, number]] | null {
-  if (tramos.length === 0) return null
+function boundsDesdeCoordenadas(
+  coords: ReadonlyArray<readonly [number, number]>
+): [[number, number], [number, number]] | null {
+  if (coords.length === 0) return null
 
   let minLat = Infinity
   let minLng = Infinity
   let maxLat = -Infinity
   let maxLng = -Infinity
 
-  for (const tramo of tramos) {
-    for (const [lng, lat] of tramo.geometria.coordinates) {
-      minLat = Math.min(minLat, lat)
-      minLng = Math.min(minLng, lng)
-      maxLat = Math.max(maxLat, lat)
-      maxLng = Math.max(maxLng, lng)
-    }
+  for (const [lng, lat] of coords) {
+    minLat = Math.min(minLat, lat)
+    minLng = Math.min(minLng, lng)
+    maxLat = Math.max(maxLat, lat)
+    maxLng = Math.max(maxLng, lng)
   }
 
   return [
     [minLat, minLng],
     [maxLat, maxLng],
   ]
+}
+
+export function boundsDesdeGeometria(
+  geometria: GeoJsonLineString
+): [[number, number], [number, number]] | null {
+  return boundsDesdeCoordenadas(geometria.coordinates)
+}
+
+export function boundsDesdeTramos(tramos: CanalTramo[]): [[number, number], [number, number]] | null {
+  if (tramos.length === 0) return null
+  const coords: [number, number][] = []
+  for (const tramo of tramos) {
+    for (const c of tramo.geometria.coordinates) {
+      coords.push(c)
+    }
+  }
+  return boundsDesdeCoordenadas(coords)
 }
