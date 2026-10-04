@@ -1,14 +1,19 @@
 "use client"
 
-import { cn } from "@/lib/utils"
 import {
   colorEstadoTramo,
   etiquetaEstadoTramo,
   type CanalTramo,
   type EstadoTramo,
 } from "@/src/data/tramos/types"
+import { MinitramoGerencialCard } from "@/src/components/mapa/MinitramoGerencialCard"
 import { formatearNumero } from "@/src/lib/maquinaria-resumen"
+import {
+  minitramosCompletosOrdenados,
+  metrosTerminadosMinitramos,
+} from "@/src/lib/minitramo-gerencial-resumen"
 import { tituloTramoMapa } from "@/src/lib/tramo-display"
+import type { JornadaMinitramoMapa } from "@/src/lib/tramo-maquinaria-historial"
 import {
   etiquetaLetra,
   formatLongitudSegmentoMapa,
@@ -70,6 +75,7 @@ export function BarraSegmentosTramo({
 type TramoDetalleResumenProps = {
   tramo: CanalTramo
   puntosAvance: TramoPuntoAvance[]
+  jornadaPorPuntoFin?: ReadonlyMap<string, JornadaMinitramoMapa>
   segmentoDestacado?: SegmentoVisualTramo | null
   mostrarEncabezado?: boolean
   tituloId?: string
@@ -107,12 +113,18 @@ export function TramoDetalleEncabezado({
 export function TramoDetalleResumen({
   tramo,
   puntosAvance,
+  jornadaPorPuntoFin,
   segmentoDestacado = null,
   mostrarEncabezado = true,
   tituloId,
 }: TramoDetalleResumenProps) {
   const avance = avanceDesasolveTramo(tramo, puntosAvance)
   const minitramos = resumenMinitramos(puntosAvance, tramo.id, tramo)
+  const minitramosCompletos = minitramosCompletosOrdenados(minitramos)
+  const kmTerminadosGps = metrosTerminadosMinitramos(minitramosCompletos) / 1000
+  const puntosPorId = new Map(
+    puntosAvance.filter((p) => p.tramo_id === tramo.id).map((p) => [p.id, p] as const)
+  )
   const kmEjecutados = avance.metrosEjecutados / 1000
   const kmTotales = avance.metrosTotales / 1000
 
@@ -161,49 +173,40 @@ export function TramoDetalleResumen({
         )}
       </section>
 
-      {minitramos.length > 0 ? (
+      {minitramosCompletos.length > 0 ? (
         <section className="space-y-3">
           <div>
             <h3 className="text-sm font-medium">Minitramos GPS</h3>
             <p className="text-xs text-muted-foreground">
-              Segmentos confirmados en este tramo.
+              {minitramosCompletos.length} minitramo
+              {minitramosCompletos.length === 1 ? "" : "s"} confirmado
+              {minitramosCompletos.length === 1 ? "" : "s"}
+              {avance.usaAvanceGps ? (
+                <>
+                  {" "}
+                  · {formatearNumero(kmTerminadosGps, 2)} km terminados (GPS)
+                </>
+              ) : null}
             </p>
           </div>
           <BarraSegmentosTramo tramo={tramo} puntosAvance={puntosAvance} />
-          <ul className="space-y-2">
-            {minitramos.map((item) => {
-              if (item.tipo !== "completo") return null
+          <ul className="space-y-3">
+            {minitramosCompletos.map((item, indice) => {
               const destacado =
                 segmentoDestacado?.tipo === "minitramo" &&
                 segmentoDestacado.letraInicio === item.letraInicio &&
                 segmentoDestacado.letraFin === item.letraFin
               return (
-                <li
+                <MinitramoGerencialCard
                   key={item.grupo_id}
-                  className={cn(
-                    "rounded-lg border px-3 py-2.5 text-sm",
-                    destacado
-                      ? "border-primary/40 bg-primary/5 ring-1 ring-primary/20"
-                      : "border-foreground/10 bg-background"
-                  )}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-medium">
-                      {etiquetaLetra(item.letraInicio)}–{etiquetaLetra(item.letraFin)}
-                    </span>
-                    <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <span
-                        className="size-2 shrink-0 rounded-full"
-                        style={{ backgroundColor: colorEstadoTramo(item.estado) }}
-                        aria-hidden
-                      />
-                      {etiquetaEstadoTramo(item.estado)}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {formatLongitudSegmentoMapa(item.longitud_m)}
-                  </p>
-                </li>
+                  item={item}
+                  indice={indice}
+                  itemsOrdenados={minitramosCompletos}
+                  tramo={tramo}
+                  jornada={jornadaPorPuntoFin?.get(item.puntoFinId)}
+                  puntoFin={puntosPorId.get(item.puntoFinId) ?? null}
+                  destacado={destacado}
+                />
               )
             })}
           </ul>

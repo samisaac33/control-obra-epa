@@ -214,7 +214,7 @@ export function MapaTramosClient() {
   }, [confirmandoAvance, confirmModo])
 
   useEffect(() => {
-    if (isResident || tramos.length === 0) {
+    if (tramos.length === 0) {
       setJornadaPorPuntoFin(new Map())
       return
     }
@@ -241,7 +241,7 @@ export function MapaTramosClient() {
     return () => {
       cancelado = true
     }
-  }, [isResident, tramos, puntosAvance, proyectoId, supabase])
+  }, [tramos, puntosAvance, proyectoId, supabase])
 
   useEffect(() => {
     async function checkResident() {
@@ -952,6 +952,7 @@ export function MapaTramosClient() {
         loading={saving}
         proyectoId={proyectoId}
         puntosAvance={puntosAvance}
+        jornadaPorPuntoFin={jornadaPorPuntoFin}
         puntosRefreshKey={puntosRefreshKey}
         eliminandoId={eliminandoId}
         panelError={panelError}
@@ -985,6 +986,7 @@ export function MapaTramosClient() {
           open={tramoVisitanteModal !== null}
           tramo={tramoVisitanteModal?.tramo ?? null}
           puntosAvance={puntosAvance}
+          jornadaPorPuntoFin={jornadaPorPuntoFin}
           segmentoDestacado={tramoVisitanteModal?.segmentoDestacado ?? null}
           onClose={() => setTramoVisitanteModal(null)}
           onVerDetalleTramo={(tramo) => {

@@ -10,6 +10,7 @@ import { TramoDetalleResidenteBottomSheet } from "@/src/components/mapa/TramoDet
 import { TramoDetalleResidenteContenido } from "@/src/components/mapa/TramoDetalleResidenteContenido"
 import { tituloTramoMapa } from "@/src/lib/tramo-display"
 import type { PropuestaPuntoMinitramo, TramoPuntoAvance } from "@/src/lib/tramo-geometria"
+import type { JornadaMinitramoMapa } from "@/src/lib/tramo-maquinaria-historial"
 import type { ConfirmarOrigenInicioOptions } from "@/src/components/mapa/TramoOrigenInicioBlock"
 import type { EstadoTramo, OrigenExtremoTramo } from "@/src/data/tramos/types"
 
@@ -27,6 +28,7 @@ type TramoDetallePanelProps = {
   loading: boolean
   proyectoId: string
   puntosAvance: TramoPuntoAvance[]
+  jornadaPorPuntoFin?: ReadonlyMap<string, JornadaMinitramoMapa>
   puntosRefreshKey: number
   eliminandoId?: string | null
   panelError?: string | null
@@ -65,6 +67,7 @@ export function TramoDetallePanel({
   loading,
   proyectoId,
   puntosAvance,
+  jornadaPorPuntoFin,
   puntosRefreshKey,
   eliminandoId = null,
   panelError = null,
@@ -96,6 +99,7 @@ export function TramoDetallePanel({
     loading,
     proyectoId,
     puntosAvance,
+    jornadaPorPuntoFin,
     puntosRefreshKey,
     eliminandoId,
     panelError,
@@ -122,6 +126,7 @@ export function TramoDetallePanel({
         open={open}
         tramo={tramo}
         puntosAvance={puntosAvance}
+        jornadaPorPuntoFin={jornadaPorPuntoFin}
         panelError={panelError}
         onOpenChange={handleOpenChange}
       />
@@ -163,6 +168,7 @@ export function TramoDetallePanel({
               <TramoDetalleVisitanteContenido
                 tramo={tramo}
                 puntosAvance={puntosAvance}
+                jornadaPorPuntoFin={jornadaPorPuntoFin}
                 panelError={panelError}
                 tituloId="tramo-detalle-sheet-title"
               />
