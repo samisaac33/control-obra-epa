@@ -3,13 +3,14 @@
 import type { CanalTramo } from "@/src/data/tramos/types"
 import { TramoDetalleResumen } from "@/src/components/mapa/TramoDetalleResumen"
 import { TramoMaquinariaHistorialBlock } from "@/src/components/mapa/TramoMaquinariaHistorialBlock"
-import type { TramoPuntoAvance } from "@/src/lib/tramo-geometria"
+import type { SegmentoVisualTramo, TramoPuntoAvance } from "@/src/lib/tramo-geometria"
 import type { JornadaMinitramoMapa } from "@/src/lib/tramo-maquinaria-historial"
 
 type TramoDetalleVisitanteContenidoProps = {
   tramo: CanalTramo
   puntosAvance: TramoPuntoAvance[]
   jornadaPorPuntoFin?: ReadonlyMap<string, JornadaMinitramoMapa>
+  segmentoDestacado?: SegmentoVisualTramo | null
   panelError?: string | null
   tituloId: string
 }
@@ -18,6 +19,7 @@ export function TramoDetalleVisitanteContenido({
   tramo,
   puntosAvance,
   jornadaPorPuntoFin,
+  segmentoDestacado = null,
   panelError = null,
   tituloId,
 }: TramoDetalleVisitanteContenidoProps) {
@@ -36,6 +38,7 @@ export function TramoDetalleVisitanteContenido({
         tramo={tramo}
         puntosAvance={puntosAvance}
         jornadaPorPuntoFin={jornadaPorPuntoFin}
+        segmentoDestacado={segmentoDestacado}
         tituloId={tituloId}
       />
 

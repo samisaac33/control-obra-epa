@@ -82,6 +82,8 @@ type TramoDetalleResumenProps = {
   jornadaPorPuntoFin?: ReadonlyMap<string, JornadaMinitramoMapa>
   segmentoDestacado?: SegmentoVisualTramo | null
   mostrarEncabezado?: boolean
+  /** Vista previa móvil: solo encabezado y avance % (sin listado de minitramos). */
+  mostrarListadoMinitramos?: boolean
   tituloId?: string
 }
 
@@ -120,6 +122,7 @@ export function TramoDetalleResumen({
   jornadaPorPuntoFin,
   segmentoDestacado = null,
   mostrarEncabezado = true,
+  mostrarListadoMinitramos = true,
   tituloId,
 }: TramoDetalleResumenProps) {
   const avance = avanceDesasolveTramo(tramo, puntosAvance)
@@ -196,7 +199,7 @@ export function TramoDetalleResumen({
         )}
       </section>
 
-      {minitramosTerminados.length > 0 ? (
+      {mostrarListadoMinitramos && minitramosTerminados.length > 0 ? (
         <section className="space-y-3">
           <div>
             <h3 className="text-sm font-medium">Minitramos GPS terminados</h3>
@@ -234,15 +237,15 @@ export function TramoDetalleResumen({
             })}
           </ul>
         </section>
-      ) : minitramosCompletos.length > 0 ? (
+      ) : mostrarListadoMinitramos && minitramosCompletos.length > 0 ? (
         <p className="rounded-lg border border-dashed border-foreground/15 bg-muted/20 px-3 py-2.5 text-sm text-muted-foreground">
           Hay minitramos GPS en curso o pendientes; aquí solo se listan los ya terminados.
         </p>
-      ) : (
+      ) : mostrarListadoMinitramos ? (
         <p className="rounded-lg border border-dashed border-foreground/15 bg-muted/20 px-3 py-2.5 text-sm text-muted-foreground">
           Aún no hay minitramos GPS registrados en este tramo.
         </p>
-      )}
+      ) : null}
     </div>
   )
 }

@@ -16,6 +16,7 @@ import {
   type FiltrosTramos,
 } from "@/src/components/mapa/MapaTramosFiltros"
 import { MapaSegmentoInfoModal } from "@/src/components/mapa/MapaSegmentoInfoModal"
+import { MapaTramoPreviewMovil } from "@/src/components/mapa/MapaTramoPreviewMovil"
 import { MapaTramosFiltrosSheet } from "@/src/components/mapa/MapaTramosFiltrosSheet"
 import { MapaOpcionesCapasMapa } from "@/src/components/mapa/MapaOpcionesCapasMapa"
 import { MapaBuscarCoordenadasResidente } from "@/src/components/mapa/MapaBuscarCoordenadasResidente"
@@ -154,6 +155,8 @@ export function MapaTramosClient() {
     tramo: CanalTramo
     segmentoDestacado: SegmentoVisualTramo
   } | null>(null)
+  const [segmentoDestacadoMovil, setSegmentoDestacadoMovil] =
+    useState<SegmentoVisualTramo | null>(null)
   const esViewportMovil = useEsViewportMovil()
   const [vistaSoloTramos1a24, setVistaSoloTramos1a24] = useState(false)
   const [mostrarNumerosTramo, setMostrarNumerosTramo] = useState(false)
@@ -274,8 +277,20 @@ export function MapaTramosClient() {
 
   function handleTramoClick(tramo: CanalTramo) {
     setTramoSeleccionado(tramo)
-    setPanelAbierto(true)
     setPanelError(null)
+    setSegmentoDestacadoMovil(null)
+    if (esViewportMovil) {
+      setPanelAbierto(false)
+      setTramoVisitanteModal(null)
+    } else {
+      setPanelAbierto(true)
+    }
+  }
+
+  function cerrarPreviewTramoMovil() {
+    setTramoSeleccionado(null)
+    setSegmentoDestacadoMovil(null)
+    setPanelAbierto(false)
   }
 
   async function handleSubmitTramo(tramoId: string, values: TramoFormValues) {
@@ -721,6 +736,10 @@ export function MapaTramosClient() {
 
   const visitante = !isResident
   const visitanteMovil = visitante && esViewportMovil
+  const previewTramoMovilVisible =
+    esViewportMovil && tramoSeleccionado !== null && !panelAbierto
+  const atenuarTramosNoSeleccionadosEnMapa =
+    esViewportMovil && tramoSeleccionadoId !== null && !panelAbierto
 
   const ubicacionResidenteProps = useMemo(
     () => ({
@@ -742,6 +761,19 @@ export function MapaTramosClient() {
     ]
   )
 
+  const previewTramoMovil =
+    previewTramoMovilVisible && tramoSeleccionado ? (
+      <MapaTramoPreviewMovil
+        tramo={tramoSeleccionado}
+        puntosAvance={puntosAvance}
+        jornadaPorPuntoFin={jornadaPorPuntoFin}
+        segmentoDestacado={segmentoDestacadoMovil}
+        className={isResident ? "bottom-14" : undefined}
+        onVerMas={() => setPanelAbierto(true)}
+        onCerrar={cerrarPreviewTramoMovil}
+      />
+    ) : null
+
   const mapaLeaflet = (
     <MapaTramosLeaflet
       tramos={tramosFiltrados}
@@ -760,9 +792,21 @@ export function MapaTramosClient() {
       onSegmentoVisitanteClick={
         isResident
           ? undefined
-          : (segmento) =>
-              setTramoVisitanteModal({ tramo: segmento.tramo, segmentoDestacado: segmento })
+          : (segmento) => {
+              if (esViewportMovil) {
+                setTramoSeleccionado(segmento.tramo)
+                setSegmentoDestacadoMovil(segmento)
+                setPanelAbierto(false)
+                setTramoVisitanteModal(null)
+                return
+              }
+              setTramoVisitanteModal({
+                tramo: segmento.tramo,
+                segmentoDestacado: segmento,
+              })
+            }
       }
+      atenuarTramosNoSeleccionados={atenuarTramosNoSeleccionadosEnMapa}
       ubicacionUsuario={isResident ? ubicacionResidente : null}
       seguirUbicacionUsuario={isResident ? seguirUbicacionResidente : false}
       centrarUbicacionVersion={isResident ? centrarUbicacionKey : 0}
@@ -846,7 +890,10 @@ export function MapaTramosClient() {
                     />
                     </div>
                   )}
-                  {mapaLeaflet}
+                  <MapaTramosMapaConBarra>
+                    {mapaLeaflet}
+                    {previewTramoMovil}
+                  </MapaTramosMapaConBarra>
                   {visitanteMovil ? (
                     <MapaTramosFiltrosSheet
                       variant="visitanteTramoCapas"
@@ -908,6 +955,7 @@ export function MapaTramosClient() {
                     }
                   >
                     {mapaLeaflet}
+                    {previewTramoMovil}
                   </MapaTramosMapaConBarra>
                   <div className="md:hidden">
                     <MapaBuscarCoordenadasResidente />
@@ -948,6 +996,7 @@ export function MapaTramosClient() {
         open={panelAbierto}
         onOpenChange={setPanelAbierto}
         detalleEnBottomSheet={esViewportMovil}
+        segmentoDestacado={segmentoDestacadoMovil}
         isResident={isResident}
         loading={saving}
         proyectoId={proyectoId}
@@ -983,7 +1032,7 @@ export function MapaTramosClient() {
 
       {visitante ? (
         <MapaSegmentoInfoModal
-          open={tramoVisitanteModal !== null}
+          open={tramoVisitanteModal !== null && !esViewportMovil}
           tramo={tramoVisitanteModal?.tramo ?? null}
           puntosAvance={puntosAvance}
           jornadaPorPuntoFin={jornadaPorPuntoFin}
