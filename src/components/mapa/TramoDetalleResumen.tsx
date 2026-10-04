@@ -12,6 +12,7 @@ import {
   fechaMsMinitramoGerencial,
   mapaAcumuladoTerminadoPorFecha,
   minitramosCompletosOrdenados,
+  minitramosTerminadosGerencial,
   metrosTerminadosMinitramos,
 } from "@/src/lib/minitramo-gerencial-resumen"
 import { tituloTramoMapa } from "@/src/lib/tramo-display"
@@ -123,12 +124,13 @@ export function TramoDetalleResumen({
   const avance = avanceDesasolveTramo(tramo, puntosAvance)
   const minitramos = resumenMinitramos(puntosAvance, tramo.id, tramo)
   const minitramosCompletos = minitramosCompletosOrdenados(minitramos)
-  const kmTerminadosGps = metrosTerminadosMinitramos(minitramosCompletos) / 1000
+  const minitramosTerminados = minitramosTerminadosGerencial(minitramosCompletos)
+  const kmTerminadosGps = metrosTerminadosMinitramos(minitramosTerminados) / 1000
   const puntosPorId = new Map(
     puntosAvance.filter((p) => p.tramo_id === tramo.id).map((p) => [p.id, p] as const)
   )
   const fechaMsPorPuntoFin = new Map(
-    minitramosCompletos.map((item) => [
+    minitramosTerminados.map((item) => [
       item.puntoFinId,
       fechaMsMinitramoGerencial(item, {
         jornadaFecha: jornadaPorPuntoFin?.get(item.puntoFinId)?.fecha,
@@ -137,7 +139,7 @@ export function TramoDetalleResumen({
     ] as const)
   )
   const acumuladoPorPuntoFin = mapaAcumuladoTerminadoPorFecha(
-    minitramosCompletos,
+    minitramosTerminados,
     (puntoFinId) => fechaMsPorPuntoFin.get(puntoFinId) ?? 0
   )
   const kmEjecutados = avance.metrosEjecutados / 1000
@@ -188,25 +190,25 @@ export function TramoDetalleResumen({
         )}
       </section>
 
-      {minitramosCompletos.length > 0 ? (
+      {minitramosTerminados.length > 0 ? (
         <section className="space-y-3">
           <div>
-            <h3 className="text-sm font-medium">Minitramos GPS</h3>
+            <h3 className="text-sm font-medium">Minitramos GPS terminados</h3>
             <p className="text-xs text-muted-foreground">
-              {minitramosCompletos.length} minitramo
-              {minitramosCompletos.length === 1 ? "" : "s"} confirmado
-              {minitramosCompletos.length === 1 ? "" : "s"}
+              {minitramosTerminados.length} minitramo
+              {minitramosTerminados.length === 1 ? "" : "s"} terminado
+              {minitramosTerminados.length === 1 ? "" : "s"}
               {avance.usaAvanceGps ? (
                 <>
                   {" "}
-                  · {formatearNumero(kmTerminadosGps, 2)} km terminados (GPS)
+                  · {formatearNumero(kmTerminadosGps, 2)} km (GPS)
                 </>
               ) : null}
             </p>
           </div>
           <BarraSegmentosTramo tramo={tramo} puntosAvance={puntosAvance} />
           <ul className="space-y-3">
-            {minitramosCompletos.map((item, indice) => {
+            {minitramosTerminados.map((item, indice) => {
               const destacado =
                 segmentoDestacado?.tipo === "minitramo" &&
                 segmentoDestacado.letraInicio === item.letraInicio &&
@@ -226,6 +228,10 @@ export function TramoDetalleResumen({
             })}
           </ul>
         </section>
+      ) : minitramosCompletos.length > 0 ? (
+        <p className="rounded-lg border border-dashed border-foreground/15 bg-muted/20 px-3 py-2.5 text-sm text-muted-foreground">
+          Hay minitramos GPS en curso o pendientes; aquí solo se listan los ya terminados.
+        </p>
       ) : (
         <p className="rounded-lg border border-dashed border-foreground/15 bg-muted/20 px-3 py-2.5 text-sm text-muted-foreground">
           Aún no hay minitramos GPS registrados en este tramo.
