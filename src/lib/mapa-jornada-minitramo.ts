@@ -2,7 +2,6 @@ import type { CanalTramo } from "@/src/data/tramos/types"
 import type { ProyectoEquipoMaquinaria } from "@/src/lib/proyecto-equipos-maquinaria"
 import { minitramosDesdePuntos, type TramoPuntoAvance } from "@/src/lib/tramo-geometria"
 import {
-  formatearFechaRegistro,
   mapaEquiposPorId,
   nombreEquipoParaMostrar,
   type JornadaMinitramoMapa,
@@ -129,7 +128,7 @@ export function indiceJornadaMinitramoPorPuntoFin(
       registrosUsados.add(registro.id)
 
       indice.set(mt.puntoFin.id, {
-        fecha: formatearFechaRegistro(registro.fecha),
+        fecha: registro.fecha.slice(0, 10),
         metros_desasolados: mt.longitud_m,
         equipoNombre: nombreEquipoParaMostrar(registro, equiposPorId),
         duracion_horas: registro.duracion_horas,

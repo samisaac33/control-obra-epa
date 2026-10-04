@@ -242,7 +242,31 @@ export function formatearMetrosDesasolados(metros: number): string {
 }
 
 export function formatearFechaRegistro(fechaIso: string): string {
-  const [y, m, d] = fechaIso.split("-")
+  const iso = fechaIso.trim()
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(iso)) return iso
+  const [y, m, d] = iso.split("-")
   if (!y || !m || !d) return fechaIso
   return `${d}/${m}/${y}`
+}
+
+/** Convierte fecha ISO (`YYYY-MM-DD`) o display (`DD/MM/YYYY`) a ms UTC medianoche. */
+export function fechaRegistroAMs(fecha: string): number | null {
+  const t = fecha.trim()
+  if (!t) return null
+
+  if (/^\d{4}-\d{2}-\d{2}/.test(t)) {
+    const ms = Date.parse(`${t.slice(0, 10)}T00:00:00.000Z`)
+    return Number.isFinite(ms) ? ms : null
+  }
+
+  const display = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(t)
+  if (display) {
+    const dia = Number(display[1])
+    const mes = Number(display[2])
+    const anio = Number(display[3])
+    const ms = Date.UTC(anio, mes - 1, dia)
+    return Number.isFinite(ms) ? ms : null
+  }
+
+  return null
 }

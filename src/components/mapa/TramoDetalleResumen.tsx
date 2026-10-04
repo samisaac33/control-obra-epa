@@ -13,6 +13,7 @@ import {
   mapaAcumuladoTerminadoPorFecha,
   minitramosCompletosOrdenados,
   minitramosTerminadosGerencial,
+  minitramosTerminadosParaVistaGerencial,
   metrosTerminadosMinitramos,
 } from "@/src/lib/minitramo-gerencial-resumen"
 import { tituloTramoMapa } from "@/src/lib/tramo-display"
@@ -138,9 +139,14 @@ export function TramoDetalleResumen({
       }),
     ] as const)
   )
+  const fechaMsDePuntoFin = (puntoFinId: string) => fechaMsPorPuntoFin.get(puntoFinId) ?? 0
   const acumuladoPorPuntoFin = mapaAcumuladoTerminadoPorFecha(
     minitramosTerminados,
-    (puntoFinId) => fechaMsPorPuntoFin.get(puntoFinId) ?? 0
+    fechaMsDePuntoFin
+  )
+  const minitramosVista = minitramosTerminadosParaVistaGerencial(
+    minitramosTerminados,
+    fechaMsDePuntoFin
   )
   const kmEjecutados = avance.metrosEjecutados / 1000
   const kmTotales = avance.metrosTotales / 1000
@@ -208,7 +214,7 @@ export function TramoDetalleResumen({
           </div>
           <BarraSegmentosTramo tramo={tramo} puntosAvance={puntosAvance} />
           <ul className="space-y-3">
-            {minitramosTerminados.map((item, indice) => {
+            {minitramosVista.map((item, indice) => {
               const destacado =
                 segmentoDestacado?.tipo === "minitramo" &&
                 segmentoDestacado.letraInicio === item.letraInicio &&
