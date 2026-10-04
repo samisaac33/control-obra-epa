@@ -11,6 +11,13 @@ export function minitramosCompletosOrdenados(
   return items.filter((item): item is MinitramoCompletoResumen => item.tipo === "completo")
 }
 
+/** Solo minitramos en estado terminado (vista gerencial y acumulados). */
+export function minitramosTerminadosGerencial(
+  items: MinitramoCompletoResumen[]
+): MinitramoCompletoResumen[] {
+  return items.filter((item) => item.estado === "terminado")
+}
+
 export function metrosTerminadosMinitramos(items: MinitramoCompletoResumen[]): number {
   return items.reduce(
     (sum, item) => (item.estado === "terminado" ? sum + item.longitud_m : sum),
@@ -39,7 +46,8 @@ export function mapaAcumuladoTerminadoPorFecha(
   items: MinitramoCompletoResumen[],
   fechaMsPorPuntoFin: (puntoFinId: string) => number
 ): ReadonlyMap<string, number> {
-  const sorted = [...items].sort((a, b) => {
+  const soloTerminados = minitramosTerminadosGerencial(items)
+  const sorted = [...soloTerminados].sort((a, b) => {
     const da = fechaMsPorPuntoFin(a.puntoFinId)
     const db = fechaMsPorPuntoFin(b.puntoFinId)
     if (da !== db) return da - db
@@ -48,7 +56,7 @@ export function mapaAcumuladoTerminadoPorFecha(
   const map = new Map<string, number>()
   let sum = 0
   for (const item of sorted) {
-    if (item.estado === "terminado") sum += item.longitud_m
+    sum += item.longitud_m
     map.set(item.puntoFinId, sum)
   }
   return map
