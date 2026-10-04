@@ -29,6 +29,7 @@ import {
 import {
   ALTURA_MAPA_TRAMOS,
   ALTURA_MAPA_VISITANTE_MOVIL,
+  aplicarAtenuacionSeleccionTramoEnMapa,
   estiloContornoOscuroTramo,
   estiloHaloBlancoTramo,
   estiloSegmentoTramoEnMapa,
@@ -71,6 +72,8 @@ type MapaTramosLeafletProps = {
   centrarUbicacionVersion?: number
   puntoIdsParpadeoFrente?: ReadonlySet<string>
   jornadaPorPuntoFin?: ReadonlyMap<string, JornadaMinitramoMapa>
+  /** Móvil: atenuar tramos distintos al seleccionado (vista previa). */
+  atenuarTramosNoSeleccionados?: boolean
 }
 
 type HoverVisitanteMapa = {
@@ -207,6 +210,7 @@ function registrarInteraccionTramo(
     onHoverChange: (hover: HoverVisitanteMapa) => void
     onTramoClick: (tramo: CanalTramo) => void
     onSegmentoVisitanteClick?: (segmento: SegmentoVisualTramo) => void
+    atenuarTramosNoSeleccionados: boolean
     registrarCapa: (capa: CapaSegmentoRegistrada) => void
   }
 ) {
@@ -274,15 +278,21 @@ function registrarInteraccionTramo(
     mouseout: () => {
       if (ctx.isResident || ctx.esViewportMovil) {
         const seleccionado = tramo.id === ctx.tramoSeleccionadoId
+        const base = estiloSegmentoTramoEnMapa(
+          tramo,
+          props.tipo ?? "pendiente",
+          seleccionado,
+          false,
+          props.estadoSegmento,
+          ctx.mostrarMinitramosTerminados,
+          ctx.mapaConsolidado
+        )
         path.setStyle(
-          estiloSegmentoTramoEnMapa(
-            tramo,
-            props.tipo ?? "pendiente",
-            seleccionado,
-            false,
-            props.estadoSegmento,
-            ctx.mostrarMinitramosTerminados,
-            ctx.mapaConsolidado
+          aplicarAtenuacionSeleccionTramoEnMapa(
+            base,
+            tramo.id,
+            ctx.tramoSeleccionadoId,
+            ctx.atenuarTramosNoSeleccionados
           )
         )
         return
@@ -343,6 +353,7 @@ export function MapaTramosLeaflet({
   centrarUbicacionVersion = 0,
   puntoIdsParpadeoFrente,
   jornadaPorPuntoFin,
+  atenuarTramosNoSeleccionados = false,
 }: MapaTramosLeafletProps) {
   const idsParpadeoFrente = puntoIdsParpadeoFrente ?? new Set<string>()
   const jornadasMapa = jornadaPorPuntoFin ?? new Map<string, JornadaMinitramoMapa>()
@@ -420,17 +431,42 @@ export function MapaTramosLeaflet({
   }, [])
 
   useEffect(() => {
-    if (isResident || esViewportMovil) return
+    if (!isResident && !esViewportMovil) {
+      for (const capa of capasSegmentoRef.current) {
+        capa.path.setStyle(
+          estiloCapaSegmentoVisitante(capa.props, {
+            tramoSeleccionadoId,
+            mostrarMinitramosTerminados,
+            mapaConsolidado,
+            mostrarPuntosAvance,
+            hover: hoverVisitante,
+            claveSegmento: capa.clave,
+          })
+        )
+      }
+      return
+    }
+    if (!atenuarTramosNoSeleccionados) return
     for (const capa of capasSegmentoRef.current) {
+      const tramo = capa.props.tramo
+      if (!tramo) continue
+      const seleccionado = tramo.id === tramoSeleccionadoId
+      const base = estiloSegmentoTramoEnMapa(
+        tramo,
+        capa.props.tipo ?? "pendiente",
+        seleccionado,
+        false,
+        capa.props.estadoSegmento,
+        mostrarMinitramosTerminados,
+        mapaConsolidado
+      )
       capa.path.setStyle(
-        estiloCapaSegmentoVisitante(capa.props, {
+        aplicarAtenuacionSeleccionTramoEnMapa(
+          base,
+          tramo.id,
           tramoSeleccionadoId,
-          mostrarMinitramosTerminados,
-          mapaConsolidado,
-          mostrarPuntosAvance,
-          hover: hoverVisitante,
-          claveSegmento: capa.clave,
-        })
+          atenuarTramosNoSeleccionados
+        )
       )
     }
   }, [
@@ -441,6 +477,7 @@ export function MapaTramosLeaflet({
     mostrarMinitramosTerminados,
     mapaConsolidado,
     mostrarPuntosAvance,
+    atenuarTramosNoSeleccionados,
   ])
 
   if (tramos.length === 0) {
@@ -529,7 +566,13 @@ export function MapaTramosLeaflet({
           style={(feature): PathOptions => {
             const tramo = (feature?.properties as FeatureProps | undefined)?.tramo
             const seleccionado = tramo?.id === tramoSeleccionadoId
-            return estiloContornoOscuroTramo(seleccionado)
+            const base = estiloContornoOscuroTramo(seleccionado)
+            return aplicarAtenuacionSeleccionTramoEnMapa(
+              base,
+              tramo?.id,
+              tramoSeleccionadoId,
+              atenuarTramosNoSeleccionados
+            )
           }}
           interactive={false}
         />
@@ -539,7 +582,13 @@ export function MapaTramosLeaflet({
           style={(feature): PathOptions => {
             const tramo = (feature?.properties as FeatureProps | undefined)?.tramo
             const seleccionado = tramo?.id === tramoSeleccionadoId
-            return estiloHaloBlancoTramo(seleccionado)
+            const base = estiloHaloBlancoTramo(seleccionado)
+            return aplicarAtenuacionSeleccionTramoEnMapa(
+              base,
+              tramo?.id,
+              tramoSeleccionadoId,
+              atenuarTramosNoSeleccionados
+            )
           }}
           interactive={false}
         />
@@ -548,15 +597,22 @@ export function MapaTramosLeaflet({
           data={featureCollectionColoreada}
           style={(feature): PathOptions => {
             const props = feature?.properties as FeatureProps | undefined
-            const seleccionado = props?.tramo?.id === tramoSeleccionadoId
-            return estiloSegmentoTramoEnMapa(
-              props?.tramo,
+            const tramo = props?.tramo
+            const seleccionado = tramo?.id === tramoSeleccionadoId
+            const base = estiloSegmentoTramoEnMapa(
+              tramo,
               props?.tipo ?? "pendiente",
               seleccionado,
               false,
               props?.estadoSegmento,
               mostrarMinitramosTerminados,
               mapaConsolidado
+            )
+            return aplicarAtenuacionSeleccionTramoEnMapa(
+              base,
+              tramo?.id,
+              tramoSeleccionadoId,
+              atenuarTramosNoSeleccionados
             )
           }}
           onEachFeature={(feature, layer) => {
@@ -580,6 +636,7 @@ export function MapaTramosLeaflet({
               onHoverChange: setHoverVisitante,
               onTramoClick,
               onSegmentoVisitanteClick,
+              atenuarTramosNoSeleccionados,
               registrarCapa: registrarCapaSegmento,
             })
           }}

@@ -112,3 +112,17 @@ export function estiloContornoOscuroTramo(seleccionado: boolean): PathOptions {
     lineJoin: "round",
   }
 }
+
+/** Atenúa tramos que no coinciden con la selección (vista móvil). */
+export function aplicarAtenuacionSeleccionTramoEnMapa(
+  estilo: PathOptions,
+  tramoId: string | undefined,
+  tramoSeleccionadoId: string | null,
+  activo: boolean
+): PathOptions {
+  if (!activo || !tramoSeleccionadoId || !tramoId) return estilo
+  if (tramoId === tramoSeleccionadoId) {
+    return { ...estilo, opacity: 1 }
+  }
+  return { ...estilo, opacity: OPACIDAD_TRAMO_ATENUADO_MAPA }
+}

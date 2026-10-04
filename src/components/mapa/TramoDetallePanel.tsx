@@ -9,7 +9,11 @@ import { TramoDetalleVisitanteContenido } from "@/src/components/mapa/TramoDetal
 import { TramoDetalleResidenteBottomSheet } from "@/src/components/mapa/TramoDetalleResidenteBottomSheet"
 import { TramoDetalleResidenteContenido } from "@/src/components/mapa/TramoDetalleResidenteContenido"
 import { tituloTramoMapa } from "@/src/lib/tramo-display"
-import type { PropuestaPuntoMinitramo, TramoPuntoAvance } from "@/src/lib/tramo-geometria"
+import type {
+  PropuestaPuntoMinitramo,
+  SegmentoVisualTramo,
+  TramoPuntoAvance,
+} from "@/src/lib/tramo-geometria"
 import type { JornadaMinitramoMapa } from "@/src/lib/tramo-maquinaria-historial"
 import type { ConfirmarOrigenInicioOptions } from "@/src/components/mapa/TramoOrigenInicioBlock"
 import type { EstadoTramo, OrigenExtremoTramo } from "@/src/data/tramos/types"
@@ -57,6 +61,7 @@ type TramoDetallePanelProps = {
   onRenumerarPuntosTramo?: () => void | Promise<void>
   /** Mapa en viewport móvil: bottom sheet fijo en lugar de Sheet lateral. */
   detalleEnBottomSheet?: boolean
+  segmentoDestacado?: SegmentoVisualTramo | null
 }
 
 export function TramoDetallePanel({
@@ -89,6 +94,7 @@ export function TramoDetallePanel({
   reiniciandoOrigen = false,
   onRenumerarPuntosTramo,
   detalleEnBottomSheet = false,
+  segmentoDestacado = null,
 }: TramoDetallePanelProps) {
   const handleOpenChange = (nextOpen: boolean) => {
     if (!nextOpen) onClearPanelError?.()
@@ -127,6 +133,7 @@ export function TramoDetallePanel({
         tramo={tramo}
         puntosAvance={puntosAvance}
         jornadaPorPuntoFin={jornadaPorPuntoFin}
+        segmentoDestacado={segmentoDestacado}
         panelError={panelError}
         onOpenChange={handleOpenChange}
       />
@@ -169,6 +176,7 @@ export function TramoDetallePanel({
                 tramo={tramo}
                 puntosAvance={puntosAvance}
                 jornadaPorPuntoFin={jornadaPorPuntoFin}
+                segmentoDestacado={segmentoDestacado}
                 panelError={panelError}
                 tituloId="tramo-detalle-sheet-title"
               />
