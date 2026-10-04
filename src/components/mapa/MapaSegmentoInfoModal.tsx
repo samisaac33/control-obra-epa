@@ -8,12 +8,14 @@ import { MapaOverlayPortal } from "@/src/components/mapa/MapaOverlayPortal"
 import { TramoDetalleResumen } from "@/src/components/mapa/TramoDetalleResumen"
 import type { CanalTramo } from "@/src/data/tramos/types"
 import { Z_MAPA_OVERLAY } from "@/src/lib/mapa-capas-z"
+import type { JornadaMinitramoMapa } from "@/src/lib/tramo-maquinaria-historial"
 import type { SegmentoVisualTramo, TramoPuntoAvance } from "@/src/lib/tramo-geometria"
 
 type MapaSegmentoInfoModalProps = {
   open: boolean
   tramo: CanalTramo | null
   puntosAvance: TramoPuntoAvance[]
+  jornadaPorPuntoFin?: ReadonlyMap<string, JornadaMinitramoMapa>
   segmentoDestacado: SegmentoVisualTramo | null
   onClose: () => void
   onVerDetalleTramo: (tramo: CanalTramo) => void
@@ -23,6 +25,7 @@ export function MapaSegmentoInfoModal({
   open,
   tramo,
   puntosAvance,
+  jornadaPorPuntoFin,
   segmentoDestacado,
   onClose,
   onVerDetalleTramo,
@@ -61,6 +64,7 @@ export function MapaSegmentoInfoModal({
         <TramoDetalleResumen
           tramo={tramo}
           puntosAvance={puntosAvance}
+          jornadaPorPuntoFin={jornadaPorPuntoFin}
           segmentoDestacado={segmentoDestacado}
           tituloId="mapa-tramo-info-title"
         />

@@ -17,6 +17,7 @@ import { TramoPuntosHistorial } from "@/src/components/mapa/TramoPuntosHistorial
 import { TramoDetalleResumen } from "@/src/components/mapa/TramoDetalleResumen"
 import { TramoMaquinariaHistorialBlock } from "@/src/components/mapa/TramoMaquinariaHistorialBlock"
 import type { PropuestaPuntoMinitramo, TramoPuntoAvance } from "@/src/lib/tramo-geometria"
+import type { JornadaMinitramoMapa } from "@/src/lib/tramo-maquinaria-historial"
 import type { SolicitarConfirmacionAvanceOptions } from "@/src/components/mapa/TramoDetallePanel"
 
 export type TramoDetalleResidenteContenidoProps = {
@@ -24,6 +25,7 @@ export type TramoDetalleResidenteContenidoProps = {
   loading: boolean
   proyectoId: string
   puntosAvance: TramoPuntoAvance[]
+  jornadaPorPuntoFin?: ReadonlyMap<string, JornadaMinitramoMapa>
   puntosRefreshKey: number
   eliminandoId?: string | null
   panelError?: string | null
@@ -57,6 +59,7 @@ export function TramoDetalleResidenteContenido({
   loading,
   proyectoId,
   puntosAvance,
+  jornadaPorPuntoFin,
   puntosRefreshKey,
   eliminandoId = null,
   panelError = null,
@@ -98,6 +101,7 @@ export function TramoDetalleResidenteContenido({
       <TramoDetalleResumen
         tramo={tramo}
         puntosAvance={puntosAvance}
+        jornadaPorPuntoFin={jornadaPorPuntoFin}
         tituloId={tituloId}
         mostrarEncabezado={mostrarEncabezadoResumen}
       />
