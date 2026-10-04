@@ -100,7 +100,7 @@ export function MinitramoGerencialCard({
         </p>
         {jornada ? (
           <>
-            {filaDato({ etiqueta: "Fecha", valor: jornada.fecha })}
+            {filaDato({ etiqueta: "Fecha", valor: formatearFechaRegistro(jornada.fecha) })}
             {filaDato({
               etiqueta: "Longitud trabajada",
               valor: formatLongitudSegmentoMapa(item.longitud_m),

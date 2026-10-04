@@ -1,5 +1,6 @@
 import type { CanalTramo } from "@/src/data/tramos/types"
 import { formatearNumero } from "@/src/lib/maquinaria-resumen"
+import { fechaRegistroAMs } from "@/src/lib/tramo-maquinaria-historial"
 import type { ItemResumenMinitramo } from "@/src/lib/tramo-geometria"
 import { formatLongitudSegmentoMapa } from "@/src/lib/tramo-geometria"
 
@@ -26,16 +27,32 @@ export function metrosTerminadosMinitramos(items: MinitramoCompletoResumen[]): n
 }
 
 export function fechaMsMinitramoGerencial(
-  item: MinitramoCompletoResumen,
+  _item: MinitramoCompletoResumen,
   opts?: {
     jornadaFecha?: string | null
     puntoFinCreatedAt?: string | null
   }
 ): number {
-  const raw = opts?.jornadaFecha?.trim() || opts?.puntoFinCreatedAt?.slice(0, 10) || ""
-  if (!raw) return 0
-  const ms = new Date(raw).getTime()
-  return Number.isFinite(ms) ? ms : 0
+  const desdeJornada = opts?.jornadaFecha ? fechaRegistroAMs(opts.jornadaFecha) : null
+  if (desdeJornada != null) return desdeJornada
+  const desdeGps = opts?.puntoFinCreatedAt
+    ? fechaRegistroAMs(opts.puntoFinCreatedAt.slice(0, 10))
+    : null
+  if (desdeGps != null) return desdeGps
+  return 0
+}
+
+/** Vista gerencial: jornada más reciente arriba; empate por abscisa (más avanzado en canal primero). */
+export function minitramosTerminadosParaVistaGerencial(
+  items: MinitramoCompletoResumen[],
+  fechaMsPorPuntoFin: (puntoFinId: string) => number
+): MinitramoCompletoResumen[] {
+  return [...minitramosTerminadosGerencial(items)].sort((a, b) => {
+    const da = fechaMsPorPuntoFin(a.puntoFinId)
+    const db = fechaMsPorPuntoFin(b.puntoFinId)
+    if (da !== db) return db - da
+    return b.abscisaFin - a.abscisaFin
+  })
 }
 
 /**

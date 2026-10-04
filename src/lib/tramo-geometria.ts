@@ -7,7 +7,11 @@ import {
 } from "@/src/data/tramos/types"
 import { formatearNumero } from "@/src/lib/maquinaria-resumen"
 import { tituloTramoMapa } from "@/src/lib/tramo-display"
-import { formatearMetrosDesasolados, type JornadaMinitramoMapa } from "@/src/lib/tramo-maquinaria-historial"
+import {
+  formatearFechaRegistro,
+  formatearMetrosDesasolados,
+  type JornadaMinitramoMapa,
+} from "@/src/lib/tramo-maquinaria-historial"
 import { avanceDesasolveTramo, longitudDesdeGeometria, sincronizarAvanceDesdeMetros } from "@/src/lib/tramos-avance"
 
 const EARTH_RADIUS_M = 6_371_000
@@ -428,7 +432,7 @@ export function htmlTooltipVisitanteMinitramo(
     : tituloTramoMapa(segmento.tramo.codigo)
 
   const longitudTrabajada = info.longitudTexto
-  const fecha = jornada?.fecha ?? "—"
+  const fecha = jornada?.fecha ? formatearFechaRegistro(jornada.fecha) : "—"
   const maquinaria = jornada?.equipoNombre?.trim() ? jornada.equipoNombre : "—"
   const horas =
     jornada?.duracion_horas != null && Number.isFinite(jornada.duracion_horas)
