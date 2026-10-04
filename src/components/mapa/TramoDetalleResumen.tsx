@@ -9,6 +9,8 @@ import {
 import { MinitramoGerencialCard } from "@/src/components/mapa/MinitramoGerencialCard"
 import { formatearNumero } from "@/src/lib/maquinaria-resumen"
 import {
+  fechaMsMinitramoGerencial,
+  mapaAcumuladoTerminadoPorFecha,
   minitramosCompletosOrdenados,
   metrosTerminadosMinitramos,
 } from "@/src/lib/minitramo-gerencial-resumen"
@@ -125,6 +127,19 @@ export function TramoDetalleResumen({
   const puntosPorId = new Map(
     puntosAvance.filter((p) => p.tramo_id === tramo.id).map((p) => [p.id, p] as const)
   )
+  const fechaMsPorPuntoFin = new Map(
+    minitramosCompletos.map((item) => [
+      item.puntoFinId,
+      fechaMsMinitramoGerencial(item, {
+        jornadaFecha: jornadaPorPuntoFin?.get(item.puntoFinId)?.fecha,
+        puntoFinCreatedAt: puntosPorId.get(item.puntoFinId)?.created_at,
+      }),
+    ] as const)
+  )
+  const acumuladoPorPuntoFin = mapaAcumuladoTerminadoPorFecha(
+    minitramosCompletos,
+    (puntoFinId) => fechaMsPorPuntoFin.get(puntoFinId) ?? 0
+  )
   const kmEjecutados = avance.metrosEjecutados / 1000
   const kmTotales = avance.metrosTotales / 1000
 
@@ -200,9 +215,9 @@ export function TramoDetalleResumen({
                 <MinitramoGerencialCard
                   key={item.grupo_id}
                   item={item}
-                  indice={indice}
-                  itemsOrdenados={minitramosCompletos}
+                  indiceVisual={indice}
                   tramo={tramo}
+                  acumuladoTerminado_m={acumuladoPorPuntoFin.get(item.puntoFinId) ?? 0}
                   jornada={jornadaPorPuntoFin?.get(item.puntoFinId)}
                   puntoFin={puntosPorId.get(item.puntoFinId) ?? null}
                   destacado={destacado}

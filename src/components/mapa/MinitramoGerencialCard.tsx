@@ -10,7 +10,6 @@ import {
   type EstadoTramo,
 } from "@/src/data/tramos/types"
 import {
-  acumuladoTerminadoHastaIndice,
   pctSobreTramo,
   textoAcumuladoTramo,
   type MinitramoCompletoResumen,
@@ -23,9 +22,9 @@ import { etiquetaLetra, formatLongitudSegmentoMapa, type TramoPuntoAvance } from
 
 type MinitramoGerencialCardProps = {
   item: MinitramoCompletoResumen
-  indice: number
-  itemsOrdenados: MinitramoCompletoResumen[]
+  indiceVisual: number
   tramo: CanalTramo
+  acumuladoTerminado_m: number
   jornada?: JornadaMinitramoMapa | null
   puntoFin?: TramoPuntoAvance | null
   destacado?: boolean
@@ -50,16 +49,17 @@ function mensajeEstadoOperativo(estado: EstadoTramo): string | null {
 
 export function MinitramoGerencialCard({
   item,
-  indice,
-  itemsOrdenados,
+  indiceVisual,
   tramo,
+  acumuladoTerminado_m,
   jornada,
   puntoFin,
   destacado = false,
 }: MinitramoGerencialCardProps) {
   const etiqueta = `${etiquetaLetra(item.letraInicio)}–${etiquetaLetra(item.letraFin)}`
   const pctTramo = pctSobreTramo(item.longitud_m, tramo)
-  const acumulado_m = acumuladoTerminadoHastaIndice(itemsOrdenados, indice)
+  const acumulado_m = acumuladoTerminado_m
+  const filaPar = indiceVisual % 2 === 0
   const avisoEstado = mensajeEstadoOperativo(item.estado)
   const fechaGps = puntoFin?.created_at ? formatearFechaRegistro(puntoFin.created_at.slice(0, 10)) : null
   const fotoId = puntoFin?.registro_foto_id
@@ -70,7 +70,9 @@ export function MinitramoGerencialCard({
         "rounded-xl border px-3 py-3 text-sm shadow-sm",
         destacado
           ? "border-primary/40 bg-primary/5 ring-1 ring-primary/20"
-          : "border-foreground/10 bg-background"
+          : filaPar
+            ? "border-foreground/10 bg-muted/30"
+            : "border-foreground/10 bg-card"
       )}
     >
       <div className="flex items-start justify-between gap-2">

@@ -18,17 +18,40 @@ export function metrosTerminadosMinitramos(items: MinitramoCompletoResumen[]): n
   )
 }
 
-/** Suma de longitudes GPS en estado terminado hasta incluir `indice` (orden A→B→C). */
-export function acumuladoTerminadoHastaIndice(
-  items: MinitramoCompletoResumen[],
-  indice: number
-): number {
-  let sum = 0
-  for (let i = 0; i <= indice; i++) {
-    const item = items[i]
-    if (item && item.estado === "terminado") sum += item.longitud_m
+export function fechaMsMinitramoGerencial(
+  item: MinitramoCompletoResumen,
+  opts?: {
+    jornadaFecha?: string | null
+    puntoFinCreatedAt?: string | null
   }
-  return sum
+): number {
+  const raw = opts?.jornadaFecha?.trim() || opts?.puntoFinCreatedAt?.slice(0, 10) || ""
+  if (!raw) return 0
+  const ms = new Date(raw).getTime()
+  return Number.isFinite(ms) ? ms : 0
+}
+
+/**
+ * Acumulado de minitramos terminados en orden cronológico (fecha jornada o confirmación GPS).
+ * La lista en pantalla puede ir de más reciente a más antiguo; cada card usa su propio acumulado.
+ */
+export function mapaAcumuladoTerminadoPorFecha(
+  items: MinitramoCompletoResumen[],
+  fechaMsPorPuntoFin: (puntoFinId: string) => number
+): ReadonlyMap<string, number> {
+  const sorted = [...items].sort((a, b) => {
+    const da = fechaMsPorPuntoFin(a.puntoFinId)
+    const db = fechaMsPorPuntoFin(b.puntoFinId)
+    if (da !== db) return da - db
+    return a.abscisaFin - b.abscisaFin
+  })
+  const map = new Map<string, number>()
+  let sum = 0
+  for (const item of sorted) {
+    if (item.estado === "terminado") sum += item.longitud_m
+    map.set(item.puntoFinId, sum)
+  }
+  return map
 }
 
 export function pctSobreTramo(longitud_m: number, tramo: Pick<CanalTramo, "longitud_m">): number {
