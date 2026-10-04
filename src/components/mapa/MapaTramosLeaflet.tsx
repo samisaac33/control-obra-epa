@@ -20,7 +20,8 @@ import {
   type SegmentoVisualTramo,
   type TramoPuntoAvance,
 } from "@/src/lib/tramo-geometria"
-import { boundsDesdeTramos } from "@/src/lib/tramos-avance"
+import type { GeoJsonLineString } from "@/src/data/tramos/types"
+import { boundsDesdeGeometria, boundsDesdeTramos } from "@/src/lib/tramos-avance"
 import {
   Z_MAPA_MARCADOR_FRENTE_PARPADEO,
   Z_MAPA_MARCADOR_PUNTO,
@@ -74,6 +75,10 @@ type MapaTramosLeafletProps = {
   jornadaPorPuntoFin?: ReadonlyMap<string, JornadaMinitramoMapa>
   /** Móvil: atenuar tramos distintos al seleccionado (vista previa). */
   atenuarTramosNoSeleccionados?: boolean
+  /** Incrementar al seleccionar tramo/segmento en móvil para encuadrar el mapa. */
+  encuadrarSeleccionToken?: number
+  encuadrarGeometria?: GeoJsonLineString | null
+  encuadrarPaddingInferior?: number
 }
 
 type HoverVisitanteMapa = {
@@ -106,6 +111,44 @@ function AjustarBounds({ tramos }: { tramos: CanalTramo[] }) {
       maxZoom: MAX_ZOOM_MAPA_TRAMOS,
     })
   }, [map, tramos])
+
+  return null
+}
+
+function EncuadrarSeleccionEnMapa({
+  tramoId,
+  tramos,
+  geometriaPreferida,
+  token,
+  paddingInferior = 0,
+}: {
+  tramoId: string | null
+  tramos: CanalTramo[]
+  geometriaPreferida?: GeoJsonLineString | null
+  token: number
+  paddingInferior?: number
+}) {
+  const map = useMap()
+
+  useEffect(() => {
+    if (!tramoId || token <= 0) return
+    const tramo = tramos.find((t) => t.id === tramoId)
+    if (!tramo) return
+
+    const bounds =
+      geometriaPreferida && geometriaPreferida.coordinates.length >= 2
+        ? boundsDesdeGeometria(geometriaPreferida)
+        : boundsDesdeTramos([tramo])
+    if (!bounds) return
+
+    map.fitBounds(bounds, {
+      paddingTopLeft: [28, 28],
+      paddingBottomRight: [28, 28 + paddingInferior],
+      maxZoom: MAX_ZOOM_MAPA_TRAMOS,
+      animate: true,
+      duration: 0.45,
+    })
+  }, [map, tramoId, tramos, geometriaPreferida, token, paddingInferior])
 
   return null
 }
@@ -354,6 +397,9 @@ export function MapaTramosLeaflet({
   puntoIdsParpadeoFrente,
   jornadaPorPuntoFin,
   atenuarTramosNoSeleccionados = false,
+  encuadrarSeleccionToken = 0,
+  encuadrarGeometria = null,
+  encuadrarPaddingInferior = 0,
 }: MapaTramosLeafletProps) {
   const idsParpadeoFrente = puntoIdsParpadeoFrente ?? new Set<string>()
   const jornadasMapa = jornadaPorPuntoFin ?? new Map<string, JornadaMinitramoMapa>()
@@ -552,6 +598,13 @@ export function MapaTramosLeaflet({
         />
         <MapaEtiquetasMinitramoPorZoom segmentos={segmentosColoreados} />
         <AjustarBounds tramos={tramos} />
+        <EncuadrarSeleccionEnMapa
+          tramoId={tramoSeleccionadoId}
+          tramos={tramos}
+          geometriaPreferida={encuadrarGeometria}
+          token={encuadrarSeleccionToken}
+          paddingInferior={encuadrarPaddingInferior}
+        />
         <ExponerMapaCapacitacion tramos={tramos} />
         {ubicacionUsuario ? (
           <UbicacionUsuarioEnMapa

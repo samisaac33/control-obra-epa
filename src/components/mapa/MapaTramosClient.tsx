@@ -157,6 +157,7 @@ export function MapaTramosClient() {
   } | null>(null)
   const [segmentoDestacadoMovil, setSegmentoDestacadoMovil] =
     useState<SegmentoVisualTramo | null>(null)
+  const [encuadrarSeleccionToken, setEncuadrarSeleccionToken] = useState(0)
   const esViewportMovil = useEsViewportMovil()
   const [vistaSoloTramos1a24, setVistaSoloTramos1a24] = useState(false)
   const [mostrarNumerosTramo, setMostrarNumerosTramo] = useState(false)
@@ -275,6 +276,10 @@ export function MapaTramosClient() {
 
   const tramoSeleccionadoId = tramoSeleccionado?.id ?? null
 
+  function solicitarEncuadreTramoEnMapa() {
+    setEncuadrarSeleccionToken((n) => n + 1)
+  }
+
   function handleTramoClick(tramo: CanalTramo) {
     setTramoSeleccionado(tramo)
     setPanelError(null)
@@ -282,6 +287,7 @@ export function MapaTramosClient() {
     if (esViewportMovil) {
       setPanelAbierto(false)
       setTramoVisitanteModal(null)
+      solicitarEncuadreTramoEnMapa()
     } else {
       setPanelAbierto(true)
     }
@@ -766,7 +772,6 @@ export function MapaTramosClient() {
       <MapaTramoPreviewMovil
         tramo={tramoSeleccionado}
         puntosAvance={puntosAvance}
-        jornadaPorPuntoFin={jornadaPorPuntoFin}
         segmentoDestacado={segmentoDestacadoMovil}
         className={isResident ? "bottom-14" : undefined}
         onVerMas={() => setPanelAbierto(true)}
@@ -798,6 +803,7 @@ export function MapaTramosClient() {
                 setSegmentoDestacadoMovil(segmento)
                 setPanelAbierto(false)
                 setTramoVisitanteModal(null)
+                solicitarEncuadreTramoEnMapa()
                 return
               }
               setTramoVisitanteModal({
@@ -807,6 +813,9 @@ export function MapaTramosClient() {
             }
       }
       atenuarTramosNoSeleccionados={atenuarTramosNoSeleccionadosEnMapa}
+      encuadrarSeleccionToken={previewTramoMovilVisible ? encuadrarSeleccionToken : 0}
+      encuadrarGeometria={segmentoDestacadoMovil?.geometria ?? null}
+      encuadrarPaddingInferior={previewTramoMovilVisible ? (isResident ? 112 : 64) : 0}
       ubicacionUsuario={isResident ? ubicacionResidente : null}
       seguirUbicacionUsuario={isResident ? seguirUbicacionResidente : false}
       centrarUbicacionVersion={isResident ? centrarUbicacionKey : 0}
