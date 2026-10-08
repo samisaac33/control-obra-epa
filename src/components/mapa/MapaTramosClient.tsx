@@ -43,8 +43,8 @@ import { useProyecto } from "@/src/contexts/ProyectoContext"
 import type { CanalTramo, EstadoTramo, OrigenExtremoTramo } from "@/src/data/tramos/types"
 import { cargarTramosMapaProyecto } from "@/src/lib/cargar-tramos-mapa-proyecto"
 import {
-  actualizarFrenteParpadeoTramo,
-  frenteParpadeoPorTramoDesdeTramos,
+  actualizarFrenteParpadeoPunto,
+  idsPuntosFrenteParpadeo,
 } from "@/src/lib/tramo-frente-mapa"
 import { createClient } from "@/src/lib/supabase/client"
 import {
@@ -645,8 +645,8 @@ export function MapaTramosClient() {
     await handleEstadoPuntoChange(puntoFinId, estado)
   }
 
-  const puntoFrenteParpadeoPorTramo = useMemo(
-    () => frenteParpadeoPorTramoDesdeTramos(tramos, puntosAvance),
+  const puntoIdsParpadeoFrente = useMemo(
+    () => idsPuntosFrenteParpadeo(tramos, puntosAvance),
     [tramos, puntosAvance]
   )
 
@@ -655,25 +655,21 @@ export function MapaTramosClient() {
       const tramo = tramos.find((t) => t.id === tramoId)
       if (!tramo) return
 
-      const activo = tramo.punto_frente_mapa_id === puntoId
-      const nextPuntoId = activo ? null : puntoId
+      const activo = puntoIdsParpadeoFrente.has(puntoId)
+      const nextFrente = !activo
 
       setGuardandoFrenteParpadeoPuntoId(puntoId)
       setPanelError(null)
-      const tramosSnapshot = tramos
-      const tramoSeleccionadoSnapshot = tramoSeleccionado
+      const puntosSnapshot = puntosAvance
 
-      const patchFrente = (t: CanalTramo): CanalTramo =>
-        t.id === tramoId ? { ...t, punto_frente_mapa_id: nextPuntoId } : t
-
-      setTramos((prev) => prev.map(patchFrente))
-      setTramoSeleccionado((prev) => (prev?.id === tramoId ? patchFrente(prev) : prev))
+      setPuntosAvance((prev) =>
+        prev.map((p) => (p.id === puntoId ? { ...p, frente_mapa: nextFrente } : p))
+      )
 
       try {
-        await actualizarFrenteParpadeoTramo(supabase, tramoId, nextPuntoId)
+        await actualizarFrenteParpadeoPunto(supabase, tramoId, puntoId, nextFrente)
       } catch (err) {
-        setTramos(tramosSnapshot)
-        setTramoSeleccionado(tramoSeleccionadoSnapshot)
+        setPuntosAvance(puntosSnapshot)
         setPanelError(
           err instanceof Error ? err.message : "No se pudo guardar el frente en el mapa."
         )
@@ -681,12 +677,8 @@ export function MapaTramosClient() {
         setGuardandoFrenteParpadeoPuntoId(null)
       }
     },
-    [tramos, tramoSeleccionado, supabase]
+    [tramos, puntosAvance, puntoIdsParpadeoFrente, supabase]
   )
-
-  const puntoIdsParpadeoFrente = useMemo(() => {
-    return new Set(Object.values(puntoFrenteParpadeoPorTramo))
-  }, [puntoFrenteParpadeoPorTramo])
 
   async function handleRenumerarPuntosTramo() {
     if (!tramoSeleccionado) return
@@ -1022,9 +1014,7 @@ export function MapaTramosClient() {
         onEliminarPuntoHuérfano={isResident ? handleEliminarPuntoHuérfano : undefined}
         onEstadoMinitramoChange={isResident ? handleEstadoMinitramoChange : undefined}
         onEstadoPuntoChange={isResident ? handleEstadoPuntoChange : undefined}
-        puntoFrenteParpadeoId={
-          tramoSeleccionado ? (puntoFrenteParpadeoPorTramo[tramoSeleccionado.id] ?? null) : null
-        }
+        puntoIdsFrenteParpadeo={puntoIdsParpadeoFrente}
         onFrenteTrabajoParpadeo={
           isResident && tramoSeleccionado
             ? (puntoId) => void handleFrenteTrabajoParpadeo(tramoSeleccionado.id, puntoId)

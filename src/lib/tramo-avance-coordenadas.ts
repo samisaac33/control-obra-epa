@@ -41,6 +41,7 @@ export function normalizarPuntoAvance(row: Record<string, unknown>): TramoPuntoA
     rol: esRolValido(rolRaw) ? rolRaw : null,
     grupo_id: row.grupo_id ? String(row.grupo_id) : null,
     estado_minitramo: parseEstadoMinitramo(row.estado_minitramo),
+    frente_mapa: row.frente_mapa === true || row.frente_mapa === "true",
     punto_enlace_id: row.punto_enlace_id ? String(row.punto_enlace_id) : null,
   }
 }
