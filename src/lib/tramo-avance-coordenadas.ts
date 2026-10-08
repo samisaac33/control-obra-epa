@@ -61,17 +61,6 @@ export async function actualizarEstadoPuntoAvance(
     return
   }
 
-  if (estado === "en_ejecucion") {
-    const { error: clearError } = await supabase
-      .from("tramo_puntos_avance")
-      .update({ estado_minitramo: null })
-      .eq("tramo_id", tramoId)
-      .eq("estado_minitramo", "en_ejecucion")
-      .neq("id", puntoId)
-
-    if (clearError) throw new Error(clearError.message)
-  }
-
   const { error } = await supabase
     .from("tramo_puntos_avance")
     .update({ estado_minitramo: estado })
