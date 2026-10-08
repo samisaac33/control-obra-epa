@@ -614,6 +614,8 @@ export type TramoPuntoAvance = {
   rol?: RolPuntoAvance | null
   grupo_id?: string | null
   estado_minitramo?: EstadoTramo | null
+  /** Parpadeo de frente en mapa (botón «En ejecución»), independiente de estado_minitramo. */
+  frente_mapa?: boolean
   /** Vértice inicio del minitramo que cierra este punto; null = anterior cronológico. */
   punto_enlace_id?: string | null
 }

@@ -47,7 +47,7 @@ type TramoDetallePanelProps = {
   onEliminarPuntoHuérfano?: (puntoId: string) => void
   onEstadoMinitramoChange?: (puntoFinId: string, estado: EstadoTramo) => void | Promise<void>
   onEstadoPuntoChange?: (puntoId: string, estado: EstadoTramo | null) => void | Promise<void>
-  puntoFrenteParpadeoId?: string | null
+  puntoIdsFrenteParpadeo?: ReadonlySet<string>
   onFrenteTrabajoParpadeo?: (puntoId: string) => void
   guardandoEstadoMinitramoId?: string | null
   onEvidenciaSubida?: () => void
@@ -84,7 +84,7 @@ export function TramoDetallePanel({
   onEliminarPuntoHuérfano,
   onEstadoMinitramoChange,
   onEstadoPuntoChange,
-  puntoFrenteParpadeoId = null,
+  puntoIdsFrenteParpadeo,
   onFrenteTrabajoParpadeo,
   guardandoEstadoMinitramoId = null,
   onEvidenciaSubida,
@@ -118,7 +118,7 @@ export function TramoDetallePanel({
     onEditarMinitramo,
     onEstadoMinitramoChange,
     onEstadoPuntoChange,
-    puntoFrenteParpadeoId,
+    puntoIdsFrenteParpadeo,
     onFrenteTrabajoParpadeo,
     onEvidenciaSubida,
     onGuardarOrigenInicio,

@@ -21,7 +21,7 @@ import {
 } from "@/src/data/capacitacion/demo-map-desasolve"
 import { tramosMapaDesasolveSinExcluidos } from "@/src/data/tramos/tramos-excluidos"
 import type { CanalTramo } from "@/src/data/tramos/types"
-import { frenteParpadeoPorTramoDesdeTramos } from "@/src/lib/tramo-frente-mapa"
+import { idsPuntosFrenteParpadeo } from "@/src/lib/tramo-frente-mapa"
 import type { SegmentoVisualTramo } from "@/src/lib/tramo-geometria"
 import {
   calcularKpisTramos,
@@ -83,14 +83,10 @@ export function MapaCapacitacionDesasolveClient() {
     [tramosFiltrados, puntosAvance]
   )
 
-  const puntoFrenteParpadeoPorTramo = useMemo(
-    () => frenteParpadeoPorTramoDesdeTramos(tramos, puntosAvance),
+  const puntoIdsParpadeoFrente = useMemo(
+    () => idsPuntosFrenteParpadeo(tramos, puntosAvance),
     [tramos, puntosAvance]
   )
-
-  const puntoIdsParpadeoFrente = useMemo(() => {
-    return new Set(Object.values(puntoFrenteParpadeoPorTramo))
-  }, [puntoFrenteParpadeoPorTramo])
 
   function handleTramoClick(tramo: CanalTramo) {
     setTramoSeleccionado(tramo)
@@ -195,9 +191,7 @@ export function MapaCapacitacionDesasolveClient() {
         onClearPanelError={() => {}}
         onSubmit={async () => {}}
         onSolicitarConfirmacionAvance={() => {}}
-        puntoFrenteParpadeoId={
-          tramoSeleccionado ? (puntoFrenteParpadeoPorTramo[tramoSeleccionado.id] ?? null) : null
-        }
+        puntoIdsFrenteParpadeo={puntoIdsParpadeoFrente}
         guardandoEstadoMinitramoId={null}
         onEvidenciaSubida={() => {}}
       />

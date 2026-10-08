@@ -467,7 +467,7 @@ export function MapaTramosLeaflet({
 
   const layerKey = `${isResident ? "r" : "v"}-${esViewportMovil ? "m" : "d"}-${mostrarPuntosAvance ? "pts1" : "pts0"}-${mostrarMinitramosTerminados ? "mtt1" : "mtt0"}-${mapaConsolidado ? "cons1" : "cons0"}-${tramoSeleccionadoId ?? "none"}-${tramos
     .map((t) => `${t.id}:${t.metros_ejecutados}:${t.estado}`)
-    .join("|")}-${puntosVisibles.map((p) => `${p.id}:${p.estado_minitramo ?? ""}`).join(",")}-${[...idsParpadeoFrente].sort().join(",")}`
+    .join("|")}-${puntosVisibles.map((p) => `${p.id}:${p.estado_minitramo ?? ""}:${p.frente_mapa ? "1" : "0"}`).join(",")}-${[...idsParpadeoFrente].sort().join(",")}`
 
   useEffect(() => {
     setHoverVisitante(null)

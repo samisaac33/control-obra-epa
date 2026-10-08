@@ -134,5 +134,6 @@ export const DEMO_PUNTOS_CAPACITACION: TramoPuntoAvance[] = [
     created_at: "2025-08-20T10:00:00Z",
     rol: "c",
     estado_minitramo: "en_ejecucion",
+    frente_mapa: true,
   },
 ]
