@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <title>Informe semanal 5–11 oct 2026</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body {
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        font-family: system-ui, "Segoe UI", sans-serif;
+        background: #0f1419;
+        color: #f4f4f5;
+      }
+      .slide {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 80px 120px;
+        opacity: 0;
+        transform: scale(1.04);
+        transition: opacity 0.35s ease, transform 0.45s ease;
+        pointer-events: none;
+      }
+      .slide.active {
+        opacity: 1;
+        transform: scale(1);
+      }
+      .kicker {
+        font-size: 28px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #7dd3fc;
+        margin-bottom: 24px;
+      }
+      h1 {
+        font-size: 72px;
+        font-weight: 700;
+        line-height: 1.05;
+        max-width: 14ch;
+      }
+      h2 {
+        font-size: 56px;
+        font-weight: 650;
+        margin-bottom: 32px;
+      }
+      .big {
+        font-size: 120px;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        color: #4ade80;
+        line-height: 1;
+      }
+      .sub {
+        font-size: 36px;
+        color: #a1a1aa;
+        margin-top: 16px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 40px;
+        margin-top: 24px;
+      }
+      .card {
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 20px;
+        padding: 40px 48px;
+      }
+      .card .label {
+        font-size: 22px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #a1a1aa;
+      }
+      .card .value {
+        font-size: 64px;
+        font-weight: 750;
+        margin-top: 12px;
+        font-variant-numeric: tabular-nums;
+      }
+      .footer {
+        position: absolute;
+        bottom: 48px;
+        left: 120px;
+        right: 120px;
+        font-size: 22px;
+        color: #71717a;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="slides"></div>
+    <script>
+      const DATA = {
+        periodo: "5–11 oct 2026",
+        jornadas: 52,
+        kmSemana: "20,03",
+        horas: 364,
+        dias: 7,
+        tramosSemana: 6,
+        tramoTop: "tramo 19",
+        equipoTop: "Brazo Corto",
+        avancePct: "21,2",
+        kmEj: "14,1",
+        kmTot: "66,68",
+        terminados: 3,
+        enEjecucion: 2,
+      }
+
+      const SCENES = [
+        { id: "title", ms: 5500 },
+        { id: "semana1", ms: 9000 },
+        { id: "semana2", ms: 8500 },
+        { id: "destacado", ms: 9000 },
+        { id: "global", ms: 11000 },
+        { id: "mapa", ms: 9000 },
+        { id: "cierre", ms: 6500 },
+      ]
+
+      function htmlFor(id) {
+        const d = DATA
+        switch (id) {
+          case "title":
+            return `<div class="kicker">Informe semanal · Desasolve canales</div><h1>${d.periodo}</h1><p class="sub">Avance operativo y jornadas de maquinaria</p>`
+          case "semana1":
+            return `<div class="kicker">Actividad de la semana</div><div class="big">${d.jornadas}</div><p class="sub">jornadas registradas · ${d.dias} días con actividad · ${d.tramosSemana} tramos</p>`
+          case "semana2":
+            return `<div class="kicker">Registro en campo</div><div class="grid"><div class="card"><div class="label">Metros desasolvidos</div><div class="value">${d.kmSemana} km</div></div><div class="card"><div class="label">Horas de equipo</div><div class="value">${d.horas} h</div></div></div>`
+          case "destacado":
+            return `<div class="kicker">Mayor concentración</div><h2>${d.tramoTop}</h2><p class="sub">Equipo principal: ${d.equipoTop}</p>`
+          case "global":
+            return `<div class="kicker">Avance global al 11 oct</div><div class="big">${d.avancePct}%</div><p class="sub">${d.kmEj} km ejecutados de ${d.kmTot} km totales</p><div class="grid" style="margin-top:48px"><div class="card"><div class="label">Terminados</div><div class="value">${d.terminados}</div></div><div class="card"><div class="label">En ejecución</div><div class="value">${d.enEjecucion}</div></div></div>`
+          case "mapa":
+            return `<div class="kicker">Mapa operativo</div><h2>Residente · GPS · minitramos</h2><p class="sub">Red georreferenciada actualizada en control-obra-epa.vercel.app</p>`
+          case "cierre":
+            return `<div class="kicker">Control de obra EPA</div><h1>Mapa y maquinaria</h1><p class="sub">Detalle completo en la plataforma</p>`
+          default:
+            return ""
+        }
+      }
+
+      const root = document.getElementById("slides")
+      SCENES.forEach((s, i) => {
+        const el = document.createElement("div")
+        el.className = "slide" + (i === 0 ? " active" : "")
+        el.dataset.scene = s.id
+        el.innerHTML =
+          htmlFor(s.id) +
+          `<div class="footer">Desasolve de canales de riego · ${DATA.periodo}</div>`
+        root.appendChild(el)
+      })
+
+      window.__informeReady = true
+
+      const params = new URLSearchParams(location.search)
+      if (params.get("autostart") === "1") {
+        let idx = 0
+        const slides = [...document.querySelectorAll(".slide")]
+        function show(i) {
+          slides.forEach((s, j) => s.classList.toggle("active", j === i))
+        }
+        function next() {
+          idx += 1
+          if (idx >= SCENES.length) return
+          show(idx)
+          setTimeout(next, SCENES[idx].ms)
+        }
+        setTimeout(next, SCENES[0].ms)
+      }
+    </script>
+  </body>
+</html>
