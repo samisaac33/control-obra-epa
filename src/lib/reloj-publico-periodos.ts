@@ -44,11 +44,18 @@ function addMonths(year: number, monthIndex: number, delta: number): { year: num
   return { year: d.getFullYear(), monthIndex: d.getMonth() }
 }
 
+function restarDiasCalendario(iso: string, dias: number): string {
+  const fecha = parseIso(iso)
+  fecha.setDate(fecha.getDate() - dias)
+  return padIso(fecha.getFullYear(), fecha.getMonth() + 1, fecha.getDate())
+}
+
 export function calcularFechasPeriodo(anioInicio: number, mesInicio: number): RelojPublicoFechasPeriodo {
   const inicio = padIso(anioInicio, mesInicio, 7)
   const finMes = addMonths(anioInicio, mesInicio - 1, 1)
   const fin = padIso(finMes.year, finMes.monthIndex + 1, 6)
-  const notificacion = padIso(anioInicio, mesInicio, 4)
+  /** Dos días antes de la fecha de cierre del periodo (ej. cierra 6 ago → notificación 4 ago). */
+  const notificacion = restarDiasCalendario(fin, 2)
   const entregaInforme = fin
   return { inicio, fin, notificacion, entregaInforme }
 }
