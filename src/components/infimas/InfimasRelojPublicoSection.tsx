@@ -117,9 +117,10 @@ export function InfimasRelojPublicoSection() {
       <div className="rounded-xl border border-foreground/10 bg-card/60 p-4 sm:p-5">
         <p className="text-sm text-muted-foreground">
           Ciclo mensual: actividades del <strong className="font-medium text-foreground">7</strong> al{" "}
-          <strong className="font-medium text-foreground">6</strong> del mes siguiente; oficio de notificación el día{" "}
-          <strong className="font-medium text-foreground">4</strong>; oficio de entrega e informe el día{" "}
-          <strong className="font-medium text-foreground">6</strong> de cierre. Doce periodos (jul 2026 – jun 2027).
+          <strong className="font-medium text-foreground">6</strong> del mes siguiente; oficio de notificación{" "}
+          <strong className="font-medium text-foreground">2 días antes</strong> del cierre del periodo; oficio de
+          entrega e informe el día <strong className="font-medium text-foreground">6</strong> de cierre. Doce periodos
+          (jul 2026 – jun 2027).
         </p>
 
         <div className="mt-4 space-y-2">
