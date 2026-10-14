@@ -1,0 +1,25 @@
+{
+  "periodo": {
+    "inicio": "2026-10-05",
+    "fin": "2026-10-11",
+    "etiqueta": "5–11 oct 2026"
+  },
+  "semana": {
+    "jornadas": 52,
+    "metros": 20029.8,
+    "km": 20.03,
+    "horas": 364,
+    "diasConActividad": 7,
+    "tramosConJornada": 6,
+    "topEquipo": "Brazo Corto",
+    "topTramoCodigo": "tramo 19"
+  },
+  "acumulado": {
+    "avanceGlobalPct": 21.2,
+    "kmEjecutados": 14.1,
+    "kmTotales": 66.68,
+    "totalTramos": 34,
+    "terminados": 3,
+    "enEjecucion": 2
+  }
+}
