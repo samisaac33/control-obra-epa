@@ -23,6 +23,8 @@ const REDIRECTS_AMBIGUOS: Record<string, string> = {
   "/maquinaria": "/",
 }
 
+const RUTA_MAPA_DESASOLVE = rutaObra(PROYECTO_DESASOLVE_CANALES, "mapa")
+
 export async function proxy(request: NextRequest) {
   const { response, user } = await updateSession(request)
   const pathname = request.nextUrl.pathname
@@ -32,15 +34,26 @@ export async function proxy(request: NextRequest) {
     residenteEmail && user?.email?.toLowerCase() === residenteEmail
   )
 
+  const visitaGateActivo = isVisitaGateConfigured()
+  const visitaAutenticada = visitaGateActivo ? await validarCookieVisita(request) : false
+
+  if (visitaGateActivo && !isResident && visitaAutenticada && pathname === "/") {
+    const mapaUrl = request.nextUrl.clone()
+    mapaUrl.pathname = RUTA_MAPA_DESASOLVE
+    return NextResponse.redirect(mapaUrl)
+  }
+
   if (
-    isVisitaGateConfigured() &&
+    visitaGateActivo &&
     !rutasPublicasVisita(pathname) &&
     !isResident &&
-    !(await validarCookieVisita(request))
+    !visitaAutenticada
   ) {
     const ingresoUrl = request.nextUrl.clone()
     ingresoUrl.pathname = "/ingreso"
-    ingresoUrl.searchParams.set("next", `${pathname}${request.nextUrl.search}`)
+    const destinoTrasIngreso =
+      pathname === "/" ? RUTA_MAPA_DESASOLVE : `${pathname}${request.nextUrl.search}`
+    ingresoUrl.searchParams.set("next", destinoTrasIngreso)
     return NextResponse.redirect(ingresoUrl)
   }
 
@@ -58,7 +71,7 @@ export async function proxy(request: NextRequest) {
 
   if (pathname === "/mapa") {
     const url = request.nextUrl.clone()
-    url.pathname = rutaObra(PROYECTO_DESASOLVE_CANALES, "mapa")
+    url.pathname = RUTA_MAPA_DESASOLVE
     return NextResponse.redirect(url)
   }
 

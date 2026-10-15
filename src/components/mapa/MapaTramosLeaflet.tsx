@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import { createPortal } from "react-dom"
 import { CircleMarker, GeoJSON, MapContainer, Marker, TileLayer, useMap } from "react-leaflet"
 import type { Layer, PathOptions } from "leaflet"
@@ -80,6 +80,9 @@ type MapaTramosLeafletProps = {
   encuadrarSeleccionToken?: number
   encuadrarGeometria?: GeoJsonLineString | null
   encuadrarPaddingInferior?: number
+  /** Controles superpuestos al mapa solo en pantalla completa (p. ej. GPS y búsqueda del residente). */
+  controlesPantallaCompleta?: ReactNode
+  onPantallaCompletaChange?: (activo: boolean) => void
 }
 
 type HoverVisitanteMapa = {
@@ -401,6 +404,8 @@ export function MapaTramosLeaflet({
   encuadrarSeleccionToken = 0,
   encuadrarGeometria = null,
   encuadrarPaddingInferior = 0,
+  controlesPantallaCompleta,
+  onPantallaCompletaChange,
 }: MapaTramosLeafletProps) {
   const idsParpadeoFrente = puntoIdsParpadeoFrente ?? new Set<string>()
   const jornadasMapa = jornadaPorPuntoFin ?? new Map<string, JornadaMinitramoMapa>()
@@ -418,6 +423,10 @@ export function MapaTramosLeaflet({
       : alturaNormal
   const marcadoresRealmenteCompactos =
     marcadoresCompactos || (alturaResponsiveResidente && esViewportMovilHook)
+
+  useEffect(() => {
+    onPantallaCompletaChange?.(pantallaCompleta)
+  }, [pantallaCompleta, onPantallaCompletaChange])
 
   useEffect(() => {
     if (!pantallaCompleta) return
@@ -748,6 +757,16 @@ export function MapaTramosLeaflet({
           )
         })()}
       </MapContainer>
+      {pantallaCompleta && controlesPantallaCompleta ? (
+        <div
+          className={cn(
+            "pointer-events-none absolute inset-x-0 bottom-0 z-[1000] p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
+          )}
+          aria-live="polite"
+        >
+          <div className="pointer-events-auto">{controlesPantallaCompleta}</div>
+        </div>
+      ) : null}
     </div>
   )
 

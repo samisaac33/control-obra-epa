@@ -21,6 +21,7 @@ import { MapaTramosFiltrosSheet } from "@/src/components/mapa/MapaTramosFiltrosS
 import { MapaOpcionesCapasMapa } from "@/src/components/mapa/MapaOpcionesCapasMapa"
 import { MapaAsistenteChat } from "@/src/components/mapa/MapaAsistenteChat"
 import { MapaBuscarCoordenadasResidente } from "@/src/components/mapa/MapaBuscarCoordenadasResidente"
+import { MapaResidenteControlesPantallaCompleta } from "@/src/components/mapa/MapaResidenteControlesPantallaCompleta"
 import {
   MapaUbicacionResidenteBarra,
   MapaUbicacionResidentePanel,
@@ -127,6 +128,7 @@ export function MapaTramosClient() {
   const [reiniciandoOrigen, setReiniciandoOrigen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isResident, setIsResident] = useState(false)
+  const [mapaPantallaCompleta, setMapaPantallaCompleta] = useState(false)
   const [tramoSeleccionado, setTramoSeleccionado] = useState<CanalTramo | null>(null)
   const [panelAbierto, setPanelAbierto] = useState(false)
   const [filtros, setFiltros] = useState<FiltrosTramos>({
@@ -814,6 +816,10 @@ export function MapaTramosClient() {
       centrarUbicacionVersion={isResident ? centrarUbicacionKey : 0}
       puntoIdsParpadeoFrente={puntoIdsParpadeoFrente}
       jornadaPorPuntoFin={jornadaPorPuntoFin}
+      controlesPantallaCompleta={
+        isResident ? <MapaResidenteControlesPantallaCompleta /> : undefined
+      }
+      onPantallaCompletaChange={isResident ? setMapaPantallaCompleta : undefined}
     />
   )
 
@@ -957,17 +963,21 @@ export function MapaTramosClient() {
                   </div>
                   <MapaTramosMapaConBarra
                     barraInferior={
-                      <div className="md:hidden">
-                        <MapaUbicacionResidenteBarra />
-                      </div>
+                      mapaPantallaCompleta ? null : (
+                        <div className="md:hidden">
+                          <MapaUbicacionResidenteBarra />
+                        </div>
+                      )
                     }
                   >
                     {mapaLeaflet}
                     {previewTramoMovil}
                   </MapaTramosMapaConBarra>
-                  <div className="md:hidden">
-                    <MapaBuscarCoordenadasResidente />
-                  </div>
+                  {!mapaPantallaCompleta ? (
+                    <div className="md:hidden">
+                      <MapaBuscarCoordenadasResidente conBotonUbicacion />
+                    </div>
+                  ) : null}
                   <MapaAsistenteChat
                     proyectoId={proyectoId}
                     tramos={tramos}
