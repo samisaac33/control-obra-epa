@@ -24,7 +24,7 @@ cp .env.example .env.local
 - **Asistente multimodal en `/mapa` (residente):**
   - En el panel, **ACTIVE** solo indica que AI Gateway está habilitado; **no** es el valor de la variable.
   - **Opción A (recomendada en Vercel):** [AI Gateway](https://vercel.com/docs/ai-gateway) → **API Keys** → crear clave → en el proyecto, variable **`AI_GATEWAY_API_KEY`** = el **secreto** que muestra Vercel una sola vez (cadena larga, no la palabra ACTIVE).
-  - **Opción B:** OIDC en despliegues Vercel (token `VERCEL_OIDC_TOKEN` automático); no defina `AI_GATEWAY_API_KEY` con un valor falso.
+  - **Opción B (OIDC):** en el proyecto → **Settings → Security** → active **Secure Backend Access with OIDC Federation** → **Save** → **Redeploy**. No defina `AI_GATEWAY_API_KEY`. El token no suele verse en Environment Variables; el runtime lo resuelve en cada petición.
   - **Opcional (modelos):** `MAPA_ASISTENTE_CHAT_MODEL` y `MAPA_ASISTENTE_VISION_MODEL` (por defecto `google/gemini-2.5-flash`). Solo cambian qué modelo de Google se llama; no sustituyen la API key.
 - **Acceso visitantes (opcional):** `VISITANTE_SESSION_SECRET` (cadena aleatoria ≥ 32 caracteres) y `VISITANTE_PIN` o `VISITANTE_PIN_SHA256` (hash SHA-256 en hex del PIN). Si están definidos, quien no sea residente debe ingresar el PIN en `/ingreso` (cookie firmada ~30 días; sin cuentas en Supabase).
 

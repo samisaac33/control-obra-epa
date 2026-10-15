@@ -5,39 +5,31 @@ const PLACEHOLDERS_INVALIDOS = new Set(
   )
 )
 
+/**
+ * Solo rechaza configuraciones claramente incorrectas.
+ * Con OIDC, el AI SDK obtiene el token en cada request vía @vercel/oidc;
+ * no hace falta que VERCEL_OIDC_TOKEN aparezca en Environment Variables del dashboard.
+ */
 export function verificarCredencialesAiGateway():
   | { ok: true }
   | { ok: false; mensaje: string } {
   const apiKey = process.env.AI_GATEWAY_API_KEY?.trim()
-  const oidc = process.env.VERCEL_OIDC_TOKEN?.trim()
 
   if (apiKey && PLACEHOLDERS_INVALIDOS.has(apiKey.toLowerCase())) {
     return {
       ok: false,
       mensaje:
-        'AI_GATEWAY_API_KEY no debe ser "ACTIVE" ni otro estado del panel. Cree una API key en Vercel → AI Gateway → API Keys y pegue el valor secreto completo, o elimine esa variable y use OIDC en el despliegue.',
+        'AI_GATEWAY_API_KEY no debe ser "ACTIVE" ni otro estado del panel. Elimine esa variable para usar OIDC, o pegue una API key secreta real de AI Gateway.',
     }
   }
 
-  if (apiKey && apiKey.length >= 20) {
-    return { ok: true }
-  }
-
-  if (oidc && oidc.length > 20) {
-    return { ok: true }
-  }
-
-  if (apiKey && apiKey.length < 20) {
+  if (apiKey && apiKey.length > 0 && apiKey.length < 20) {
     return {
       ok: false,
       mensaje:
-        "AI_GATEWAY_API_KEY parece incompleta. Use la clave secreta generada en Vercel (AI Gateway → API Keys), no la etiqueta ACTIVE del estado del servicio.",
+        "AI_GATEWAY_API_KEY parece incompleta. Use la clave secreta de Vercel (AI Gateway → API Keys) o elimínela para OIDC.",
     }
   }
 
-  return {
-    ok: false,
-    mensaje:
-      "Falta autenticación con AI Gateway. En Vercel: cree AI_GATEWAY_API_KEY con una API key real, o enlace el proyecto a AI Gateway para OIDC (VERCEL_OIDC_TOKEN en runtime).",
-  }
+  return { ok: true }
 }
