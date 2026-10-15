@@ -6,13 +6,24 @@ import { Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
-import { useMapaUbicacionResidente } from "@/src/components/mapa/MapaUbicacionResidenteBlock"
+import {
+  BotonGpsResidenteIcono,
+  useMapaUbicacionResidente,
+} from "@/src/components/mapa/MapaUbicacionResidenteBlock"
 
 type MapaBuscarCoordenadasResidenteProps = {
   className?: string
+  /** Estilo flotante legible sobre el mapa en pantalla completa */
+  variant?: "default" | "overlay"
+  /** Botón cuadrado «Mi ubicación» al inicio de la fila (móvil / pantalla completa) */
+  conBotonUbicacion?: boolean
 }
 
-export function MapaBuscarCoordenadasResidente({ className }: MapaBuscarCoordenadasResidenteProps) {
+export function MapaBuscarCoordenadasResidente({
+  className,
+  variant = "default",
+  conBotonUbicacion = false,
+}: MapaBuscarCoordenadasResidenteProps) {
   const { buscarPorTextoCoordenadas, limpiarBusquedaCoordenadas, posicionManual } =
     useMapaUbicacionResidente()
   const [texto, setTexto] = useState("")
@@ -37,7 +48,8 @@ export function MapaBuscarCoordenadasResidente({ className }: MapaBuscarCoordena
 
   return (
     <div className={cn("space-y-1.5", className)}>
-      <div className="flex gap-2">
+      <div className="flex min-w-0 items-center gap-2">
+        {conBotonUbicacion ? <BotonGpsResidenteIcono overlay={variant === "overlay"} /> : null}
         <Input
           type="text"
           inputMode="decimal"
@@ -51,14 +63,22 @@ export function MapaBuscarCoordenadasResidente({ className }: MapaBuscarCoordena
               ejecutarBusqueda()
             }
           }}
-          className="min-h-11 flex-1 text-sm"
+          className={cn(
+            "min-h-11 min-w-0 flex-1 text-xs sm:text-sm",
+            variant === "overlay" &&
+              "border-foreground/15 bg-background/95 shadow-md backdrop-blur-sm"
+          )}
           aria-label="Coordenadas latitud, longitud"
         />
         <Button
           type="button"
           variant="outline"
           size="icon"
-          className="size-11 shrink-0"
+          className={cn(
+            "size-11 shrink-0",
+            variant === "overlay" &&
+              "border-foreground/15 bg-background/95 shadow-md backdrop-blur-sm"
+          )}
           aria-label="Buscar coordenadas"
           onClick={ejecutarBusqueda}
         >
