@@ -15,6 +15,7 @@ import {
 import { registrarSolicitudAsistente } from "@/src/lib/mapa-asistente-rate-limit"
 import type { MapaAsistenteUIMessage } from "@/src/lib/mapa-asistente-types"
 import type { CoordenadasMapaAplicables } from "@/src/lib/mapa-coordenadas-gps"
+import { verificarCredencialesAiGateway } from "@/src/lib/mapa-asistente-gateway"
 import { ipDesdeRequest } from "@/src/lib/visita-rate-limit"
 
 export const maxDuration = 60
@@ -98,6 +99,11 @@ ${coordsBlock}`
 }
 
 export async function POST(request: Request, { params }: RouteParams) {
+  const gateway = verificarCredencialesAiGateway()
+  if (!gateway.ok) {
+    return Response.json({ error: gateway.mensaje }, { status: 503 })
+  }
+
   const { proyectoId } = await params
   const auth = await autorizarMapaAsistente(proyectoId)
   if (!auth.ok) {
