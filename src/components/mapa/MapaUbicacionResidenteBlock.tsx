@@ -243,19 +243,27 @@ export function MapaUbicacionResidenteProvider({
   )
 }
 
-function BotonesUbicacionResidente({ barraMapa }: { barraMapa?: boolean }) {
+function BotonesUbicacionResidente({
+  barraMapa,
+}: {
+  barraMapa?: boolean | "pantallaCompleta"
+}) {
   const { gpsActivo, posicionEfectiva, puedeRegistrar, handleToggleGps, handleRegistrarPunto } =
     useUbicacionResidenteContext()
+  const esBarraFlotante = Boolean(barraMapa)
+  const esPantallaCompleta = barraMapa === "pantallaCompleta"
 
   return (
-    <div className="flex gap-2">
+    <div className={cn("flex gap-2", esPantallaCompleta && "flex-wrap justify-start")}>
       <Button
         type="button"
         variant={gpsActivo ? "secondary" : "outline"}
-        size={barraMapa ? "default" : "sm"}
+        size={esBarraFlotante ? "default" : "sm"}
         className={cn(
-          "min-h-11 flex-1 text-xs shadow-sm",
-          barraMapa && "border-foreground/15 bg-background/95 backdrop-blur-sm"
+          "min-h-11 text-xs shadow-sm",
+          !esPantallaCompleta && "flex-1",
+          esPantallaCompleta && "min-w-[9.5rem] shrink-0",
+          esBarraFlotante && "border-foreground/15 bg-background/95 backdrop-blur-sm"
         )}
         onClick={handleToggleGps}
       >
@@ -274,8 +282,12 @@ function BotonesUbicacionResidente({ barraMapa }: { barraMapa?: boolean }) {
       {posicionEfectiva ? (
         <Button
           type="button"
-          size={barraMapa ? "default" : "sm"}
-          className="min-h-11 flex-1 text-xs shadow-sm"
+          size={esBarraFlotante ? "default" : "sm"}
+          className={cn(
+            "min-h-11 text-xs shadow-sm",
+            !esPantallaCompleta && "flex-1",
+            esPantallaCompleta && "min-w-[9.5rem] shrink-0"
+          )}
           disabled={!puedeRegistrar}
           onClick={handleRegistrarPunto}
         >
@@ -287,10 +299,18 @@ function BotonesUbicacionResidente({ barraMapa }: { barraMapa?: boolean }) {
   )
 }
 
-export function MapaUbicacionResidenteBarra({ className }: { className?: string }) {
+export function MapaUbicacionResidenteBarra({
+  className,
+  modo = "barraMapa",
+}: {
+  className?: string
+  /** barraMapa: flotante sobre el mapa normal; pantallaCompleta: esquina inferior izquierda al expandir */
+  modo?: "barraMapa" | "pantallaCompleta"
+}) {
   const { lineaEstado, errorGps, mensajeLocal, deteccion } = useUbicacionResidenteContext()
 
   const esAlerta = Boolean(errorGps || mensajeLocal)
+  const barraMapaProp = modo === "pantallaCompleta" ? "pantallaCompleta" : true
 
   return (
     <div className={cn("space-y-1.5", className)}>
@@ -309,7 +329,7 @@ export function MapaUbicacionResidenteBarra({ className }: { className?: string 
           {lineaEstado}
         </p>
       ) : null}
-      <BotonesUbicacionResidente barraMapa />
+      <BotonesUbicacionResidente barraMapa={barraMapaProp} />
     </div>
   )
 }

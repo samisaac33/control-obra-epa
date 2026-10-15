@@ -10,9 +10,14 @@ import { useMapaUbicacionResidente } from "@/src/components/mapa/MapaUbicacionRe
 
 type MapaBuscarCoordenadasResidenteProps = {
   className?: string
+  /** Estilo flotante legible sobre el mapa en pantalla completa */
+  variant?: "default" | "overlay"
 }
 
-export function MapaBuscarCoordenadasResidente({ className }: MapaBuscarCoordenadasResidenteProps) {
+export function MapaBuscarCoordenadasResidente({
+  className,
+  variant = "default",
+}: MapaBuscarCoordenadasResidenteProps) {
   const { buscarPorTextoCoordenadas, limpiarBusquedaCoordenadas, posicionManual } =
     useMapaUbicacionResidente()
   const [texto, setTexto] = useState("")
@@ -51,14 +56,22 @@ export function MapaBuscarCoordenadasResidente({ className }: MapaBuscarCoordena
               ejecutarBusqueda()
             }
           }}
-          className="min-h-11 flex-1 text-sm"
+          className={cn(
+            "min-h-11 flex-1 text-sm",
+            variant === "overlay" &&
+              "border-foreground/15 bg-background/95 shadow-md backdrop-blur-sm"
+          )}
           aria-label="Coordenadas latitud, longitud"
         />
         <Button
           type="button"
           variant="outline"
           size="icon"
-          className="size-11 shrink-0"
+          className={cn(
+            "size-11 shrink-0",
+            variant === "overlay" &&
+              "border-foreground/15 bg-background/95 shadow-md backdrop-blur-sm"
+          )}
           aria-label="Buscar coordenadas"
           onClick={ejecutarBusqueda}
         >
