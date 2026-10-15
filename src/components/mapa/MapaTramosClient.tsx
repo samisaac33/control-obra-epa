@@ -19,6 +19,7 @@ import { MapaSegmentoInfoModal } from "@/src/components/mapa/MapaSegmentoInfoMod
 import { MapaTramoPreviewMovil } from "@/src/components/mapa/MapaTramoPreviewMovil"
 import { MapaTramosFiltrosSheet } from "@/src/components/mapa/MapaTramosFiltrosSheet"
 import { MapaOpcionesCapasMapa } from "@/src/components/mapa/MapaOpcionesCapasMapa"
+import { MapaAsistenteChat } from "@/src/components/mapa/MapaAsistenteChat"
 import { MapaBuscarCoordenadasResidente } from "@/src/components/mapa/MapaBuscarCoordenadasResidente"
 import { MapaResidenteControlesPantallaCompleta } from "@/src/components/mapa/MapaResidenteControlesPantallaCompleta"
 import {
@@ -945,6 +946,12 @@ export function MapaTramosClient() {
                     />
                     <MapaUbicacionResidentePanel />
                     <MapaBuscarCoordenadasResidente />
+                    <MapaAsistenteChat
+                      proyectoId={proyectoId}
+                      tramos={tramos}
+                      puntosAvance={puntosAvance}
+                      variant="inline"
+                    />
                     <MapaTramosKpis kpis={kpis} />
                     <MapaTramosFiltros
                       filtros={filtros}
@@ -971,6 +978,12 @@ export function MapaTramosClient() {
                       <MapaBuscarCoordenadasResidente conBotonUbicacion />
                     </div>
                   ) : null}
+                  <MapaAsistenteChat
+                    proyectoId={proyectoId}
+                    tramos={tramos}
+                    puntosAvance={puntosAvance}
+                    variant="sheet"
+                  />
                   <div className="md:hidden">
                     <MapaTramosFiltrosSheet
                       filtros={filtros}

@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils"
 import type { UbicacionUsuario } from "@/src/components/mapa/UbicacionUsuarioEnMapa"
 import type { CanalTramo } from "@/src/data/tramos/types"
 import { useGeolocalizacion } from "@/src/hooks/use-geolocalizacion"
-import { parseCoordenadasDesdeTexto } from "@/src/lib/coordenadas-evidencia"
+import { normalizarEntradaCoordenadas } from "@/src/lib/mapa-coordenadas-gps"
 import type { PropuestaPuntoMinitramo, TramoPuntoAvance } from "@/src/lib/tramo-geometria"
 import {
   detectarTramoDesdeCoordenada,
@@ -58,6 +58,11 @@ type UbicacionResidenteContextValue = {
   handleToggleGps: () => void
   handleRegistrarPunto: () => void
   buscarPorTextoCoordenadas: (texto: string) => BuscarCoordenadasResult
+  aplicarCoordenadasEnMapa: (coords: {
+    lat: number
+    lng: number
+    precision_m?: number
+  }) => void
   limpiarBusquedaCoordenadas: () => void
 }
 
@@ -141,22 +146,30 @@ export function MapaUbicacionResidenteProvider({
     setPosicionManual(null)
   }, [])
 
+  const aplicarCoordenadasEnMapa = useCallback(
+    (coords: { lat: number; lng: number; precision_m?: number }) => {
+      setMensajeLocal(null)
+      setPosicionManual({
+        lat: coords.lat,
+        lng: coords.lng,
+        precision_m: coords.precision_m ?? 10,
+      })
+      onCentrarMapaEnUbicacion?.()
+    },
+    [onCentrarMapaEnUbicacion]
+  )
+
   const buscarPorTextoCoordenadas = useCallback(
     (texto: string): BuscarCoordenadasResult => {
       setMensajeLocal(null)
-      const parsed = parseCoordenadasDesdeTexto(texto)
+      const parsed = normalizarEntradaCoordenadas(texto)
       if (!parsed.ok) {
         return { ok: false, error: parsed.error }
       }
-      setPosicionManual({
-        lat: parsed.lat,
-        lng: parsed.lng,
-        precision_m: parsed.precision_m,
-      })
-      onCentrarMapaEnUbicacion?.()
+      aplicarCoordenadasEnMapa(parsed.coords)
       return { ok: true }
     },
-    [onCentrarMapaEnUbicacion]
+    [aplicarCoordenadasEnMapa]
   )
 
   function handleToggleGps() {
@@ -235,6 +248,7 @@ export function MapaUbicacionResidenteProvider({
     handleToggleGps,
     handleRegistrarPunto,
     buscarPorTextoCoordenadas,
+    aplicarCoordenadasEnMapa,
     limpiarBusquedaCoordenadas,
   }
 

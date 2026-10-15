@@ -21,6 +21,7 @@ cp .env.example .env.local
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `NEXT_PUBLIC_RESIDENTE_EMAIL` (correo autorizado para editar)
+- **Asistente multimodal en `/mapa` (residente):** en Vercel, active [AI Gateway](https://vercel.com/docs/ai-gateway) y configure `AI_GATEWAY_API_KEY` (o OIDC en despliegue). Opcional: `MAPA_ASISTENTE_CHAT_MODEL` y `MAPA_ASISTENTE_VISION_MODEL` (por defecto `google/gemini-2.5-flash`).
 - **Acceso visitantes (opcional):** `VISITANTE_SESSION_SECRET` (cadena aleatoria ≥ 32 caracteres) y `VISITANTE_PIN` o `VISITANTE_PIN_SHA256` (hash SHA-256 en hex del PIN). Si están definidos, quien no sea residente debe ingresar el PIN en `/ingreso` (cookie firmada ~30 días; sin cuentas en Supabase).
 
   Generar hash del PIN (ejemplo PIN `482910`):
