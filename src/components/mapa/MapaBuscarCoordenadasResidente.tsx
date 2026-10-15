@@ -42,7 +42,7 @@ export function MapaBuscarCoordenadasResidente({ className }: MapaBuscarCoordena
           type="text"
           inputMode="decimal"
           autoComplete="off"
-          placeholder="-0.846327, -80.512136"
+          placeholder="Lat, lng o UTM (ej. zona 17, 552453E, 9907113N)"
           value={texto}
           onChange={(e) => handleChange(e.target.value)}
           onKeyDown={(e) => {
