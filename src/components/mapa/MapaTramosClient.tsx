@@ -767,9 +767,35 @@ export function MapaTramosClient() {
         tramo={tramoSeleccionado}
         puntosAvance={puntosAvance}
         segmentoDestacado={segmentoDestacadoMovil}
-        className={isResident ? "bottom-14" : undefined}
+        className={isResident || visitanteMovil ? "bottom-14" : undefined}
         onVerMas={() => setPanelAbierto(true)}
         onCerrar={cerrarPreviewTramoMovil}
+      />
+    ) : null
+
+  const filtrosVisitanteMovil =
+    visitanteMovil && !previewTramoMovilVisible ? (
+      <MapaTramosFiltrosSheet
+        variant="visitanteTramoCapas"
+        anclajeMapa
+        triggerLabel="Filtros y leyenda"
+        filtros={filtros}
+        tramos={tramosParaVista}
+        semanas={semanasProgramadasUnicas(tramos)}
+        onChange={setFiltros}
+        capas={{
+          vistaSoloTramos1a24,
+          onVistaSoloTramos1a24Change: setVistaSoloTramos1a24,
+          mostrarNumerosTramo,
+          onMostrarNumerosTramoChange: setMostrarNumerosTramo,
+          mostrarPuntosAvance,
+          onMostrarPuntosAvanceChange: setMostrarPuntosAvance,
+          ocultarMinitramosTerminados,
+          onOcultarMinitramosTerminadosChange: setOcultarMinitramosTerminados,
+          mapaConsolidado,
+          onMapaConsolidadoChange: setMapaConsolidado,
+          idPrefix: "visitante-movil",
+        }}
       />
     ) : null
 
@@ -819,6 +845,7 @@ export function MapaTramosClient() {
         isResident ? <MapaResidenteControlesPantallaCompleta /> : undefined
       }
       onPantallaCompletaChange={isResident ? setMapaPantallaCompleta : undefined}
+      barraInferiorMapa={filtrosVisitanteMovil}
     />
   )
 
@@ -869,7 +896,7 @@ export function MapaTramosClient() {
                       resumen.
                     </p>
                   )}
-                  <MapaTramosLeyenda compact={visitanteMovil} />
+                  {visitanteMovil ? null : <MapaTramosLeyenda compact={visitanteMovil} />}
                   {visitanteMovil ? null : (
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                       <div className="min-w-0 sm:flex-1">
@@ -901,28 +928,6 @@ export function MapaTramosClient() {
                     {mapaLeaflet}
                     {previewTramoMovil}
                   </MapaTramosMapaConBarra>
-                  {visitanteMovil ? (
-                    <MapaTramosFiltrosSheet
-                      variant="visitanteTramoCapas"
-                      filtros={filtros}
-                      tramos={tramosParaVista}
-                      semanas={semanasProgramadasUnicas(tramos)}
-                      onChange={setFiltros}
-                      capas={{
-                        vistaSoloTramos1a24,
-                        onVistaSoloTramos1a24Change: setVistaSoloTramos1a24,
-                        mostrarNumerosTramo,
-                        onMostrarNumerosTramoChange: setMostrarNumerosTramo,
-                        mostrarPuntosAvance,
-                        onMostrarPuntosAvanceChange: setMostrarPuntosAvance,
-                        ocultarMinitramosTerminados,
-                        onOcultarMinitramosTerminadosChange: setOcultarMinitramosTerminados,
-                        mapaConsolidado,
-                        onMapaConsolidadoChange: setMapaConsolidado,
-                        idPrefix: "visitante-movil",
-                      }}
-                    />
-                  ) : null}
                 </>
               ) : (
                 <MapaUbicacionResidenteProvider {...ubicacionResidenteProps}>
