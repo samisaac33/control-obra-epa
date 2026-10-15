@@ -11,6 +11,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
+import { cn } from "@/lib/utils"
 import { MapaOpcionesCapasMapa } from "@/src/components/mapa/MapaOpcionesCapasMapa"
 import {
   MapaTramosFiltroTramo,
@@ -43,6 +44,9 @@ type MapaTramosFiltrosSheetProps = {
   camposFiltro?: Array<"estado" | "tramo" | "semana">
   leyendaCompact?: boolean
   capas?: CapasMapaProps
+  /** Superpone el botón al mapa y abre un panel inferior sin oscurecer el mapa. */
+  anclajeMapa?: boolean
+  triggerClassName?: string
 }
 
 function filtrosActivos(filtros: FiltrosTramos): boolean {
@@ -78,6 +82,8 @@ export function MapaTramosFiltrosSheet({
   camposFiltro = ["estado", "semana"],
   leyendaCompact = false,
   capas,
+  anclajeMapa = false,
+  triggerClassName,
 }: MapaTramosFiltrosSheetProps) {
   const esVisitanteTramoCapas = variant === "visitanteTramoCapas"
 
@@ -86,26 +92,60 @@ export function MapaTramosFiltrosSheet({
     : filtrosActivos(filtros) || capasActivas(capas)
 
   return (
-    <Sheet>
+    <Sheet modal={!anclajeMapa}>
       <SheetTrigger asChild>
-        <Button type="button" variant="outline" className="relative min-h-11 w-full gap-2">
-          <SlidersHorizontal className="size-4" aria-hidden />
+        <Button
+          type="button"
+          variant="outline"
+          className={cn(
+            "relative min-h-11 w-full gap-2",
+            anclajeMapa &&
+              "border-foreground/15 bg-background/92 shadow-md backdrop-blur-md touch-manipulation",
+            triggerClassName
+          )}
+        >
+          <SlidersHorizontal className="size-4 shrink-0" aria-hidden />
           {triggerLabel}
           {activos ? (
             <span className="absolute right-3 top-1/2 size-2 -translate-y-1/2 rounded-full bg-primary" />
           ) : null}
         </Button>
       </SheetTrigger>
-      <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto" aria-label="Filtros del mapa">
-        <SheetHeader>
-          <SheetTitle>Filtros del mapa</SheetTitle>
-          <SheetDescription>
-            {esVisitanteTramoCapas
-              ? "Seleccione tramo y capas del mapa."
-              : "Refine los tramos visibles, capas y leyenda de colores."}
-          </SheetDescription>
+      <SheetContent
+        side="bottom"
+        showOverlay={!anclajeMapa}
+        className={cn(
+          "overflow-y-auto",
+          anclajeMapa
+            ? "z-[230] max-h-[min(46dvh,360px)] gap-0 rounded-t-2xl border-t border-foreground/15 bg-background/95 p-0 shadow-[0_-8px_32px_rgba(0,0,0,0.12)] backdrop-blur-md"
+            : "max-h-[85dvh]"
+        )}
+        aria-label="Filtros del mapa"
+      >
+        <SheetHeader
+          className={cn(
+            anclajeMapa &&
+              "border-b border-foreground/10 px-4 py-3 pr-12 text-left"
+          )}
+        >
+          {anclajeMapa ? (
+            <div
+              className="mx-auto mb-1 h-1 w-10 shrink-0 rounded-full bg-foreground/20"
+              aria-hidden
+            />
+          ) : null}
+          <SheetTitle className={cn(anclajeMapa && "text-sm font-semibold")}>
+            {anclajeMapa ? triggerLabel : "Filtros del mapa"}
+          </SheetTitle>
+          {!anclajeMapa ? (
+            <SheetDescription>
+              {esVisitanteTramoCapas
+                ? "Seleccione tramo y capas del mapa."
+                : "Refine los tramos visibles, capas y leyenda de colores."}
+            </SheetDescription>
+          ) : null}
         </SheetHeader>
-        <div className="mt-4 space-y-4">
+        <div className={cn("space-y-4", anclajeMapa ? "px-4 pb-4 pt-3" : "mt-4")}>
           {esVisitanteTramoCapas ? (
             <>
               <MapaTramosFiltroTramo
@@ -130,6 +170,7 @@ export function MapaTramosFiltrosSheet({
                   perfil="visitante"
                 />
               ) : null}
+              {anclajeMapa ? <MapaTramosLeyenda compact /> : null}
             </>
           ) : (
             <>

@@ -83,6 +83,8 @@ type MapaTramosLeafletProps = {
   /** Controles superpuestos al mapa solo en pantalla completa (p. ej. GPS y búsqueda del residente). */
   controlesPantallaCompleta?: ReactNode
   onPantallaCompletaChange?: (activo: boolean) => void
+  /** Barra inferior sobre el canvas del mapa (normal y pantalla completa). */
+  barraInferiorMapa?: ReactNode
 }
 
 type HoverVisitanteMapa = {
@@ -406,6 +408,7 @@ export function MapaTramosLeaflet({
   encuadrarPaddingInferior = 0,
   controlesPantallaCompleta,
   onPantallaCompletaChange,
+  barraInferiorMapa,
 }: MapaTramosLeafletProps) {
   const idsParpadeoFrente = puntoIdsParpadeoFrente ?? new Set<string>()
   const jornadasMapa = jornadaPorPuntoFin ?? new Map<string, JornadaMinitramoMapa>()
@@ -757,14 +760,18 @@ export function MapaTramosLeaflet({
           )
         })()}
       </MapContainer>
-      {pantallaCompleta && controlesPantallaCompleta ? (
+      {barraInferiorMapa || (pantallaCompleta && controlesPantallaCompleta) ? (
         <div
           className={cn(
-            "pointer-events-none absolute inset-x-0 bottom-0 z-[1000] p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
+            "pointer-events-none absolute inset-x-0 bottom-0 p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]",
+            pantallaCompleta ? "z-[1000]" : Z_MAPA_BARRA_CONTROLES
           )}
           aria-live="polite"
         >
-          <div className="pointer-events-auto">{controlesPantallaCompleta}</div>
+          <div className="pointer-events-auto space-y-2">
+            {barraInferiorMapa}
+            {pantallaCompleta ? controlesPantallaCompleta : null}
+          </div>
         </div>
       ) : null}
     </div>
