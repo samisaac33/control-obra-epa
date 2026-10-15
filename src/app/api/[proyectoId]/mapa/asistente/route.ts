@@ -15,11 +15,8 @@ import {
 import { registrarSolicitudAsistente } from "@/src/lib/mapa-asistente-rate-limit"
 import type { MapaAsistenteUIMessage } from "@/src/lib/mapa-asistente-types"
 import type { CoordenadasMapaAplicables } from "@/src/lib/mapa-coordenadas-gps"
-import { verificarCredencialesAiGateway } from "@/src/lib/mapa-asistente-gateway"
-import {
-  mensajeErrorAsistenteLegible,
-  modeloAsistenteChat,
-} from "@/src/lib/mapa-asistente-modelos"
+import { modeloGoogleChat, verificarCredencialesGoogle } from "@/src/lib/mapa-asistente-google"
+import { mensajeErrorAsistenteLegible } from "@/src/lib/mapa-asistente-modelos"
 import { ipDesdeRequest } from "@/src/lib/visita-rate-limit"
 
 export const maxDuration = 60
@@ -100,9 +97,9 @@ ${coordsBlock}`
 }
 
 export async function POST(request: Request, { params }: RouteParams) {
-  const gateway = verificarCredencialesAiGateway()
-  if (!gateway.ok) {
-    return Response.json({ error: gateway.mensaje }, { status: 503 })
+  const googleAuth = verificarCredencialesGoogle()
+  if (!googleAuth.ok) {
+    return Response.json({ error: googleAuth.mensaje }, { status: 503 })
   }
 
   const { proyectoId } = await params
@@ -163,7 +160,7 @@ export async function POST(request: Request, { params }: RouteParams) {
     const systemConError = `${system}\n\nNota: ${coordsError} Sugiera revisar la captura o ingresar coordenadas manualmente.`
     const modelMessages = await convertToModelMessages(messages as UIMessage[])
     const result = streamText({
-      model: modeloAsistenteChat(),
+      model: modeloGoogleChat(),
       system: systemConError,
       messages: modelMessages,
     })
@@ -181,7 +178,7 @@ export async function POST(request: Request, { params }: RouteParams) {
 
   const modelMessages = await convertToModelMessages(messages as UIMessage[])
   const result = streamText({
-    model: modeloAsistenteChat(),
+    model: modeloGoogleChat(),
     system,
     messages: modelMessages,
   })

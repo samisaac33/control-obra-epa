@@ -1,6 +1,6 @@
-/** Modelos con visión + structured output; accesibles en créditos gratuitos de AI Gateway (no usar gemini-2.5-flash base). */
-export const MAPA_ASISTENTE_VISION_MODEL_DEFAULT = "google/gemini-2.5-flash-lite"
-export const MAPA_ASISTENTE_CHAT_MODEL_DEFAULT = "google/gemini-2.5-flash-lite"
+/** IDs para @ai-sdk/google (sin prefijo google/). */
+export const MAPA_ASISTENTE_VISION_MODEL_DEFAULT = "gemini-2.5-flash-lite"
+export const MAPA_ASISTENTE_CHAT_MODEL_DEFAULT = "gemini-2.5-flash-lite"
 
 export function modeloAsistenteVision(): string {
   return process.env.MAPA_ASISTENTE_VISION_MODEL?.trim() || MAPA_ASISTENTE_VISION_MODEL_DEFAULT
@@ -12,21 +12,30 @@ export function modeloAsistenteChat(): string {
 
 export function mensajeErrorAsistenteLegible(detalle: string): string {
   const t = detalle.trim()
+  if (t.includes("GOOGLE_GENERATIVE_AI_API_KEY") || t.includes("API key not valid")) {
+    return (
+      "Clave de Google inválida o ausente. Configure GOOGLE_GENERATIVE_AI_API_KEY en Vercel " +
+      "(Google AI Studio → Get API key)."
+    )
+  }
   if (t.includes("Free tier users do not have access to this model")) {
     return (
-      "El modelo de IA configurado no está disponible en el plan gratuito de Vercel AI Gateway. " +
-      "Opciones: (1) recargar créditos de pago en el equipo de Vercel, o (2) usar modelos «lite» — " +
-      "por defecto el proyecto ya usa google/gemini-2.5-flash-lite; si definió variables de modelo, cámbielas o elimínelas y redeploy."
+      "Este mensaje corresponde a Vercel AI Gateway. El asistente ya debería usar Google directo; " +
+      "redeploy producción y confirme GOOGLE_GENERATIVE_AI_API_KEY. Si persiste, elimine variables de AI Gateway."
     )
   }
   if (t.includes("Unauthenticated") || t.includes("AI_GATEWAY_API_KEY")) {
     return (
-      "No se pudo autenticar con AI Gateway. Revise OIDC (Settings → Security) o AI_GATEWAY_API_KEY."
+      "Error de autenticación con AI Gateway. Si usa Google directo, ignore AI Gateway: " +
+      "defina GOOGLE_GENERATIVE_AI_API_KEY y redeploy."
     )
   }
   try {
-    const json = JSON.parse(t) as { error?: string }
+    const json = JSON.parse(t) as { error?: string | { message?: string } }
     if (typeof json.error === "string") return mensajeErrorAsistenteLegible(json.error)
+    if (json.error && typeof json.error === "object" && json.error.message) {
+      return mensajeErrorAsistenteLegible(json.error.message)
+    }
   } catch {
     /* texto plano */
   }
