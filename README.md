@@ -58,7 +58,7 @@ npm run dev
 
 ## Flujo implementado
 
-- `/ingreso`: PIN compartido de obra para visitantes (solo si configuró variables de visita).
+- `/ingreso`: PIN compartido de obra para visitantes (solo si configuró variables de visita). Tras el PIN, destino por defecto: mapa de desasolve-canales (`/desasolve-canales/mapa`).
 - `/login`: acceso por correo y contrasena del residente (omite el PIN).
 - Proxy de proteccion: redirige a `/ingreso` sin cookie de visita válida.
 - Cierre de sesion del residente o «Salir» de visita desde el header del panel de obra.

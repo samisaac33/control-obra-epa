@@ -6,10 +6,16 @@ import { useRouter, useSearchParams } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { PROYECTO_DESASOLVE_CANALES } from "@/src/data/proyectos/catalog"
+import { rutaObra } from "@/src/lib/rutas-proyecto"
+
+const DESTINO_VISITANTE_DEFECTO = rutaObra(PROYECTO_DESASOLVE_CANALES, "mapa")
 
 function rutaSegura(next: string | null): string {
-  if (!next || !next.startsWith("/") || next.startsWith("//")) return "/"
-  if (next.startsWith("/ingreso") || next.startsWith("/login")) return "/"
+  if (!next || !next.startsWith("/") || next.startsWith("//")) return DESTINO_VISITANTE_DEFECTO
+  if (next === "/" || next.startsWith("/ingreso") || next.startsWith("/login")) {
+    return DESTINO_VISITANTE_DEFECTO
+  }
   return next
 }
 
@@ -19,7 +25,7 @@ export default function IngresoClient() {
   const nextPath = useMemo(() => rutaSegura(searchParams.get("next")), [searchParams])
   const loginHref = useMemo(() => {
     const params = new URLSearchParams()
-    if (nextPath !== "/") params.set("next", nextPath)
+    if (nextPath !== DESTINO_VISITANTE_DEFECTO) params.set("next", nextPath)
     const qs = params.toString()
     return qs ? `/login?${qs}` : "/login"
   }, [nextPath])
