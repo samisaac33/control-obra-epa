@@ -1,6 +1,5 @@
 import { cn } from "@/lib/utils"
-import { ESTADOS_OPERATIVOS_MAPA } from "@/src/data/tramos/types"
-import { COLOR_LEYENDA_NUEVOS_TRAMOS } from "@/src/lib/mapa-tramos-zona-color"
+import { colorEstadoTramo, ESTADOS_OPERATIVOS_MAPA } from "@/src/data/tramos/types"
 
 export function MapaTramosLeyenda({ compact = false }: { compact?: boolean }) {
   return (
@@ -21,15 +20,21 @@ export function MapaTramosLeyenda({ compact = false }: { compact?: boolean }) {
               compact && "min-w-0 justify-center gap-0.5 whitespace-nowrap sm:gap-1"
             )}
           >
-            <span
-              className="size-3 rounded-sm ring-1 ring-foreground/10"
-              style={{
-                backgroundColor:
-                  estado.id === "en_ejecucion" ? COLOR_LEYENDA_NUEVOS_TRAMOS : estado.color,
-              }}
-              aria-hidden
-            />
-            {estado.id === "en_ejecucion" ? "Nuevos tramos" : estado.label}
+            {estado.id === "en_ejecucion" ? (
+              <span
+                className="mapa-punto-en-ejecucion size-3.5 shrink-0 rounded-full border-2 border-white shadow-sm ring-1 ring-foreground/10"
+                style={{ backgroundColor: colorEstadoTramo("en_ejecucion") }}
+                title="Frente activo en mapa (parpadeo)"
+                aria-hidden
+              />
+            ) : (
+              <span
+                className="size-3 shrink-0 rounded-sm ring-1 ring-foreground/10"
+                style={{ backgroundColor: estado.color }}
+                aria-hidden
+              />
+            )}
+            {estado.label}
           </span>
         ))}
       </div>

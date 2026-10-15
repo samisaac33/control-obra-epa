@@ -1,14 +1,23 @@
 "use client"
 
-import { cn } from "@/lib/utils"
 import {
   colorEstadoTramo,
   etiquetaEstadoTramo,
   type CanalTramo,
   type EstadoTramo,
 } from "@/src/data/tramos/types"
+import { MinitramoGerencialCard } from "@/src/components/mapa/MinitramoGerencialCard"
 import { formatearNumero } from "@/src/lib/maquinaria-resumen"
+import {
+  fechaMsMinitramoGerencial,
+  mapaAcumuladoTerminadoPorFecha,
+  minitramosCompletosOrdenados,
+  minitramosTerminadosGerencial,
+  minitramosTerminadosParaVistaGerencial,
+  metrosTerminadosMinitramos,
+} from "@/src/lib/minitramo-gerencial-resumen"
 import { tituloTramoMapa } from "@/src/lib/tramo-display"
+import type { JornadaMinitramoMapa } from "@/src/lib/tramo-maquinaria-historial"
 import {
   etiquetaLetra,
   formatLongitudSegmentoMapa,
@@ -70,8 +79,11 @@ export function BarraSegmentosTramo({
 type TramoDetalleResumenProps = {
   tramo: CanalTramo
   puntosAvance: TramoPuntoAvance[]
+  jornadaPorPuntoFin?: ReadonlyMap<string, JornadaMinitramoMapa>
   segmentoDestacado?: SegmentoVisualTramo | null
   mostrarEncabezado?: boolean
+  /** Vista previa móvil: solo encabezado y avance % (sin listado de minitramos). */
+  mostrarListadoMinitramos?: boolean
   tituloId?: string
 }
 
@@ -107,12 +119,38 @@ export function TramoDetalleEncabezado({
 export function TramoDetalleResumen({
   tramo,
   puntosAvance,
+  jornadaPorPuntoFin,
   segmentoDestacado = null,
   mostrarEncabezado = true,
+  mostrarListadoMinitramos = true,
   tituloId,
 }: TramoDetalleResumenProps) {
   const avance = avanceDesasolveTramo(tramo, puntosAvance)
   const minitramos = resumenMinitramos(puntosAvance, tramo.id, tramo)
+  const minitramosCompletos = minitramosCompletosOrdenados(minitramos)
+  const minitramosTerminados = minitramosTerminadosGerencial(minitramosCompletos)
+  const kmTerminadosGps = metrosTerminadosMinitramos(minitramosTerminados) / 1000
+  const puntosPorId = new Map(
+    puntosAvance.filter((p) => p.tramo_id === tramo.id).map((p) => [p.id, p] as const)
+  )
+  const fechaMsPorPuntoFin = new Map(
+    minitramosTerminados.map((item) => [
+      item.puntoFinId,
+      fechaMsMinitramoGerencial(item, {
+        jornadaFecha: jornadaPorPuntoFin?.get(item.puntoFinId)?.fecha,
+        puntoFinCreatedAt: puntosPorId.get(item.puntoFinId)?.created_at,
+      }),
+    ] as const)
+  )
+  const fechaMsDePuntoFin = (puntoFinId: string) => fechaMsPorPuntoFin.get(puntoFinId) ?? 0
+  const acumuladoPorPuntoFin = mapaAcumuladoTerminadoPorFecha(
+    minitramosTerminados,
+    fechaMsDePuntoFin
+  )
+  const minitramosVista = minitramosTerminadosParaVistaGerencial(
+    minitramosTerminados,
+    fechaMsDePuntoFin
+  )
   const kmEjecutados = avance.metrosEjecutados / 1000
   const kmTotales = avance.metrosTotales / 1000
 
@@ -161,58 +199,53 @@ export function TramoDetalleResumen({
         )}
       </section>
 
-      {minitramos.length > 0 ? (
+      {mostrarListadoMinitramos && minitramosTerminados.length > 0 ? (
         <section className="space-y-3">
           <div>
-            <h3 className="text-sm font-medium">Minitramos GPS</h3>
+            <h3 className="text-sm font-medium">Minitramos GPS terminados</h3>
             <p className="text-xs text-muted-foreground">
-              Segmentos confirmados en este tramo.
+              {minitramosTerminados.length} minitramo
+              {minitramosTerminados.length === 1 ? "" : "s"} terminado
+              {minitramosTerminados.length === 1 ? "" : "s"}
+              {avance.usaAvanceGps ? (
+                <>
+                  {" "}
+                  · {formatearNumero(kmTerminadosGps, 2)} km (GPS)
+                </>
+              ) : null}
             </p>
           </div>
           <BarraSegmentosTramo tramo={tramo} puntosAvance={puntosAvance} />
-          <ul className="space-y-2">
-            {minitramos.map((item) => {
-              if (item.tipo !== "completo") return null
+          <ul className="space-y-3">
+            {minitramosVista.map((item, indice) => {
               const destacado =
                 segmentoDestacado?.tipo === "minitramo" &&
                 segmentoDestacado.letraInicio === item.letraInicio &&
                 segmentoDestacado.letraFin === item.letraFin
               return (
-                <li
+                <MinitramoGerencialCard
                   key={item.grupo_id}
-                  className={cn(
-                    "rounded-lg border px-3 py-2.5 text-sm",
-                    destacado
-                      ? "border-primary/40 bg-primary/5 ring-1 ring-primary/20"
-                      : "border-foreground/10 bg-background"
-                  )}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-medium">
-                      {etiquetaLetra(item.letraInicio)}–{etiquetaLetra(item.letraFin)}
-                    </span>
-                    <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <span
-                        className="size-2 shrink-0 rounded-full"
-                        style={{ backgroundColor: colorEstadoTramo(item.estado) }}
-                        aria-hidden
-                      />
-                      {etiquetaEstadoTramo(item.estado)}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {formatLongitudSegmentoMapa(item.longitud_m)}
-                  </p>
-                </li>
+                  item={item}
+                  indiceVisual={indice}
+                  tramo={tramo}
+                  acumuladoTerminado_m={acumuladoPorPuntoFin.get(item.puntoFinId) ?? 0}
+                  jornada={jornadaPorPuntoFin?.get(item.puntoFinId)}
+                  puntoFin={puntosPorId.get(item.puntoFinId) ?? null}
+                  destacado={destacado}
+                />
               )
             })}
           </ul>
         </section>
-      ) : (
+      ) : mostrarListadoMinitramos && minitramosCompletos.length > 0 ? (
+        <p className="rounded-lg border border-dashed border-foreground/15 bg-muted/20 px-3 py-2.5 text-sm text-muted-foreground">
+          Hay minitramos GPS en curso o pendientes; aquí solo se listan los ya terminados.
+        </p>
+      ) : mostrarListadoMinitramos ? (
         <p className="rounded-lg border border-dashed border-foreground/15 bg-muted/20 px-3 py-2.5 text-sm text-muted-foreground">
           Aún no hay minitramos GPS registrados en este tramo.
         </p>
-      )}
+      ) : null}
     </div>
   )
 }

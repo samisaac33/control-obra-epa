@@ -8,14 +8,16 @@ type MapaOpcionesCapasMapaProps = {
   onVistaSoloTramos1a24Change: (value: boolean) => void
   mostrarNumerosTramo: boolean
   onMostrarNumerosTramoChange: (value: boolean) => void
-  ocultarPuntosAvance: boolean
-  onOcultarPuntosAvanceChange: (value: boolean) => void
+  mostrarPuntosAvance: boolean
+  onMostrarPuntosAvanceChange: (value: boolean) => void
   ocultarMinitramosTerminados: boolean
   onOcultarMinitramosTerminadosChange: (value: boolean) => void
   mapaConsolidado: boolean
   onMapaConsolidadoChange: (value: boolean) => void
   idPrefix: string
   className?: string
+  /** Visitante: oculta MTT y No consolidado; renombra filtro 1–24. */
+  perfil?: "completo" | "visitante"
 }
 
 type OpcionCheckboxProps = {
@@ -49,15 +51,18 @@ export function MapaOpcionesCapasMapa({
   onVistaSoloTramos1a24Change,
   mostrarNumerosTramo,
   onMostrarNumerosTramoChange,
-  ocultarPuntosAvance,
-  onOcultarPuntosAvanceChange,
+  mostrarPuntosAvance,
+  onMostrarPuntosAvanceChange,
   ocultarMinitramosTerminados,
   onOcultarMinitramosTerminadosChange,
   mapaConsolidado,
   onMapaConsolidadoChange,
   idPrefix,
   className,
+  perfil = "completo",
 }: MapaOpcionesCapasMapaProps) {
+  const esVisitante = perfil === "visitante"
+
   return (
     <div
       className={cn(
@@ -69,7 +74,12 @@ export function MapaOpcionesCapasMapa({
         id={`${idPrefix}-vista-tramos-1-24`}
         checked={vistaSoloTramos1a24}
         onChange={onVistaSoloTramos1a24Change}
-        titulo="Vista tramos 1–24"
+        titulo={esVisitante ? "Primer levantamiento" : "Vista tramos 1–24"}
+        ariaLabel={
+          esVisitante
+            ? "Mostrar solo tramos del primer levantamiento (1–24)"
+            : undefined
+        }
       />
       <OpcionCheckbox
         id={`${idPrefix}-mostrar-numeros-tramos`}
@@ -78,26 +88,30 @@ export function MapaOpcionesCapasMapa({
         titulo="Mostrar números de tramos"
       />
       <OpcionCheckbox
-        id={`${idPrefix}-ocultar-puntos-avance`}
-        checked={ocultarPuntosAvance}
-        onChange={onOcultarPuntosAvanceChange}
-        titulo="Ocultar puntos A, B, C…"
-        ariaLabel="Ocultar marcadores de avance"
+        id={`${idPrefix}-mostrar-puntos-avance`}
+        checked={mostrarPuntosAvance}
+        onChange={onMostrarPuntosAvanceChange}
+        titulo="Mostrar puntos A, B, C…"
+        ariaLabel="Mostrar marcadores de avance; siempre visibles: frente en mapa con parpadeo"
       />
-      <OpcionCheckbox
-        id={`${idPrefix}-ocultar-mtt`}
-        checked={ocultarMinitramosTerminados}
-        onChange={onOcultarMinitramosTerminadosChange}
-        titulo="Ocultar MTT"
-        ariaLabel="Ocultar resaltado de minitramos terminados"
-      />
-      <OpcionCheckbox
-        id={`${idPrefix}-consolidado`}
-        checked={mapaConsolidado}
-        onChange={onMapaConsolidadoChange}
-        titulo="Consolidado"
-        ariaLabel="Vista consolidada: todos los tramos del mismo color"
-      />
+      {esVisitante ? null : (
+        <>
+          <OpcionCheckbox
+            id={`${idPrefix}-ocultar-mtt`}
+            checked={ocultarMinitramosTerminados}
+            onChange={onOcultarMinitramosTerminadosChange}
+            titulo="Ocultar MTT"
+            ariaLabel="Ocultar resaltado de minitramos terminados"
+          />
+          <OpcionCheckbox
+            id={`${idPrefix}-consolidado`}
+            checked={!mapaConsolidado}
+            onChange={(checked) => onMapaConsolidadoChange(!checked)}
+            titulo="No consolidado"
+            ariaLabel="Vista por colores de estado; desmarcado muestra tramos consolidados en violeta"
+          />
+        </>
+      )}
     </div>
   )
 }

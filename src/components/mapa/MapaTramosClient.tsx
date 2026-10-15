@@ -1,7 +1,7 @@
 "use client"
 
 import dynamic from "next/dynamic"
-import { Map } from "lucide-react"
+import { Map as MapIcon } from "lucide-react"
 import { useCallback, useEffect, useMemo, useState } from "react"
 
 import { cn } from "@/lib/utils"
@@ -16,6 +16,7 @@ import {
   type FiltrosTramos,
 } from "@/src/components/mapa/MapaTramosFiltros"
 import { MapaSegmentoInfoModal } from "@/src/components/mapa/MapaSegmentoInfoModal"
+import { MapaTramoPreviewMovil } from "@/src/components/mapa/MapaTramoPreviewMovil"
 import { MapaTramosFiltrosSheet } from "@/src/components/mapa/MapaTramosFiltrosSheet"
 import { MapaOpcionesCapasMapa } from "@/src/components/mapa/MapaOpcionesCapasMapa"
 import { MapaBuscarCoordenadasResidente } from "@/src/components/mapa/MapaBuscarCoordenadasResidente"
@@ -39,13 +40,11 @@ import {
 import type { TramoFormValues } from "@/src/components/mapa/TramoEditorForm"
 import { ProyectoModuloGuard } from "@/src/components/ProyectoModuloGuard"
 import { useProyecto } from "@/src/contexts/ProyectoContext"
-import { PROYECTO_DESASOLVE_CANALES } from "@/src/data/proyectos/catalog"
 import type { CanalTramo, EstadoTramo, OrigenExtremoTramo } from "@/src/data/tramos/types"
-import { esTramoExcluidoDesasolve } from "@/src/data/tramos/tramos-excluidos"
-import { normalizarTramo } from "@/src/lib/canal-tramos-normalize"
+import { cargarTramosMapaProyecto } from "@/src/lib/cargar-tramos-mapa-proyecto"
 import {
-  actualizarFrenteParpadeoTramo,
-  frenteParpadeoPorTramoDesdeTramos,
+  actualizarFrenteParpadeoPunto,
+  idsPuntosFrenteParpadeo,
 } from "@/src/lib/tramo-frente-mapa"
 import { createClient } from "@/src/lib/supabase/client"
 import {
@@ -66,7 +65,17 @@ import type {
   TramoPuntoAvance,
 } from "@/src/lib/tramo-geometria"
 import { contextoEditarMinitramo, evaluarPropuestaPuntoConAutoEnlace } from "@/src/lib/tramo-geometria"
-import { crearRegistroMaquinariaTramo } from "@/src/lib/tramo-maquinaria-historial"
+import {
+  cargarRegistrosMaquinariaPorTramoIds,
+  indiceJornadaMinitramoPorPuntoFin,
+  type JornadaMinitramoMapa,
+} from "@/src/lib/mapa-jornada-minitramo"
+import { cargarEquiposMaquinariaProyecto } from "@/src/lib/proyecto-equipos-maquinaria"
+import {
+  eliminarRegistroMaquinariaTramo,
+  guardarJornadaMinitramo,
+} from "@/src/lib/tramo-maquinaria-historial"
+import { tramosMapaDesasolveSinExcluidos } from "@/src/data/tramos/tramos-excluidos"
 import {
   calcularKpisTramos,
   filtrarTramos,
@@ -90,6 +99,19 @@ const MapaTramosLeaflet = dynamic(
 function trimOrNull(value: string): string | null {
   const trimmed = value.trim()
   return trimmed || null
+}
+
+function coordsPuntoSinCambio(
+  puntoActual: TramoPuntoAvance | undefined,
+  propuesto: { lat: number; lng: number; abscisa_m: number }
+): boolean {
+  if (!puntoActual) return false
+  const tolCoord = 1e-5
+  return (
+    Math.abs(puntoActual.lat - propuesto.lat) < tolCoord &&
+    Math.abs(puntoActual.lng - propuesto.lng) < tolCoord &&
+    Math.abs(puntoActual.abscisa_m - propuesto.abscisa_m) < 0.05
+  )
 }
 
 export function MapaTramosClient() {
@@ -121,6 +143,8 @@ export function MapaTramosClient() {
   const [editarEstadoInicial, setEditarEstadoInicial] = useState<EstadoTramo | undefined>()
   const [confirmRegistroFotoId, setConfirmRegistroFotoId] = useState<string | null>(null)
   const [confirmandoAvance, setConfirmandoAvance] = useState(false)
+  const [confirmLoadingDetalle, setConfirmLoadingDetalle] = useState<string | null>(null)
+  const [errorConfirmacion, setErrorConfirmacion] = useState<string | null>(null)
   const [eliminandoId, setEliminandoId] = useState<string | null>(null)
   const [guardandoEstadoMinitramoId, setGuardandoEstadoMinitramoId] = useState<string | null>(null)
   const [guardandoFrenteParpadeoPuntoId, setGuardandoFrenteParpadeoPuntoId] = useState<
@@ -131,12 +155,15 @@ export function MapaTramosClient() {
     tramo: CanalTramo
     segmentoDestacado: SegmentoVisualTramo
   } | null>(null)
+  const [segmentoDestacadoMovil, setSegmentoDestacadoMovil] =
+    useState<SegmentoVisualTramo | null>(null)
+  const [encuadrarSeleccionToken, setEncuadrarSeleccionToken] = useState(0)
   const esViewportMovil = useEsViewportMovil()
   const [vistaSoloTramos1a24, setVistaSoloTramos1a24] = useState(false)
   const [mostrarNumerosTramo, setMostrarNumerosTramo] = useState(false)
-  const [ocultarPuntosAvance, setOcultarPuntosAvance] = useState(false)
+  const [mostrarPuntosAvance, setMostrarPuntosAvance] = useState(false)
   const [ocultarMinitramosTerminados, setOcultarMinitramosTerminados] = useState(false)
-  const [mapaConsolidado, setMapaConsolidado] = useState(false)
+  const [mapaConsolidado, setMapaConsolidado] = useState(true)
   const [ubicacionResidente, setUbicacionResidente] = useState<UbicacionUsuario | null>(null)
   const [seguirUbicacionResidente, setSeguirUbicacionResidente] = useState(false)
   const [origenDesdeMapa, setOrigenDesdeMapa] = useState<RequiereOrigenDesdeMapaPayload | null>(
@@ -147,27 +174,17 @@ export function MapaTramosClient() {
     lng: number
   } | null>(null)
   const [centrarUbicacionKey, setCentrarUbicacionKey] = useState(0)
+  const [jornadaPorPuntoFin, setJornadaPorPuntoFin] = useState(
+    () => new Map<string, JornadaMinitramoMapa>()
+  )
   const cargarDatos = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
-      const [{ data: tramosData, error: tramosError }, puntos] = await Promise.all([
-        supabase
-          .from("canal_tramos")
-          .select("*")
-          .eq("proyecto_id", proyectoId)
-          .order("codigo", { ascending: true }),
-        cargarPuntosAvancePorProyecto(supabase, proyectoId),
-      ])
-
-      if (tramosError) throw new Error(tramosError.message)
-
-      const tramosNormalizados = (tramosData ?? [])
-        .map((row) => normalizarTramo(row as Record<string, unknown>))
-        .filter(
-          (t) =>
-            proyectoId !== PROYECTO_DESASOLVE_CANALES || !esTramoExcluidoDesasolve(t.codigo)
-        )
+      const { tramos: tramosNormalizados, puntosAvance: puntos } = await cargarTramosMapaProyecto(
+        supabase,
+        proyectoId
+      )
       setTramos(tramosNormalizados)
       setPuntosAvance(puntos)
       setPuntosRefreshKey((k) => k + 1)
@@ -190,6 +207,47 @@ export function MapaTramosClient() {
   }, [cargarDatos])
 
   useEffect(() => {
+    if (!confirmandoAvance || confirmModo !== "editar_minitramo") {
+      setConfirmLoadingDetalle(null)
+      return
+    }
+    const timer = window.setTimeout(() => {
+      setConfirmLoadingDetalle("Renumerando puntos del tramo…")
+    }, 1000)
+    return () => window.clearTimeout(timer)
+  }, [confirmandoAvance, confirmModo])
+
+  useEffect(() => {
+    if (tramos.length === 0) {
+      setJornadaPorPuntoFin(new Map())
+      return
+    }
+
+    let cancelado = false
+
+    async function cargarJornadasMapa() {
+      try {
+        const tramoIds = tramos.map((t) => t.id)
+        const [registros, equipos] = await Promise.all([
+          cargarRegistrosMaquinariaPorTramoIds(supabase, tramoIds),
+          cargarEquiposMaquinariaProyecto(supabase, proyectoId, { soloActivos: false }),
+        ])
+        if (cancelado) return
+        setJornadaPorPuntoFin(
+          indiceJornadaMinitramoPorPuntoFin(tramos, puntosAvance, registros, equipos)
+        )
+      } catch {
+        if (!cancelado) setJornadaPorPuntoFin(new Map())
+      }
+    }
+
+    void cargarJornadasMapa()
+    return () => {
+      cancelado = true
+    }
+  }, [tramos, puntosAvance, proyectoId, supabase])
+
+  useEffect(() => {
     async function checkResident() {
       const {
         data: { user },
@@ -199,11 +257,12 @@ export function MapaTramosClient() {
     void checkResident()
   }, [supabase, residentEmail])
 
-  const tramosParaVista = useMemo(
-    () =>
-      vistaSoloTramos1a24 ? filtrarTramosPorRangoNumerico(tramos, 1, 24) : tramos,
-    [tramos, vistaSoloTramos1a24]
-  )
+  const tramosParaVista = useMemo(() => {
+    if (vistaSoloTramos1a24) {
+      return filtrarTramosPorRangoNumerico(tramos, 1, 24)
+    }
+    return tramosMapaDesasolveSinExcluidos(tramos)
+  }, [tramos, vistaSoloTramos1a24])
 
   const tramosFiltrados = useMemo(
     () => filtrarTramos(tramosParaVista, filtros, puntosAvance),
@@ -217,10 +276,27 @@ export function MapaTramosClient() {
 
   const tramoSeleccionadoId = tramoSeleccionado?.id ?? null
 
+  function solicitarEncuadreTramoEnMapa() {
+    setEncuadrarSeleccionToken((n) => n + 1)
+  }
+
   function handleTramoClick(tramo: CanalTramo) {
     setTramoSeleccionado(tramo)
-    setPanelAbierto(true)
     setPanelError(null)
+    setSegmentoDestacadoMovil(null)
+    if (esViewportMovil) {
+      setPanelAbierto(false)
+      setTramoVisitanteModal(null)
+      solicitarEncuadreTramoEnMapa()
+    } else {
+      setPanelAbierto(true)
+    }
+  }
+
+  function cerrarPreviewTramoMovil() {
+    setTramoSeleccionado(null)
+    setSegmentoDestacadoMovil(null)
+    setPanelAbierto(false)
   }
 
   async function handleSubmitTramo(tramoId: string, values: TramoFormValues) {
@@ -275,6 +351,7 @@ export function MapaTramosClient() {
     setConfirmRegistroFotoId(opciones?.registroFotoId ?? null)
     setConfirmModalAbierto(true)
     setPanelError(null)
+    setErrorConfirmacion(null)
   }
 
   function cerrarConfirmacion() {
@@ -285,6 +362,8 @@ export function MapaTramosClient() {
     setConfirmModo("nuevo")
     setEditarEtiquetaMinitramo(undefined)
     setEditarEstadoInicial(undefined)
+    setErrorConfirmacion(null)
+    setConfirmLoadingDetalle(null)
   }
 
   function handleSolicitarEditarMinitramo(puntoFinId: string) {
@@ -305,32 +384,44 @@ export function MapaTramosClient() {
     setConfirmRegistroFotoId(null)
     setConfirmModalAbierto(true)
     setPanelError(null)
+    setErrorConfirmacion(null)
   }
 
   async function handleConfirmarPunto(payload: ConfirmarPuntoPayload) {
     setConfirmandoAvance(true)
     setPanelError(null)
+    setErrorConfirmacion(null)
     try {
       const {
         data: { user },
       } = await supabase.auth.getUser()
       if (!user) {
-        setPanelError("Sesión no válida.")
+        const msg = "Sesión no válida."
+        setPanelError(msg)
+        setErrorConfirmacion(msg)
         return
       }
+
+      let nuevoPuntoIdConfirmado: string | undefined
 
       if (
         (payload.modo === "corregir" || payload.modo === "editar_minitramo") &&
         payload.puntoId
       ) {
+        const puntoActual = puntosAvance.find((p) => p.id === payload.puntoId)
+        const omitirRenumerarRoles =
+          payload.modo === "editar_minitramo" &&
+          coordsPuntoSinCambio(puntoActual, payload.punto)
+
         await corregirPuntoMinitramo(supabase, {
           tramo: payload.tramo,
           puntoId: payload.puntoId,
           punto: payload.punto,
           estado: payload.estado,
+          omitirRenumerarRoles,
         })
       } else {
-        await confirmarPuntoMinitramo(supabase, {
+        nuevoPuntoIdConfirmado = await confirmarPuntoMinitramo(supabase, {
           tramo: payload.tramo,
           punto: payload.punto,
           rol: payload.rol,
@@ -342,16 +433,56 @@ export function MapaTramosClient() {
         })
       }
 
-      if (payload.jornada) {
+      const puntoJornada =
+        payload.puntoAvanceIdJornada ??
+        payload.puntoId ??
+        nuevoPuntoIdConfirmado ??
+        null
+
+      if (payload.eliminarRegistroJornadaId) {
         try {
-          await crearRegistroMaquinariaTramo(supabase, payload.tramo.id, payload.jornada)
+          await eliminarRegistroMaquinariaTramo(supabase, payload.eliminarRegistroJornadaId)
         } catch (jornadaErr) {
           await cargarDatos()
-          setPanelError(
+          const prefijoGuardado =
+            payload.modo === "editar_minitramo"
+              ? "Cambios guardados, pero la jornada no se eliminó"
+              : "Punto guardado, pero la jornada no se eliminó"
+          const msg =
             jornadaErr instanceof Error
-              ? `Punto guardado, pero la jornada no se registró: ${jornadaErr.message}`
-              : "Punto guardado, pero no se pudo registrar la jornada."
+              ? `${prefijoGuardado}: ${jornadaErr.message}`
+              : payload.modo === "editar_minitramo"
+                ? "Cambios guardados, pero no se pudo eliminar la jornada."
+                : "Punto guardado, pero no se pudo eliminar la jornada."
+          setPanelError(msg)
+          setErrorConfirmacion(msg)
+          cerrarConfirmacion()
+          setPuntosRefreshKey((k) => k + 1)
+          return
+        }
+      } else if (payload.jornada && puntoJornada) {
+        try {
+          await guardarJornadaMinitramo(
+            supabase,
+            payload.tramo.id,
+            puntoJornada,
+            payload.jornada,
+            payload.registroJornadaId
           )
+        } catch (jornadaErr) {
+          await cargarDatos()
+          const prefijoGuardado =
+            payload.modo === "editar_minitramo"
+              ? "Cambios guardados, pero la jornada no se registró"
+              : "Punto guardado, pero la jornada no se registró"
+          const msg =
+            jornadaErr instanceof Error
+              ? `${prefijoGuardado}: ${jornadaErr.message}`
+              : payload.modo === "editar_minitramo"
+                ? "Cambios guardados, pero no se pudo registrar la jornada."
+                : "Punto guardado, pero no se pudo registrar la jornada."
+          setPanelError(msg)
+          setErrorConfirmacion(msg)
           cerrarConfirmacion()
           setPuntosRefreshKey((k) => k + 1)
           return
@@ -362,9 +493,12 @@ export function MapaTramosClient() {
       cerrarConfirmacion()
       setPuntosRefreshKey((k) => k + 1)
     } catch (err) {
-      setPanelError(err instanceof Error ? err.message : "No se pudo confirmar el punto.")
+      const msg = err instanceof Error ? err.message : "No se pudo confirmar el punto."
+      setPanelError(msg)
+      setErrorConfirmacion(msg)
     } finally {
       setConfirmandoAvance(false)
+      setConfirmLoadingDetalle(null)
     }
   }
 
@@ -511,8 +645,8 @@ export function MapaTramosClient() {
     await handleEstadoPuntoChange(puntoFinId, estado)
   }
 
-  const puntoFrenteParpadeoPorTramo = useMemo(
-    () => frenteParpadeoPorTramoDesdeTramos(tramos, puntosAvance),
+  const puntoIdsParpadeoFrente = useMemo(
+    () => idsPuntosFrenteParpadeo(tramos, puntosAvance),
     [tramos, puntosAvance]
   )
 
@@ -521,25 +655,21 @@ export function MapaTramosClient() {
       const tramo = tramos.find((t) => t.id === tramoId)
       if (!tramo) return
 
-      const activo = tramo.punto_frente_mapa_id === puntoId
-      const nextPuntoId = activo ? null : puntoId
+      const activo = puntoIdsParpadeoFrente.has(puntoId)
+      const nextFrente = !activo
 
       setGuardandoFrenteParpadeoPuntoId(puntoId)
       setPanelError(null)
-      const tramosSnapshot = tramos
-      const tramoSeleccionadoSnapshot = tramoSeleccionado
+      const puntosSnapshot = puntosAvance
 
-      const patchFrente = (t: CanalTramo): CanalTramo =>
-        t.id === tramoId ? { ...t, punto_frente_mapa_id: nextPuntoId } : t
-
-      setTramos((prev) => prev.map(patchFrente))
-      setTramoSeleccionado((prev) => (prev?.id === tramoId ? patchFrente(prev) : prev))
+      setPuntosAvance((prev) =>
+        prev.map((p) => (p.id === puntoId ? { ...p, frente_mapa: nextFrente } : p))
+      )
 
       try {
-        await actualizarFrenteParpadeoTramo(supabase, tramoId, nextPuntoId)
+        await actualizarFrenteParpadeoPunto(supabase, tramoId, puntoId, nextFrente)
       } catch (err) {
-        setTramos(tramosSnapshot)
-        setTramoSeleccionado(tramoSeleccionadoSnapshot)
+        setPuntosAvance(puntosSnapshot)
         setPanelError(
           err instanceof Error ? err.message : "No se pudo guardar el frente en el mapa."
         )
@@ -547,12 +677,8 @@ export function MapaTramosClient() {
         setGuardandoFrenteParpadeoPuntoId(null)
       }
     },
-    [tramos, tramoSeleccionado, supabase]
+    [tramos, puntosAvance, puntoIdsParpadeoFrente, supabase]
   )
-
-  const puntoIdsParpadeoFrente = useMemo(() => {
-    return new Set(Object.values(puntoFrenteParpadeoPorTramo))
-  }, [puntoFrenteParpadeoPorTramo])
 
   async function handleRenumerarPuntosTramo() {
     if (!tramoSeleccionado) return
@@ -608,6 +734,10 @@ export function MapaTramosClient() {
 
   const visitante = !isResident
   const visitanteMovil = visitante && esViewportMovil
+  const previewTramoMovilVisible =
+    esViewportMovil && tramoSeleccionado !== null && !panelAbierto
+  const atenuarTramosNoSeleccionadosEnMapa =
+    esViewportMovil && tramoSeleccionadoId !== null && !panelAbierto
 
   const ubicacionResidenteProps = useMemo(
     () => ({
@@ -629,6 +759,18 @@ export function MapaTramosClient() {
     ]
   )
 
+  const previewTramoMovil =
+    previewTramoMovilVisible && tramoSeleccionado ? (
+      <MapaTramoPreviewMovil
+        tramo={tramoSeleccionado}
+        puntosAvance={puntosAvance}
+        segmentoDestacado={segmentoDestacadoMovil}
+        className={isResident ? "bottom-14" : undefined}
+        onVerMas={() => setPanelAbierto(true)}
+        onCerrar={cerrarPreviewTramoMovil}
+      />
+    ) : null
+
   const mapaLeaflet = (
     <MapaTramosLeaflet
       tramos={tramosFiltrados}
@@ -640,20 +782,37 @@ export function MapaTramosClient() {
       alturaResponsiveResidente={isResident}
       marcadoresCompactos={visitanteMovil}
       mostrarEtiquetasTramo={mostrarNumerosTramo}
-      mostrarPuntosAvance={!ocultarPuntosAvance}
+      mostrarPuntosAvance={mostrarPuntosAvance}
       mostrarMinitramosTerminados={!ocultarMinitramosTerminados}
       mapaConsolidado={mapaConsolidado}
       onTramoClick={handleTramoClick}
       onSegmentoVisitanteClick={
         isResident
           ? undefined
-          : (segmento) =>
-              setTramoVisitanteModal({ tramo: segmento.tramo, segmentoDestacado: segmento })
+          : (segmento) => {
+              if (esViewportMovil) {
+                setTramoSeleccionado(segmento.tramo)
+                setSegmentoDestacadoMovil(segmento)
+                setPanelAbierto(false)
+                setTramoVisitanteModal(null)
+                solicitarEncuadreTramoEnMapa()
+                return
+              }
+              setTramoVisitanteModal({
+                tramo: segmento.tramo,
+                segmentoDestacado: segmento,
+              })
+            }
       }
+      atenuarTramosNoSeleccionados={atenuarTramosNoSeleccionadosEnMapa}
+      encuadrarSeleccionToken={previewTramoMovilVisible ? encuadrarSeleccionToken : 0}
+      encuadrarGeometria={segmentoDestacadoMovil?.geometria ?? null}
+      encuadrarPaddingInferior={previewTramoMovilVisible ? (isResident ? 168 : 140) : 0}
       ubicacionUsuario={isResident ? ubicacionResidente : null}
       seguirUbicacionUsuario={isResident ? seguirUbicacionResidente : false}
       centrarUbicacionVersion={isResident ? centrarUbicacionKey : 0}
       puntoIdsParpadeoFrente={puntoIdsParpadeoFrente}
+      jornadaPorPuntoFin={jornadaPorPuntoFin}
     />
   )
 
@@ -666,7 +825,7 @@ export function MapaTramosClient() {
               <CardHeader className="max-md:pb-2">
                 <div className="flex items-start gap-3">
                   <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg border border-foreground/10 bg-muted/80">
-                    <Map className="size-4" aria-hidden />
+                    <MapIcon className="size-4" aria-hidden />
                   </div>
                   <div>
                     <CardTitle className="max-md:text-base">Mapa interactivo</CardTitle>
@@ -699,52 +858,65 @@ export function MapaTramosClient() {
                   />
                   {visitanteMovil ? null : (
                     <p className="text-sm text-muted-foreground">
-                      Pase el cursor sobre un tramo coloreado para ver minitramos, o haga clic para
-                      abrir el resumen.
+                      Pase el cursor sobre un tramo para ver avance del tramo; active «Mostrar puntos
+                      A, B, C…» para consultar jornada y maquinaria por minitramo. Clic abre el
+                      resumen.
                     </p>
                   )}
                   <MapaTramosLeyenda compact={visitanteMovil} />
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                    <div className="min-w-0 sm:flex-1">
-                      <MapaTramosFiltroTramo
-                        filtros={filtros}
-                        tramos={tramos}
-                        onChange={setFiltros}
-                        selectId="filtro-tramo-visitante-inline"
-                      />
-                    </div>
-                    <MapaOpcionesCapasMapa
-                      vistaSoloTramos1a24={vistaSoloTramos1a24}
-                      onVistaSoloTramos1a24Change={setVistaSoloTramos1a24}
-                      mostrarNumerosTramo={mostrarNumerosTramo}
-                      onMostrarNumerosTramoChange={setMostrarNumerosTramo}
-                      ocultarPuntosAvance={ocultarPuntosAvance}
-                      onOcultarPuntosAvanceChange={setOcultarPuntosAvance}
-                      ocultarMinitramosTerminados={ocultarMinitramosTerminados}
-                      onOcultarMinitramosTerminadosChange={setOcultarMinitramosTerminados}
+                  {visitanteMovil ? null : (
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                      <div className="min-w-0 sm:flex-1">
+                        <MapaTramosFiltroTramo
+                          filtros={filtros}
+                          tramos={tramosParaVista}
+                          onChange={setFiltros}
+                          selectId="filtro-tramo-visitante-inline"
+                        />
+                      </div>
+                      <MapaOpcionesCapasMapa
+                        vistaSoloTramos1a24={vistaSoloTramos1a24}
+                        onVistaSoloTramos1a24Change={setVistaSoloTramos1a24}
+                        mostrarNumerosTramo={mostrarNumerosTramo}
+                        onMostrarNumerosTramoChange={setMostrarNumerosTramo}
+                        mostrarPuntosAvance={mostrarPuntosAvance}
+                        onMostrarPuntosAvanceChange={setMostrarPuntosAvance}
+                        ocultarMinitramosTerminados={ocultarMinitramosTerminados}
+                        onOcultarMinitramosTerminadosChange={setOcultarMinitramosTerminados}
                       mapaConsolidado={mapaConsolidado}
                       onMapaConsolidadoChange={setMapaConsolidado}
                       idPrefix="visitante"
+                      perfil="visitante"
                       className="sm:max-w-md sm:flex-1"
                     />
-                  </div>
-                  {mapaLeaflet}
+                    </div>
+                  )}
+                  <MapaTramosMapaConBarra>
+                    {mapaLeaflet}
+                    {previewTramoMovil}
+                  </MapaTramosMapaConBarra>
                   {visitanteMovil ? (
                     <MapaTramosFiltrosSheet
+                      variant="visitanteTramoCapas"
                       filtros={filtros}
-                      tramos={tramos}
+                      tramos={tramosParaVista}
                       semanas={semanasProgramadasUnicas(tramos)}
                       onChange={setFiltros}
+                      capas={{
+                        vistaSoloTramos1a24,
+                        onVistaSoloTramos1a24Change: setVistaSoloTramos1a24,
+                        mostrarNumerosTramo,
+                        onMostrarNumerosTramoChange: setMostrarNumerosTramo,
+                        mostrarPuntosAvance,
+                        onMostrarPuntosAvanceChange: setMostrarPuntosAvance,
+                        ocultarMinitramosTerminados,
+                        onOcultarMinitramosTerminadosChange: setOcultarMinitramosTerminados,
+                        mapaConsolidado,
+                        onMapaConsolidadoChange: setMapaConsolidado,
+                        idPrefix: "visitante-movil",
+                      }}
                     />
-                  ) : (
-                    <MapaTramosFiltros
-                      filtros={filtros}
-                      tramos={tramos}
-                      semanas={semanasProgramadasUnicas(tramos)}
-                      onChange={setFiltros}
-                      campos={["estado", "semana"]}
-                    />
-                  )}
+                  ) : null}
                 </>
               ) : (
                 <MapaUbicacionResidenteProvider {...ubicacionResidenteProps}>
@@ -757,8 +929,8 @@ export function MapaTramosClient() {
                       onVistaSoloTramos1a24Change={setVistaSoloTramos1a24}
                       mostrarNumerosTramo={mostrarNumerosTramo}
                       onMostrarNumerosTramoChange={setMostrarNumerosTramo}
-                      ocultarPuntosAvance={ocultarPuntosAvance}
-                      onOcultarPuntosAvanceChange={setOcultarPuntosAvance}
+                      mostrarPuntosAvance={mostrarPuntosAvance}
+                      onMostrarPuntosAvanceChange={setMostrarPuntosAvance}
                       ocultarMinitramosTerminados={ocultarMinitramosTerminados}
                       onOcultarMinitramosTerminadosChange={setOcultarMinitramosTerminados}
                       mapaConsolidado={mapaConsolidado}
@@ -770,7 +942,7 @@ export function MapaTramosClient() {
                     <MapaTramosKpis kpis={kpis} />
                     <MapaTramosFiltros
                       filtros={filtros}
-                      tramos={tramos}
+                      tramos={tramosParaVista}
                       semanas={semanasProgramadasUnicas(tramos)}
                       onChange={setFiltros}
                     />
@@ -784,6 +956,7 @@ export function MapaTramosClient() {
                     }
                   >
                     {mapaLeaflet}
+                    {previewTramoMovil}
                   </MapaTramosMapaConBarra>
                   <div className="md:hidden">
                     <MapaBuscarCoordenadasResidente />
@@ -791,7 +964,7 @@ export function MapaTramosClient() {
                   <div className="md:hidden">
                     <MapaTramosFiltrosSheet
                       filtros={filtros}
-                      tramos={tramos}
+                      tramos={tramosParaVista}
                       semanas={semanasProgramadasUnicas(tramos)}
                       onChange={setFiltros}
                       triggerLabel="Filtros y capas"
@@ -802,8 +975,8 @@ export function MapaTramosClient() {
                         onVistaSoloTramos1a24Change: setVistaSoloTramos1a24,
                         mostrarNumerosTramo,
                         onMostrarNumerosTramoChange: setMostrarNumerosTramo,
-                        ocultarPuntosAvance,
-                        onOcultarPuntosAvanceChange: setOcultarPuntosAvance,
+                        mostrarPuntosAvance,
+                        onMostrarPuntosAvanceChange: setMostrarPuntosAvance,
                         ocultarMinitramosTerminados,
                         onOcultarMinitramosTerminadosChange: setOcultarMinitramosTerminados,
                         mapaConsolidado,
@@ -824,10 +997,12 @@ export function MapaTramosClient() {
         open={panelAbierto}
         onOpenChange={setPanelAbierto}
         detalleEnBottomSheet={esViewportMovil}
+        segmentoDestacado={segmentoDestacadoMovil}
         isResident={isResident}
         loading={saving}
         proyectoId={proyectoId}
         puntosAvance={puntosAvance}
+        jornadaPorPuntoFin={jornadaPorPuntoFin}
         puntosRefreshKey={puntosRefreshKey}
         eliminandoId={eliminandoId}
         panelError={panelError}
@@ -839,9 +1014,7 @@ export function MapaTramosClient() {
         onEliminarPuntoHuérfano={isResident ? handleEliminarPuntoHuérfano : undefined}
         onEstadoMinitramoChange={isResident ? handleEstadoMinitramoChange : undefined}
         onEstadoPuntoChange={isResident ? handleEstadoPuntoChange : undefined}
-        puntoFrenteParpadeoId={
-          tramoSeleccionado ? (puntoFrenteParpadeoPorTramo[tramoSeleccionado.id] ?? null) : null
-        }
+        puntoIdsFrenteParpadeo={puntoIdsParpadeoFrente}
         onFrenteTrabajoParpadeo={
           isResident && tramoSeleccionado
             ? (puntoId) => void handleFrenteTrabajoParpadeo(tramoSeleccionado.id, puntoId)
@@ -858,9 +1031,10 @@ export function MapaTramosClient() {
 
       {visitante ? (
         <MapaSegmentoInfoModal
-          open={tramoVisitanteModal !== null}
+          open={tramoVisitanteModal !== null && !esViewportMovil}
           tramo={tramoVisitanteModal?.tramo ?? null}
           puntosAvance={puntosAvance}
+          jornadaPorPuntoFin={jornadaPorPuntoFin}
           segmentoDestacado={tramoVisitanteModal?.segmentoDestacado ?? null}
           onClose={() => setTramoVisitanteModal(null)}
           onVerDetalleTramo={(tramo) => {
@@ -891,7 +1065,9 @@ export function MapaTramosClient() {
         etiquetaMinitramo={editarEtiquetaMinitramo}
         estadoInicialMinitramo={editarEstadoInicial}
         loading={confirmandoAvance}
-        mostrarRegistrarJornada={isResident && confirmModo !== "editar_minitramo"}
+        loadingDetalle={confirmLoadingDetalle}
+        errorExterno={errorConfirmacion}
+        mostrarRegistrarJornada={isResident}
         onConfirm={handleConfirmarPunto}
         onCancel={cerrarConfirmacion}
       />

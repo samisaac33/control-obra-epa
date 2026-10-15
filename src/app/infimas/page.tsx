@@ -1,8 +1,7 @@
 import type { Metadata } from "next"
 import { FileArchive } from "lucide-react"
 
-import { InfimasDocumentoLista } from "@/src/components/infimas/InfimasDocumentoLista"
-import { DOCUMENTOS_INFIMAS } from "@/src/data/infimas/catalog"
+import { InfimasModulosHub } from "@/src/components/infimas/InfimasModulosHub"
 
 export const metadata: Metadata = {
   title: "Ínfimas Cuantía",
@@ -27,15 +26,15 @@ export default function InfimasPage() {
                 Ínfimas Cuantía
               </h1>
               <p className="text-sm text-muted-foreground">
-                Informes técnicos y documentos PDF para procesos de ínfima cuantía
+                Seleccione un contrato o módulo para acceder a informes y documentos
               </p>
             </div>
           </div>
         </div>
       </header>
 
-      <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col space-y-6 px-4 py-6 sm:space-y-8 sm:px-6 sm:py-8 lg:px-8">
-        <InfimasDocumentoLista documentos={DOCUMENTOS_INFIMAS} />
+      <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col space-y-6 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+        <InfimasModulosHub />
       </main>
     </div>
   )

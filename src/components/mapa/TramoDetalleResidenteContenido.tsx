@@ -17,6 +17,7 @@ import { TramoPuntosHistorial } from "@/src/components/mapa/TramoPuntosHistorial
 import { TramoDetalleResumen } from "@/src/components/mapa/TramoDetalleResumen"
 import { TramoMaquinariaHistorialBlock } from "@/src/components/mapa/TramoMaquinariaHistorialBlock"
 import type { PropuestaPuntoMinitramo, TramoPuntoAvance } from "@/src/lib/tramo-geometria"
+import type { JornadaMinitramoMapa } from "@/src/lib/tramo-maquinaria-historial"
 import type { SolicitarConfirmacionAvanceOptions } from "@/src/components/mapa/TramoDetallePanel"
 
 export type TramoDetalleResidenteContenidoProps = {
@@ -24,6 +25,7 @@ export type TramoDetalleResidenteContenidoProps = {
   loading: boolean
   proyectoId: string
   puntosAvance: TramoPuntoAvance[]
+  jornadaPorPuntoFin?: ReadonlyMap<string, JornadaMinitramoMapa>
   puntosRefreshKey: number
   eliminandoId?: string | null
   panelError?: string | null
@@ -41,7 +43,7 @@ export type TramoDetalleResidenteContenidoProps = {
   onEditarMinitramo?: (puntoFinId: string) => void
   onEstadoMinitramoChange?: (puntoFinId: string, estado: EstadoTramo) => void | Promise<void>
   onEstadoPuntoChange?: (puntoId: string, estado: EstadoTramo | null) => void | Promise<void>
-  puntoFrenteParpadeoId?: string | null
+  puntoIdsFrenteParpadeo?: ReadonlySet<string>
   onFrenteTrabajoParpadeo?: (puntoId: string) => void
   onEvidenciaSubida?: () => void
   onGuardarOrigenInicio?: (
@@ -57,6 +59,7 @@ export function TramoDetalleResidenteContenido({
   loading,
   proyectoId,
   puntosAvance,
+  jornadaPorPuntoFin,
   puntosRefreshKey,
   eliminandoId = null,
   panelError = null,
@@ -71,7 +74,7 @@ export function TramoDetalleResidenteContenido({
   onEditarMinitramo,
   onEstadoMinitramoChange,
   onEstadoPuntoChange,
-  puntoFrenteParpadeoId = null,
+  puntoIdsFrenteParpadeo,
   onFrenteTrabajoParpadeo,
   onEvidenciaSubida,
   onGuardarOrigenInicio,
@@ -98,6 +101,7 @@ export function TramoDetalleResidenteContenido({
       <TramoDetalleResumen
         tramo={tramo}
         puntosAvance={puntosAvance}
+        jornadaPorPuntoFin={jornadaPorPuntoFin}
         tituloId={tituloId}
         mostrarEncabezado={mostrarEncabezadoResumen}
       />
@@ -128,7 +132,7 @@ export function TramoDetalleResidenteContenido({
           tramoId={tramo.id}
           puntos={puntosDelTramo}
           guardandoPuntoId={guardandoEstadoMinitramoId}
-          puntoFrenteParpadeoId={puntoFrenteParpadeoId}
+          puntoIdsFrenteParpadeo={puntoIdsFrenteParpadeo}
           onFrenteTrabajoParpadeo={onFrenteTrabajoParpadeo}
           onEstadoPuntoChange={onEstadoPuntoChange}
         />

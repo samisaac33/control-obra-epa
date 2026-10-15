@@ -15,12 +15,14 @@ export const FRACCION_MAX_ANCHO_ETIQUETA_SOBRE_MINITRAMO = 0.5
 /** @deprecated Use ZOOM_MIN_ETIQUETAS_LONGITUD */
 export const ZOOM_MIN_ETIQUETAS_MINITRAMO = ZOOM_MIN_ETIQUETAS_LONGITUD
 
-/** Color violeta cuando la capa «Consolidado» está activa (no aplica a MTT terminado visible). */
+/** Color violeta en vista consolidada (modo por defecto del mapa; no aplica a MTT terminado visible). */
 export const COLOR_TRAMO_CONSOLIDADO = "#7c3aed"
 
 const PESO_NORMAL = 6
 const PESO_SELECCIONADO = 8
 const PESO_HOVER_EXTRA = 1
+/** Opacidad de tramos no resaltados al pasar el cursor (visitante, escritorio). */
+export const OPACIDAD_TRAMO_ATENUADO_MAPA = 0.32
 const HALO_BLANCO_EXTRA = 4
 const CONTORNO_OSCURO_EXTRA = 6
 
@@ -109,4 +111,18 @@ export function estiloContornoOscuroTramo(seleccionado: boolean): PathOptions {
     lineCap: "round",
     lineJoin: "round",
   }
+}
+
+/** Atenúa tramos que no coinciden con la selección (vista móvil). */
+export function aplicarAtenuacionSeleccionTramoEnMapa(
+  estilo: PathOptions,
+  tramoId: string | undefined,
+  tramoSeleccionadoId: string | null,
+  activo: boolean
+): PathOptions {
+  if (!activo || !tramoSeleccionadoId || !tramoId) return estilo
+  if (tramoId === tramoSeleccionadoId) {
+    return { ...estilo, opacity: 1 }
+  }
+  return { ...estilo, opacity: OPACIDAD_TRAMO_ATENUADO_MAPA }
 }

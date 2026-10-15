@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:ex="http://earth.google.com/kml/ext">
+<Document id="document">
+	<ex:extension>base64;CooBCoEBCn8KAggBEnkKdwokCiAKAwjQDxoHCNLtZRD_ASEAAAAAAADwPykAAAAAAAAAABgAEg8KCAitgO8HEP8BEKAfGAAaGgoHCP___wcQQBIICK2A7wcQ_wEYoB8gACgAIgkIARIFCP___wcqFwgBEggI____BxD_ARkAAAAAAADwPyAAEgQIARAA</ex:extension>
+	<name>Tramo 37</name>
+	<gx:CascadingStyle kml:id="__managed_style_0BD08A2D8E4256F13FCC_highlight">
+		<ex:extension>base64;EgIYAQ</ex:extension>
+		<Style>
+			<IconStyle>
+				<scale>1.2</scale>
+				<Icon>
+					<href>https://earth.google.com/earth/document/icon?color=1976d2&amp;id=2000&amp;scale=4</href>
+				</Icon>
+				<hotSpot x="64" y="128" xunits="pixels" yunits="insetPixels"/>
+			</IconStyle>
+			<LabelStyle>
+			</LabelStyle>
+			<LineStyle>
+				<color>ff2dc0fb</color>
+				<width>6</width>
+			</LineStyle>
+			<PolyStyle>
+				<color>40ffffff</color>
+			</PolyStyle>
+			<BalloonStyle>
+				<displayMode>hide</displayMode>
+			</BalloonStyle>
+		</Style>
+	</gx:CascadingStyle>
+	<gx:CascadingStyle kml:id="__managed_style_0BD08A2D8E4256F13FCC_normal">
+		<ex:extension>base64;EgIYAQ</ex:extension>
+		<Style>
+			<IconStyle>
+				<Icon>
+					<href>https://earth.google.com/earth/document/icon?color=1976d2&amp;id=2000&amp;scale=4</href>
+				</Icon>
+				<hotSpot x="64" y="128" xunits="pixels" yunits="insetPixels"/>
+			</IconStyle>
+			<LabelStyle>
+			</LabelStyle>
+			<LineStyle>
+				<color>ff2dc0fb</color>
+				<width>4</width>
+			</LineStyle>
+			<PolyStyle>
+				<color>40ffffff</color>
+			</PolyStyle>
+			<BalloonStyle>
+				<displayMode>hide</displayMode>
+			</BalloonStyle>
+		</Style>
+	</gx:CascadingStyle>
+	<StyleMap id="__managed_style_0BD08A2D8E4256F13FCC">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#__managed_style_0BD08A2D8E4256F13FCC_normal</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#__managed_style_0BD08A2D8E4256F13FCC_highlight</styleUrl>
+		</Pair>
+	</StyleMap>
+	<Placemark id="03B6827A534256F13F1C">
+		<name>Tramo 37</name>
+		<LookAt>
+			<longitude>-80.45988789773649</longitude>
+			<latitude>-0.8842144456526151</latitude>
+			<altitude>19.76672898923801</altitude>
+			<heading>0</heading>
+			<tilt>0</tilt>
+			<gx:fovy>35</gx:fovy>
+			<range>515.3204996661952</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_0BD08A2D8E4256F13FCC</styleUrl>
+		<LineString>
+			<coordinates>
+				-80.45898125786493,-0.8884895832750277,0 -80.45917701521616,-0.8882251053577165,0 -80.45926308791535,-0.8881505168505066,0 -80.45964086285237,-0.888070963066567,0 -80.45974405181387,-0.8879964899272192,0 -80.45987064544279,-0.8877665764300728,0 -80.45996226547057,-0.8876692604028988,0 -80.46004250404349,-0.8874112707553137,0 -80.4601456491893,-0.8872638221684463,0 -80.46031831411929,-0.8871541617038822,0 -80.46040782427089,-0.8869651489428345,0 -80.46044537826627,-0.8867823790253265,0 -80.46045184403155,-0.8866768963947951,0 -80.46064900583444,-0.886364274012056,0 -80.46068819161091,-0.8862362070018083,0 -80.46060482658397,-0.8859596632938396,0 -80.46060148015582,-0.8856510278969242,0 -80.46060231334106,-0.885217780406139,0 -80.46056417514457,-0.8850366255507121,0 -80.46036973473247,-0.8846717166971158,0 -80.46026227921287,-0.8844407870016763,0 -80.4602762934425,-0.8842709764805951,0 -80.4604169032676,-0.8840128404499453,0 -80.46050793753807,-0.8838437666201707,0 -80.4605685001689,-0.8836227819157718,0 -80.4605728975266,-0.883488345531574,0 
+			</coordinates>
+		</LineString>
+	</Placemark>
+</Document>
+</kml>

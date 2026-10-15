@@ -41,6 +41,7 @@ export function normalizarPuntoAvance(row: Record<string, unknown>): TramoPuntoA
     rol: esRolValido(rolRaw) ? rolRaw : null,
     grupo_id: row.grupo_id ? String(row.grupo_id) : null,
     estado_minitramo: parseEstadoMinitramo(row.estado_minitramo),
+    frente_mapa: row.frente_mapa === true || row.frente_mapa === "true",
     punto_enlace_id: row.punto_enlace_id ? String(row.punto_enlace_id) : null,
   }
 }
@@ -59,17 +60,6 @@ export async function actualizarEstadoPuntoAvance(
 
     if (error) throw new Error(error.message)
     return
-  }
-
-  if (estado === "en_ejecucion") {
-    const { error: clearError } = await supabase
-      .from("tramo_puntos_avance")
-      .update({ estado_minitramo: null })
-      .eq("tramo_id", tramoId)
-      .eq("estado_minitramo", "en_ejecucion")
-      .neq("id", puntoId)
-
-    if (clearError) throw new Error(clearError.message)
   }
 
   const { error } = await supabase
@@ -181,7 +171,7 @@ export type ConfirmarPuntoMinitramoInput = {
 export async function confirmarPuntoMinitramo(
   supabase: SupabaseClient,
   input: ConfirmarPuntoMinitramoInput
-): Promise<void> {
+): Promise<string> {
   const cierraMinitramo = esFinPar(input.orden)
   const estadoMinitramoInicial: EstadoTramo | null = cierraMinitramo
     ? input.estado === "pendiente"
@@ -189,21 +179,27 @@ export async function confirmarPuntoMinitramo(
       : input.estado
     : null
 
-  const { error: insertError } = await supabase.from("tramo_puntos_avance").insert({
-    tramo_id: input.tramo.id,
-    registro_foto_id: input.registro_foto_id ?? null,
-    lat: input.punto.lat,
-    lng: input.punto.lng,
-    abscisa_m: input.punto.abscisa_m,
-    confirmado: true,
-    created_by: input.userId,
-    rol: input.rol,
-    grupo_id: null,
-    estado_minitramo: estadoMinitramoInicial,
-    punto_enlace_id: input.punto_enlace_id ?? null,
-  })
+  const { data: insertado, error: insertError } = await supabase
+    .from("tramo_puntos_avance")
+    .insert({
+      tramo_id: input.tramo.id,
+      registro_foto_id: input.registro_foto_id ?? null,
+      lat: input.punto.lat,
+      lng: input.punto.lng,
+      abscisa_m: input.punto.abscisa_m,
+      confirmado: true,
+      created_by: input.userId,
+      rol: input.rol,
+      grupo_id: null,
+      estado_minitramo: estadoMinitramoInicial,
+      punto_enlace_id: input.punto_enlace_id ?? null,
+    })
+    .select("id")
+    .single()
 
   if (insertError) throw new Error(insertError.message)
+
+  const puntoId = String(insertado.id)
 
   await renumerarRolesPuntosTramo(supabase, input.tramo)
 
@@ -215,6 +211,8 @@ export async function confirmarPuntoMinitramo(
 
     if (fotoError) throw new Error(fotoError.message)
   }
+
+  return puntoId
 }
 
 export type CorregirPuntoMinitramoInput = {
@@ -222,6 +220,8 @@ export type CorregirPuntoMinitramoInput = {
   puntoId: string
   punto: PuntoMarcado
   estado: EstadoTramo
+  /** Si true, solo recalcula avance del tramo (p. ej. edición sin mover coordenadas). */
+  omitirRenumerarRoles?: boolean
 }
 
 export async function corregirPuntoMinitramo(
@@ -240,7 +240,11 @@ export async function corregirPuntoMinitramo(
   if (updateError) throw new Error(updateError.message)
 
   await actualizarEstadoPuntoAvance(supabase, input.tramo.id, input.puntoId, input.estado)
-  await renumerarRolesPuntosTramo(supabase, input.tramo)
+  if (input.omitirRenumerarRoles) {
+    await recalcularAvanceTramoDesdePuntos(supabase, input.tramo)
+  } else {
+    await renumerarRolesPuntosTramo(supabase, input.tramo)
+  }
 }
 
 export async function renumerarRolesPuntosTramo(

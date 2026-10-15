@@ -90,7 +90,7 @@ export function RegistrarJornadaTramoFields({
           />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor={`${idPrefix}-metros`}>Metros desasolados</Label>
+          <Label htmlFor={`${idPrefix}-metros`}>Metros desazolvados</Label>
           <Input
             id={`${idPrefix}-metros`}
             type="number"

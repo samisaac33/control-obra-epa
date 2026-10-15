@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:ex="http://earth.google.com/kml/ext">
+<Document id="document">
+	<ex:extension>base64;CooBCoEBCn8KAggBEnkKdwokCiAKAwjQDxoHCNLtZRD_ASEAAAAAAADwPykAAAAAAAAAABgAEg8KCAitgO8HEP8BEKAfGAAaGgoHCP___wcQQBIICK2A7wcQ_wEYoB8gACgAIgkIARIFCP___wcqFwgBEggI____BxD_ARkAAAAAAADwPyAAEgQIARAA</ex:extension>
+	<name>Proyecto de mapa sin título</name>
+	<gx:CascadingStyle kml:id="__managed_style_09E8211E134252007E14_highlight">
+		<ex:extension>base64;EgIYAQ</ex:extension>
+		<Style>
+			<IconStyle>
+				<scale>1.2</scale>
+				<Icon>
+					<href>https://earth.google.com/earth/document/icon?color=1976d2&amp;id=2000&amp;scale=4</href>
+				</Icon>
+				<hotSpot x="64" y="128" xunits="pixels" yunits="insetPixels"/>
+			</IconStyle>
+			<LabelStyle>
+			</LabelStyle>
+			<LineStyle>
+				<color>ff2dc0fb</color>
+				<width>6</width>
+			</LineStyle>
+			<PolyStyle>
+				<color>40ffffff</color>
+			</PolyStyle>
+			<BalloonStyle>
+				<displayMode>hide</displayMode>
+			</BalloonStyle>
+		</Style>
+	</gx:CascadingStyle>
+	<gx:CascadingStyle kml:id="__managed_style_09E8211E134252007E14_normal">
+		<ex:extension>base64;EgIYAQ</ex:extension>
+		<Style>
+			<IconStyle>
+				<Icon>
+					<href>https://earth.google.com/earth/document/icon?color=1976d2&amp;id=2000&amp;scale=4</href>
+				</Icon>
+				<hotSpot x="64" y="128" xunits="pixels" yunits="insetPixels"/>
+			</IconStyle>
+			<LabelStyle>
+			</LabelStyle>
+			<LineStyle>
+				<color>ff2dc0fb</color>
+				<width>4</width>
+			</LineStyle>
+			<PolyStyle>
+				<color>40ffffff</color>
+			</PolyStyle>
+			<BalloonStyle>
+				<displayMode>hide</displayMode>
+			</BalloonStyle>
+		</Style>
+	</gx:CascadingStyle>
+	<StyleMap id="__managed_style_09E8211E134252007E14">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#__managed_style_09E8211E134252007E14_normal</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#__managed_style_09E8211E134252007E14_highlight</styleUrl>
+		</Pair>
+	</StyleMap>
+	<Placemark id="0E00F1881D4252007DA0">
+		<name>Tramo 36</name>
+		<LookAt>
+			<longitude>-80.51744171717181</longitude>
+			<latitude>-0.8362058535096495</latitude>
+			<altitude>7.847808267647</altitude>
+			<heading>0</heading>
+			<tilt>0</tilt>
+			<gx:fovy>35</gx:fovy>
+			<range>909.6704331251387</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_09E8211E134252007E14</styleUrl>
+		<LineString>
+			<coordinates>
+				-80.51680344335742,-0.8372125466736628,0 -80.51765436061663,-0.8374550006952478,0 -80.51782881591821,-0.8374694820339579,0 -80.51787442818491,-0.8373634213236434,0 -80.51810998623418,-0.8366348667913985,0 -80.51829999834834,-0.8360425695194603,0 -80.51830754082967,-0.8358223494538194,0 -80.51832280340041,-0.835533716838098,0 -80.51842867415328,-0.8351241117832308,0 -80.51847389272822,-0.8350030412544175,0 
+			</coordinates>
+		</LineString>
+	</Placemark>
+</Document>
+</kml>

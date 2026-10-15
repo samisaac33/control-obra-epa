@@ -193,7 +193,7 @@ export function TramoMaquinariaHistorialBlock({
                     {formatearMetrosDesasolados(registro.metros_desasolados)}
                   </p>
                   <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                    desasolados
+                    desazolvados
                   </p>
                 </div>
               </div>

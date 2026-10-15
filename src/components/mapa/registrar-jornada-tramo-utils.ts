@@ -1,5 +1,7 @@
-import type { TramoRegistroMaquinariaInput } from "@/src/lib/tramo-maquinaria-historial"
+import type { CanalTramo } from "@/src/data/tramos/types"
+import type { TramoRegistroMaquinaria, TramoRegistroMaquinariaInput } from "@/src/lib/tramo-maquinaria-historial"
 import type { ProyectoEquipoMaquinaria } from "@/src/lib/proyecto-equipos-maquinaria"
+import type { TramoPuntoAvance } from "@/src/lib/tramo-geometria"
 
 export const EQUIPO_OTRO_VALUE = "__otro__"
 
@@ -46,7 +48,7 @@ export function validarJornadaFormState(
     return "Complete fecha y equipo de la jornada."
   }
   if (!Number.isFinite(metrosNum) || metrosNum < 0) {
-    return "Indique metros desasolados válidos."
+    return "Indique metros desazolvados válidos."
   }
 
   const horasNum = state.horas.trim() ? Number(state.horas.replace(",", ".")) : null
@@ -79,4 +81,78 @@ export function jornadaInputDesdeFormState(
     duracion_horas: horasNum,
     observaciones: state.observaciones.trim() || null,
   }
+}
+
+function fechaIsoDesdeCreatedAt(createdAt: string): string {
+  return createdAt.slice(0, 10)
+}
+
+export function jornadaFormDesdeRegistro(
+  registro: TramoRegistroMaquinaria,
+  equipos: ProyectoEquipoMaquinaria[]
+): RegistrarJornadaFormState {
+  let equipoSeleccionId = ""
+  let equipoOtroTexto = ""
+
+  if (registro.equipo_id && equipos.some((e) => e.id === registro.equipo_id)) {
+    equipoSeleccionId = registro.equipo_id
+  } else {
+    const porNombre = equipos.find(
+      (e) => e.nombre.trim().toLowerCase() === registro.equipo.trim().toLowerCase()
+    )
+    if (porNombre) {
+      equipoSeleccionId = porNombre.id
+    } else {
+      equipoSeleccionId = EQUIPO_OTRO_VALUE
+      equipoOtroTexto = registro.equipo
+    }
+  }
+
+  return {
+    fecha: registro.fecha,
+    metros: String(registro.metros_desasolados),
+    equipoSeleccionId,
+    equipoOtroTexto,
+    horas: registro.duracion_horas != null ? String(registro.duracion_horas) : "",
+    observaciones: registro.observaciones ?? "",
+  }
+}
+
+function registroCoincideLegacy(
+  registro: TramoRegistroMaquinaria,
+  puntoFin: TramoPuntoAvance,
+  longitudMinitramo_m: number
+): boolean {
+  if (registro.punto_avance_id) {
+    return registro.punto_avance_id === puntoFin.id
+  }
+
+  if (longitudMinitramo_m <= 0) return false
+  const tolerancia = Math.max(1, longitudMinitramo_m * 0.05)
+  const metrosCoinciden =
+    Math.abs(registro.metros_desasolados - longitudMinitramo_m) <= tolerancia
+  if (!metrosCoinciden) return false
+
+  const fechaPunto = fechaIsoDesdeCreatedAt(puntoFin.created_at)
+  return registro.fecha === fechaPunto
+}
+
+/** Busca jornada antigua sin punto_avance_id vinculado a este punto final. */
+export function buscarRegistroJornadaLegacyParaPunto(
+  _tramo: Pick<CanalTramo, "id">,
+  puntoFin: TramoPuntoAvance,
+  registrosTramo: TramoRegistroMaquinaria[],
+  longitudMinitramo_m: number,
+  options?: { excluirRegistroIds?: ReadonlySet<string> }
+): TramoRegistroMaquinaria | null {
+  const excluir = options?.excluirRegistroIds
+  const candidatos = registrosTramo.filter(
+    (r) =>
+      !(excluir?.has(r.id) ?? false) &&
+      !r.punto_avance_id &&
+      registroCoincideLegacy(r, puntoFin, longitudMinitramo_m)
+  )
+
+  if (candidatos.length === 1) return candidatos[0]!
+  return null
 }

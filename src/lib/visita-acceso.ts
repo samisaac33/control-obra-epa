@@ -139,8 +139,10 @@ export function opcionesCookieVisita() {
 }
 
 export function rutasPublicasVisita(pathname: string): boolean {
+  if (pathname.startsWith("/capacitacion/")) return true
   if (pathname === "/ingreso" || pathname === "/login") return true
   if (pathname === "/infimas" || pathname.startsWith("/infimas/")) return true
+  if (pathname.startsWith("/api/infimas/")) return true
   if (
     pathname === "/api/visita/verificar" ||
     pathname === "/api/visita/salir" ||

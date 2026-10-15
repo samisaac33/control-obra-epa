@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import { CircleMarker, GeoJSON, MapContainer, Marker, TileLayer, useMap } from "react-leaflet"
 import type { Layer, PathOptions } from "leaflet"
@@ -11,14 +11,19 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import type { CanalTramo, EstadoTramo } from "@/src/data/tramos/types"
 import { etiquetaEstadoTramo } from "@/src/data/tramos/types"
+import type { JornadaMinitramoMapa } from "@/src/lib/mapa-jornada-minitramo"
 import {
-  htmlTooltipVisitanteSegmento,
+  claveSegmentoMapaHover,
+  htmlTooltipVisitanteMinitramo,
+  htmlTooltipVisitanteTramo,
   segmentosVisualesTramo,
   type SegmentoVisualTramo,
   type TramoPuntoAvance,
 } from "@/src/lib/tramo-geometria"
-import { boundsDesdeTramos } from "@/src/lib/tramos-avance"
+import type { GeoJsonLineString } from "@/src/data/tramos/types"
+import { boundsDesdeGeometria, boundsDesdeTramos } from "@/src/lib/tramos-avance"
 import {
+  Z_MAPA_BARRA_CONTROLES,
   Z_MAPA_MARCADOR_FRENTE_PARPADEO,
   Z_MAPA_MARCADOR_PUNTO,
   Z_MAPA_PANTALLA_COMPLETA,
@@ -26,10 +31,12 @@ import {
 import {
   ALTURA_MAPA_TRAMOS,
   ALTURA_MAPA_VISITANTE_MOVIL,
+  aplicarAtenuacionSeleccionTramoEnMapa,
   estiloContornoOscuroTramo,
   estiloHaloBlancoTramo,
   estiloSegmentoTramoEnMapa,
   MAX_ZOOM_MAPA_TRAMOS,
+  OPACIDAD_TRAMO_ATENUADO_MAPA,
   pesoTramoEnMapa,
 } from "@/src/lib/mapa-tramos-estilo"
 import { MapaEtiquetasLongitudTramoPorZoom } from "@/src/components/mapa/MapaEtiquetasLongitudTramoPorZoom"
@@ -55,6 +62,8 @@ type MapaTramosLeafletProps = {
   alturaResponsiveResidente?: boolean
   marcadoresCompactos?: boolean
   mostrarEtiquetasTramo?: boolean
+  /** Etiquetas fijas de longitud total en tramos (desactivado: solo tooltip al hover). */
+  mostrarLongitudTramosEnMapa?: boolean
   mostrarPuntosAvance?: boolean
   mostrarMinitramosTerminados?: boolean
   mapaConsolidado?: boolean
@@ -64,6 +73,24 @@ type MapaTramosLeafletProps = {
   seguirUbicacionUsuario?: boolean
   centrarUbicacionVersion?: number
   puntoIdsParpadeoFrente?: ReadonlySet<string>
+  jornadaPorPuntoFin?: ReadonlyMap<string, JornadaMinitramoMapa>
+  /** Móvil: atenuar tramos distintos al seleccionado (vista previa). */
+  atenuarTramosNoSeleccionados?: boolean
+  /** Incrementar al seleccionar tramo/segmento en móvil para encuadrar el mapa. */
+  encuadrarSeleccionToken?: number
+  encuadrarGeometria?: GeoJsonLineString | null
+  encuadrarPaddingInferior?: number
+}
+
+type HoverVisitanteMapa = {
+  tramoId: string
+  segmentoClave: string
+} | null
+
+type CapaSegmentoRegistrada = {
+  path: L.Path
+  props: FeatureProps
+  clave: string
 }
 
 type FeatureProps = {
@@ -89,6 +116,68 @@ function AjustarBounds({ tramos }: { tramos: CanalTramo[] }) {
   return null
 }
 
+function EncuadrarSeleccionEnMapa({
+  tramoId,
+  tramos,
+  geometriaPreferida,
+  token,
+  paddingInferior = 0,
+}: {
+  tramoId: string | null
+  tramos: CanalTramo[]
+  geometriaPreferida?: GeoJsonLineString | null
+  token: number
+  paddingInferior?: number
+}) {
+  const map = useMap()
+
+  useEffect(() => {
+    if (!tramoId || token <= 0) return
+    const tramo = tramos.find((t) => t.id === tramoId)
+    if (!tramo) return
+
+    const bounds =
+      geometriaPreferida && geometriaPreferida.coordinates.length >= 2
+        ? boundsDesdeGeometria(geometriaPreferida)
+        : boundsDesdeTramos([tramo])
+    if (!bounds) return
+
+    map.fitBounds(bounds, {
+      paddingTopLeft: [28, 28],
+      paddingBottomRight: [28, 28 + paddingInferior],
+      maxZoom: MAX_ZOOM_MAPA_TRAMOS,
+      animate: true,
+      duration: 0.45,
+    })
+  }, [map, tramoId, tramos, geometriaPreferida, token, paddingInferior])
+
+  return null
+}
+
+/** Referencia global para scripts de grabación de capacitación (flyTo / fitBounds). */
+function ExponerMapaCapacitacion({ tramos }: { tramos: CanalTramo[] }) {
+  const map = useMap()
+
+  useEffect(() => {
+    window.__mapaTramosLeaflet = map
+    window.__mapaCapacitacionFitBoundsRed = () => {
+      const bounds = boundsDesdeTramos(tramos)
+      if (!bounds) return false
+      map.fitBounds(bounds, {
+        padding: [24, 24],
+        maxZoom: MAX_ZOOM_MAPA_TRAMOS,
+      })
+      return true
+    }
+    return () => {
+      delete window.__mapaTramosLeaflet
+      delete window.__mapaCapacitacionFitBoundsRed
+    }
+  }, [map, tramos])
+
+  return null
+}
+
 /** Leaflet no detecta cambios de tamaño del contenedor al pasar a pantalla completa. */
 function InvalidarTamanoMapa({ pantallaCompleta }: { pantallaCompleta: boolean }) {
   const map = useMap()
@@ -107,26 +196,102 @@ function InvalidarTamanoMapa({ pantallaCompleta }: { pantallaCompleta: boolean }
   return null
 }
 
+function estiloCapaSegmentoVisitante(
+  props: FeatureProps,
+  ctx: {
+    tramoSeleccionadoId: string | null
+    mostrarMinitramosTerminados: boolean
+    mapaConsolidado: boolean
+    mostrarPuntosAvance: boolean
+    hover: HoverVisitanteMapa
+    claveSegmento: string
+  }
+): PathOptions {
+  const { tramo, tipo, estadoSegmento } = props
+  const seleccionado = tramo.id === ctx.tramoSeleccionadoId
+  const base = estiloSegmentoTramoEnMapa(
+    tramo,
+    tipo ?? "pendiente",
+    seleccionado,
+    false,
+    estadoSegmento,
+    ctx.mostrarMinitramosTerminados,
+    ctx.mapaConsolidado
+  )
+
+  if (!ctx.hover) return base
+
+  const mismoTramo = ctx.hover.tramoId === tramo.id
+  if (!ctx.mostrarPuntosAvance) {
+    if (mismoTramo) {
+      return { ...base, weight: pesoTramoEnMapa(seleccionado, true), opacity: 1 }
+    }
+    return { ...base, opacity: OPACIDAD_TRAMO_ATENUADO_MAPA }
+  }
+
+  const resaltado = mismoTramo && ctx.hover.segmentoClave === ctx.claveSegmento
+  if (resaltado) {
+    return { ...base, weight: pesoTramoEnMapa(seleccionado, true), opacity: 1 }
+  }
+  return { ...base, opacity: OPACIDAD_TRAMO_ATENUADO_MAPA }
+}
+
 function registrarInteraccionTramo(
   layer: Layer,
   segmento: SegmentoVisualTramo,
-  tramoSeleccionadoId: string | null,
-  isResident: boolean,
-  esViewportMovil: boolean,
-  mostrarMinitramosTerminados: boolean,
-  mapaConsolidado: boolean,
-  onTramoClick: (tramo: CanalTramo) => void,
-  onSegmentoVisitanteClick?: (segmento: SegmentoVisualTramo) => void
+  props: FeatureProps,
+  claveSegmento: string,
+  ctx: {
+    tramoSeleccionadoId: string | null
+    isResident: boolean
+    esViewportMovil: boolean
+    mostrarMinitramosTerminados: boolean
+    mapaConsolidado: boolean
+    mostrarPuntosAvance: boolean
+    puntosAvance: TramoPuntoAvance[]
+    jornadaPorPuntoFin: ReadonlyMap<string, JornadaMinitramoMapa>
+    hover: HoverVisitanteMapa
+    onHoverChange: (hover: HoverVisitanteMapa) => void
+    onTramoClick: (tramo: CanalTramo) => void
+    onSegmentoVisitanteClick?: (segmento: SegmentoVisualTramo) => void
+    atenuarTramosNoSeleccionados: boolean
+    registrarCapa: (capa: CapaSegmentoRegistrada) => void
+  }
 ) {
-  const { tramo, tipo, estadoSegmento } = segmento
+  const { tramo } = segmento
+  const path = layer as L.Path
 
-  if (isResident) {
+  ctx.registrarCapa({ path, props, clave: claveSegmento })
+
+  path.setStyle(
+    estiloCapaSegmentoVisitante(props, {
+      tramoSeleccionadoId: ctx.tramoSeleccionadoId,
+      mostrarMinitramosTerminados: ctx.mostrarMinitramosTerminados,
+      mapaConsolidado: ctx.mapaConsolidado,
+      mostrarPuntosAvance: ctx.mostrarPuntosAvance,
+      hover: ctx.hover,
+      claveSegmento,
+    })
+  )
+
+  if (ctx.isResident) {
     layer.bindTooltip(`${tramo.codigo} · ${etiquetaEstadoTramo(tramo.estado)} · ${tramo.canal}`, {
       sticky: true,
       direction: "top",
     })
-  } else if (!esViewportMovil) {
-    layer.bindTooltip(htmlTooltipVisitanteSegmento(segmento), {
+  } else if (!ctx.esViewportMovil) {
+    const tooltipHtml = ctx.mostrarPuntosAvance
+      ? segmento.tipo === "minitramo"
+        ? htmlTooltipVisitanteMinitramo(
+            segmento,
+            segmento.puntoFinId
+              ? ctx.jornadaPorPuntoFin.get(segmento.puntoFinId)
+              : undefined
+          )
+        : htmlTooltipVisitanteTramo(tramo, ctx.puntosAvance)
+      : htmlTooltipVisitanteTramo(tramo, ctx.puntosAvance)
+
+    layer.bindTooltip(tooltipHtml, {
       sticky: true,
       direction: "auto",
       className: "mapa-segmento-tooltip",
@@ -135,33 +300,48 @@ function registrarInteraccionTramo(
 
   layer.on({
     click: () => {
-      if (!isResident && onSegmentoVisitanteClick) {
-        onSegmentoVisitanteClick(segmento)
+      if (!ctx.isResident && ctx.onSegmentoVisitanteClick) {
+        ctx.onSegmentoVisitanteClick(segmento)
         return
       }
-      onTramoClick(tramo)
+      ctx.onTramoClick(tramo)
     },
-    mouseover: (event) => {
-      const target = event.target as L.Path
-      target.setStyle({
-        weight: pesoTramoEnMapa(tramo.id === tramoSeleccionadoId, true),
-        opacity: 1,
+    mouseover: () => {
+      if (ctx.isResident || ctx.esViewportMovil) {
+        path.setStyle({
+          weight: pesoTramoEnMapa(tramo.id === ctx.tramoSeleccionadoId, true),
+          opacity: 1,
+        })
+        return
+      }
+      ctx.onHoverChange({
+        tramoId: tramo.id,
+        segmentoClave: claveSegmento,
       })
     },
-    mouseout: (event) => {
-      const seleccionado = tramo.id === tramoSeleccionadoId
-      const target = event.target as L.Path
-      target.setStyle(
-        estiloSegmentoTramoEnMapa(
+    mouseout: () => {
+      if (ctx.isResident || ctx.esViewportMovil) {
+        const seleccionado = tramo.id === ctx.tramoSeleccionadoId
+        const base = estiloSegmentoTramoEnMapa(
           tramo,
-          tipo ?? "pendiente",
+          props.tipo ?? "pendiente",
           seleccionado,
           false,
-          estadoSegmento,
-          mostrarMinitramosTerminados,
-          mapaConsolidado
+          props.estadoSegmento,
+          ctx.mostrarMinitramosTerminados,
+          ctx.mapaConsolidado
         )
-      )
+        path.setStyle(
+          aplicarAtenuacionSeleccionTramoEnMapa(
+            base,
+            tramo.id,
+            ctx.tramoSeleccionadoId,
+            ctx.atenuarTramosNoSeleccionados
+          )
+        )
+        return
+      }
+      ctx.onHoverChange(null)
     },
   })
 }
@@ -205,19 +385,29 @@ export function MapaTramosLeaflet({
   modoMapaVisitanteMovil = false,
   alturaResponsiveResidente = false,
   marcadoresCompactos = false,
-  mostrarEtiquetasTramo = true,
-  mostrarPuntosAvance = true,
+  mostrarEtiquetasTramo = false,
+  mostrarLongitudTramosEnMapa = false,
+  mostrarPuntosAvance = false,
   mostrarMinitramosTerminados = true,
-  mapaConsolidado = false,
+  mapaConsolidado = true,
   onTramoClick,
   onSegmentoVisitanteClick,
   ubicacionUsuario = null,
   seguirUbicacionUsuario = false,
   centrarUbicacionVersion = 0,
   puntoIdsParpadeoFrente,
+  jornadaPorPuntoFin,
+  atenuarTramosNoSeleccionados = false,
+  encuadrarSeleccionToken = 0,
+  encuadrarGeometria = null,
+  encuadrarPaddingInferior = 0,
 }: MapaTramosLeafletProps) {
   const idsParpadeoFrente = puntoIdsParpadeoFrente ?? new Set<string>()
+  const jornadasMapa = jornadaPorPuntoFin ?? new Map<string, JornadaMinitramoMapa>()
   const [pantallaCompleta, setPantallaCompleta] = useState(false)
+  const [hoverVisitante, setHoverVisitante] = useState<HoverVisitanteMapa>(null)
+  const capasSegmentoRef = useRef<CapaSegmentoRegistrada[]>([])
+  const capasLayerKeyRef = useRef<string | null>(null)
   const esViewportMovilHook = useEsViewportMovil()
   const alturaNormal = modoMapaVisitanteMovil ? ALTURA_MAPA_VISITANTE_MOVIL : ALTURA_MAPA_TRAMOS
   const usaAlturaCssResidente = alturaResponsiveResidente && !pantallaCompleta
@@ -275,6 +465,68 @@ export function MapaTramosLeaflet({
     return [(minLat + maxLat) / 2, (minLng + maxLng) / 2]
   }, [tramos])
 
+  const layerKey = `${isResident ? "r" : "v"}-${esViewportMovil ? "m" : "d"}-${mostrarPuntosAvance ? "pts1" : "pts0"}-${mostrarMinitramosTerminados ? "mtt1" : "mtt0"}-${mapaConsolidado ? "cons1" : "cons0"}-${tramoSeleccionadoId ?? "none"}-${tramos
+    .map((t) => `${t.id}:${t.metros_ejecutados}:${t.estado}`)
+    .join("|")}-${puntosVisibles.map((p) => `${p.id}:${p.estado_minitramo ?? ""}:${p.frente_mapa ? "1" : "0"}`).join(",")}-${[...idsParpadeoFrente].sort().join(",")}`
+
+  useEffect(() => {
+    setHoverVisitante(null)
+  }, [layerKey])
+
+  const registrarCapaSegmento = useCallback((capa: CapaSegmentoRegistrada) => {
+    capasSegmentoRef.current.push(capa)
+  }, [])
+
+  useEffect(() => {
+    if (!isResident && !esViewportMovil) {
+      for (const capa of capasSegmentoRef.current) {
+        capa.path.setStyle(
+          estiloCapaSegmentoVisitante(capa.props, {
+            tramoSeleccionadoId,
+            mostrarMinitramosTerminados,
+            mapaConsolidado,
+            mostrarPuntosAvance,
+            hover: hoverVisitante,
+            claveSegmento: capa.clave,
+          })
+        )
+      }
+      return
+    }
+    if (!atenuarTramosNoSeleccionados) return
+    for (const capa of capasSegmentoRef.current) {
+      const tramo = capa.props.tramo
+      if (!tramo) continue
+      const seleccionado = tramo.id === tramoSeleccionadoId
+      const base = estiloSegmentoTramoEnMapa(
+        tramo,
+        capa.props.tipo ?? "pendiente",
+        seleccionado,
+        false,
+        capa.props.estadoSegmento,
+        mostrarMinitramosTerminados,
+        mapaConsolidado
+      )
+      capa.path.setStyle(
+        aplicarAtenuacionSeleccionTramoEnMapa(
+          base,
+          tramo.id,
+          tramoSeleccionadoId,
+          atenuarTramosNoSeleccionados
+        )
+      )
+    }
+  }, [
+    hoverVisitante,
+    isResident,
+    esViewportMovil,
+    tramoSeleccionadoId,
+    mostrarMinitramosTerminados,
+    mapaConsolidado,
+    mostrarPuntosAvance,
+    atenuarTramosNoSeleccionados,
+  ])
+
   if (tramos.length === 0) {
     return (
       <div
@@ -288,10 +540,6 @@ export function MapaTramosLeaflet({
       </div>
     )
   }
-
-  const layerKey = `${isResident ? "r" : "v"}-${esViewportMovil ? "m" : "d"}-${mostrarMinitramosTerminados ? "mtt1" : "mtt0"}-${mapaConsolidado ? "cons1" : "cons0"}-${tramoSeleccionadoId ?? "none"}-${tramos
-    .map((t) => `${t.id}:${t.metros_ejecutados}:${t.estado}`)
-    .join("|")}-${puntosVisibles.map((p) => `${p.id}:${p.estado_minitramo ?? ""}`).join(",")}-${[...idsParpadeoFrente].sort().join(",")}`
 
   const mapaShell = (
     <div
@@ -311,7 +559,10 @@ export function MapaTramosLeaflet({
         type="button"
         variant="secondary"
         size="icon"
-        className="absolute top-2 right-2 z-[1000] size-9 border border-foreground/15 bg-background/95 shadow-md backdrop-blur-sm touch-manipulation"
+        className={cn(
+          "absolute top-2 right-2 size-9 border border-foreground/15 bg-background/95 shadow-md backdrop-blur-sm touch-manipulation",
+          pantallaCompleta ? "z-[1000]" : Z_MAPA_BARRA_CONTROLES
+        )}
         aria-label={pantallaCompleta ? "Salir de pantalla completa" : "Expandir mapa a pantalla completa"}
         aria-pressed={pantallaCompleta}
         onClick={() => setPantallaCompleta((prev) => !prev)}
@@ -343,10 +594,22 @@ export function MapaTramosLeaflet({
           tramos={tramos}
           tramoSeleccionadoId={tramoSeleccionadoId}
           mostrar={mostrarEtiquetasTramo}
+          etiquetasSiempre={mostrarEtiquetasTramo}
         />
-        <MapaEtiquetasLongitudTramoPorZoom tramos={tramos} />
+        <MapaEtiquetasLongitudTramoPorZoom
+          tramos={tramos}
+          activo={mostrarLongitudTramosEnMapa}
+        />
         <MapaEtiquetasMinitramoPorZoom segmentos={segmentosColoreados} />
         <AjustarBounds tramos={tramos} />
+        <EncuadrarSeleccionEnMapa
+          tramoId={tramoSeleccionadoId}
+          tramos={tramos}
+          geometriaPreferida={encuadrarGeometria}
+          token={encuadrarSeleccionToken}
+          paddingInferior={encuadrarPaddingInferior}
+        />
+        <ExponerMapaCapacitacion tramos={tramos} />
         {ubicacionUsuario ? (
           <UbicacionUsuarioEnMapa
             ubicacion={ubicacionUsuario}
@@ -360,7 +623,13 @@ export function MapaTramosLeaflet({
           style={(feature): PathOptions => {
             const tramo = (feature?.properties as FeatureProps | undefined)?.tramo
             const seleccionado = tramo?.id === tramoSeleccionadoId
-            return estiloContornoOscuroTramo(seleccionado)
+            const base = estiloContornoOscuroTramo(seleccionado)
+            return aplicarAtenuacionSeleccionTramoEnMapa(
+              base,
+              tramo?.id,
+              tramoSeleccionadoId,
+              atenuarTramosNoSeleccionados
+            )
           }}
           interactive={false}
         />
@@ -370,7 +639,13 @@ export function MapaTramosLeaflet({
           style={(feature): PathOptions => {
             const tramo = (feature?.properties as FeatureProps | undefined)?.tramo
             const seleccionado = tramo?.id === tramoSeleccionadoId
-            return estiloHaloBlancoTramo(seleccionado)
+            const base = estiloHaloBlancoTramo(seleccionado)
+            return aplicarAtenuacionSeleccionTramoEnMapa(
+              base,
+              tramo?.id,
+              tramoSeleccionadoId,
+              atenuarTramosNoSeleccionados
+            )
           }}
           interactive={false}
         />
@@ -379,9 +654,10 @@ export function MapaTramosLeaflet({
           data={featureCollectionColoreada}
           style={(feature): PathOptions => {
             const props = feature?.properties as FeatureProps | undefined
-            const seleccionado = props?.tramo?.id === tramoSeleccionadoId
-            return estiloSegmentoTramoEnMapa(
-              props?.tramo,
+            const tramo = props?.tramo
+            const seleccionado = tramo?.id === tramoSeleccionadoId
+            const base = estiloSegmentoTramoEnMapa(
+              tramo,
               props?.tipo ?? "pendiente",
               seleccionado,
               false,
@@ -389,70 +665,88 @@ export function MapaTramosLeaflet({
               mostrarMinitramosTerminados,
               mapaConsolidado
             )
+            return aplicarAtenuacionSeleccionTramoEnMapa(
+              base,
+              tramo?.id,
+              tramoSeleccionadoId,
+              atenuarTramosNoSeleccionados
+            )
           }}
           onEachFeature={(feature, layer) => {
             const props = feature.properties as FeatureProps
             if (!props.tramo || !props.segmento) return
-            registrarInteraccionTramo(
-              layer,
-              props.segmento,
+            if (capasLayerKeyRef.current !== layerKey) {
+              capasLayerKeyRef.current = layerKey
+              capasSegmentoRef.current = []
+            }
+            const claveSegmento = claveSegmentoMapaHover(props.segmento)
+            registrarInteraccionTramo(layer, props.segmento, props, claveSegmento, {
               tramoSeleccionadoId,
               isResident,
               esViewportMovil,
               mostrarMinitramosTerminados,
               mapaConsolidado,
+              mostrarPuntosAvance,
+              puntosAvance: puntosVisibles,
+              jornadaPorPuntoFin: jornadasMapa,
+              hover: hoverVisitante,
+              onHoverChange: setHoverVisitante,
               onTramoClick,
-              onSegmentoVisitanteClick
-            )
+              onSegmentoVisitanteClick,
+              atenuarTramosNoSeleccionados,
+              registrarCapa: registrarCapaSegmento,
+            })
           }}
         />
-        {mostrarPuntosAvance
-          ? (() => {
-              const puntosFrente = puntosVisibles.filter((p) => idsParpadeoFrente.has(p.id))
-              const puntosResto = puntosVisibles.filter((p) => !idsParpadeoFrente.has(p.id))
+        {(() => {
+          const puntosFrente = puntosVisibles.filter((p) => idsParpadeoFrente.has(p.id))
+          const puntosResto = mostrarPuntosAvance
+            ? puntosVisibles.filter((p) => !idsParpadeoFrente.has(p.id))
+            : []
 
-              const renderMarcadorDiv = (punto: TramoPuntoAvance, parpadeoFrente: boolean) => (
-                <Marker
-                  key={punto.id}
-                  position={[punto.lat, punto.lng]}
-                  zIndexOffset={
-                    parpadeoFrente ? Z_MAPA_MARCADOR_FRENTE_PARPADEO : Z_MAPA_MARCADOR_PUNTO
-                  }
-                  icon={L.divIcon({
-                    className: "",
-                    html: htmlMarcadorPuntoAvance(punto, iconSize, fontSize, parpadeoFrente),
-                    iconSize: [iconSize, iconSize],
-                    iconAnchor: [iconSize / 2, iconSize / 2],
-                  })}
-                />
-              )
+          const renderMarcadorDiv = (punto: TramoPuntoAvance, parpadeoFrente: boolean) => (
+            <Marker
+              key={punto.id}
+              position={[punto.lat, punto.lng]}
+              zIndexOffset={
+                parpadeoFrente ? Z_MAPA_MARCADOR_FRENTE_PARPADEO : Z_MAPA_MARCADOR_PUNTO
+              }
+              icon={L.divIcon({
+                className: "",
+                html: htmlMarcadorPuntoAvance(punto, iconSize, fontSize, parpadeoFrente),
+                iconSize: [iconSize, iconSize],
+                iconAnchor: [iconSize / 2, iconSize / 2],
+              })}
+            />
+          )
 
-              return (
-                <>
-                  {puntosResto.map((punto) => {
-                    if (punto.rol) {
-                      return renderMarcadorDiv(punto, false)
-                    }
-                    const seleccionado = punto.tramo_id === tramoSeleccionadoId
-                    return (
-                      <CircleMarker
-                        key={punto.id}
-                        center={[punto.lat, punto.lng]}
-                        radius={marcadoresCompactos ? 5 : 6}
-                        pathOptions={{
-                          color: "#ffffff",
-                          weight: 2,
-                          fillColor: seleccionado ? "#2563eb" : "#16a34a",
-                          fillOpacity: 0.95,
-                        }}
-                      />
-                    )
-                  })}
-                  {puntosFrente.map((punto) => renderMarcadorDiv(punto, true))}
-                </>
-              )
-            })()
-          : null}
+          if (puntosResto.length === 0 && puntosFrente.length === 0) return null
+
+          return (
+            <>
+              {puntosResto.map((punto) => {
+                if (punto.rol) {
+                  return renderMarcadorDiv(punto, false)
+                }
+                const seleccionado = punto.tramo_id === tramoSeleccionadoId
+                return (
+                  <CircleMarker
+                    key={punto.id}
+                    center={[punto.lat, punto.lng]}
+                    radius={marcadoresCompactos ? 5 : 6}
+                    pathOptions={{
+                      color: "#ffffff",
+                      weight: 2,
+                      fillColor: seleccionado ? "#2563eb" : "#16a34a",
+                      fillOpacity: 0.95,
+                    }}
+                  />
+                )
+              })}
+              {puntosFrente.map((punto) => renderMarcadorDiv(punto, true))}
+            </>
+          )
+        })()}
       </MapContainer>
     </div>
   )

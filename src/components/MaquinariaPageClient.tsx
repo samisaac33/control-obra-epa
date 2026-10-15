@@ -7,16 +7,32 @@ import { KpiCard } from "@/src/components/KpiCard"
 import { MaquinariaAccionistaChip } from "@/src/components/MaquinariaRegistroBadge"
 import { MaquinariaCronologia } from "@/src/components/MaquinariaCronologia"
 import { MaquinariaCatalogoEquipos } from "@/src/components/MaquinariaCatalogoEquipos"
+import { MaquinariaDesasolvePageClient } from "@/src/components/MaquinariaDesasolvePageClient"
 import { MaquinariaExportClient } from "@/src/components/MaquinariaExportClient"
 import { MaquinariaMatrizCalendario } from "@/src/components/MaquinariaMatrizCalendario"
 import { MaquinariaResumenTabla } from "@/src/components/MaquinariaResumenTabla"
 import { ProyectoModuloGuard } from "@/src/components/ProyectoModuloGuard"
 import { useProyecto } from "@/src/contexts/ProyectoContext"
+import { PROYECTO_DESASOLVE_CANALES } from "@/src/data/proyectos/catalog"
 import { ACCIONISTA_META } from "@/src/data/registro-maquinaria"
 import { useRegistroMaquinariaProyecto } from "@/src/hooks/use-registro-maquinaria-proyecto"
 import { formatearNumero, kpisMaquinaria } from "@/src/lib/maquinaria-resumen"
 
 export function MaquinariaPageClient() {
+  const { proyectoActivo } = useProyecto()
+
+  if (proyectoActivo.id === PROYECTO_DESASOLVE_CANALES) {
+    return (
+      <ProyectoModuloGuard modulo="maquinaria">
+        <MaquinariaDesasolvePageClient />
+      </ProyectoModuloGuard>
+    )
+  }
+
+  return <MaquinariaEmergenciaPageClient />
+}
+
+function MaquinariaEmergenciaPageClient() {
   const { proyectoActivo } = useProyecto()
   const { registros, periodo } = useRegistroMaquinariaProyecto()
   const kpis = kpisMaquinaria(registros)

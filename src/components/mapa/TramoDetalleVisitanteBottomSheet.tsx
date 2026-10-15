@@ -8,12 +8,15 @@ import { MapaOverlayPortal } from "@/src/components/mapa/MapaOverlayPortal"
 import { TramoDetalleVisitanteContenido } from "@/src/components/mapa/TramoDetalleVisitanteContenido"
 import type { CanalTramo } from "@/src/data/tramos/types"
 import { Z_MAPA_OVERLAY } from "@/src/lib/mapa-capas-z"
-import type { TramoPuntoAvance } from "@/src/lib/tramo-geometria"
+import type { SegmentoVisualTramo, TramoPuntoAvance } from "@/src/lib/tramo-geometria"
+import type { JornadaMinitramoMapa } from "@/src/lib/tramo-maquinaria-historial"
 
 type TramoDetalleVisitanteBottomSheetProps = {
   open: boolean
   tramo: CanalTramo | null
   puntosAvance: TramoPuntoAvance[]
+  jornadaPorPuntoFin?: ReadonlyMap<string, JornadaMinitramoMapa>
+  segmentoDestacado?: SegmentoVisualTramo | null
   panelError?: string | null
   onOpenChange: (open: boolean) => void
 }
@@ -22,6 +25,8 @@ export function TramoDetalleVisitanteBottomSheet({
   open,
   tramo,
   puntosAvance,
+  jornadaPorPuntoFin,
+  segmentoDestacado = null,
   panelError = null,
   onOpenChange,
 }: TramoDetalleVisitanteBottomSheetProps) {
@@ -58,6 +63,8 @@ export function TramoDetalleVisitanteBottomSheet({
           <TramoDetalleVisitanteContenido
             tramo={tramo}
             puntosAvance={puntosAvance}
+            jornadaPorPuntoFin={jornadaPorPuntoFin}
+            segmentoDestacado={segmentoDestacado}
             panelError={panelError}
             tituloId="tramo-detalle-visitante-title"
           />

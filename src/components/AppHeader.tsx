@@ -2,12 +2,14 @@
 
 import { useEffect, useRef, useState } from "react"
 import { usePathname, useRouter } from "next/navigation"
-import { Menu } from "lucide-react"
+import { LogOut, Menu } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet"
 import { NavigationPanel } from "@/src/components/NavigationPanel"
 import { useProyecto } from "@/src/contexts/ProyectoContext"
+import { PROYECTO_DESASOLVE_CANALES } from "@/src/data/proyectos/catalog"
+import { seccionDesdePathname } from "@/src/lib/proyecto-seccion-desde-path"
 import { createClient } from "@/src/lib/supabase/client"
 import { esRutaMapaObra } from "@/src/lib/rutas-proyecto"
 import { cn } from "@/lib/utils"
@@ -140,6 +142,9 @@ export function AppHeader() {
   }, [modoMapaMovil, headerOculto])
 
   const ocultarEnMapaMovil = modoMapaMovil && headerOculto
+  const headerDesasolveMovil =
+    proyectoActivo.id === PROYECTO_DESASOLVE_CANALES && esViewportMovil && !modoMapaMovil
+  const seccionActual = seccionDesdePathname(pathname, proyectoActivo.id)
 
   async function handleLogout() {
     setLoadingLogout(true)
@@ -211,29 +216,56 @@ export function AppHeader() {
           </SheetContent>
         </Sheet>
         <div className="min-w-0 flex-1">
-          <h1 className="line-clamp-2 text-sm font-semibold leading-snug text-foreground sm:line-clamp-1 sm:text-base">
-            {proyectoActivo.nombreObra}
-          </h1>
+          {headerDesasolveMovil ? (
+            <>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+                Control de Obra · EPA
+              </p>
+              <h1 className="line-clamp-2 text-sm font-semibold leading-snug text-foreground">
+                {seccionActual.titulo}
+              </h1>
+            </>
+          ) : (
+            <h1 className="line-clamp-2 text-sm font-semibold leading-snug text-foreground sm:line-clamp-1 sm:text-base">
+              {proyectoActivo.nombreObra}
+            </h1>
+          )}
         </div>
         {isResident ? (
           <Button
             type="button"
             variant="outline"
+            size={headerDesasolveMovil ? "icon" : "default"}
             onClick={handleLogout}
             disabled={loadingLogout}
-            className="h-9 shrink-0"
+            className={cn("h-9 shrink-0", headerDesasolveMovil && "w-9")}
+            aria-label={headerDesasolveMovil ? "Cerrar sesión" : undefined}
           >
-            {loadingLogout ? "Saliendo..." : "Cerrar sesión"}
+            {headerDesasolveMovil ? (
+              <LogOut className="size-4" aria-hidden />
+            ) : loadingLogout ? (
+              "Saliendo..."
+            ) : (
+              "Cerrar sesión"
+            )}
           </Button>
         ) : visitaActiva ? (
           <Button
             type="button"
             variant="outline"
+            size={headerDesasolveMovil ? "icon" : "default"}
             onClick={handleVisitaSalir}
             disabled={loadingVisitaSalir}
-            className="h-9 shrink-0"
+            className={cn("h-9 shrink-0", headerDesasolveMovil && "w-9")}
+            aria-label={headerDesasolveMovil ? "Salir" : undefined}
           >
-            {loadingVisitaSalir ? "Saliendo..." : "Salir"}
+            {headerDesasolveMovil ? (
+              <LogOut className="size-4" aria-hidden />
+            ) : loadingVisitaSalir ? (
+              "Saliendo..."
+            ) : (
+              "Salir"
+            )}
           </Button>
         ) : null}
       </div>

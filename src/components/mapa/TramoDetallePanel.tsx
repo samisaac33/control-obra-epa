@@ -9,7 +9,12 @@ import { TramoDetalleVisitanteContenido } from "@/src/components/mapa/TramoDetal
 import { TramoDetalleResidenteBottomSheet } from "@/src/components/mapa/TramoDetalleResidenteBottomSheet"
 import { TramoDetalleResidenteContenido } from "@/src/components/mapa/TramoDetalleResidenteContenido"
 import { tituloTramoMapa } from "@/src/lib/tramo-display"
-import type { PropuestaPuntoMinitramo, TramoPuntoAvance } from "@/src/lib/tramo-geometria"
+import type {
+  PropuestaPuntoMinitramo,
+  SegmentoVisualTramo,
+  TramoPuntoAvance,
+} from "@/src/lib/tramo-geometria"
+import type { JornadaMinitramoMapa } from "@/src/lib/tramo-maquinaria-historial"
 import type { ConfirmarOrigenInicioOptions } from "@/src/components/mapa/TramoOrigenInicioBlock"
 import type { EstadoTramo, OrigenExtremoTramo } from "@/src/data/tramos/types"
 
@@ -27,6 +32,7 @@ type TramoDetallePanelProps = {
   loading: boolean
   proyectoId: string
   puntosAvance: TramoPuntoAvance[]
+  jornadaPorPuntoFin?: ReadonlyMap<string, JornadaMinitramoMapa>
   puntosRefreshKey: number
   eliminandoId?: string | null
   panelError?: string | null
@@ -41,7 +47,7 @@ type TramoDetallePanelProps = {
   onEliminarPuntoHuérfano?: (puntoId: string) => void
   onEstadoMinitramoChange?: (puntoFinId: string, estado: EstadoTramo) => void | Promise<void>
   onEstadoPuntoChange?: (puntoId: string, estado: EstadoTramo | null) => void | Promise<void>
-  puntoFrenteParpadeoId?: string | null
+  puntoIdsFrenteParpadeo?: ReadonlySet<string>
   onFrenteTrabajoParpadeo?: (puntoId: string) => void
   guardandoEstadoMinitramoId?: string | null
   onEvidenciaSubida?: () => void
@@ -55,6 +61,7 @@ type TramoDetallePanelProps = {
   onRenumerarPuntosTramo?: () => void | Promise<void>
   /** Mapa en viewport móvil: bottom sheet fijo en lugar de Sheet lateral. */
   detalleEnBottomSheet?: boolean
+  segmentoDestacado?: SegmentoVisualTramo | null
 }
 
 export function TramoDetallePanel({
@@ -65,6 +72,7 @@ export function TramoDetallePanel({
   loading,
   proyectoId,
   puntosAvance,
+  jornadaPorPuntoFin,
   puntosRefreshKey,
   eliminandoId = null,
   panelError = null,
@@ -76,7 +84,7 @@ export function TramoDetallePanel({
   onEliminarPuntoHuérfano,
   onEstadoMinitramoChange,
   onEstadoPuntoChange,
-  puntoFrenteParpadeoId = null,
+  puntoIdsFrenteParpadeo,
   onFrenteTrabajoParpadeo,
   guardandoEstadoMinitramoId = null,
   onEvidenciaSubida,
@@ -86,6 +94,7 @@ export function TramoDetallePanel({
   reiniciandoOrigen = false,
   onRenumerarPuntosTramo,
   detalleEnBottomSheet = false,
+  segmentoDestacado = null,
 }: TramoDetallePanelProps) {
   const handleOpenChange = (nextOpen: boolean) => {
     if (!nextOpen) onClearPanelError?.()
@@ -96,6 +105,7 @@ export function TramoDetallePanel({
     loading,
     proyectoId,
     puntosAvance,
+    jornadaPorPuntoFin,
     puntosRefreshKey,
     eliminandoId,
     panelError,
@@ -108,7 +118,7 @@ export function TramoDetallePanel({
     onEditarMinitramo,
     onEstadoMinitramoChange,
     onEstadoPuntoChange,
-    puntoFrenteParpadeoId,
+    puntoIdsFrenteParpadeo,
     onFrenteTrabajoParpadeo,
     onEvidenciaSubida,
     onGuardarOrigenInicio,
@@ -122,6 +132,8 @@ export function TramoDetallePanel({
         open={open}
         tramo={tramo}
         puntosAvance={puntosAvance}
+        jornadaPorPuntoFin={jornadaPorPuntoFin}
+        segmentoDestacado={segmentoDestacado}
         panelError={panelError}
         onOpenChange={handleOpenChange}
       />
@@ -163,6 +175,8 @@ export function TramoDetallePanel({
               <TramoDetalleVisitanteContenido
                 tramo={tramo}
                 puntosAvance={puntosAvance}
+                jornadaPorPuntoFin={jornadaPorPuntoFin}
+                segmentoDestacado={segmentoDestacado}
                 panelError={panelError}
                 tituloId="tramo-detalle-sheet-title"
               />

@@ -66,6 +66,9 @@ export function NavigationPanel({ onNavigate, isDrawer, className }: NavigationP
           Control de Obra
         </p>
         <p className="mt-1.5 text-base font-semibold leading-tight text-white">{proyectoActivo.nombreObra}</p>
+        {isDrawer ? (
+          <p className="mt-1 text-xs leading-snug text-slate-400">Empresa Pública del Agua (EPA EP)</p>
+        ) : null}
       </div>
       <nav className="min-h-0 flex-1 overflow-y-auto p-2" aria-label="Secciones">
         <ul className="space-y-0.5">
