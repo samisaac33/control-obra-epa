@@ -15,7 +15,11 @@ import {
 import { registrarSolicitudAsistente } from "@/src/lib/mapa-asistente-rate-limit"
 import type { MapaAsistenteUIMessage } from "@/src/lib/mapa-asistente-types"
 import type { CoordenadasMapaAplicables } from "@/src/lib/mapa-coordenadas-gps"
-import { modeloGoogleChat, verificarCredencialesGoogle } from "@/src/lib/mapa-asistente-google"
+import {
+  crearModeloGoogle,
+  modelosGoogleChatEnOrden,
+  verificarCredencialesGoogle,
+} from "@/src/lib/mapa-asistente-google"
 import { mensajeErrorAsistenteLegible } from "@/src/lib/mapa-asistente-modelos"
 import { ipDesdeRequest } from "@/src/lib/visita-rate-limit"
 
@@ -96,6 +100,19 @@ Reglas:
 ${coordsBlock}`
 }
 
+function streamTextChatAsistente(options: {
+  system: string
+  messages: Awaited<ReturnType<typeof convertToModelMessages>>
+}) {
+  const modelId = modelosGoogleChatEnOrden()[0]
+  return streamText({
+    model: crearModeloGoogle(modelId),
+    maxRetries: 0,
+    system: options.system,
+    messages: options.messages,
+  })
+}
+
 export async function POST(request: Request, { params }: RouteParams) {
   const googleAuth = verificarCredencialesGoogle()
   if (!googleAuth.ok) {
@@ -159,8 +176,7 @@ export async function POST(request: Request, { params }: RouteParams) {
   if (coordsError) {
     const systemConError = `${system}\n\nNota: ${coordsError} Sugiera revisar la captura o ingresar coordenadas manualmente.`
     const modelMessages = await convertToModelMessages(messages as UIMessage[])
-    const result = streamText({
-      model: modeloGoogleChat(),
+    const result = streamTextChatAsistente({
       system: systemConError,
       messages: modelMessages,
     })
@@ -177,8 +193,7 @@ export async function POST(request: Request, { params }: RouteParams) {
   }
 
   const modelMessages = await convertToModelMessages(messages as UIMessage[])
-  const result = streamText({
-    model: modeloGoogleChat(),
+  const result = streamTextChatAsistente({
     system,
     messages: modelMessages,
   })

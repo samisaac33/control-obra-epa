@@ -8,7 +8,12 @@ import {
   utmToWgs84,
 } from "@/src/lib/mapa-coordenadas-gps"
 
-import { modeloGoogleVision } from "@/src/lib/mapa-asistente-google"
+import {
+  crearModeloGoogle,
+  errorModeloGoogleSaturadoOTransitorio,
+  esperarMs,
+  modelosGoogleVisionEnOrden,
+} from "@/src/lib/mapa-asistente-google"
 
 const extraccionSchema = z.object({
   formato: z.enum(["utm", "latlng", "ninguno"]),
@@ -32,29 +37,52 @@ export async function extraerCoordenadasDesdeImagen(
   coords: CoordenadasMapaAplicables | null
   error?: string
 }> {
-  const { output } = await generateText({
-    model: modeloGoogleVision(),
-    output: Output.object({ schema: extraccionSchema }),
-    messages: [
-      {
-        role: "user",
-        content: [
-          {
-            type: "text",
-            text: `Analiza esta captura de una app GPS/brújula en campo (Ecuador, proyecto de desasolve de canales).
+  const mensajesVision = [
+    {
+      role: "user" as const,
+      content: [
+        {
+          type: "text" as const,
+          text: `Analiza esta captura de una app GPS/brújula en campo (Ecuador, proyecto de desasolve de canales).
 Extrae coordenadas UTM (zona, hemisferio N/S, easting, northing) o latitud/longitud decimal si aparecen.
 Extrae la precisión en metros si se muestra (±N m).
 Si no hay coordenadas legibles, usa formato "ninguno".`,
-          },
-          {
-            type: "image",
-            image: imageBase64,
-            mediaType,
-          },
-        ],
-      },
-    ],
-  })
+        },
+        {
+          type: "image" as const,
+          image: imageBase64,
+          mediaType,
+        },
+      ],
+    },
+  ]
+
+  let output: ExtraccionCoordenadasImagen | undefined
+  let ultimoError: unknown
+  const modelos = modelosGoogleVisionEnOrden()
+
+  for (let i = 0; i < modelos.length; i += 1) {
+    try {
+      const result = await generateText({
+        model: crearModeloGoogle(modelos[i]),
+        maxRetries: 0,
+        output: Output.object({ schema: extraccionSchema }),
+        messages: mensajesVision,
+      })
+      output = result.output
+      break
+    } catch (err) {
+      ultimoError = err
+      const puedeReintentar =
+        i < modelos.length - 1 && errorModeloGoogleSaturadoOTransitorio(err)
+      if (!puedeReintentar) throw err
+      await esperarMs(800 * (i + 1))
+    }
+  }
+
+  if (!output) {
+    throw ultimoError instanceof Error ? ultimoError : new Error("No se pudo analizar la imagen.")
+  }
 
   const extraccion = output
   if (extraccion.formato === "ninguno") {

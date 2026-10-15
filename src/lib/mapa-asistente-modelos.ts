@@ -1,6 +1,6 @@
 /** IDs para @ai-sdk/google (sin prefijo google/). */
-export const MAPA_ASISTENTE_VISION_MODEL_DEFAULT = "gemini-2.5-flash-lite"
-export const MAPA_ASISTENTE_CHAT_MODEL_DEFAULT = "gemini-2.5-flash-lite"
+export const MAPA_ASISTENTE_VISION_MODEL_DEFAULT = "gemini-2.0-flash-lite"
+export const MAPA_ASISTENTE_CHAT_MODEL_DEFAULT = "gemini-2.0-flash-lite"
 
 export function modeloAsistenteVision(): string {
   return process.env.MAPA_ASISTENTE_VISION_MODEL?.trim() || MAPA_ASISTENTE_VISION_MODEL_DEFAULT
@@ -22,6 +22,16 @@ export function mensajeErrorAsistenteLegible(detalle: string): string {
     return (
       "Este mensaje corresponde a Vercel AI Gateway. El asistente ya debería usar Google directo; " +
       "redeploy producción y confirme GOOGLE_GENERATIVE_AI_API_KEY. Si persiste, elimine variables de AI Gateway."
+    )
+  }
+  if (
+    t.toLowerCase().includes("high demand") ||
+    t.toLowerCase().includes("resource exhausted") ||
+    t.includes("Failed after 3 attempts")
+  ) {
+    return (
+      "Google reporta alta demanda en el modelo Gemini (saturación temporal). Espere 1–2 minutos y reintente, " +
+      "o en Vercel defina MAPA_ASISTENTE_VISION_MODEL=gemini-2.0-flash-lite (y redeploy)."
     )
   }
   if (t.includes("Unauthenticated") || t.includes("AI_GATEWAY_API_KEY")) {

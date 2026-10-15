@@ -8,6 +8,9 @@ import {
   modeloAsistenteVision,
 } from "@/src/lib/mapa-asistente-modelos"
 
+const FALLBACKS_VISION = ["gemini-2.0-flash-lite", "gemini-flash-latest"] as const
+const FALLBACKS_CHAT = ["gemini-2.0-flash-lite", "gemini-flash-latest"] as const
+
 export function googleGenerativeApiKey(): string | null {
   const key =
     process.env.GOOGLE_GENERATIVE_AI_API_KEY?.trim() ||
@@ -34,6 +37,26 @@ export function normalizarIdModeloGoogle(id: string): string {
   return id.replace(/^google\//i, "").trim()
 }
 
+function idsDesdeEnv(listaEnv: string | undefined, fallbacks: readonly string[]): string[] {
+  const extra = listaEnv
+    ?.split(",")
+    .map((s) => normalizarIdModeloGoogle(s))
+    .filter(Boolean)
+  return [...new Set([...(extra ?? []), ...fallbacks])]
+}
+
+export function modelosGoogleVisionEnOrden(): string[] {
+  const primary = normalizarIdModeloGoogle(modeloAsistenteVision()) || MAPA_ASISTENTE_VISION_MODEL_DEFAULT
+  const fallbacks = idsDesdeEnv(process.env.MAPA_ASISTENTE_VISION_MODEL_FALLBACKS, FALLBACKS_VISION)
+  return [...new Set([primary, ...fallbacks])]
+}
+
+export function modelosGoogleChatEnOrden(): string[] {
+  const primary = normalizarIdModeloGoogle(modeloAsistenteChat()) || MAPA_ASISTENTE_CHAT_MODEL_DEFAULT
+  const fallbacks = idsDesdeEnv(process.env.MAPA_ASISTENTE_CHAT_MODEL_FALLBACKS, FALLBACKS_CHAT)
+  return [...new Set([primary, ...fallbacks])]
+}
+
 function instanciaGoogle() {
   const apiKey = googleGenerativeApiKey()
   if (!apiKey) {
@@ -42,12 +65,31 @@ function instanciaGoogle() {
   return createGoogleGenerativeAI({ apiKey })
 }
 
+export function crearModeloGoogle(id: string): LanguageModel {
+  return instanciaGoogle()(id)
+}
+
 export function modeloGoogleVision(): LanguageModel {
-  const id = normalizarIdModeloGoogle(modeloAsistenteVision())
-  return instanciaGoogle()(id || MAPA_ASISTENTE_VISION_MODEL_DEFAULT)
+  return crearModeloGoogle(modelosGoogleVisionEnOrden()[0])
 }
 
 export function modeloGoogleChat(): LanguageModel {
-  const id = normalizarIdModeloGoogle(modeloAsistenteChat())
-  return instanciaGoogle()(id || MAPA_ASISTENTE_CHAT_MODEL_DEFAULT)
+  return crearModeloGoogle(modelosGoogleChatEnOrden()[0])
+}
+
+export function errorModeloGoogleSaturadoOTransitorio(error: unknown): boolean {
+  const msg = error instanceof Error ? error.message : String(error)
+  const lower = msg.toLowerCase()
+  return (
+    lower.includes("high demand") ||
+    lower.includes("resource exhausted") ||
+    lower.includes("overloaded") ||
+    lower.includes("503") ||
+    lower.includes("429") ||
+    lower.includes("unavailable")
+  )
+}
+
+export async function esperarMs(ms: number): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, ms))
 }

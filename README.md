@@ -25,7 +25,7 @@ cp .env.example .env.local
   - Cree una API key en [Google AI Studio](https://aistudio.google.com/apikey).
   - En Vercel → **Environment Variables** → **`GOOGLE_GENERATIVE_AI_API_KEY`** = esa clave (Production y Preview). **Redeploy**.
   - No necesita AI Gateway ni `AI_GATEWAY_API_KEY` para el asistente.
-  - **Opcional (modelos):** `MAPA_ASISTENTE_CHAT_MODEL` y `MAPA_ASISTENTE_VISION_MODEL` (por defecto `gemini-2.5-flash-lite`). IDs sin prefijo `google/`.
+  - **Opcional (modelos):** `MAPA_ASISTENTE_CHAT_MODEL` y `MAPA_ASISTENTE_VISION_MODEL` (por defecto `gemini-2.0-flash-lite`). Si Google responde «high demand», el servidor prueba modelos alternativos; puede forzar `MAPA_ASISTENTE_VISION_MODEL_FALLBACKS=gemini-flash-latest,gemini-2.5-flash-lite`.
 - **Acceso visitantes (opcional):** `VISITANTE_SESSION_SECRET` (cadena aleatoria ≥ 32 caracteres) y `VISITANTE_PIN` o `VISITANTE_PIN_SHA256` (hash SHA-256 en hex del PIN). Si están definidos, quien no sea residente debe ingresar el PIN en `/ingreso` (cookie firmada ~30 días; sin cuentas en Supabase).
 
   Generar hash del PIN (ejemplo PIN `482910`):
