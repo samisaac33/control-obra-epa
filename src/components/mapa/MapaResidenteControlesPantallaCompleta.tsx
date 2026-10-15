@@ -7,12 +7,8 @@ import { MapaUbicacionResidenteBarra } from "@/src/components/mapa/MapaUbicacion
 export function MapaResidenteControlesPantallaCompleta() {
   return (
     <div className="space-y-2">
-      <div className="flex justify-start">
-        <div className="w-full max-w-sm">
-          <MapaUbicacionResidenteBarra modo="pantallaCompleta" />
-        </div>
-      </div>
-      <MapaBuscarCoordenadasResidente variant="overlay" />
+      <MapaUbicacionResidenteBarra modo="pantallaCompleta" />
+      <MapaBuscarCoordenadasResidente variant="overlay" conBotonUbicacion />
     </div>
   )
 }

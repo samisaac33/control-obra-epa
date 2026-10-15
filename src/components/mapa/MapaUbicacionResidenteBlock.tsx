@@ -243,58 +243,106 @@ export function MapaUbicacionResidenteProvider({
   )
 }
 
-function BotonesUbicacionResidente({
-  barraMapa,
+export function BotonGpsResidenteIcono({
+  className,
+  overlay,
 }: {
-  barraMapa?: boolean | "pantallaCompleta"
+  className?: string
+  /** Estilo legible sobre el mapa en pantalla completa */
+  overlay?: boolean
 }) {
-  const { gpsActivo, posicionEfectiva, puedeRegistrar, handleToggleGps, handleRegistrarPunto } =
-    useUbicacionResidenteContext()
-  const esBarraFlotante = Boolean(barraMapa)
-  const esPantallaCompleta = barraMapa === "pantallaCompleta"
+  const { gpsActivo, handleToggleGps } = useUbicacionResidenteContext()
 
   return (
-    <div className={cn("flex gap-2", esPantallaCompleta && "flex-wrap justify-start")}>
-      <Button
-        type="button"
-        variant={gpsActivo ? "secondary" : "outline"}
-        size={esBarraFlotante ? "default" : "sm"}
-        className={cn(
-          "min-h-11 text-xs shadow-sm",
-          !esPantallaCompleta && "flex-1",
-          esPantallaCompleta && "min-w-[9.5rem] shrink-0",
-          esBarraFlotante && "border-foreground/15 bg-background/95 backdrop-blur-sm"
-        )}
-        onClick={handleToggleGps}
-      >
-        {gpsActivo ? (
-          <>
-            <LocateOff className="mr-1.5 size-4 shrink-0" aria-hidden />
-            Ocultar GPS
-          </>
-        ) : (
-          <>
-            <Crosshair className="mr-1.5 size-4 shrink-0" aria-hidden />
-            Mi ubicación
-          </>
-        )}
-      </Button>
-      {posicionEfectiva ? (
+    <Button
+      type="button"
+      variant={gpsActivo ? "secondary" : "outline"}
+      size="icon"
+      className={cn(
+        "size-11 shrink-0 shadow-sm touch-manipulation",
+        overlay && "border-foreground/15 bg-background/95 shadow-md backdrop-blur-sm",
+        className
+      )}
+      aria-label={gpsActivo ? "Ocultar GPS" : "Mi ubicación"}
+      title={gpsActivo ? "Ocultar GPS" : "Mi ubicación"}
+      aria-pressed={gpsActivo}
+      onClick={handleToggleGps}
+    >
+      {gpsActivo ? (
+        <LocateOff className="size-4" aria-hidden />
+      ) : (
+        <Crosshair className="size-4" aria-hidden />
+      )}
+    </Button>
+  )
+}
+
+function BotonRegistrarPuntoResidente({
+  barraMapa,
+  compacto,
+}: {
+  barraMapa?: boolean
+  compacto?: boolean
+}) {
+  const { posicionEfectiva, puedeRegistrar, handleRegistrarPunto } = useUbicacionResidenteContext()
+
+  if (!posicionEfectiva) return null
+
+  return (
+    <Button
+      type="button"
+      size={barraMapa ? "default" : "sm"}
+      className={cn(
+        "min-h-11 text-xs shadow-sm",
+        compacto ? "w-full max-w-sm" : "flex-1",
+        barraMapa && "border-foreground/15 bg-background/95 backdrop-blur-sm"
+      )}
+      disabled={!puedeRegistrar}
+      onClick={handleRegistrarPunto}
+    >
+      <MapPin className="mr-1.5 size-4 shrink-0" aria-hidden />
+      Registrar punto
+    </Button>
+  )
+}
+
+function BotonesUbicacionResidente({
+  barraMapa,
+  incluirGps = true,
+}: {
+  barraMapa?: boolean
+  incluirGps?: boolean
+}) {
+  const { gpsActivo, handleToggleGps } = useUbicacionResidenteContext()
+  const esBarraFlotante = Boolean(barraMapa)
+
+  return (
+    <div className="flex gap-2">
+      {incluirGps ? (
         <Button
           type="button"
+          variant={gpsActivo ? "secondary" : "outline"}
           size={esBarraFlotante ? "default" : "sm"}
           className={cn(
-            "min-h-11 text-xs shadow-sm",
-            !esPantallaCompleta && "flex-1",
-            esPantallaCompleta && "min-w-[9.5rem] shrink-0"
+            "min-h-11 flex-1 text-xs shadow-sm",
+            esBarraFlotante && "border-foreground/15 bg-background/95 backdrop-blur-sm"
           )}
-          disabled={!puedeRegistrar}
-          onClick={handleRegistrarPunto}
+          onClick={handleToggleGps}
         >
-          <MapPin className="mr-1.5 size-4 shrink-0" aria-hidden />
-          Registrar punto
+          {gpsActivo ? (
+            <>
+              <LocateOff className="mr-1.5 size-4 shrink-0" aria-hidden />
+              Ocultar GPS
+            </>
+          ) : (
+            <>
+              <Crosshair className="mr-1.5 size-4 shrink-0" aria-hidden />
+              Mi ubicación
+            </>
+          )}
         </Button>
       ) : null}
+      <BotonRegistrarPuntoResidente barraMapa={esBarraFlotante} />
     </div>
   )
 }
@@ -304,13 +352,14 @@ export function MapaUbicacionResidenteBarra({
   modo = "barraMapa",
 }: {
   className?: string
-  /** barraMapa: flotante sobre el mapa normal; pantallaCompleta: esquina inferior izquierda al expandir */
+  /** barraMapa / pantallaCompleta: estado y registrar sobre el mapa; el GPS va en la fila de coordenadas */
   modo?: "barraMapa" | "pantallaCompleta"
 }) {
-  const { lineaEstado, errorGps, mensajeLocal, deteccion } = useUbicacionResidenteContext()
+  const { lineaEstado, errorGps, mensajeLocal, deteccion, posicionEfectiva } =
+    useUbicacionResidenteContext()
 
   const esAlerta = Boolean(errorGps || mensajeLocal)
-  const barraMapaProp = modo === "pantallaCompleta" ? "pantallaCompleta" : true
+  const esFlotante = modo === "barraMapa" || modo === "pantallaCompleta"
 
   return (
     <div className={cn("space-y-1.5", className)}>
@@ -329,7 +378,11 @@ export function MapaUbicacionResidenteBarra({
           {lineaEstado}
         </p>
       ) : null}
-      <BotonesUbicacionResidente barraMapa={barraMapaProp} />
+      {posicionEfectiva ? (
+        <div className={cn(modo === "pantallaCompleta" && "flex justify-start")}>
+          <BotonRegistrarPuntoResidente barraMapa={esFlotante} compacto={modo === "pantallaCompleta"} />
+        </div>
+      ) : null}
     </div>
   )
 }

@@ -968,7 +968,7 @@ export function MapaTramosClient() {
                   </MapaTramosMapaConBarra>
                   {!mapaPantallaCompleta ? (
                     <div className="md:hidden">
-                      <MapaBuscarCoordenadasResidente />
+                      <MapaBuscarCoordenadasResidente conBotonUbicacion />
                     </div>
                   ) : null}
                   <div className="md:hidden">
