@@ -10,7 +10,7 @@ import {
 
 import {
   crearModeloGoogle,
-  errorModeloGoogleSaturadoOTransitorio,
+  errorModeloGoogleReintentarConFallback,
   esperarMs,
   modelosGoogleVisionEnOrden,
 } from "@/src/lib/mapa-asistente-google"
@@ -74,7 +74,7 @@ Si no hay coordenadas legibles, usa formato "ninguno".`,
     } catch (err) {
       ultimoError = err
       const puedeReintentar =
-        i < modelos.length - 1 && errorModeloGoogleSaturadoOTransitorio(err)
+        i < modelos.length - 1 && errorModeloGoogleReintentarConFallback(err)
       if (!puedeReintentar) throw err
       await esperarMs(800 * (i + 1))
     }

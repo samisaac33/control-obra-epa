@@ -1,6 +1,6 @@
 /** IDs para @ai-sdk/google (sin prefijo google/). */
-export const MAPA_ASISTENTE_VISION_MODEL_DEFAULT = "gemini-2.0-flash-lite"
-export const MAPA_ASISTENTE_CHAT_MODEL_DEFAULT = "gemini-2.0-flash-lite"
+export const MAPA_ASISTENTE_VISION_MODEL_DEFAULT = "gemini-3.5-flash-lite"
+export const MAPA_ASISTENTE_CHAT_MODEL_DEFAULT = "gemini-3.5-flash-lite"
 
 export function modeloAsistenteVision(): string {
   return process.env.MAPA_ASISTENTE_VISION_MODEL?.trim() || MAPA_ASISTENTE_VISION_MODEL_DEFAULT
@@ -31,7 +31,13 @@ export function mensajeErrorAsistenteLegible(detalle: string): string {
   ) {
     return (
       "Google reporta alta demanda en el modelo Gemini (saturación temporal). Espere 1–2 minutos y reintente, " +
-      "o en Vercel defina MAPA_ASISTENTE_VISION_MODEL=gemini-2.0-flash-lite (y redeploy)."
+      "o en Vercel defina MAPA_ASISTENTE_VISION_MODEL=google/gemini-3.6-flash (y redeploy)."
+    )
+  }
+  if (t.toLowerCase().includes("no longer available")) {
+    return (
+      "Google retiró ese modelo Gemini. Actualice MAPA_ASISTENTE_VISION_MODEL / CHAT (p. ej. google/gemini-3.6-flash " +
+      "o gemini-3.5-flash-lite) y redeploy. Los respaldos antiguos 2.0 ya no se usan."
     )
   }
   if (t.includes("Unauthenticated") || t.includes("AI_GATEWAY_API_KEY")) {
