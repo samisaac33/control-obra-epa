@@ -99,7 +99,7 @@ export const INFORME_CRUCITA_LEOPOLDO_CEDENO: InfimaInformeData = {
     },
     { etiqueta: "Tipo de Proceso", valor: "Ínfima Cuantía" },
     { etiqueta: "No. Orden de Compra", valor: "IC-EPA EP-052-2026" },
-    { etiqueta: "Fecha de Emisión O/C", valor: "19 de agosto de 2026" },
+    { etiqueta: "Fecha de Emisión O/C", valor: "21 de agosto de 2026" },
     { etiqueta: "Proveedor", valor: "Zambrano Mendoza Milton Joseph" },
     { etiqueta: "RUC Proveedor", valor: "1313540997001" },
     { etiqueta: "Monto Contractual (Sin IVA)", valor: "$ 9,852.00" },
@@ -112,7 +112,7 @@ export const INFORME_CRUCITA_LEOPOLDO_CEDENO: InfimaInformeData = {
     {
       titulo: "INTRODUCCIÓN Y ANTECEDENTES",
       parrafos: [
-        `Mediante Orden de Compra No. IC-EPA EP-052-2026, emitida el 19 de agosto de 2026, la Empresa Pública del Agua EPA-EP contrató la ${OBJETO_CONTRACTUAL_CRUCITA}. El objetivo primordial del proyecto era recuperar la funcionalidad del sistema de control hídrico, el cual se encontraba deshabilitado por el avanzado deterioro corrosivo de las pantallas y el desgaste del mecanismo de izamiento, comprometiendo la operación técnica de los canales de aducción.`,
+        `Mediante Orden de Compra No. IC-EPA EP-052-2026, suscrita el 21 de agosto de 2026, la Empresa Pública del Agua EPA-EP contrató la ${OBJETO_CONTRACTUAL_CRUCITA}. El objetivo primordial del proyecto era recuperar la funcionalidad del sistema de control hídrico, el cual se encontraba deshabilitado por el avanzado deterioro corrosivo de las pantallas y el desgaste del mecanismo de izamiento, comprometiendo la operación técnica de los canales de aducción.`,
         "Este Informe Técnico tiene como finalidad dejar constancia de la culminación del 100% de las actividades contratadas, de acuerdo con los Términos de Referencia (TDRs) aprobados, las especificaciones técnicas detalladas en el Catálogo Provisional de Productos (CPC) de la orden de compra y los cronogramas vigentes, garantizando la operatividad hídrica del sistema.",
       ],
     },
@@ -173,7 +173,7 @@ export const INFORME_CRUCITA_LEOPOLDO_CEDENO: InfimaInformeData = {
         "Monto Facturado (Sin IVA): $ 9,852.00.",
         "Monto TOTAL (Con IVA 15%): $ 11,329.80.",
         "Garantía Técnica: Se entrega la Garantía Técnica de 1 año sobre los materiales instalados y la mano de obra, conforme a lo establecido en la página 4 de la Orden de Compra.",
-        "Plazos: No se registraron prorrogas. El servicio se entregó el día 03 de septiembre del 2026, cumpliendo el plazo contractual de 15 días calendario.",
+        "Plazos: El plazo contractual de 15 días calendario inició el 21 de agosto de 2026 y venció el 04 de septiembre de 2026. La culminación real de la ejecución se registró el 03 de septiembre de 2026. El 08 de septiembre de 2026 se solicitó la recepción mediante el presente informe. No se registraron prórrogas ni días de retraso (0 días).",
       ],
     },
     {
@@ -195,3 +195,7 @@ export const INFORME_CRUCITA_LEOPOLDO_CEDENO: InfimaInformeData = {
 
 export const ARCHIVO_PDF_CRUCITA_LEOPOLDO_CEDENO =
   "informe-finalizacion-compuerta-leopoldo-cedeno-ic-epa-ep-052-2026.pdf"
+
+/** Hoja de cierre con firma escaneada; se fusiona tras generar el PDF con React-PDF. */
+export const ARCHIVO_PAGINA_FIRMA_CRUCITA_LEOPOLDO_CEDENO =
+  "assets/crucita-informe-pagina-firma.pdf"

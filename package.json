@@ -8,6 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "generate:infimas-pdf": "tsx scripts/generate-infimas-pdf.ts",
+    "replace-pdf-last-page": "tsx scripts/replace-pdf-last-page.ts",
+    "extract-pdf-page": "tsx scripts/extract-pdf-page.ts",
     "generate:guia-pdf": "tsx scripts/generate-guia-practica-pdf.ts",
     "import:kmz": "tsx scripts/import-kmz-tramos.ts",
     "import:kmz:dry-run": "tsx scripts/import-kmz-tramos.ts --dry-run",
@@ -48,6 +50,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
     "jszip": "^3.10.2",
+    "pdf-lib": "^1.17.1",
     "tailwindcss": "^4",
     "tsx": "^4.23.13",
     "typescript": "^5"
