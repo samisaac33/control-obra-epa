@@ -99,14 +99,15 @@ export const INFORME_CRUCITA_LEOPOLDO_CEDENO: InfimaInformeData = {
     },
     { etiqueta: "Tipo de Proceso", valor: "Ínfima Cuantía" },
     { etiqueta: "No. Orden de Compra", valor: "IC-EPA EP-052-2026" },
-    { etiqueta: "Fecha de Emisión O/C", valor: "21 de agosto de 2026" },
+    { etiqueta: "Fecha de Emisión O/C", valor: "19 de agosto de 2026" },
     { etiqueta: "Proveedor", valor: "Zambrano Mendoza Milton Joseph" },
     { etiqueta: "RUC Proveedor", valor: "1313540997001" },
     { etiqueta: "Monto Contractual (Sin IVA)", valor: "$ 9,852.00" },
     { etiqueta: "IVA (15%)", valor: "$ 1,477.80" },
     { etiqueta: "TOTAL CON IVA", valor: "$ 11,329.80" },
     { etiqueta: "Plazo Ejecución", valor: "15 días calendario" },
-    { etiqueta: "Fecha de Culminación", valor: "03 de septiembre del 2026" },
+    { etiqueta: "Fecha de Culminación del Plazo", valor: "04 de septiembre de 2026" },
+    { etiqueta: "Fecha de Culminación de los Trabajos", valor: "03 de septiembre de 2026" },
   ],
   secciones: [
     {
