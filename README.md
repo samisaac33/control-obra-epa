@@ -25,7 +25,7 @@ cp .env.example .env.local
   - En el panel, **ACTIVE** solo indica que AI Gateway está habilitado; **no** es el valor de la variable.
   - **Opción A (recomendada en Vercel):** [AI Gateway](https://vercel.com/docs/ai-gateway) → **API Keys** → crear clave → en el proyecto, variable **`AI_GATEWAY_API_KEY`** = el **secreto** que muestra Vercel una sola vez (cadena larga, no la palabra ACTIVE).
   - **Opción B (OIDC):** en el proyecto → **Settings → Security** → active **Secure Backend Access with OIDC Federation** → **Save** → **Redeploy**. No defina `AI_GATEWAY_API_KEY`. El token no suele verse en Environment Variables; el runtime lo resuelve en cada petición.
-  - **Opcional (modelos):** `MAPA_ASISTENTE_CHAT_MODEL` y `MAPA_ASISTENTE_VISION_MODEL` (por defecto `google/gemini-2.5-flash`). Solo cambian qué modelo de Google se llama; no sustituyen la API key.
+  - **Opcional (modelos):** `MAPA_ASISTENTE_CHAT_MODEL` y `MAPA_ASISTENTE_VISION_MODEL` (por defecto `google/gemini-2.5-flash-lite`, compatible con créditos gratuitos del gateway). Modelos «Flash» completos (p. ej. `gemini-2.5-flash`) pueden exigir créditos de pago.
 - **Acceso visitantes (opcional):** `VISITANTE_SESSION_SECRET` (cadena aleatoria ≥ 32 caracteres) y `VISITANTE_PIN` o `VISITANTE_PIN_SHA256` (hash SHA-256 en hex del PIN). Si están definidos, quien no sea residente debe ingresar el PIN en `/ingreso` (cookie firmada ~30 días; sin cuentas en Supabase).
 
   Generar hash del PIN (ejemplo PIN `482910`):

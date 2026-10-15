@@ -16,12 +16,13 @@ import { registrarSolicitudAsistente } from "@/src/lib/mapa-asistente-rate-limit
 import type { MapaAsistenteUIMessage } from "@/src/lib/mapa-asistente-types"
 import type { CoordenadasMapaAplicables } from "@/src/lib/mapa-coordenadas-gps"
 import { verificarCredencialesAiGateway } from "@/src/lib/mapa-asistente-gateway"
+import {
+  mensajeErrorAsistenteLegible,
+  modeloAsistenteChat,
+} from "@/src/lib/mapa-asistente-modelos"
 import { ipDesdeRequest } from "@/src/lib/visita-rate-limit"
 
 export const maxDuration = 60
-
-const MAPA_ASISTENTE_CHAT_MODEL =
-  process.env.MAPA_ASISTENTE_CHAT_MODEL?.trim() || "google/gemini-2.5-flash"
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024
 
@@ -162,7 +163,7 @@ export async function POST(request: Request, { params }: RouteParams) {
     const systemConError = `${system}\n\nNota: ${coordsError} Sugiera revisar la captura o ingresar coordenadas manualmente.`
     const modelMessages = await convertToModelMessages(messages as UIMessage[])
     const result = streamText({
-      model: MAPA_ASISTENTE_CHAT_MODEL,
+      model: modeloAsistenteChat(),
       system: systemConError,
       messages: modelMessages,
     })
@@ -170,6 +171,7 @@ export async function POST(request: Request, { params }: RouteParams) {
     return createUIMessageStreamResponse({
       stream: createUIMessageStream<MapaAsistenteUIMessage>({
         originalMessages: messages,
+        onError: (error) => mensajeErrorAsistenteLegible(String(error)),
         execute: ({ writer }) => {
           writer.merge(result.toUIMessageStream({ originalMessages: messages }))
         },
@@ -179,7 +181,7 @@ export async function POST(request: Request, { params }: RouteParams) {
 
   const modelMessages = await convertToModelMessages(messages as UIMessage[])
   const result = streamText({
-    model: MAPA_ASISTENTE_CHAT_MODEL,
+    model: modeloAsistenteChat(),
     system,
     messages: modelMessages,
   })
@@ -187,6 +189,7 @@ export async function POST(request: Request, { params }: RouteParams) {
   return createUIMessageStreamResponse({
     stream: createUIMessageStream<MapaAsistenteUIMessage>({
       originalMessages: messages,
+      onError: (error) => mensajeErrorAsistenteLegible(String(error)),
       execute: ({ writer }) => {
         if (coords) {
           writer.write({

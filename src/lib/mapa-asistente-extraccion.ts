@@ -8,8 +8,7 @@ import {
   utmToWgs84,
 } from "@/src/lib/mapa-coordenadas-gps"
 
-const MAPA_ASISTENTE_VISION_MODEL =
-  process.env.MAPA_ASISTENTE_VISION_MODEL?.trim() || "google/gemini-2.5-flash"
+import { modeloAsistenteVision } from "@/src/lib/mapa-asistente-modelos"
 
 const extraccionSchema = z.object({
   formato: z.enum(["utm", "latlng", "ninguno"]),
@@ -34,7 +33,7 @@ export async function extraerCoordenadasDesdeImagen(
   error?: string
 }> {
   const { output } = await generateText({
-    model: MAPA_ASISTENTE_VISION_MODEL,
+    model: modeloAsistenteVision(),
     output: Output.object({ schema: extraccionSchema }),
     messages: [
       {

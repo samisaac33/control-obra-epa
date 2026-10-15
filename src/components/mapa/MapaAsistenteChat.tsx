@@ -20,6 +20,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
 import { useMapaUbicacionResidente } from "@/src/components/mapa/MapaUbicacionResidenteBlock"
 import type { CanalTramo } from "@/src/data/tramos/types"
+import { mensajeErrorAsistenteLegible } from "@/src/lib/mapa-asistente-modelos"
 import type { MapaAsistenteUIMessage } from "@/src/lib/mapa-asistente-types"
 import {
   resumenPropuestaPuntoEnMapa,
@@ -183,7 +184,7 @@ function MapaAsistenteChatInner({
           ) : null}
           {error ? (
             <p className="text-xs text-destructive" role="alert">
-              {error.message}
+              {mensajeErrorAsistenteLegible(error.message)}
             </p>
           ) : null}
         </div>
