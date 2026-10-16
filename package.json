@@ -20,6 +20,7 @@
     "delete:tramos:dry-run": "tsx scripts/delete-tramos.ts --proyecto desasolve-canales --codigos 4,21 --dry-run",
     "test:utm": "tsx scripts/test-utm-conversion.ts",
     "test:maquinaria-consolidado": "tsx scripts/test-maquinaria-informe-consolidado.ts",
+    "test:maquinaria-jimmy-equipos": "tsx scripts/test-maquinaria-informe-jimmy-equipos.ts",
     "postinstall": "node scripts/patch-hyphenate.mjs"
   },
   "dependencies": {

@@ -76,14 +76,23 @@ export function MaquinariaExportClient({ generadoEn }: MaquinariaExportClientPro
     return construirReportePorSitio(diasFiltrados, frentes)
   }, [diasFiltrados, etapa])
 
-  const urlInformeConsolidado = useMemo(() => {
-    const base = rutaObra(proyectoActivo.id, "maquinaria/informe-consolidado")
+  const queryMaquinariaPdf = useMemo(() => {
     const params = new URLSearchParams()
     if (desde) params.set("desde", desde)
     if (hasta) params.set("hasta", hasta)
     const qs = params.toString()
-    return qs ? `${base}?${qs}` : base
-  }, [proyectoActivo.id, desde, hasta])
+    return qs ? `?${qs}` : ""
+  }, [desde, hasta])
+
+  const urlInformeConsolidado = useMemo(
+    () => `${rutaObra(proyectoActivo.id, "maquinaria/informe-consolidado")}${queryMaquinariaPdf}`,
+    [proyectoActivo.id, queryMaquinariaPdf]
+  )
+
+  const urlInformeJimmyEquipos = useMemo(
+    () => `${rutaObra(proyectoActivo.id, "maquinaria/informe-jimmy-equipos")}${queryMaquinariaPdf}`,
+    [proyectoActivo.id, queryMaquinariaPdf]
+  )
 
   function handleEtapaChange(nuevaEtapa: EtapaMaquinariaId) {
     setEtapa(nuevaEtapa)
@@ -193,20 +202,28 @@ export function MaquinariaExportClient({ generadoEn }: MaquinariaExportClientPro
               Imprimir / Guardar PDF
             </Button>
             {proyectoActivo.id === PROYECTO_EMERGENCIA_MANABI ? (
-              <Button asChild variant="secondary" type="button">
-                <a href={urlInformeConsolidado} download>
-                  <FileDown className="size-4" aria-hidden />
-                  Descargar informe consolidado
-                </a>
-              </Button>
+              <>
+                <Button asChild variant="secondary" type="button">
+                  <a href={urlInformeConsolidado} download>
+                    <FileDown className="size-4" aria-hidden />
+                    Descargar informe consolidado
+                  </a>
+                </Button>
+                <Button asChild variant="outline" type="button">
+                  <a href={urlInformeJimmyEquipos} download>
+                    <FileDown className="size-4" aria-hidden />
+                    Informe Jimmy — horas por equipo
+                  </a>
+                </Button>
+              </>
             ) : null}
           </div>
 
           {proyectoActivo.id === PROYECTO_EMERGENCIA_MANABI ? (
             <p className="text-sm text-muted-foreground">
-              El informe consolidado resume horas máquina y viajes de volquetas por frente de trabajo
-              (Jimmy y Mauricio), sin detalle diario ni semanal. Respeta las fechas «Desde» y «Hasta»
-              si están definidas.
+              El informe consolidado resume por frente (Jimmy y Mauricio). El informe Jimmy — horas
+              por equipo es un PDF apaisado con matriz frente × maquinaria (sin volquetas). Respeta
+              las fechas «Desde» y «Hasta» si están definidas.
             </p>
           ) : null}
 
