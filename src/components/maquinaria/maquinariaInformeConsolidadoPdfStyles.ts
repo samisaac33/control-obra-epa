@@ -93,6 +93,22 @@ export const maquinariaInformeConsolidadoPdfStyles = StyleSheet.create({
   colFrente: { width: "28%" },
   colHoras: { width: "18%" },
   colViajes: { width: "18%" },
+  colEquipo: { width: "40%" },
+  colAcc: { width: "18%" },
+  colHorasDet: { width: "22%" },
+  colViajesDet: { width: "20%" },
+  seccionFrente: {
+    marginTop: 12,
+    marginBottom: 4,
+  },
+  seccionFrenteTitulo: {
+    fontFamily: "Helvetica-Bold",
+    fontSize: 10,
+    marginBottom: 4,
+  },
+  pageBreakBefore: {
+    marginTop: 0,
+  },
   nota: {
     marginTop: 10,
     fontSize: 8,

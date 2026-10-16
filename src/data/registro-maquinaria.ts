@@ -63,8 +63,11 @@ export const FRENTE_META = {
   cienega: { label: "Ciénega", abrev: "Cien." },
   poza_honda: { label: "Poza Honda", abrev: "P.H." },
   pechiche: { label: "Pechiche", abrev: "Pech." },
-  las_penas: { label: "Las Peñas", abrev: "L.P." },
+  las_penas: { label: "Las Peñas etapa 2", abrev: "L.P. E2" },
 } as const
+
+/** Registros sin campo `frente` corresponden a Las Peñas etapa 1 (período inicial del registro). */
+export const ETIQUETA_FRENTE_LAS_PENAS_ETAPA_1 = "Las Peñas etapa 1"
 
 export const REGISTRO_MAQUINARIA: RegistroDia[] = [
   {

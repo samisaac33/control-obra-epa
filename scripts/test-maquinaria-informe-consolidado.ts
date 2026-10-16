@@ -46,9 +46,15 @@ assert.ok(pechiche)
 assert.equal(pechiche!.horasMaquina, 4)
 assert.equal(pechiche!.viajesMauricio, 2)
 
-const sinFrente = informe.filas.find((f) => f.frente === null)
-assert.ok(sinFrente)
-assert.equal(sinFrente!.horasMaquina, 4)
+const lasPenasE1 = informe.filas.find((f) => f.frente === null)
+assert.ok(lasPenasE1)
+assert.equal(lasPenasE1!.label, "Las Peñas etapa 1")
+assert.equal(lasPenasE1!.horasMaquina, 4)
+
+assert.equal(informe.detallePorFrente.length, informe.filas.length)
+const detalleE1 = informe.detallePorFrente.find((s) => s.frente === null)
+assert.ok(detalleE1)
+assert.ok(detalleE1!.filas.some((f) => f.equipo === "Excavadora brazo corto" && f.horasMaquina === 4))
 
 assert.equal(informe.totales.horasMaquina, 16)
 assert.equal(informe.totales.viajesJimmy, 3)

@@ -183,7 +183,7 @@ function LeyendaMatrizImpresa() {
     <div className="mt-3 space-y-2 text-[10px] text-neutral-600">
       <p>
         Leyenda: ● día completo · ◐ medio día · número = viajes · ◆ actividad · rayado = sin obra · el frente
-        en negrita indica ubicación (Ciénega / Poza Honda / Pechiche / Las Peñas)
+        en negrita indica ubicación (Ciénega / Poza Honda / Pechiche / Las Peñas etapa 1 y 2)
       </p>
       <div className="flex flex-wrap gap-3">
         <span className="maquinaria-accionista-chip inline-flex items-center gap-1 rounded border border-blue-600/40 bg-blue-50 px-1.5 py-0.5 font-medium text-blue-950">

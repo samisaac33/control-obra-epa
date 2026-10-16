@@ -1,4 +1,5 @@
 import {
+  ETIQUETA_FRENTE_LAS_PENAS_ETAPA_1,
   FRENTE_META,
   type Accionista,
   type FrenteObra,
@@ -11,14 +12,15 @@ const HORAS_POR_DIA = 8
 
 const EQUIPOS_VIAJES = new Set(["Viajes de material para vía", "Viajes de arena"])
 
-export const ETIQUETA_SIN_FRENTE = "Sin frente asignado"
+/** @deprecated Use ETIQUETA_FRENTE_LAS_PENAS_ETAPA_1 */
+export const ETIQUETA_SIN_FRENTE = ETIQUETA_FRENTE_LAS_PENAS_ETAPA_1
 
 const ORDEN_FRENTE: Record<string, number> = {
-  "": 0,
   cienega: 1,
   poza_honda: 2,
   pechiche: 3,
-  las_penas: 4,
+  "": 4,
+  las_penas: 5,
 }
 
 type ClaveFrente = FrenteObra | ""
@@ -67,8 +69,24 @@ export type FilaInformeConsolidadoMaquinaria = {
   viajesTotal: number
 }
 
+export type FilaDetalleEquipoPorFrente = {
+  equipo: string
+  accionista: Accionista
+  horasMaquina: number
+  viajesVolqueta: number
+}
+
+export type SeccionDetalleMaquinasPorFrente = {
+  frente: FrenteObra | null
+  label: string
+  filas: FilaDetalleEquipoPorFrente[]
+  subtotalHoras: number
+  subtotalViajes: number
+}
+
 export type InformeConsolidadoMaquinaria = {
   filas: FilaInformeConsolidadoMaquinaria[]
+  detallePorFrente: SeccionDetalleMaquinasPorFrente[]
   totales: {
     horasMaquina: number
     viajesJimmy: number
@@ -78,8 +96,58 @@ export type InformeConsolidadoMaquinaria = {
 }
 
 function etiquetaDesdeClave(clave: ClaveFrente): string {
-  if (clave === "") return ETIQUETA_SIN_FRENTE
+  if (clave === "") return ETIQUETA_FRENTE_LAS_PENAS_ETAPA_1
   return FRENTE_META[clave].label
+}
+
+function claveEquipoAccionista(equipo: string, accionista: Accionista): string {
+  return `${equipo}::${accionista}`
+}
+
+type AcumuladorEquipo = {
+  equipo: string
+  accionista: Accionista
+  horasMaquina: number
+  viajesVolqueta: number
+}
+
+function ordenarFilasDetalle(a: FilaDetalleEquipoPorFrente, b: FilaDetalleEquipoPorFrente): number {
+  if (a.accionista !== b.accionista) {
+    return a.accionista === "consorcio" ? -1 : 1
+  }
+  return a.equipo.localeCompare(b.equipo, "es")
+}
+
+function construirDetallePorFrente(
+  mapaEquipos: Map<ClaveFrente, Map<string, AcumuladorEquipo>>,
+  filasResumen: FilaInformeConsolidadoMaquinaria[]
+): SeccionDetalleMaquinasPorFrente[] {
+  return filasResumen.map((filaResumen) => {
+    const clave = filaResumen.frente ?? ""
+    const equipos = mapaEquipos.get(clave)
+    const filas = equipos
+      ? [...equipos.values()]
+          .map((item) => ({
+            equipo: item.equipo,
+            accionista: item.accionista,
+            horasMaquina: item.horasMaquina,
+            viajesVolqueta: item.viajesVolqueta,
+          }))
+          .filter((f) => f.horasMaquina > 0 || f.viajesVolqueta > 0)
+          .sort(ordenarFilasDetalle)
+      : []
+
+    const subtotalHoras = filas.reduce((s, f) => s + f.horasMaquina, 0)
+    const subtotalViajes = filas.reduce((s, f) => s + f.viajesVolqueta, 0)
+
+    return {
+      frente: filaResumen.frente,
+      label: filaResumen.label,
+      filas,
+      subtotalHoras,
+      subtotalViajes,
+    }
+  })
 }
 
 function filaDesdeAcumulador(clave: ClaveFrente, acum: AcumuladorFrente): FilaInformeConsolidadoMaquinaria {
@@ -95,10 +163,30 @@ function filaDesdeAcumulador(clave: ClaveFrente, acum: AcumuladorFrente): FilaIn
 
 export function construirInformeConsolidadoMaquinaria(dias: RegistroDia[]): InformeConsolidadoMaquinaria {
   const mapa = new Map<ClaveFrente, AcumuladorFrente>()
+  const mapaEquipos = new Map<ClaveFrente, Map<string, AcumuladorEquipo>>()
 
   function obtener(clave: ClaveFrente): AcumuladorFrente {
     const prev = mapa.get(clave) ?? vacioAcumulador()
     mapa.set(clave, prev)
+    return prev
+  }
+
+  function obtenerEquipo(clave: ClaveFrente, registro: RegistroEquipo): AcumuladorEquipo {
+    let porFrente = mapaEquipos.get(clave)
+    if (!porFrente) {
+      porFrente = new Map()
+      mapaEquipos.set(clave, porFrente)
+    }
+    const id = claveEquipoAccionista(registro.equipo, registro.accionista)
+    const prev =
+      porFrente.get(id) ??
+      ({
+        equipo: registro.equipo,
+        accionista: registro.accionista,
+        horasMaquina: 0,
+        viajesVolqueta: 0,
+      } satisfies AcumuladorEquipo)
+    porFrente.set(id, prev)
     return prev
   }
 
@@ -108,13 +196,18 @@ export function construirInformeConsolidadoMaquinaria(dias: RegistroDia[]): Info
     for (const registro of dia.registros) {
       const clave = claveFrente(registro.frente)
       const acum = obtener(clave)
+      const detalle = obtenerEquipo(clave, registro)
 
       if (esRegistroMaquina(registro)) {
-        acum.horasMaquina += horasMaquinaDesdeRegistro(registro)
+        const horas = horasMaquinaDesdeRegistro(registro)
+        acum.horasMaquina += horas
+        detalle.horasMaquina += horas
       }
 
       if (esRegistroViajesVolqueta(registro)) {
-        sumarViajes(acum, registro.accionista, registro.cantidad ?? 0)
+        const cantidad = registro.cantidad ?? 0
+        sumarViajes(acum, registro.accionista, cantidad)
+        detalle.viajesVolqueta += cantidad
       }
     }
   }
@@ -128,6 +221,8 @@ export function construirInformeConsolidadoMaquinaria(dias: RegistroDia[]): Info
         fila.horasMaquina > 0 || fila.viajesJimmy > 0 || fila.viajesMauricio > 0
     )
 
+  const detallePorFrente = construirDetallePorFrente(mapaEquipos, filas)
+
   const totales = filas.reduce(
     (acc, fila) => {
       acc.horasMaquina += fila.horasMaquina
@@ -139,11 +234,11 @@ export function construirInformeConsolidadoMaquinaria(dias: RegistroDia[]): Info
     { horasMaquina: 0, viajesJimmy: 0, viajesMauricio: 0, viajesTotal: 0 }
   )
 
-  return { filas, totales }
+  return { filas, detallePorFrente, totales }
 }
 
 /** Etiqueta de frente para exportaciones (reutiliza resumen estándar salvo sin frente). */
 export function etiquetaFrenteInformeConsolidado(frente: FrenteObra | null): string {
-  if (frente === null) return ETIQUETA_SIN_FRENTE
+  if (frente === null) return ETIQUETA_FRENTE_LAS_PENAS_ETAPA_1
   return resumenFrenteEtiqueta(frente)
 }

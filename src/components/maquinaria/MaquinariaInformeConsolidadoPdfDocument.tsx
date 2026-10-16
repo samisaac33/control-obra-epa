@@ -2,8 +2,11 @@ import { Document, Page, Text, View } from "@react-pdf/renderer"
 
 import { ACCIONISTA_META } from "@/src/data/registro-maquinaria"
 import type { ProyectoConfig } from "@/src/data/proyectos/catalog"
-import type { InformeConsolidadoMaquinaria } from "@/src/lib/maquinaria-informe-consolidado"
-import { formatearNumero } from "@/src/lib/maquinaria-resumen"
+import type {
+  InformeConsolidadoMaquinaria,
+  SeccionDetalleMaquinasPorFrente,
+} from "@/src/lib/maquinaria-informe-consolidado"
+import { formatearNumero, resumenAccionistaEtiqueta } from "@/src/lib/maquinaria-resumen"
 
 import { maquinariaInformeConsolidadoPdfStyles as styles } from "./maquinariaInformeConsolidadoPdfStyles"
 
@@ -37,6 +40,55 @@ function celdaEntero(valor: number): string {
 
 type Props = {
   data: MaquinariaInformeConsolidadoPdfData
+}
+
+function TablaDetalleFrente({ seccion }: { seccion: SeccionDetalleMaquinasPorFrente }) {
+  return (
+    <View style={styles.seccionFrente}>
+      <Text style={styles.seccionFrenteTitulo}>{seccion.label}</Text>
+      <View style={styles.table}>
+        <View style={styles.tableHeaderRow}>
+          <Text style={[styles.colEquipo, styles.headerCell]}>Equipo</Text>
+          <Text style={[styles.colAcc, styles.headerCell]}>Accionista</Text>
+          <Text style={[styles.colHorasDet, styles.headerCell, { textAlign: "right" }]}>
+            Horas máquina
+          </Text>
+          <Text style={[styles.colViajesDet, styles.headerCell, { textAlign: "right" }]}>
+            Viajes volqueta
+          </Text>
+        </View>
+        {seccion.filas.map((fila, index) => (
+          <View
+            key={`${fila.equipo}-${fila.accionista}-${index}`}
+            style={index === seccion.filas.length - 1 ? styles.tableRowLast : styles.tableRow}
+          >
+            <Text style={[styles.colEquipo, styles.cell]}>{fila.equipo}</Text>
+            <Text style={[styles.colAcc, styles.cell]}>
+              {resumenAccionistaEtiqueta(fila.accionista)}
+            </Text>
+            <Text style={[styles.colHorasDet, styles.cellMono]}>
+              {celdaNumero(fila.horasMaquina)}
+            </Text>
+            <Text style={[styles.colViajesDet, styles.cellMono]}>
+              {celdaEntero(fila.viajesVolqueta)}
+            </Text>
+          </View>
+        ))}
+        <View style={styles.tableRowLast}>
+          <Text style={[styles.colEquipo, styles.cell, { fontFamily: "Helvetica-Bold" }]}>
+            Subtotal {seccion.label}
+          </Text>
+          <Text style={[styles.colAcc, styles.cell]} />
+          <Text style={[styles.colHorasDet, styles.cellMono, { fontFamily: "Helvetica-Bold" }]}>
+            {celdaNumero(seccion.subtotalHoras)}
+          </Text>
+          <Text style={[styles.colViajesDet, styles.cellMono, { fontFamily: "Helvetica-Bold" }]}>
+            {celdaEntero(seccion.subtotalViajes)}
+          </Text>
+        </View>
+      </View>
+    </View>
+  )
 }
 
 export function MaquinariaInformeConsolidadoPdfDocument({ data }: Props) {
@@ -150,6 +202,29 @@ export function MaquinariaInformeConsolidadoPdfDocument({ data }: Props) {
         <View style={styles.footer}>
           <Text>Registro operativo de maquinaria — {proyecto.nombreObra}</Text>
           <Text>Uso exclusivo para fiscalización interna. No sustituye firmas oficiales.</Text>
+        </View>
+
+        <Text
+          style={styles.pageNumber}
+          render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`}
+          fixed
+        />
+      </Page>
+
+      <Page size="A4" style={styles.page} break>
+        <Text style={styles.kicker}>Detalle consolidado por frente</Text>
+        <Text style={styles.sectionTitle}>Horas por equipo y sector</Text>
+        <Text style={[styles.nota, { marginTop: 0, marginBottom: 8 }]}>
+          Totales acumulados del período por frente. Incluye maquinaria en jornada y registros de
+          viajes de material (volqueta).
+        </Text>
+
+        {informe.detallePorFrente.map((seccion) => (
+          <TablaDetalleFrente key={seccion.label} seccion={seccion} />
+        ))}
+
+        <View style={styles.footer}>
+          <Text>Registro operativo de maquinaria — {proyecto.nombreObra}</Text>
         </View>
 
         <Text
