@@ -12,7 +12,10 @@ import {
   rangoMaquinariaInvalido,
   resolverRangoMaquinaria,
 } from "@/src/lib/maquinaria-filtro"
-import { construirInformeConsolidadoMaquinaria } from "@/src/lib/maquinaria-informe-consolidado"
+import {
+  construirInformeConsolidadoMaquinaria,
+  informeConsolidadoTieneDatos,
+} from "@/src/lib/maquinaria-informe-consolidado"
 import { formatearFechaCorta } from "@/src/lib/maquinaria-resumen"
 
 export const dynamic = "force-dynamic"
@@ -61,7 +64,7 @@ export async function GET(request: Request, context: RouteContext) {
   }
 
   const informe = construirInformeConsolidadoMaquinaria(diasFiltrados)
-  if (informe.filas.length === 0) {
+  if (!informeConsolidadoTieneDatos(informe)) {
     return new Response("No hay actividad de maquinaria ni viajes en el período indicado", {
       status: 404,
     })

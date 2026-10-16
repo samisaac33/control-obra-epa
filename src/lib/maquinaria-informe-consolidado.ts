@@ -10,7 +10,11 @@ import { esRegistroMaquina, normalizarDuracion, resumenFrenteEtiqueta } from "@/
 
 const HORAS_POR_DIA = 8
 
-const EQUIPOS_VIAJES = new Set(["Viajes de material para vía", "Viajes de arena"])
+const EQUIPO_VOLQUETA = "Volqueta"
+const EQUIPO_VIAJES_ARENA = "Viajes de arena"
+const EQUIPO_VIAJES_MEJORAMIENTO = "Viajes de material para vía"
+
+const ACCIONISTAS_ORDEN: Accionista[] = ["consorcio", "mauricio"]
 
 /** @deprecated Use ETIQUETA_FRENTE_LAS_PENAS_ETAPA_1 */
 export const ETIQUETA_SIN_FRENTE = ETIQUETA_FRENTE_LAS_PENAS_ETAPA_1
@@ -33,8 +37,12 @@ function ordenFrenteClave(clave: ClaveFrente): number {
   return ORDEN_FRENTE[clave] ?? 99
 }
 
-function esRegistroViajesVolqueta(registro: RegistroEquipo): boolean {
-  return registro.duracion === "viajes" && EQUIPOS_VIAJES.has(registro.equipo)
+function esViajesArena(registro: RegistroEquipo): boolean {
+  return registro.duracion === "viajes" && registro.equipo === EQUIPO_VIAJES_ARENA
+}
+
+function esViajesMejoramiento(registro: RegistroEquipo): boolean {
+  return registro.duracion === "viajes" && registro.equipo === EQUIPO_VIAJES_MEJORAMIENTO
 }
 
 export function horasMaquinaDesdeRegistro(registro: RegistroEquipo): number {
@@ -42,31 +50,27 @@ export function horasMaquinaDesdeRegistro(registro: RegistroEquipo): number {
   return normalizarDuracion(registro) * HORAS_POR_DIA
 }
 
-type AcumuladorFrente = {
+export function diasVolquetaDesdeHoras(horasVolqueta: number): number {
+  if (horasVolqueta <= 0) return 0
+  return Math.round(horasVolqueta / HORAS_POR_DIA)
+}
+
+export type MetricasFrenteAccionista = {
   horasMaquina: number
-  viajesJimmy: number
-  viajesMauricio: number
+  viajesArena: number
+  viajesMejoramiento: number
+  diasVolquetas: number
 }
 
-function vacioAcumulador(): AcumuladorFrente {
-  return { horasMaquina: 0, viajesJimmy: 0, viajesMauricio: 0 }
-}
-
-function sumarViajes(acum: AcumuladorFrente, accionista: Accionista, cantidad: number): void {
-  if (accionista === "consorcio") {
-    acum.viajesJimmy += cantidad
-  } else {
-    acum.viajesMauricio += cantidad
-  }
-}
-
-export type FilaInformeConsolidadoMaquinaria = {
+export type FilaResumenAccionista = MetricasFrenteAccionista & {
   frente: FrenteObra | null
   label: string
-  horasMaquina: number
-  viajesJimmy: number
-  viajesMauricio: number
-  viajesTotal: number
+}
+
+export type ResumenInformeAccionista = {
+  accionista: Accionista
+  filas: FilaResumenAccionista[]
+  totales: MetricasFrenteAccionista
 }
 
 export type FilaDetalleEquipoPorFrente = {
@@ -85,13 +89,45 @@ export type SeccionDetalleMaquinasPorFrente = {
 }
 
 export type InformeConsolidadoMaquinaria = {
-  filas: FilaInformeConsolidadoMaquinaria[]
+  resumenPorAccionista: ResumenInformeAccionista[]
   detallePorFrente: SeccionDetalleMaquinasPorFrente[]
-  totales: {
-    horasMaquina: number
-    viajesJimmy: number
-    viajesMauricio: number
-    viajesTotal: number
+}
+
+type AcumuladorMetricas = {
+  horasMaquina: number
+  horasVolqueta: number
+  viajesArena: number
+  viajesMejoramiento: number
+}
+
+function vacioMetricas(): AcumuladorMetricas {
+  return { horasMaquina: 0, horasVolqueta: 0, viajesArena: 0, viajesMejoramiento: 0 }
+}
+
+function metricasDesdeAcumulador(acum: AcumuladorMetricas): MetricasFrenteAccionista {
+  return {
+    horasMaquina: acum.horasMaquina,
+    viajesArena: acum.viajesArena,
+    viajesMejoramiento: acum.viajesMejoramiento,
+    diasVolquetas: diasVolquetaDesdeHoras(acum.horasVolqueta),
+  }
+}
+
+function frenteTieneMetricas(m: MetricasFrenteAccionista): boolean {
+  return (
+    m.horasMaquina > 0 ||
+    m.viajesArena > 0 ||
+    m.viajesMejoramiento > 0 ||
+    m.diasVolquetas > 0
+  )
+}
+
+function sumarMetricas(a: MetricasFrenteAccionista, b: MetricasFrenteAccionista): MetricasFrenteAccionista {
+  return {
+    horasMaquina: a.horasMaquina + b.horasMaquina,
+    viajesArena: a.viajesArena + b.viajesArena,
+    viajesMejoramiento: a.viajesMejoramiento + b.viajesMejoramiento,
+    diasVolquetas: a.diasVolquetas + b.diasVolquetas,
   }
 }
 
@@ -120,54 +156,72 @@ function ordenarFilasDetalle(a: FilaDetalleEquipoPorFrente, b: FilaDetalleEquipo
 
 function construirDetallePorFrente(
   mapaEquipos: Map<ClaveFrente, Map<string, AcumuladorEquipo>>,
-  filasResumen: FilaInformeConsolidadoMaquinaria[]
+  clavesOrdenadas: ClaveFrente[]
 ): SeccionDetalleMaquinasPorFrente[] {
-  return filasResumen.map((filaResumen) => {
-    const clave = filaResumen.frente ?? ""
-    const equipos = mapaEquipos.get(clave)
-    const filas = equipos
-      ? [...equipos.values()]
-          .map((item) => ({
-            equipo: item.equipo,
-            accionista: item.accionista,
-            horasMaquina: item.horasMaquina,
-            viajesVolqueta: item.viajesVolqueta,
-          }))
-          .filter((f) => f.horasMaquina > 0 || f.viajesVolqueta > 0)
-          .sort(ordenarFilasDetalle)
-      : []
+  return clavesOrdenadas
+    .map((clave) => {
+      const equipos = mapaEquipos.get(clave)
+      const filas = equipos
+        ? [...equipos.values()]
+            .map((item) => ({
+              equipo: item.equipo,
+              accionista: item.accionista,
+              horasMaquina: item.horasMaquina,
+              viajesVolqueta: item.viajesVolqueta,
+            }))
+            .filter((f) => f.horasMaquina > 0 || f.viajesVolqueta > 0)
+            .sort(ordenarFilasDetalle)
+        : []
 
-    const subtotalHoras = filas.reduce((s, f) => s + f.horasMaquina, 0)
-    const subtotalViajes = filas.reduce((s, f) => s + f.viajesVolqueta, 0)
+      const subtotalHoras = filas.reduce(
+        (s, f) => s + (f.equipo === EQUIPO_VOLQUETA ? 0 : f.horasMaquina),
+        0
+      )
+      const subtotalViajes = filas.reduce((s, f) => s + f.viajesVolqueta, 0)
 
-    return {
-      frente: filaResumen.frente,
-      label: filaResumen.label,
-      filas,
-      subtotalHoras,
-      subtotalViajes,
-    }
-  })
+      return {
+        frente: clave === "" ? null : clave,
+        label: etiquetaDesdeClave(clave),
+        filas,
+        subtotalHoras,
+        subtotalViajes,
+      }
+    })
+    .filter((s) => s.filas.length > 0)
 }
 
-function filaDesdeAcumulador(clave: ClaveFrente, acum: AcumuladorFrente): FilaInformeConsolidadoMaquinaria {
-  return {
-    frente: clave === "" ? null : clave,
-    label: etiquetaDesdeClave(clave),
-    horasMaquina: acum.horasMaquina,
-    viajesJimmy: acum.viajesJimmy,
-    viajesMauricio: acum.viajesMauricio,
-    viajesTotal: acum.viajesJimmy + acum.viajesMauricio,
+function acumularRegistro(acum: AcumuladorMetricas, registro: RegistroEquipo): void {
+  if (esRegistroMaquina(registro)) {
+    const horas = horasMaquinaDesdeRegistro(registro)
+    if (registro.equipo === EQUIPO_VOLQUETA) {
+      acum.horasVolqueta += horas
+    } else {
+      acum.horasMaquina += horas
+    }
+  }
+
+  if (esViajesArena(registro)) {
+    acum.viajesArena += registro.cantidad ?? 0
+  }
+
+  if (esViajesMejoramiento(registro)) {
+    acum.viajesMejoramiento += registro.cantidad ?? 0
   }
 }
 
 export function construirInformeConsolidadoMaquinaria(dias: RegistroDia[]): InformeConsolidadoMaquinaria {
-  const mapa = new Map<ClaveFrente, AcumuladorFrente>()
+  const porAccionistaFrente = new Map<Accionista, Map<ClaveFrente, AcumuladorMetricas>>()
   const mapaEquipos = new Map<ClaveFrente, Map<string, AcumuladorEquipo>>()
+  const clavesActivas = new Set<ClaveFrente>()
 
-  function obtener(clave: ClaveFrente): AcumuladorFrente {
-    const prev = mapa.get(clave) ?? vacioAcumulador()
-    mapa.set(clave, prev)
+  function obtenerMetricas(accionista: Accionista, clave: ClaveFrente): AcumuladorMetricas {
+    let porFrente = porAccionistaFrente.get(accionista)
+    if (!porFrente) {
+      porFrente = new Map()
+      porAccionistaFrente.set(accionista, porFrente)
+    }
+    const prev = porFrente.get(clave) ?? vacioMetricas()
+    porFrente.set(clave, prev)
     return prev
   }
 
@@ -195,50 +249,65 @@ export function construirInformeConsolidadoMaquinaria(dias: RegistroDia[]): Info
 
     for (const registro of dia.registros) {
       const clave = claveFrente(registro.frente)
-      const acum = obtener(clave)
+      clavesActivas.add(clave)
+
+      acumularRegistro(obtenerMetricas(registro.accionista, clave), registro)
+
       const detalle = obtenerEquipo(clave, registro)
 
       if (esRegistroMaquina(registro)) {
-        const horas = horasMaquinaDesdeRegistro(registro)
-        acum.horasMaquina += horas
-        detalle.horasMaquina += horas
+        detalle.horasMaquina += horasMaquinaDesdeRegistro(registro)
       }
 
-      if (esRegistroViajesVolqueta(registro)) {
-        const cantidad = registro.cantidad ?? 0
-        sumarViajes(acum, registro.accionista, cantidad)
-        detalle.viajesVolqueta += cantidad
+      if (esViajesArena(registro) || esViajesMejoramiento(registro)) {
+        detalle.viajesVolqueta += registro.cantidad ?? 0
       }
     }
   }
 
-  const clavesOrdenadas = [...mapa.keys()].sort((a, b) => ordenFrenteClave(a) - ordenFrenteClave(b))
+  const clavesOrdenadas = [...clavesActivas].sort((a, b) => ordenFrenteClave(a) - ordenFrenteClave(b))
 
-  const filas = clavesOrdenadas
-    .map((clave) => filaDesdeAcumulador(clave, mapa.get(clave)!))
-    .filter(
-      (fila) =>
-        fila.horasMaquina > 0 || fila.viajesJimmy > 0 || fila.viajesMauricio > 0
+  const resumenPorAccionista = ACCIONISTAS_ORDEN.map((accionista) => {
+    const porFrente = porAccionistaFrente.get(accionista) ?? new Map()
+    const filas: FilaResumenAccionista[] = []
+
+    for (const clave of clavesOrdenadas) {
+      const acum = porFrente.get(clave) ?? vacioMetricas()
+      const metricas = metricasDesdeAcumulador(acum)
+      if (!frenteTieneMetricas(metricas)) continue
+
+      filas.push({
+        frente: clave === "" ? null : clave,
+        label: etiquetaDesdeClave(clave),
+        ...metricas,
+      })
+    }
+
+    const totales = filas.reduce(
+      (acc, fila) => sumarMetricas(acc, fila),
+      {
+        horasMaquina: 0,
+        viajesArena: 0,
+        viajesMejoramiento: 0,
+        diasVolquetas: 0,
+      } satisfies MetricasFrenteAccionista
     )
 
-  const detallePorFrente = construirDetallePorFrente(mapaEquipos, filas)
+    return { accionista, filas, totales }
+  })
 
-  const totales = filas.reduce(
-    (acc, fila) => {
-      acc.horasMaquina += fila.horasMaquina
-      acc.viajesJimmy += fila.viajesJimmy
-      acc.viajesMauricio += fila.viajesMauricio
-      acc.viajesTotal += fila.viajesTotal
-      return acc
-    },
-    { horasMaquina: 0, viajesJimmy: 0, viajesMauricio: 0, viajesTotal: 0 }
-  )
+  const detallePorFrente = construirDetallePorFrente(mapaEquipos, clavesOrdenadas)
 
-  return { filas, detallePorFrente, totales }
+  return { resumenPorAccionista, detallePorFrente }
 }
 
 /** Etiqueta de frente para exportaciones (reutiliza resumen estándar salvo sin frente). */
 export function etiquetaFrenteInformeConsolidado(frente: FrenteObra | null): string {
   if (frente === null) return ETIQUETA_FRENTE_LAS_PENAS_ETAPA_1
   return resumenFrenteEtiqueta(frente)
+}
+
+export function informeConsolidadoTieneDatos(informe: InformeConsolidadoMaquinaria): boolean {
+  if (informe.detallePorFrente.length > 0) return true
+  return informe.resumenPorAccionista.some((r) => r.filas.length > 0)
 }
