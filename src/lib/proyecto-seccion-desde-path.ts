@@ -10,6 +10,7 @@ const SECCIONES: { segment: string; titulo: string }[] = [
   { segment: "mapa", titulo: "Mapa de avance" },
   { segment: "fotos", titulo: "Registro fotográfico" },
   { segment: "maquinaria", titulo: "Maquinaria y transporte" },
+  { segment: "trabajos-complementarios", titulo: "Trabajos complementarios" },
   { segment: "emergencia", titulo: "Informe de afectación" },
   { segment: "presupuesto", titulo: "Presupuesto" },
   { segment: "libro-obra", titulo: "Informe de evidencias de obra" },
