@@ -145,9 +145,6 @@ export function MaquinariaInformeConsolidadoPdfDocument({ data }: Props) {
             <Text style={[styles.colViajes, styles.headerCell, { textAlign: "right" }]}>
               Viajes {labelMauricio}
             </Text>
-            <Text style={[styles.colViajes, styles.headerCell, { textAlign: "right" }]}>
-              Viajes total
-            </Text>
           </View>
 
           {informe.filas.map((fila, index) => (
@@ -167,9 +164,6 @@ export function MaquinariaInformeConsolidadoPdfDocument({ data }: Props) {
               <Text style={[styles.colViajes, styles.cellMono]}>
                 {celdaEntero(fila.viajesMauricio)}
               </Text>
-              <Text style={[styles.colViajes, styles.cellMono]}>
-                {celdaEntero(fila.viajesTotal)}
-              </Text>
             </View>
           ))}
 
@@ -186,18 +180,8 @@ export function MaquinariaInformeConsolidadoPdfDocument({ data }: Props) {
             <Text style={[styles.colViajes, styles.cellMono, { fontFamily: "Helvetica-Bold" }]}>
               {celdaEntero(informe.totales.viajesMauricio)}
             </Text>
-            <Text style={[styles.colViajes, styles.cellMono, { fontFamily: "Helvetica-Bold" }]}>
-              {celdaEntero(informe.totales.viajesTotal)}
-            </Text>
           </View>
         </View>
-
-        <Text style={styles.nota}>
-          Horas máquina: suma de equipos en jornada (día completo = 8 h, medio día = 4 h, registro
-          por hora según cantidad), Jimmy y Mauricio combinados por frente. Viajes de volquetas:
-          conteo de registros «Viajes de arena» y «Viajes de material para vía». Sin detalle diario
-          ni semanal.
-        </Text>
 
         <View style={styles.footer}>
           <Text>Registro operativo de maquinaria — {proyecto.nombreObra}</Text>
