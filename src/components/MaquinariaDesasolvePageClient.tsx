@@ -4,6 +4,7 @@ import Link from "next/link"
 import { Map, Printer, Trash2, Truck } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -70,7 +71,12 @@ export function MaquinariaDesasolvePageClient() {
 
   async function handleEliminarJornada(id: string) {
     if (!isResident) return
-    if (!window.confirm("¿Eliminar este registro de jornada de maquinaria?")) return
+    if (
+      !window.confirm(
+        "¿Eliminar este registro? Se borrará la jornada o la incidencia de maquinaria."
+      )
+    )
+      return
     setEliminandoId(id)
     setErrorEliminar(null)
     try {
@@ -122,8 +128,9 @@ export function MaquinariaDesasolvePageClient() {
               >
                 mapa de avance
               </Link>{" "}
-              al confirmar minitramos GPS o en el historial de maquinaria de cada tramo. Esta página
-              consolida y detalla esos registros.
+              al confirmar minitramos GPS o en el historial de maquinaria de cada tramo. Las
+              incidencias (hechos extraordinarios) se reportan desde el detalle del tramo en el
+              mapa. Esta página consolida y detalla esos registros.
               {isResident ? (
                 <>
                   {" "}
@@ -228,6 +235,12 @@ export function MaquinariaDesasolvePageClient() {
                     detalle="Tramos de canal con al menos un registro"
                     compact={kpiCompact}
                   />
+                  <KpiCard
+                    label="Incidencias registradas"
+                    valor={String(kpis.totalIncidencias)}
+                    detalle="Hechos extraordinarios reportados desde el mapa"
+                    compact={kpiCompact}
+                  />
                 </div>
 
                 {jornadas.length === 0 ? (
@@ -322,68 +335,101 @@ export function MaquinariaDesasolvePageClient() {
                       <span className="flex flex-1 items-center justify-between gap-2 pr-2">
                         <span className="font-semibold">{formatearFechaRegistro(fecha)}</span>
                         <span className="text-xs font-normal text-muted-foreground">
-                          {delDia.length} jornada{delDia.length === 1 ? "" : "s"}
+                          {delDia.length} registro{delDia.length === 1 ? "" : "s"}
                         </span>
                       </span>
                     </AccordionTrigger>
                     <AccordionContent className="space-y-2 pb-3">
-                      {delDia.map((j) => (
-                        <article
-                          key={j.id}
-                          className="rounded-lg border border-foreground/10 bg-background px-3 py-2.5 text-sm"
-                        >
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="min-w-0">
-                              <p className="font-medium">
-                                Tramo {j.tramo_codigo}
-                                <span className="font-normal text-muted-foreground"> · {j.tramo_canal}</span>
-                              </p>
-                              <p className="mt-0.5 text-foreground">
-                                {nombreEquipoParaMostrar(j, equiposPorId)}
-                              </p>
-                            </div>
-                            <div className="shrink-0 text-right">
-                              <p className="font-mono text-sm font-semibold tabular-nums">
-                                {formatearMetrosDesasolados(j.metros_desasolados)}
-                              </p>
-                              <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                                desazolvados
-                              </p>
-                            </div>
-                          </div>
-                          {j.duracion_horas != null || j.observaciones ? (
-                            <dl className="mt-2 space-y-0.5 text-xs text-muted-foreground">
-                              {j.duracion_horas != null ? (
-                                <div className="flex justify-between gap-2">
-                                  <dt>Horas de trabajo</dt>
-                                  <dd className="font-mono tabular-nums">{formatearNumero(j.duracion_horas, 1)} h</dd>
+                      {delDia.map((j) => {
+                        const esIncidencia = j.es_incidencia
+                        return (
+                          <article
+                            key={j.id}
+                            className={cn(
+                              "rounded-lg border border-foreground/10 bg-background px-3 py-2.5 text-sm",
+                              esIncidencia && "border-amber-500/25 bg-amber-500/5"
+                            )}
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0">
+                                <p className="font-medium">
+                                  Tramo {j.tramo_codigo}
+                                  <span className="font-normal text-muted-foreground">
+                                    {" "}
+                                    · {j.tramo_canal}
+                                  </span>
+                                </p>
+                                <div className="mt-1 flex flex-wrap items-center gap-2">
+                                  {esIncidencia ? (
+                                    <Badge variant="outline" className="border-amber-600/40 text-amber-900 dark:text-amber-100">
+                                      Incidencia
+                                    </Badge>
+                                  ) : (
+                                    <p className="text-foreground">
+                                      {nombreEquipoParaMostrar(j, equiposPorId)}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                              {!esIncidencia ? (
+                                <div className="shrink-0 text-right">
+                                  <p className="font-mono text-sm font-semibold tabular-nums">
+                                    {formatearMetrosDesasolados(j.metros_desasolados)}
+                                  </p>
+                                  <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                                    desazolvados
+                                  </p>
                                 </div>
                               ) : null}
-                              {j.observaciones ? (
-                                <div>
-                                  <dt className="sr-only">Observaciones</dt>
-                                  <dd className="mt-1 leading-relaxed">{j.observaciones}</dd>
-                                </div>
-                              ) : null}
-                            </dl>
-                          ) : null}
-                          {isResident ? (
-                            <div className="mt-2 flex justify-end border-t border-foreground/5 pt-2">
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                className="h-8 gap-1.5 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                                disabled={eliminandoId === j.id}
-                                onClick={() => void handleEliminarJornada(j.id)}
-                              >
-                                <Trash2 className="size-3.5" aria-hidden />
-                                {eliminandoId === j.id ? "Eliminando…" : "Eliminar jornada"}
-                              </Button>
                             </div>
-                          ) : null}
-                        </article>
-                      ))}
+                            {esIncidencia ? (
+                              j.observaciones ? (
+                                <p className="mt-2 text-sm leading-relaxed text-foreground">
+                                  {j.observaciones}
+                                </p>
+                              ) : (
+                                <p className="mt-2 text-xs text-muted-foreground">Sin notas.</p>
+                              )
+                            ) : j.duracion_horas != null || j.observaciones ? (
+                              <dl className="mt-2 space-y-0.5 text-xs text-muted-foreground">
+                                {j.duracion_horas != null ? (
+                                  <div className="flex justify-between gap-2">
+                                    <dt>Horas de trabajo</dt>
+                                    <dd className="font-mono tabular-nums">
+                                      {formatearNumero(j.duracion_horas, 1)} h
+                                    </dd>
+                                  </div>
+                                ) : null}
+                                {j.observaciones ? (
+                                  <div>
+                                    <dt className="sr-only">Observaciones</dt>
+                                    <dd className="mt-1 leading-relaxed">{j.observaciones}</dd>
+                                  </div>
+                                ) : null}
+                              </dl>
+                            ) : null}
+                            {isResident ? (
+                              <div className="mt-2 flex justify-end border-t border-foreground/5 pt-2">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 gap-1.5 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                                  disabled={eliminandoId === j.id}
+                                  onClick={() => void handleEliminarJornada(j.id)}
+                                >
+                                  <Trash2 className="size-3.5" aria-hidden />
+                                  {eliminandoId === j.id
+                                    ? "Eliminando…"
+                                    : esIncidencia
+                                      ? "Eliminar incidencia"
+                                      : "Eliminar jornada"}
+                                </Button>
+                              </div>
+                            ) : null}
+                          </article>
+                        )
+                      })}
                     </AccordionContent>
                   </AccordionItem>
                 ))}

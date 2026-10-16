@@ -3,6 +3,7 @@ import type { ProyectoEquipoMaquinaria } from "@/src/lib/proyecto-equipos-maquin
 import { minitramosDesdePuntos, type TramoPuntoAvance } from "@/src/lib/tramo-geometria"
 import {
   mapaEquiposPorId,
+  normalizarRegistroMaquinaria,
   nombreEquipoParaMostrar,
   type JornadaMinitramoMapa,
   type TramoRegistroMaquinaria,
@@ -74,22 +75,7 @@ export async function cargarRegistrosMaquinariaPorTramoIds(
 
   if (error) throw new Error(error.message)
 
-  return (data ?? []).map((row) => {
-    const r = row as Record<string, unknown>
-    return {
-      id: String(r.id),
-      tramo_id: String(r.tramo_id),
-      fecha: String(r.fecha),
-      metros_desasolados: Number(r.metros_desasolados),
-      equipo: String(r.equipo),
-      equipo_id: r.equipo_id != null ? String(r.equipo_id) : null,
-      punto_avance_id: r.punto_avance_id != null ? String(r.punto_avance_id) : null,
-      duracion_horas: r.duracion_horas != null ? Number(r.duracion_horas) : null,
-      observaciones: r.observaciones ? String(r.observaciones) : null,
-      created_at: String(r.created_at),
-      updated_at: String(r.updated_at),
-    }
-  })
+  return (data ?? []).map((row) => normalizarRegistroMaquinaria(row as Record<string, unknown>))
 }
 
 export function indiceJornadaMinitramoPorPuntoFin(

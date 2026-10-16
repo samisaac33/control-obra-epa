@@ -2,8 +2,11 @@ import type { SupabaseClient } from "@supabase/supabase-js"
 
 import { cargarTramosMapaProyecto } from "@/src/lib/cargar-tramos-mapa-proyecto"
 import { mapaLongitudMinitramoPorPuntoFin } from "@/src/lib/mapa-jornada-minitramo"
-import type { TramoRegistroMaquinaria } from "@/src/lib/tramo-maquinaria-historial"
-import { formatearFechaRegistro } from "@/src/lib/tramo-maquinaria-historial"
+import {
+  formatearFechaRegistro,
+  normalizarRegistroMaquinaria,
+  type TramoRegistroMaquinaria,
+} from "@/src/lib/tramo-maquinaria-historial"
 
 export type JornadaMaquinariaProyecto = TramoRegistroMaquinaria & {
   tramo_codigo: string
@@ -27,17 +30,7 @@ function normalizarJornada(
   tramo: { codigo: string; canal: string }
 ): JornadaMaquinariaProyecto {
   return {
-    id: String(row.id),
-    tramo_id: String(row.tramo_id),
-    fecha: String(row.fecha),
-    metros_desasolados: Number(row.metros_desasolados),
-    equipo: String(row.equipo),
-    equipo_id: row.equipo_id != null ? String(row.equipo_id) : null,
-    punto_avance_id: row.punto_avance_id != null ? String(row.punto_avance_id) : null,
-    duracion_horas: row.duracion_horas != null ? Number(row.duracion_horas) : null,
-    observaciones: row.observaciones ? String(row.observaciones) : null,
-    created_at: String(row.created_at),
-    updated_at: String(row.updated_at),
+    ...normalizarRegistroMaquinaria(row),
     tramo_codigo: tramo.codigo,
     tramo_canal: tramo.canal,
   }

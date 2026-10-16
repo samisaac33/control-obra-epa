@@ -29,6 +29,10 @@ import {
   type RequiereOrigenDesdeMapaPayload,
 } from "@/src/components/mapa/MapaUbicacionResidenteBlock"
 import { RegistrarPuntoOrigenDialog } from "@/src/components/mapa/RegistrarPuntoOrigenDialog"
+import {
+  ReportarIncidenciaTramoModal,
+  type ReportarIncidenciaPayload,
+} from "@/src/components/mapa/ReportarIncidenciaTramoModal"
 import type { UbicacionUsuario } from "@/src/components/mapa/UbicacionUsuarioEnMapa"
 import { MapaTramosKpis } from "@/src/components/mapa/MapaTramosKpis"
 import { MapaTramosKpisBar } from "@/src/components/mapa/MapaTramosKpisBar"
@@ -74,9 +78,11 @@ import {
 } from "@/src/lib/mapa-jornada-minitramo"
 import { cargarEquiposMaquinariaProyecto } from "@/src/lib/proyecto-equipos-maquinaria"
 import {
+  crearIncidenciaTramo,
   eliminarRegistroMaquinariaTramo,
   guardarJornadaMinitramo,
 } from "@/src/lib/tramo-maquinaria-historial"
+import { rutaObra } from "@/src/lib/rutas-proyecto"
 import { tramosMapaDesasolveSinExcluidos } from "@/src/data/tramos/tramos-excluidos"
 import {
   calcularKpisTramos,
@@ -154,6 +160,10 @@ export function MapaTramosClient() {
     string | null
   >(null)
   const [panelError, setPanelError] = useState<string | null>(null)
+  const [incidenciaModalAbierto, setIncidenciaModalAbierto] = useState(false)
+  const [guardandoIncidencia, setGuardandoIncidencia] = useState(false)
+  const [errorIncidencia, setErrorIncidencia] = useState<string | null>(null)
+  const [incidenciaExito, setIncidenciaExito] = useState(false)
   const [tramoVisitanteModal, setTramoVisitanteModal] = useState<{
     tramo: CanalTramo
     segmentoDestacado: SegmentoVisualTramo
@@ -286,6 +296,7 @@ export function MapaTramosClient() {
   function handleTramoClick(tramo: CanalTramo) {
     setTramoSeleccionado(tramo)
     setPanelError(null)
+    setIncidenciaExito(false)
     setSegmentoDestacadoMovil(null)
     if (esViewportMovil) {
       setPanelAbierto(false)
@@ -300,6 +311,28 @@ export function MapaTramosClient() {
     setTramoSeleccionado(null)
     setSegmentoDestacadoMovil(null)
     setPanelAbierto(false)
+  }
+
+  function handleAbrirReportarIncidencia() {
+    setErrorIncidencia(null)
+    setIncidenciaExito(false)
+    setIncidenciaModalAbierto(true)
+  }
+
+  async function handleGuardarIncidencia(payload: ReportarIncidenciaPayload) {
+    if (!tramoSeleccionado) return
+    setGuardandoIncidencia(true)
+    setErrorIncidencia(null)
+    try {
+      await crearIncidenciaTramo(supabase, tramoSeleccionado.id, payload)
+      setIncidenciaModalAbierto(false)
+      setIncidenciaExito(true)
+      setPuntosRefreshKey((k) => k + 1)
+    } catch (err) {
+      setErrorIncidencia(err instanceof Error ? err.message : "No se pudo registrar la incidencia.")
+    } finally {
+      setGuardandoIncidencia(false)
+    }
   }
 
   async function handleSubmitTramo(tramoId: string, values: TramoFormValues) {
@@ -1055,6 +1088,22 @@ export function MapaTramosClient() {
         onReiniciarOrigenTramo={isResident ? handleReiniciarOrigenTramo : undefined}
         reiniciandoOrigen={reiniciandoOrigen}
         onRenumerarPuntosTramo={isResident ? handleRenumerarPuntosTramo : undefined}
+        onAbrirReportarIncidencia={isResident ? handleAbrirReportarIncidencia : undefined}
+        incidenciaExito={incidenciaExito}
+        rutaMaquinaria={rutaObra(proyectoId, "maquinaria")}
+      />
+
+      <ReportarIncidenciaTramoModal
+        open={incidenciaModalAbierto}
+        tramo={tramoSeleccionado}
+        loading={guardandoIncidencia}
+        errorExterno={errorIncidencia}
+        onGuardar={handleGuardarIncidencia}
+        onCancel={() => {
+          if (guardandoIncidencia) return
+          setIncidenciaModalAbierto(false)
+          setErrorIncidencia(null)
+        }}
       />
 
       {visitante ? (

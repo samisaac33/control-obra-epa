@@ -2,6 +2,9 @@ import type { SupabaseClient } from "@supabase/supabase-js"
 
 import type { ProyectoEquipoMaquinaria } from "@/src/lib/proyecto-equipos-maquinaria"
 
+/** Etiqueta fija en `equipo` para filas con `es_incidencia`. */
+export const EQUIPO_LABEL_INCIDENCIA = "Incidencia (hecho extraordinario)"
+
 export type TramoRegistroMaquinaria = {
   id: string
   tramo_id: string
@@ -12,6 +15,7 @@ export type TramoRegistroMaquinaria = {
   punto_avance_id: string | null
   duracion_horas: number | null
   observaciones: string | null
+  es_incidencia: boolean
   created_at: string
   updated_at: string
 }
@@ -23,6 +27,12 @@ export type TramoRegistroMaquinariaInput = {
   equipo_id?: string | null
   duracion_horas?: number | null
   observaciones?: string | null
+  es_incidencia?: boolean
+}
+
+export type CrearIncidenciaTramoInput = {
+  fecha: string
+  notas: string
 }
 
 /** Datos de jornada resumidos para tooltip de minitramo en mapa visitante. */
@@ -33,7 +43,7 @@ export type JornadaMinitramoMapa = {
   duracion_horas: number | null
 }
 
-function normalizar(row: Record<string, unknown>): TramoRegistroMaquinaria {
+export function normalizarRegistroMaquinaria(row: Record<string, unknown>): TramoRegistroMaquinaria {
   return {
     id: String(row.id),
     tramo_id: String(row.tramo_id),
@@ -44,9 +54,14 @@ function normalizar(row: Record<string, unknown>): TramoRegistroMaquinaria {
     punto_avance_id: row.punto_avance_id != null ? String(row.punto_avance_id) : null,
     duracion_horas: row.duracion_horas != null ? Number(row.duracion_horas) : null,
     observaciones: row.observaciones ? String(row.observaciones) : null,
+    es_incidencia: row.es_incidencia === true || row.es_incidencia === "true",
     created_at: String(row.created_at),
     updated_at: String(row.updated_at),
   }
+}
+
+function normalizar(row: Record<string, unknown>): TramoRegistroMaquinaria {
+  return normalizarRegistroMaquinaria(row)
 }
 
 export function mapaEquiposPorId(
@@ -111,10 +126,29 @@ export async function crearRegistroMaquinariaTramo(
     punto_avance_id: options?.punto_avance_id ?? null,
     duracion_horas: input.duracion_horas ?? null,
     observaciones: input.observaciones?.trim() || null,
+    es_incidencia: input.es_incidencia ?? false,
     updated_at: new Date().toISOString(),
   })
 
   if (error) throw new Error(error.message)
+}
+
+export async function crearIncidenciaTramo(
+  supabase: SupabaseClient,
+  tramoId: string,
+  input: CrearIncidenciaTramoInput
+): Promise<void> {
+  const notas = input.notas.trim()
+  if (notas.length < 3) {
+    throw new Error("Las notas deben tener al menos 3 caracteres.")
+  }
+  await crearRegistroMaquinariaTramo(supabase, tramoId, {
+    fecha: input.fecha,
+    metros_desasolados: 0,
+    equipo: EQUIPO_LABEL_INCIDENCIA,
+    observaciones: notas,
+    es_incidencia: true,
+  })
 }
 
 export async function actualizarRegistroMaquinariaTramo(

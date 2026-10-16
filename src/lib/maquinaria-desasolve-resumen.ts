@@ -12,6 +12,7 @@ export type KpisMaquinariaDesasolve = {
   diasConActividad: number
   totalHoras: number
   tramosConJornada: number
+  totalIncidencias: number
 }
 
 export type ResumenEquipoDesasolve = {
@@ -33,21 +34,27 @@ function claveEquipo(jornada: JornadaMaquinariaProyecto): string {
   return jornada.equipo_id ?? jornada.equipo.trim().toLowerCase()
 }
 
+function jornadasOperativas(jornadas: JornadaMaquinariaProyecto[]): JornadaMaquinariaProyecto[] {
+  return jornadas.filter((j) => !j.es_incidencia)
+}
+
 export function kpisMaquinariaDesasolve(jornadas: JornadaMaquinariaProyecto[]): KpisMaquinariaDesasolve {
+  const operativas = jornadasOperativas(jornadas)
   const fechas = new Set(jornadas.map((j) => j.fecha))
-  const tramos = new Set(jornadas.map((j) => j.tramo_id))
+  const tramos = new Set(operativas.map((j) => j.tramo_id))
   let totalHoras = 0
   let totalMetros = 0
-  for (const j of jornadas) {
+  for (const j of operativas) {
     totalMetros += j.metros_desasolados
     if (j.duracion_horas != null) totalHoras += j.duracion_horas
   }
   return {
-    totalJornadas: jornadas.length,
+    totalJornadas: operativas.length,
     totalMetros,
     diasConActividad: fechas.size,
     totalHoras,
     tramosConJornada: tramos.size,
+    totalIncidencias: jornadas.filter((j) => j.es_incidencia).length,
   }
 }
 
@@ -58,7 +65,7 @@ export function resumenPorEquipoDesasolve(
   const equiposPorId = mapaEquiposPorId(equipos)
   const map = new Map<string, ResumenEquipoDesasolve>()
 
-  for (const j of jornadas) {
+  for (const j of jornadasOperativas(jornadas)) {
     const clave = claveEquipo(j)
     const nombreEquipo = nombreEquipoParaMostrar(j, equiposPorId)
     const prev = map.get(clave) ?? {
@@ -80,7 +87,7 @@ export function resumenPorEquipoDesasolve(
 export function resumenPorTramoDesasolve(jornadas: JornadaMaquinariaProyecto[]): ResumenTramoDesasolve[] {
   const map = new Map<string, ResumenTramoDesasolve>()
 
-  for (const j of jornadas) {
+  for (const j of jornadasOperativas(jornadas)) {
     const clave = j.tramo_id
     const prev = map.get(clave) ?? {
       tramo_codigo: j.tramo_codigo,
