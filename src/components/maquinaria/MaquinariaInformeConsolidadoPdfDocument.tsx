@@ -1,14 +1,18 @@
 import { Document, Page, Text, View } from "@react-pdf/renderer"
 
-import { ACCIONISTA_META } from "@/src/data/registro-maquinaria"
+import { ETIQUETA_FRENTE_LAS_PENAS_ETAPA_1 } from "@/src/data/registro-maquinaria"
 import type { ProyectoConfig } from "@/src/data/proyectos/catalog"
 import type {
   InformeConsolidadoMaquinaria,
+  ResumenInformeAccionista,
   SeccionDetalleMaquinasPorFrente,
 } from "@/src/lib/maquinaria-informe-consolidado"
+import { diasVolquetaDesdeHoras } from "@/src/lib/maquinaria-informe-consolidado"
 import { formatearNumero, resumenAccionistaEtiqueta } from "@/src/lib/maquinaria-resumen"
 
 import { maquinariaInformeConsolidadoPdfStyles as styles } from "./maquinariaInformeConsolidadoPdfStyles"
+
+const EQUIPO_VOLQUETA = "Volqueta"
 
 export type MaquinariaInformeConsolidadoPdfData = {
   proyecto: Pick<
@@ -42,7 +46,77 @@ type Props = {
   data: MaquinariaInformeConsolidadoPdfData
 }
 
+function TablaResumenAccionista({ resumen }: { resumen: ResumenInformeAccionista }) {
+  if (resumen.filas.length === 0) return null
+
+  const titulo = resumenAccionistaEtiqueta(resumen.accionista)
+
+  return (
+    <View>
+      <Text style={styles.tablaAccionistaTitulo}>{titulo}</Text>
+      <View style={styles.table}>
+        <View style={styles.tableHeaderRow}>
+          <Text style={[styles.colFrenteResumen, styles.headerCell]}>Frente / sector</Text>
+          <Text style={[styles.colMetricaResumen, styles.headerCell, { textAlign: "right" }]}>
+            Horas máquina
+          </Text>
+          <Text style={[styles.colMetricaResumen, styles.headerCell, { textAlign: "right" }]}>
+            Viajes arena
+          </Text>
+          <Text style={[styles.colMetricaResumen, styles.headerCell, { textAlign: "right" }]}>
+            Viajes mejoramiento
+          </Text>
+          <Text style={[styles.colMetricaResumen, styles.headerCell, { textAlign: "right" }]}>
+            Días volquetas
+          </Text>
+        </View>
+
+        {resumen.filas.map((fila, index) => (
+          <View
+            key={`${fila.frente ?? "e1"}-${index}`}
+            style={index === resumen.filas.length - 1 ? styles.tableRowLast : styles.tableRow}
+          >
+            <Text style={[styles.colFrenteResumen, styles.cell]}>{fila.label}</Text>
+            <Text style={[styles.colMetricaResumen, styles.cellMono]}>
+              {celdaNumero(fila.horasMaquina)}
+            </Text>
+            <Text style={[styles.colMetricaResumen, styles.cellMono]}>
+              {celdaEntero(fila.viajesArena)}
+            </Text>
+            <Text style={[styles.colMetricaResumen, styles.cellMono]}>
+              {celdaEntero(fila.viajesMejoramiento)}
+            </Text>
+            <Text style={[styles.colMetricaResumen, styles.cellMono]}>
+              {celdaEntero(fila.diasVolquetas)}
+            </Text>
+          </View>
+        ))}
+
+        <View style={styles.tableRowLast}>
+          <Text style={[styles.colFrenteResumen, styles.cell, { fontFamily: "Helvetica-Bold" }]}>
+            TOTAL
+          </Text>
+          <Text style={[styles.colMetricaResumen, styles.cellMono, { fontFamily: "Helvetica-Bold" }]}>
+            {celdaNumero(resumen.totales.horasMaquina)}
+          </Text>
+          <Text style={[styles.colMetricaResumen, styles.cellMono, { fontFamily: "Helvetica-Bold" }]}>
+            {celdaEntero(resumen.totales.viajesArena)}
+          </Text>
+          <Text style={[styles.colMetricaResumen, styles.cellMono, { fontFamily: "Helvetica-Bold" }]}>
+            {celdaEntero(resumen.totales.viajesMejoramiento)}
+          </Text>
+          <Text style={[styles.colMetricaResumen, styles.cellMono, { fontFamily: "Helvetica-Bold" }]}>
+            {celdaEntero(resumen.totales.diasVolquetas)}
+          </Text>
+        </View>
+      </View>
+    </View>
+  )
+}
+
 function TablaDetalleFrente({ seccion }: { seccion: SeccionDetalleMaquinasPorFrente }) {
+  const esLasPenasEtapa1 = seccion.label === ETIQUETA_FRENTE_LAS_PENAS_ETAPA_1
+
   return (
     <View style={styles.seccionFrente}>
       <Text style={styles.seccionFrenteTitulo}>{seccion.label}</Text>
@@ -53,27 +127,41 @@ function TablaDetalleFrente({ seccion }: { seccion: SeccionDetalleMaquinasPorFre
           <Text style={[styles.colHorasDet, styles.headerCell, { textAlign: "right" }]}>
             Horas máquina
           </Text>
+          {esLasPenasEtapa1 ? (
+            <Text style={[styles.colDiasDet, styles.headerCell, { textAlign: "right" }]}>Días</Text>
+          ) : null}
           <Text style={[styles.colViajesDet, styles.headerCell, { textAlign: "right" }]}>
             Viajes volqueta
           </Text>
         </View>
-        {seccion.filas.map((fila, index) => (
-          <View
-            key={`${fila.equipo}-${fila.accionista}-${index}`}
-            style={index === seccion.filas.length - 1 ? styles.tableRowLast : styles.tableRow}
-          >
-            <Text style={[styles.colEquipo, styles.cell]}>{fila.equipo}</Text>
-            <Text style={[styles.colAcc, styles.cell]}>
-              {resumenAccionistaEtiqueta(fila.accionista)}
-            </Text>
-            <Text style={[styles.colHorasDet, styles.cellMono]}>
-              {celdaNumero(fila.horasMaquina)}
-            </Text>
-            <Text style={[styles.colViajesDet, styles.cellMono]}>
-              {celdaEntero(fila.viajesVolqueta)}
-            </Text>
-          </View>
-        ))}
+        {seccion.filas.map((fila, index) => {
+          const esVolqueta = fila.equipo === EQUIPO_VOLQUETA
+          const horasCelda =
+            esLasPenasEtapa1 && esVolqueta ? "—" : celdaNumero(fila.horasMaquina)
+          const diasCelda =
+            esLasPenasEtapa1 && esVolqueta
+              ? celdaEntero(diasVolquetaDesdeHoras(fila.horasMaquina))
+              : "—"
+
+          return (
+            <View
+              key={`${fila.equipo}-${fila.accionista}-${index}`}
+              style={index === seccion.filas.length - 1 ? styles.tableRowLast : styles.tableRow}
+            >
+              <Text style={[styles.colEquipo, styles.cell]}>{fila.equipo}</Text>
+              <Text style={[styles.colAcc, styles.cell]}>
+                {resumenAccionistaEtiqueta(fila.accionista)}
+              </Text>
+              <Text style={[styles.colHorasDet, styles.cellMono]}>{horasCelda}</Text>
+              {esLasPenasEtapa1 ? (
+                <Text style={[styles.colDiasDet, styles.cellMono]}>{diasCelda}</Text>
+              ) : null}
+              <Text style={[styles.colViajesDet, styles.cellMono]}>
+                {celdaEntero(fila.viajesVolqueta)}
+              </Text>
+            </View>
+          )
+        })}
         <View style={styles.tableRowLast}>
           <Text style={[styles.colEquipo, styles.cell, { fontFamily: "Helvetica-Bold" }]}>
             Subtotal {seccion.label}
@@ -82,6 +170,9 @@ function TablaDetalleFrente({ seccion }: { seccion: SeccionDetalleMaquinasPorFre
           <Text style={[styles.colHorasDet, styles.cellMono, { fontFamily: "Helvetica-Bold" }]}>
             {celdaNumero(seccion.subtotalHoras)}
           </Text>
+          {esLasPenasEtapa1 ? (
+            <Text style={[styles.colDiasDet, styles.cell]} />
+          ) : null}
           <Text style={[styles.colViajesDet, styles.cellMono, { fontFamily: "Helvetica-Bold" }]}>
             {celdaEntero(seccion.subtotalViajes)}
           </Text>
@@ -93,8 +184,6 @@ function TablaDetalleFrente({ seccion }: { seccion: SeccionDetalleMaquinasPorFre
 
 export function MaquinariaInformeConsolidadoPdfDocument({ data }: Props) {
   const { proyecto, rangoEtiqueta, generadoEnIso, informe } = data
-  const labelJimmy = ACCIONISTA_META.consorcio.label
-  const labelMauricio = ACCIONISTA_META.mauricio.label
 
   return (
     <Document
@@ -133,55 +222,9 @@ export function MaquinariaInformeConsolidadoPdfDocument({ data }: Props) {
 
         <Text style={styles.sectionTitle}>Consolidado por frente de trabajo</Text>
 
-        <View style={styles.table}>
-          <View style={styles.tableHeaderRow}>
-            <Text style={[styles.colFrente, styles.headerCell]}>Frente / sector</Text>
-            <Text style={[styles.colHoras, styles.headerCell, { textAlign: "right" }]}>
-              Horas máquina
-            </Text>
-            <Text style={[styles.colViajes, styles.headerCell, { textAlign: "right" }]}>
-              Viajes {labelJimmy}
-            </Text>
-            <Text style={[styles.colViajes, styles.headerCell, { textAlign: "right" }]}>
-              Viajes {labelMauricio}
-            </Text>
-          </View>
-
-          {informe.filas.map((fila, index) => (
-            <View
-              key={`${fila.frente ?? "sin"}-${index}`}
-              style={
-                index === informe.filas.length - 1 ? styles.tableRowLast : styles.tableRow
-              }
-            >
-              <Text style={[styles.colFrente, styles.cell]}>{fila.label}</Text>
-              <Text style={[styles.colHoras, styles.cellMono]}>
-                {celdaNumero(fila.horasMaquina)}
-              </Text>
-              <Text style={[styles.colViajes, styles.cellMono]}>
-                {celdaEntero(fila.viajesJimmy)}
-              </Text>
-              <Text style={[styles.colViajes, styles.cellMono]}>
-                {celdaEntero(fila.viajesMauricio)}
-              </Text>
-            </View>
-          ))}
-
-          <View style={styles.tableRowLast}>
-            <Text style={[styles.colFrente, styles.cell, { fontFamily: "Helvetica-Bold" }]}>
-              TOTAL
-            </Text>
-            <Text style={[styles.colHoras, styles.cellMono, { fontFamily: "Helvetica-Bold" }]}>
-              {celdaNumero(informe.totales.horasMaquina)}
-            </Text>
-            <Text style={[styles.colViajes, styles.cellMono, { fontFamily: "Helvetica-Bold" }]}>
-              {celdaEntero(informe.totales.viajesJimmy)}
-            </Text>
-            <Text style={[styles.colViajes, styles.cellMono, { fontFamily: "Helvetica-Bold" }]}>
-              {celdaEntero(informe.totales.viajesMauricio)}
-            </Text>
-          </View>
-        </View>
+        {informe.resumenPorAccionista.map((resumen) => (
+          <TablaResumenAccionista key={resumen.accionista} resumen={resumen} />
+        ))}
 
         <View style={styles.footer}>
           <Text>Registro operativo de maquinaria — {proyecto.nombreObra}</Text>

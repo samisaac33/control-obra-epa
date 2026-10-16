@@ -3,6 +3,7 @@ import assert from "node:assert/strict"
 import type { RegistroDia } from "../src/data/registro-maquinaria"
 import {
   construirInformeConsolidadoMaquinaria,
+  diasVolquetaDesdeHoras,
   horasMaquinaDesdeRegistro,
 } from "../src/lib/maquinaria-informe-consolidado"
 
@@ -16,6 +17,7 @@ const diasPrueba: RegistroDia[] = [
       { equipo: "Viajes de arena", duracion: "viajes", cantidad: 3, accionista: "consorcio", frente: "poza_honda" },
       { equipo: "Tractor", duracion: "medio_dia", accionista: "mauricio", frente: "pechiche" },
       { equipo: "Viajes de material para vía", duracion: "viajes", cantidad: 2, accionista: "mauricio", frente: "pechiche" },
+      { equipo: "Volqueta", duracion: "dia_completo", accionista: "consorcio", frente: "poza_honda" },
     ],
   },
   {
@@ -24,6 +26,7 @@ const diasPrueba: RegistroDia[] = [
     trabajado: true,
     registros: [
       { equipo: "Excavadora brazo corto", duracion: "hora", cantidad: 4, accionista: "consorcio" },
+      { equipo: "Volqueta", duracion: "medio_dia", accionista: "mauricio" },
     ],
   },
 ]
@@ -31,34 +34,37 @@ const diasPrueba: RegistroDia[] = [
 assert.equal(horasMaquinaDesdeRegistro(diasPrueba[0].registros[0]), 8)
 assert.equal(horasMaquinaDesdeRegistro(diasPrueba[0].registros[2]), 4)
 assert.equal(horasMaquinaDesdeRegistro(diasPrueba[1].registros[0]), 4)
+assert.equal(diasVolquetaDesdeHoras(8), 1)
+assert.equal(diasVolquetaDesdeHoras(260), 33)
 
 const informe = construirInformeConsolidadoMaquinaria(diasPrueba)
 
-const poza = informe.filas.find((f) => f.frente === "poza_honda")
-assert.ok(poza)
-assert.equal(poza!.horasMaquina, 8)
-assert.equal(poza!.viajesJimmy, 3)
-assert.equal(poza!.viajesMauricio, 0)
-assert.equal(poza!.viajesTotal, 3)
+const jimmy = informe.resumenPorAccionista.find((r) => r.accionista === "consorcio")!
+const mauricio = informe.resumenPorAccionista.find((r) => r.accionista === "mauricio")!
 
-const pechiche = informe.filas.find((f) => f.frente === "pechiche")
-assert.ok(pechiche)
-assert.equal(pechiche!.horasMaquina, 4)
-assert.equal(pechiche!.viajesMauricio, 2)
+const pozaJimmy = jimmy.filas.find((f) => f.frente === "poza_honda")!
+assert.equal(pozaJimmy.horasMaquina, 8)
+assert.equal(pozaJimmy.viajesArena, 3)
+assert.equal(pozaJimmy.viajesMejoramiento, 0)
+assert.equal(pozaJimmy.diasVolquetas, 1)
 
-const lasPenasE1 = informe.filas.find((f) => f.frente === null)
-assert.ok(lasPenasE1)
-assert.equal(lasPenasE1!.label, "Las Peñas etapa 1")
-assert.equal(lasPenasE1!.horasMaquina, 4)
+const pechicheMauricio = mauricio.filas.find((f) => f.frente === "pechiche")!
+assert.equal(pechicheMauricio.horasMaquina, 4)
+assert.equal(pechicheMauricio.viajesMejoramiento, 2)
 
-assert.equal(informe.detallePorFrente.length, informe.filas.length)
-const detalleE1 = informe.detallePorFrente.find((s) => s.frente === null)
-assert.ok(detalleE1)
-assert.ok(detalleE1!.filas.some((f) => f.equipo === "Excavadora brazo corto" && f.horasMaquina === 4))
+const lasPenasE1Jimmy = jimmy.filas.find((f) => f.frente === null)!
+assert.equal(lasPenasE1Jimmy.label, "Las Peñas etapa 1")
+assert.equal(lasPenasE1Jimmy.horasMaquina, 4)
 
-assert.equal(informe.totales.horasMaquina, 16)
-assert.equal(informe.totales.viajesJimmy, 3)
-assert.equal(informe.totales.viajesMauricio, 2)
-assert.equal(informe.totales.viajesTotal, 5)
+const lasPenasE1Mauricio = mauricio.filas.find((f) => f.frente === null)!
+assert.ok(lasPenasE1Mauricio)
+assert.equal(lasPenasE1Mauricio.diasVolquetas, 1)
+
+const detalleE1 = informe.detallePorFrente.find((s) => s.frente === null)!
+assert.ok(detalleE1.filas.some((f) => f.equipo === "Volqueta" && f.horasMaquina === 4))
+
+assert.equal(jimmy.totales.horasMaquina, 12)
+assert.equal(jimmy.totales.viajesArena, 3)
+assert.equal(mauricio.totales.viajesMejoramiento, 2)
 
 console.log("OK maquinaria-informe-consolidado")
