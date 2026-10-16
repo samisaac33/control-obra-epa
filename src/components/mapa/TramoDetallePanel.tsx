@@ -59,6 +59,9 @@ type TramoDetallePanelProps = {
   onReiniciarOrigenTramo?: () => Promise<void>
   reiniciandoOrigen?: boolean
   onRenumerarPuntosTramo?: () => void | Promise<void>
+  onAbrirReportarIncidencia?: () => void
+  incidenciaExito?: boolean
+  rutaMaquinaria?: string
   /** Mapa en viewport móvil: bottom sheet fijo en lugar de Sheet lateral. */
   detalleEnBottomSheet?: boolean
   segmentoDestacado?: SegmentoVisualTramo | null
@@ -93,6 +96,9 @@ export function TramoDetallePanel({
   onReiniciarOrigenTramo,
   reiniciandoOrigen = false,
   onRenumerarPuntosTramo,
+  onAbrirReportarIncidencia,
+  incidenciaExito = false,
+  rutaMaquinaria,
   detalleEnBottomSheet = false,
   segmentoDestacado = null,
 }: TramoDetallePanelProps) {
@@ -124,6 +130,9 @@ export function TramoDetallePanel({
     onGuardarOrigenInicio,
     onReiniciarOrigenTramo,
     onRenumerarPuntosTramo,
+    onAbrirReportarIncidencia,
+    incidenciaExito,
+    rutaMaquinaria,
   }
 
   if (detalleEnBottomSheet && !isResident) {

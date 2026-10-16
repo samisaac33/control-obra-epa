@@ -1,7 +1,10 @@
 "use client"
 
+import { AlertTriangle } from "lucide-react"
+import Link from "next/link"
 import { useState } from "react"
 
+import { Button } from "@/components/ui/button"
 import type { CanalTramo, EstadoTramo, OrigenExtremoTramo } from "@/src/data/tramos/types"
 import { MarcarPuntoTramoBlock } from "@/src/components/mapa/MarcarPuntoTramoBlock"
 import {
@@ -52,6 +55,9 @@ export type TramoDetalleResidenteContenidoProps = {
   ) => Promise<void>
   onReiniciarOrigenTramo?: () => Promise<void>
   onRenumerarPuntosTramo?: () => void | Promise<void>
+  onAbrirReportarIncidencia?: () => void
+  incidenciaExito?: boolean
+  rutaMaquinaria?: string
 }
 
 export function TramoDetalleResidenteContenido({
@@ -80,6 +86,9 @@ export function TramoDetalleResidenteContenido({
   onGuardarOrigenInicio,
   onReiniciarOrigenTramo,
   onRenumerarPuntosTramo,
+  onAbrirReportarIncidencia,
+  incidenciaExito = false,
+  rutaMaquinaria,
 }: TramoDetalleResidenteContenidoProps) {
   const [adminDatosAbierto, setAdminDatosAbierto] = useState(false)
 
@@ -112,6 +121,39 @@ export function TramoDetalleResidenteContenido({
         isResident
         refreshKey={puntosRefreshKey}
       />
+
+      {incidenciaExito && rutaMaquinaria ? (
+        <p
+          className="rounded-lg border border-primary/25 bg-primary/5 px-3 py-2 text-sm text-foreground"
+          role="status"
+        >
+          Incidencia registrada.{" "}
+          <Link
+            href={rutaMaquinaria}
+            className="font-medium text-primary underline-offset-4 hover:underline"
+          >
+            Ver en maquinaria
+          </Link>
+        </p>
+      ) : null}
+
+      {onAbrirReportarIncidencia ? (
+        <div>
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full gap-2 sm:w-auto"
+            disabled={loading}
+            onClick={onAbrirReportarIncidencia}
+          >
+            <AlertTriangle className="size-4 shrink-0" aria-hidden />
+            Reportar incidencias
+          </Button>
+          <p className="mt-1.5 text-xs text-muted-foreground">
+            Hechos extraordinarios en el tramo; se listan en maquinaria sin sumar metros.
+          </p>
+        </div>
+      ) : null}
 
       {requiereOrigen && onGuardarOrigenInicio ? (
         <TramoOrigenInicioBlock
