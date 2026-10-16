@@ -1,6 +1,6 @@
 "use client"
 
-import { Printer } from "lucide-react"
+import { FileDown, Printer } from "lucide-react"
 import { useMemo, useState } from "react"
 
 import { Button } from "@/components/ui/button"
@@ -13,6 +13,7 @@ import {
   type EtapaMaquinariaId,
 } from "@/src/data/maquinaria-etapas"
 import { useProyecto } from "@/src/contexts/ProyectoContext"
+import { PROYECTO_EMERGENCIA_MANABI } from "@/src/data/proyectos/catalog"
 import { useRegistroMaquinariaProyecto } from "@/src/hooks/use-registro-maquinaria-proyecto"
 import {
   aplicarEtapaMaquinaria,
@@ -23,6 +24,7 @@ import {
   type TipoReporteMaquinaria,
 } from "@/src/lib/maquinaria-filtro"
 import { construirReportePorSitio } from "@/src/lib/maquinaria-reporte-sitio"
+import { rutaObra } from "@/src/lib/rutas-proyecto"
 import { formatearFechaCorta, formatearNumero, kpisMaquinaria, kpisMaquinas } from "@/src/lib/maquinaria-resumen"
 
 export type { TipoReporteMaquinaria }
@@ -73,6 +75,15 @@ export function MaquinariaExportClient({ generadoEn }: MaquinariaExportClientPro
     const frentes = etapa ? ETAPAS_MAQUINARIA[etapa].frentes : undefined
     return construirReportePorSitio(diasFiltrados, frentes)
   }, [diasFiltrados, etapa])
+
+  const urlInformeConsolidado = useMemo(() => {
+    const base = rutaObra(proyectoActivo.id, "maquinaria/informe-consolidado")
+    const params = new URLSearchParams()
+    if (desde) params.set("desde", desde)
+    if (hasta) params.set("hasta", hasta)
+    const qs = params.toString()
+    return qs ? `${base}?${qs}` : base
+  }, [proyectoActivo.id, desde, hasta])
 
   function handleEtapaChange(nuevaEtapa: EtapaMaquinariaId) {
     setEtapa(nuevaEtapa)
@@ -181,7 +192,23 @@ export function MaquinariaExportClient({ generadoEn }: MaquinariaExportClientPro
               <Printer className="size-4" aria-hidden />
               Imprimir / Guardar PDF
             </Button>
+            {proyectoActivo.id === PROYECTO_EMERGENCIA_MANABI ? (
+              <Button asChild variant="secondary" type="button">
+                <a href={urlInformeConsolidado} download>
+                  <FileDown className="size-4" aria-hidden />
+                  Descargar informe consolidado
+                </a>
+              </Button>
+            ) : null}
           </div>
+
+          {proyectoActivo.id === PROYECTO_EMERGENCIA_MANABI ? (
+            <p className="text-sm text-muted-foreground">
+              El informe consolidado resume horas máquina y viajes de volquetas por frente de trabajo
+              (Jimmy y Mauricio), sin detalle diario ni semanal. Respeta las fechas «Desde» y «Hasta»
+              si están definidas.
+            </p>
+          ) : null}
 
           {errorRango ? (
             <p className="text-sm text-destructive" role="alert">
