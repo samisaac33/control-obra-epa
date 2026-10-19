@@ -128,3 +128,86 @@ export function formatearMetrosDesasolveResumen(metros: number): string {
   if (metros >= 1000) return `${formatearNumero(metros / 1000, 2)} km`
   return `${formatearNumero(metros, 0)} m`
 }
+
+export type DetalleJornadasDia = {
+  fecha: string
+  equiposDistintos: number
+  totalHoras: number
+  totalMetros: number
+  porEquipo: ResumenEquipoDesasolve[]
+  porTramo: ResumenTramoDesasolve[]
+  lineasJornada: string[]
+  incidencias: number
+}
+
+export function detalleJornadasDia(
+  fecha: string,
+  jornadas: JornadaMaquinariaProyecto[],
+  equipos: ProyectoEquipoMaquinaria[]
+): DetalleJornadasDia {
+  const delDia = jornadas.filter((j) => j.fecha === fecha)
+  const operativas = jornadasOperativas(delDia)
+  const porEquipo = resumenPorEquipoDesasolve(delDia, equipos)
+  const porTramo = resumenPorTramoDesasolve(delDia)
+  const kpis = kpisMaquinariaDesasolve(delDia)
+  const equiposPorId = mapaEquiposPorId(equipos)
+
+  const lineasJornada = operativas.map((j) => {
+    const nombre = nombreEquipoParaMostrar(j, equiposPorId)
+    const horas =
+      j.duracion_horas != null ? `${formatearNumero(j.duracion_horas, 1)} h` : "horas no registradas"
+    const obs = j.observaciones?.trim() ? ` — ${j.observaciones.trim()}` : ""
+    return `- ${nombre}: tramo ${j.tramo_codigo} (${j.tramo_canal}), ${formatearMetrosDesasolveResumen(j.metros_desasolados)}, ${horas}${obs}`
+  })
+
+  return {
+    fecha,
+    equiposDistintos: porEquipo.length,
+    totalHoras: kpis.totalHoras,
+    totalMetros: kpis.totalMetros,
+    porEquipo,
+    porTramo,
+    lineasJornada,
+    incidencias: delDia.filter((j) => j.es_incidencia).length,
+  }
+}
+
+export function formatearDetalleJornadasDia(detalle: DetalleJornadasDia): string {
+  const lineas: string[] = [
+    `Fecha ${detalle.fecha}:`,
+    `- Equipos distintos (jornadas operativas): ${detalle.equiposDistintos}`,
+    `- Total horas registradas: ${formatearNumero(detalle.totalHoras, 1)} h`,
+    `- Total metros desasolados: ${formatearMetrosDesasolveResumen(detalle.totalMetros)}`,
+  ]
+
+  if (detalle.porTramo.length > 0) {
+    lineas.push("- Tramos intervenidos:")
+    for (const t of detalle.porTramo) {
+      lineas.push(
+        `  · tramo ${t.tramo_codigo} (${t.tramo_canal}): ${t.jornadas} jornada(s), ${formatearMetrosDesasolveResumen(t.metros)}`
+      )
+    }
+  } else {
+    lineas.push("- Tramos intervenidos: ninguno registrado en maquinaria para esta fecha.")
+  }
+
+  if (detalle.porEquipo.length > 0) {
+    lineas.push("- Desglose por equipo:")
+    for (const e of detalle.porEquipo) {
+      lineas.push(
+        `  · ${e.nombreEquipo}: ${e.jornadas} jornada(s), ${formatearNumero(e.horas, 1)} h, ${formatearMetrosDesasolveResumen(e.metros)}`
+      )
+    }
+  }
+
+  if (detalle.lineasJornada.length > 0) {
+    lineas.push("- Detalle de jornadas:")
+    lineas.push(...detalle.lineasJornada)
+  }
+
+  if (detalle.incidencias > 0) {
+    lineas.push(`- Incidencias registradas (no operativas): ${detalle.incidencias}`)
+  }
+
+  return lineas.join("\n")
+}

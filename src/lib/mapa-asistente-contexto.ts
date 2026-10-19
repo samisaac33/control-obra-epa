@@ -1,0 +1,196 @@
+import type { SupabaseClient } from "@supabase/supabase-js"
+
+import { contextoDocumentalDesasolve } from "@/src/data/desasolve/contexto-obra"
+import { tramosMapaDesasolveSinExcluidos } from "@/src/data/tramos/tramos-excluidos"
+import type { CanalTramo } from "@/src/data/tramos/types"
+import { cargarTramosMapaProyecto } from "@/src/lib/cargar-tramos-mapa-proyecto"
+import {
+  detectarIntencionFechaConsulta,
+  etiquetaZonaHorariaAsistente,
+  fechaCalendarioDesdeIso,
+  fechaCalendarioEcuador,
+  fechasEnRango,
+  type IntencionFechaConsulta,
+} from "@/src/lib/mapa-asistente-fechas"
+import {
+  agruparJornadasPorFecha,
+  detalleJornadasDia,
+  formatearDetalleJornadasDia,
+  formatearMetrosDesasolveResumen,
+  kpisMaquinariaDesasolve,
+} from "@/src/lib/maquinaria-desasolve-resumen"
+import {
+  cargarJornadasMaquinariaProyecto,
+  periodoDesdeJornadas,
+} from "@/src/lib/maquinaria-desasolve-proyecto"
+import { cargarEquiposMaquinariaProyecto } from "@/src/lib/proyecto-equipos-maquinaria"
+import { formatearNumero } from "@/src/lib/maquinaria-resumen"
+import {
+  avanceDesasolveTramo,
+  calcularKpisTramos,
+  estadoOperativoMapa,
+} from "@/src/lib/tramos-avance"
+import { etiquetaEstadoTramo } from "@/src/data/tramos/types"
+import type { TramoPuntoAvance } from "@/src/lib/tramo-geometria"
+
+const MAX_CARACTERES_CONTEXTO_OPERATIVO = 15_000
+
+function recortarTexto(texto: string, max: number): string {
+  if (texto.length <= max) return texto
+  return `${texto.slice(0, max - 48).trimEnd()}\n\n[… datos operativos recortados por límite …]`
+}
+
+function resumenTramoLinea(tramo: CanalTramo, puntos: TramoPuntoAvance[]): string {
+  const { metrosEjecutados, metrosTotales, avancePct } = avanceDesasolveTramo(tramo, puntos)
+  const estado = estadoOperativoMapa(tramo, puntos)
+  const sem = tramo.semana_programada ? ` sem=${tramo.semana_programada}` : ""
+  const maq = tramo.maquinaria_asignada ? ` maq=${tramo.maquinaria_asignada}` : ""
+  const obs = tramo.observaciones?.trim()
+    ? ` obs=${tramo.observaciones.trim().slice(0, 80)}`
+    : ""
+  return `tramo ${tramo.codigo} | ${tramo.canal} | ${etiquetaEstadoTramo(estado)} | ${formatearNumero(metrosEjecutados, 0)}/${formatearNumero(metrosTotales, 0)} m (${formatearNumero(avancePct, 1)}%)${sem}${maq}${obs}`
+}
+
+function puntosGpsPorFechas(
+  puntos: TramoPuntoAvance[],
+  tramoPorId: Map<string, CanalTramo>,
+  fechas: Set<string>
+): string[] {
+  const lineas: string[] = []
+  for (const p of puntos) {
+    const f = fechaCalendarioDesdeIso(p.created_at)
+    if (!fechas.has(f)) continue
+    const tramo = tramoPorId.get(p.tramo_id)
+    const codigo = tramo?.codigo ?? p.tramo_id
+    const canal = tramo?.canal ?? "—"
+    lineas.push(
+      `- ${f}: tramo ${codigo} (${canal}), abscisa ${formatearNumero(p.abscisa_m, 1)} m, lat ${formatearNumero(p.lat, 6)}, lng ${formatearNumero(p.lng, 6)}`
+    )
+  }
+  return lineas.sort()
+}
+
+function fechasObjetivo(intencion: IntencionFechaConsulta, ahora: Date): Set<string> {
+  if (intencion.tipo === "dia") return new Set(intencion.fechas)
+  if (intencion.tipo === "rango") return new Set(fechasEnRango(intencion.desde, intencion.hasta))
+  const hasta = fechaCalendarioEcuador(ahora, 0)
+  const desde = fechaCalendarioEcuador(ahora, -6)
+  return new Set(fechasEnRango(desde, hasta))
+}
+
+function bloqueResumenUltimosDias(
+  jornadas: Awaited<ReturnType<typeof cargarJornadasMaquinariaProyecto>>,
+  fechas: Set<string>
+): string {
+  const agrupado = agruparJornadasPorFecha(jornadas).filter((g) => fechas.has(g.fecha))
+  if (agrupado.length === 0) {
+    return "Sin jornadas de maquinaria en el rango reciente consultado."
+  }
+  const lineas = ["Resumen diario (maquinaria, jornadas operativas):"]
+  for (const { fecha, jornadas: delDia } of agrupado) {
+    const k = kpisMaquinariaDesasolve(delDia)
+    lineas.push(
+      `- ${fecha}: ${k.totalJornadas} jornada(s), ${formatearNumero(k.totalHoras, 1)} h, ${formatearMetrosDesasolveResumen(k.totalMetros)}, ${k.tramosConJornada} tramo(s)`
+    )
+  }
+  return lineas.join("\n")
+}
+
+export async function construirContextoAsistenteDesasolve(
+  supabase: SupabaseClient,
+  proyectoId: string,
+  ultimoTextoUsuario: string,
+  ahora: Date = new Date()
+): Promise<string> {
+  const intencion = detectarIntencionFechaConsulta(ultimoTextoUsuario, ahora)
+  const fechas = fechasObjetivo(intencion, ahora)
+
+  const [{ tramos, puntosAvance }, jornadas, equipos] = await Promise.all([
+    cargarTramosMapaProyecto(supabase, proyectoId),
+    cargarJornadasMaquinariaProyecto(supabase, proyectoId),
+    cargarEquiposMaquinariaProyecto(supabase, proyectoId, { soloActivos: false }),
+  ])
+
+  const tramosVisibles = tramosMapaDesasolveSinExcluidos(tramos)
+  const tramoPorId = new Map(tramosVisibles.map((t) => [t.id, t]))
+  const kpisMapa = calcularKpisTramos(tramosVisibles, puntosAvance)
+  const kpisMaq = kpisMaquinariaDesasolve(jornadas)
+  const periodoMaq = periodoDesdeJornadas(jornadas)
+
+  const tramoIdsActivos = new Set(
+    jornadas.filter((j) => fechas.has(j.fecha) && !j.es_incidencia).map((j) => j.tramo_id)
+  )
+
+  const lineasTramos: string[] = []
+  for (const tramo of tramosVisibles) {
+    if (intencion.tipo === "reciente" && tramoIdsActivos.size > 0 && !tramoIdsActivos.has(tramo.id)) {
+      continue
+    }
+    if (intencion.tipo !== "reciente" && tramoIdsActivos.size > 0 && !tramoIdsActivos.has(tramo.id)) {
+      continue
+    }
+    lineasTramos.push(resumenTramoLinea(tramo, puntosAvance))
+  }
+
+  if (lineasTramos.length === 0) {
+    for (const tramo of tramosVisibles) {
+      lineasTramos.push(resumenTramoLinea(tramo, puntosAvance))
+    }
+  }
+
+  const partes: string[] = [
+    contextoDocumentalDesasolve(),
+    "",
+    "### Datos operativos (snapshot al momento de la consulta)",
+    `Zona horaria de fechas: ${etiquetaZonaHorariaAsistente()}`,
+    `Interpretación temporal de la pregunta: ${JSON.stringify(intencion)}`,
+    "",
+    "#### KPIs mapa (tramos visibles en app)",
+    `- Tramos: ${kpisMapa.totalTramos}`,
+    `- Km totales: ${formatearNumero(kpisMapa.kmTotales, 2)} km`,
+    `- Km ejecutados (GPS/minitramos cuando aplica): ${formatearNumero(kpisMapa.kmEjecutados, 2)} km`,
+    `- Avance global: ${formatearNumero(kpisMapa.avanceGlobalPct, 1)} %`,
+    `- Por estado operativo: pendiente ${kpisMapa.tramosPorEstado.pendiente}, en ejecución ${kpisMapa.tramosPorEstado.en_ejecucion}, terminado ${kpisMapa.tramosPorEstado.terminado}`,
+    "",
+    "#### KPIs maquinaria (histórico completo en BD)",
+    `- Periodo con registros: ${periodoMaq.etiqueta}`,
+    `- Jornadas operativas: ${kpisMaq.totalJornadas}`,
+    `- Horas registradas: ${formatearNumero(kpisMaq.totalHoras, 1)} h`,
+    `- Metros desasolados: ${formatearMetrosDesasolveResumen(kpisMaq.totalMetros)}`,
+    `- Tramos con al menos una jornada: ${kpisMaq.tramosConJornada}`,
+    `- Incidencias: ${kpisMaq.totalIncidencias}`,
+    "",
+    "#### Tramos (mapa)",
+    ...lineasTramos.map((l) => `- ${l}`),
+  ]
+
+  if (intencion.tipo === "dia") {
+    const detalle = detalleJornadasDia(intencion.fechas[0], jornadas, equipos)
+    partes.push("", "#### Maquinaria — detalle del día solicitado", formatearDetalleJornadasDia(detalle))
+  } else if (intencion.tipo === "rango") {
+    partes.push("", "#### Maquinaria — rango de fechas", bloqueResumenUltimosDias(jornadas, fechas))
+    for (const f of [...fechas].sort()) {
+      const detalle = detalleJornadasDia(f, jornadas, equipos)
+      if (detalle.lineasJornada.length === 0 && detalle.incidencias === 0) continue
+      partes.push("", formatearDetalleJornadasDia(detalle))
+    }
+  } else {
+    partes.push("", "#### Maquinaria — últimos 7 días", bloqueResumenUltimosDias(jornadas, fechas))
+  }
+
+  const puntosLineas = puntosGpsPorFechas(puntosAvance, tramoPorId, fechas)
+  partes.push(
+    "",
+    "#### Puntos GPS confirmados en fechas relevantes",
+    puntosLineas.length > 0
+      ? puntosLineas.join("\n")
+      : "Ningún punto GPS confirmado en esas fechas (según created_at en zona Ecuador)."
+  )
+
+  partes.push(
+    "",
+    "Instrucción interna: responda solo con cifras y tramos presentes arriba; si falta un dato, indíquelo."
+  )
+
+  return recortarTexto(partes.join("\n"), MAX_CARACTERES_CONTEXTO_OPERATIVO)
+}
