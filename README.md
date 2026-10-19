@@ -27,6 +27,7 @@ cp .env.example .env.local
   - No necesita AI Gateway ni `AI_GATEWAY_API_KEY` para el asistente.
   - **Opcional (modelos):** `MAPA_ASISTENTE_CHAT_MODEL` y `MAPA_ASISTENTE_VISION_MODEL` (acepta `google/gemini-3.6-flash` o `gemini-3.6-flash`). Si el principal falla, respaldos: `gemini-3.5-flash-lite`, `gemini-2.5-flash-lite` (no usar `gemini-2.0-*`, retirados por Google).
   - **Contexto de respuestas:** en cada mensaje el servidor carga un snapshot de Supabase (tramos, puntos GPS confirmados, jornadas de maquinaria) y el texto documental en [`src/data/desasolve/contexto-obra.ts`](src/data/desasolve/contexto-obra.ts) (TDR, presupuesto, cronograma — completar con el extracto contractual). Fechas relativas («ayer», «hoy») usan `America/Guayaquil`. Prueba: `npm run test:mapa-asistente-contexto`.
+  - **403 en logs de Vercel (POST a Google):** suele ser modelo no disponible para la API key o restricciones de la clave (referrer/IP). Use modelos estables (`gemini-2.5-flash-lite`) o defina respaldos en `MAPA_ASISTENTE_CHAT_MODEL_FALLBACKS`; el servidor reintenta automáticamente con la lista de respaldos.
 - **Acceso visitantes (opcional):** `VISITANTE_SESSION_SECRET` (cadena aleatoria ≥ 32 caracteres) y `VISITANTE_PIN` o `VISITANTE_PIN_SHA256` (hash SHA-256 en hex del PIN). Si están definidos, quien no sea residente debe ingresar el PIN en `/ingreso` (cookie firmada ~30 días; sin cuentas en Supabase).
 
   Generar hash del PIN (ejemplo PIN `482910`):
