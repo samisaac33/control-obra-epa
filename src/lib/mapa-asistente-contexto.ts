@@ -33,7 +33,8 @@ import {
 import { etiquetaEstadoTramo } from "@/src/data/tramos/types"
 import type { TramoPuntoAvance } from "@/src/lib/tramo-geometria"
 
-const MAX_CARACTERES_CONTEXTO_OPERATIVO = 15_000
+const MAX_CARACTERES_CONTEXTO_OPERATIVO = 10_000
+const MAX_LINEAS_PUNTOS_GPS = 25
 
 function recortarTexto(texto: string, max: number): string {
   if (texto.length <= max) return texto
@@ -105,9 +106,10 @@ export async function construirContextoAsistenteDesasolve(
   const intencion = detectarIntencionFechaConsulta(ultimoTextoUsuario, ahora)
   const fechas = fechasObjetivo(intencion, ahora)
 
-  const [{ tramos, puntosAvance }, jornadas, equipos] = await Promise.all([
-    cargarTramosMapaProyecto(supabase, proyectoId),
-    cargarJornadasMaquinariaProyecto(supabase, proyectoId),
+  const tramosMapa = await cargarTramosMapaProyecto(supabase, proyectoId)
+  const { tramos, puntosAvance } = tramosMapa
+  const [jornadas, equipos] = await Promise.all([
+    cargarJornadasMaquinariaProyecto(supabase, proyectoId, tramosMapa),
     cargarEquiposMaquinariaProyecto(supabase, proyectoId, { soloActivos: false }),
   ])
 
@@ -122,17 +124,16 @@ export async function construirContextoAsistenteDesasolve(
   )
 
   const lineasTramos: string[] = []
+  const soloTramosConActividad =
+    intencion.tipo === "dia" ||
+    ((intencion.tipo === "rango" || intencion.tipo === "reciente") && tramoIdsActivos.size > 0)
+
   for (const tramo of tramosVisibles) {
-    if (intencion.tipo === "reciente" && tramoIdsActivos.size > 0 && !tramoIdsActivos.has(tramo.id)) {
-      continue
-    }
-    if (intencion.tipo !== "reciente" && tramoIdsActivos.size > 0 && !tramoIdsActivos.has(tramo.id)) {
-      continue
-    }
+    if (soloTramosConActividad && !tramoIdsActivos.has(tramo.id)) continue
     lineasTramos.push(resumenTramoLinea(tramo, puntosAvance))
   }
 
-  if (lineasTramos.length === 0) {
+  if (lineasTramos.length === 0 && intencion.tipo !== "dia") {
     for (const tramo of tramosVisibles) {
       lineasTramos.push(resumenTramoLinea(tramo, puntosAvance))
     }
@@ -179,11 +180,18 @@ export async function construirContextoAsistenteDesasolve(
   }
 
   const puntosLineas = puntosGpsPorFechas(puntosAvance, tramoPorId, fechas)
+  const puntosMostrar =
+    puntosLineas.length > MAX_LINEAS_PUNTOS_GPS
+      ? [
+          ...puntosLineas.slice(0, MAX_LINEAS_PUNTOS_GPS),
+          `… y ${puntosLineas.length - MAX_LINEAS_PUNTOS_GPS} punto(s) más (ver mapa).`,
+        ]
+      : puntosLineas
   partes.push(
     "",
     "#### Puntos GPS confirmados en fechas relevantes",
-    puntosLineas.length > 0
-      ? puntosLineas.join("\n")
+    puntosMostrar.length > 0
+      ? puntosMostrar.join("\n")
       : "Ningún punto GPS confirmado en esas fechas (según created_at en zona Ecuador)."
   )
 
