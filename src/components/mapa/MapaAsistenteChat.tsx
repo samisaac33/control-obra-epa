@@ -133,8 +133,10 @@ function MapaAsistenteChatInner({
         <div className="space-y-3 pr-2">
           {messages.length === 0 ? (
             <p className="text-xs text-muted-foreground">
-              Suba una captura de su app GPS o pregunte sobre el registro de avance en canales. Si
-              detectamos coordenadas, el pin aparecerá en el mapa; confirme con «Registrar punto».
+              Suba una captura GPS, pregunte por avance en el mapa, jornadas de maquinaria (horas,
+              equipos, tramos por fecha) o contexto de la obra. Los datos operativos se leen de la
+              app al enviar el mensaje. Coordenadas detectadas → pin en el mapa; confirme con
+              «Registrar punto».
             </p>
           ) : null}
           {messages.map((message) => (
@@ -233,7 +235,7 @@ function MapaAsistenteChatInner({
         <Textarea
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Pregunta sobre el proyecto o pegue coordenadas…"
+          placeholder="Ej.: horas y tramos de ayer, TDR, avance…"
           rows={2}
           className="min-h-11 flex-1 resize-none text-sm"
           onKeyDown={(e) => {
@@ -282,8 +284,8 @@ export function MapaAsistenteChat({
           <SheetHeader>
             <SheetTitle>Asistente del mapa</SheetTitle>
             <SheetDescription>
-              Imágenes GPS y preguntas sobre desasolve. Las coordenadas detectadas se muestran en el
-              mapa.
+              Imágenes GPS, maquinaria, mapa y contexto contractual. Datos operativos al momento de
+              cada pregunta.
             </SheetDescription>
           </SheetHeader>
           <MapaAsistenteChatInner
@@ -305,8 +307,8 @@ export function MapaAsistenteChat({
           Asistente del mapa
         </CardTitle>
         <CardDescription>
-          Suba capturas GPS o haga preguntas. Al detectar coordenadas, el mapa mostrará el pin para
-          registrar avance.
+          Consultas sobre mapa, maquinaria y obra; capturas GPS. Cifras según registros en Supabase
+          al enviar cada mensaje.
         </CardDescription>
       </CardHeader>
       <CardContent>

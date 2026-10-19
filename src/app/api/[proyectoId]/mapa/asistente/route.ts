@@ -8,6 +8,8 @@ import {
 
 import { getProyecto } from "@/src/data/proyectos/catalog"
 import { autorizarMapaAsistente } from "@/src/lib/mapa-asistente-auth"
+import { construirContextoAsistenteDesasolve } from "@/src/lib/mapa-asistente-contexto"
+import { createClient } from "@/src/lib/supabase/server"
 import {
   coordsDesdeTextoUsuario,
   extraerCoordenadasDesdeImagen,
@@ -72,7 +74,11 @@ function imagenUltimoMensajeUsuario(
   return null
 }
 
-function contextoSistema(proyectoId: string, coords: CoordenadasMapaAplicables | null): string {
+function contextoSistemaCompleto(
+  proyectoId: string,
+  coords: CoordenadasMapaAplicables | null,
+  contextoObra: string
+): string {
   const proyecto = getProyecto(proyectoId)
   const coordsBlock = coords
     ? `
@@ -87,17 +93,21 @@ Explique en español claro qué significa colocar un punto de avance GPS en esas
 `
     : ""
 
-  return `Eres el asistente del mapa de avance GPS del proyecto "${proyecto.nombreObra}" (${proyectoId}).
+  return `Eres el asistente de obra del proyecto "${proyecto.nombreObra}" (${proyectoId}): mapa GPS, maquinaria y contexto contractual de desasolve.
 Objeto: ${proyecto.objeto}
 Sistema: ${proyecto.sistema}
 
 Responde siempre en español, tono profesional de obra civil.
-Puedes responder preguntas sobre desasolve por tramos, minitramos A/B/C, registro GPS en campo y uso del mapa.
+Puedes responder sobre términos de referencia, cronograma, presupuesto (según contexto documental), avance por tramos, minitramos A/B/C, jornadas de maquinaria (horas, equipos, tramos intervenidos) y registro GPS en campo.
 Reglas:
-- No registras puntos en la base de datos; solo orientas al residente.
-- No inventes datos de tramos, avances ni fechas que no aparezcan en la conversación.
+- No registras puntos ni jornadas en la base de datos; solo orientas al residente.
+- Para cifras operativas (máquinas, horas, metros, tramos, fechas), usa únicamente el bloque «Datos operativos» y «Contexto contractual» siguientes; no inventes ni extrapoles.
+- Si el dato no está en el snapshot, indícalo y sugiera revisar /maquinaria o /mapa en la app.
 - Si el usuario sube una captura GPS, describe las coordenadas leídas y el siguiente paso en el mapa.
-${coordsBlock}`
+${coordsBlock}
+
+---
+${contextoObra}`
 }
 
 function streamTextChatAsistente(options: {
@@ -172,7 +182,22 @@ export async function POST(request: Request, { params }: RouteParams) {
     )
   }
 
-  const system = contextoSistema(proyectoId, coords)
+  const textoUsuario = textoUltimoMensajeUsuario(messages)
+  let contextoObra = ""
+  try {
+    const supabase = await createClient()
+    contextoObra = await construirContextoAsistenteDesasolve(
+      supabase,
+      proyectoId,
+      textoUsuario
+    )
+  } catch (err) {
+    console.error("[mapa-asistente] contexto operativo:", err)
+    contextoObra =
+      "### Datos operativos\nNo se pudo cargar el snapshot desde Supabase en este momento. Responda solo con lo que el usuario indique en la conversación y sugiera reintentar."
+  }
+
+  const system = contextoSistemaCompleto(proyectoId, coords, contextoObra)
   if (coordsError) {
     const systemConError = `${system}\n\nNota: ${coordsError} Sugiera revisar la captura o ingresar coordenadas manualmente.`
     const modelMessages = await convertToModelMessages(messages as UIMessage[])
