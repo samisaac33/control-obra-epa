@@ -19,6 +19,8 @@ import type { MapaAsistenteUIMessage } from "@/src/lib/mapa-asistente-types"
 import type { CoordenadasMapaAplicables } from "@/src/lib/mapa-coordenadas-gps"
 import {
   crearModeloGoogle,
+  errorModeloGoogleReintentarConFallback,
+  esperarMs,
   modelosGoogleChatEnOrden,
   verificarCredencialesGoogle,
 } from "@/src/lib/mapa-asistente-google"
@@ -110,17 +112,41 @@ ${coordsBlock}
 ${contextoObra}`
 }
 
-function streamTextChatAsistente(options: {
+type ModelMessages = Awaited<ReturnType<typeof convertToModelMessages>>
+
+async function streamTextChatConFallback(options: {
   system: string
-  messages: Awaited<ReturnType<typeof convertToModelMessages>>
-}) {
-  const modelId = modelosGoogleChatEnOrden()[0]
-  return streamText({
-    model: crearModeloGoogle(modelId),
-    maxRetries: 0,
-    system: options.system,
-    messages: options.messages,
-  })
+  messages: ModelMessages
+  originalMessages: MapaAsistenteUIMessage[]
+  writer: { merge: (stream: ReadableStream) => void }
+}): Promise<void> {
+  const modelos = modelosGoogleChatEnOrden()
+  let ultimoError: unknown
+
+  for (let i = 0; i < modelos.length; i += 1) {
+    const result = streamText({
+      model: crearModeloGoogle(modelos[i]),
+      maxRetries: 0,
+      system: options.system,
+      messages: options.messages,
+    })
+
+    try {
+      options.writer.merge(
+        result.toUIMessageStream({ originalMessages: options.originalMessages })
+      )
+      await result.response
+      return
+    } catch (err) {
+      ultimoError = err
+      const puedeReintentar =
+        i < modelos.length - 1 && errorModeloGoogleReintentarConFallback(err)
+      if (!puedeReintentar) throw err
+      await esperarMs(800 * (i + 1))
+    }
+  }
+
+  throw ultimoError ?? new Error("No hay modelos Gemini configurados.")
 }
 
 export async function POST(request: Request, { params }: RouteParams) {
@@ -201,33 +227,28 @@ export async function POST(request: Request, { params }: RouteParams) {
   if (coordsError) {
     const systemConError = `${system}\n\nNota: ${coordsError} Sugiera revisar la captura o ingresar coordenadas manualmente.`
     const modelMessages = await convertToModelMessages(messages as UIMessage[])
-    const result = streamTextChatAsistente({
-      system: systemConError,
-      messages: modelMessages,
-    })
-
     return createUIMessageStreamResponse({
       stream: createUIMessageStream<MapaAsistenteUIMessage>({
         originalMessages: messages,
         onError: (error) => mensajeErrorAsistenteLegible(String(error)),
-        execute: ({ writer }) => {
-          writer.merge(result.toUIMessageStream({ originalMessages: messages }))
+        execute: async ({ writer }) => {
+          await streamTextChatConFallback({
+            system: systemConError,
+            messages: modelMessages,
+            originalMessages: messages,
+            writer,
+          })
         },
       }),
     })
   }
 
   const modelMessages = await convertToModelMessages(messages as UIMessage[])
-  const result = streamTextChatAsistente({
-    system,
-    messages: modelMessages,
-  })
-
   return createUIMessageStreamResponse({
     stream: createUIMessageStream<MapaAsistenteUIMessage>({
       originalMessages: messages,
       onError: (error) => mensajeErrorAsistenteLegible(String(error)),
-      execute: ({ writer }) => {
+      execute: async ({ writer }) => {
         if (coords) {
           writer.write({
             type: "data-map-coords",
@@ -235,7 +256,12 @@ export async function POST(request: Request, { params }: RouteParams) {
             transient: true,
           })
         }
-        writer.merge(result.toUIMessageStream({ originalMessages: messages }))
+        await streamTextChatConFallback({
+          system,
+          messages: modelMessages,
+          originalMessages: messages,
+          writer,
+        })
       },
     }),
   })

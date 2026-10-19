@@ -12,6 +12,16 @@ export function modeloAsistenteChat(): string {
 
 export function mensajeErrorAsistenteLegible(detalle: string): string {
   const t = detalle.trim()
+  if (
+    t.includes("403") ||
+    t.toLowerCase().includes("permission denied") ||
+    t.toLowerCase().includes("forbidden")
+  ) {
+    return (
+      "Google rechazó el modelo configurado (403). En Vercel use MAPA_ASISTENTE_CHAT_MODEL=gemini-2.5-flash-lite " +
+      "(o gemini-3.5-flash-lite), verifique restricciones de la API key (sin bloqueo por referrer) y redeploy."
+    )
+  }
   if (t.includes("GOOGLE_GENERATIVE_AI_API_KEY") || t.includes("API key not valid")) {
     return (
       "Clave de Google inválida o ausente. Configure GOOGLE_GENERATIVE_AI_API_KEY en Vercel " +

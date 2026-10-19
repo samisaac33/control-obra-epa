@@ -95,6 +95,10 @@ export function errorModeloGoogleReintentarConFallback(error: unknown): boolean 
     lower.includes("not found") ||
     lower.includes("503") ||
     lower.includes("429") ||
+    lower.includes("403") ||
+    lower.includes("permission denied") ||
+    lower.includes("permission_denied") ||
+    lower.includes("forbidden") ||
     lower.includes("unavailable")
   )
 }

@@ -1,6 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
 
-import { cargarTramosMapaProyecto } from "@/src/lib/cargar-tramos-mapa-proyecto"
+import {
+  cargarTramosMapaProyecto,
+  type TramosMapaProyecto,
+} from "@/src/lib/cargar-tramos-mapa-proyecto"
 import { mapaLongitudMinitramoPorPuntoFin } from "@/src/lib/mapa-jornada-minitramo"
 import {
   formatearFechaRegistro,
@@ -61,9 +64,11 @@ function metrosDesasoladosEfectivosJornada(
 
 export async function cargarJornadasMaquinariaProyecto(
   supabase: SupabaseClient,
-  proyectoId: string
+  proyectoId: string,
+  tramosMapaPrecargado?: TramosMapaProyecto
 ): Promise<JornadaMaquinariaProyecto[]> {
-  const { tramos, puntosAvance } = await cargarTramosMapaProyecto(supabase, proyectoId)
+  const { tramos, puntosAvance } =
+    tramosMapaPrecargado ?? (await cargarTramosMapaProyecto(supabase, proyectoId))
   if (!tramos.length) return []
 
   const tramoPorId = new Map(

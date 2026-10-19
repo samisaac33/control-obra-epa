@@ -8,7 +8,7 @@ export type ContextoDocumentalDesasolve = {
 }
 
 /** Tope por defecto del bloque documental inyectado al asistente (~ tokens). */
-export const MAX_CARACTERES_CONTEXTO_DOCUMENTAL = 12_000
+export const MAX_CARACTERES_CONTEXTO_DOCUMENTAL = 6_000
 
 const PLACEHOLDER_CONTRACTUAL =
   "[Pendiente: pegar aquí extracto contractual oficial (TDR / presupuesto / cronograma) acordado con EPA EP.]"
