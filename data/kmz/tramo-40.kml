@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:ex="http://earth.google.com/kml/ext">
+<Document id="document">
+	<ex:extension>base64;CooBCoEBCn8KAggBEnkKdwokCiAKAwjQDxoHCNLtZRD_ASEAAAAAAADwPykAAAAAAAAAABgAEg8KCAitgO8HEP8BEKAfGAAaGgoHCP___wcQQBIICK2A7wcQ_wEYoB8gACgAIgkIARIFCP___wcqFwgBEggI____BxD_ARkAAAAAAADwPyAAEgQIARAA</ex:extension>
+	<name>Tramo 40</name>
+	<gx:CascadingStyle kml:id="__managed_style_0C1974F334428CA7B7E3_highlight">
+		<ex:extension>base64;EgIYAQ</ex:extension>
+		<Style>
+			<IconStyle>
+				<scale>1.2</scale>
+				<Icon>
+					<href>https://earth.google.com/earth/document/icon?color=1976d2&amp;id=2000&amp;scale=4</href>
+				</Icon>
+				<hotSpot x="64" y="128" xunits="pixels" yunits="insetPixels"/>
+			</IconStyle>
+			<LabelStyle>
+			</LabelStyle>
+			<LineStyle>
+				<color>ff2dc0fb</color>
+				<width>6</width>
+			</LineStyle>
+			<PolyStyle>
+				<color>40ffffff</color>
+			</PolyStyle>
+			<BalloonStyle>
+				<displayMode>hide</displayMode>
+			</BalloonStyle>
+		</Style>
+	</gx:CascadingStyle>
+	<gx:CascadingStyle kml:id="__managed_style_0C1974F334428CA7B7E3_normal">
+		<ex:extension>base64;EgIYAQ</ex:extension>
+		<Style>
+			<IconStyle>
+				<Icon>
+					<href>https://earth.google.com/earth/document/icon?color=1976d2&amp;id=2000&amp;scale=4</href>
+				</Icon>
+				<hotSpot x="64" y="128" xunits="pixels" yunits="insetPixels"/>
+			</IconStyle>
+			<LabelStyle>
+			</LabelStyle>
+			<LineStyle>
+				<color>ff2dc0fb</color>
+				<width>4</width>
+			</LineStyle>
+			<PolyStyle>
+				<color>40ffffff</color>
+			</PolyStyle>
+			<BalloonStyle>
+				<displayMode>hide</displayMode>
+			</BalloonStyle>
+		</Style>
+	</gx:CascadingStyle>
+	<StyleMap id="__managed_style_0C1974F334428CA7B7E3">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#__managed_style_0C1974F334428CA7B7E3_normal</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#__managed_style_0C1974F334428CA7B7E3_highlight</styleUrl>
+		</Pair>
+	</StyleMap>
+	<Placemark id="05530484BC428CA7B7AE">
+		<name>Tramo 40</name>
+		<LookAt>
+			<longitude>-80.15812060950645</longitude>
+			<latitude>-0.7138139759870984</latitude>
+			<altitude>5.973776060069889</altitude>
+			<heading>0</heading>
+			<tilt>0</tilt>
+			<gx:fovy>35</gx:fovy>
+			<range>248.6758242828728</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_0C1974F334428CA7B7E3</styleUrl>
+		<LineString>
+			<coordinates>
+				-80.17011495188446,-0.7179972648610607,0 -80.16881652897909,-0.7179995285139066,0 -80.16816817619907,-0.7179894369488686,0 -80.16763268738016,-0.7178061523507586,0 -80.16709908319507,-0.7175776417231366,0 -80.16618575458961,-0.7171822262461014,0 -80.16509396526897,-0.7167157638933589,0 -80.16393591949819,-0.716217357334055,0 -80.163141388597,-0.7158712446629381,0 -80.16192412394686,-0.7153652988154768,0 -80.16124952858969,-0.7150823391175493,0 -80.16054515871248,-0.7147748285136012,0 -80.1597041976414,-0.7143914059280065,0 -80.15899293208979,-0.7140949489452787,0 -80.15860917284718,-0.7139293277525767,0 -80.15795573193516,-0.7136390856489436,0 
+			</coordinates>
+		</LineString>
+	</Placemark>
+</Document>
+</kml>
