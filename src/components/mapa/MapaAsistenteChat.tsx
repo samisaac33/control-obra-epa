@@ -3,7 +3,7 @@
 import { useChat } from "@ai-sdk/react"
 import { DefaultChatTransport } from "ai"
 import { Bot, ImagePlus, Loader2, MessageCircle, Send, X } from "lucide-react"
-import { useCallback, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -28,6 +28,8 @@ import {
 } from "@/src/lib/mapa-coordenadas-gps"
 import type { TramoPuntoAvance } from "@/src/lib/tramo-geometria"
 
+type MapaAsistenteChatLayout = "inline" | "sheet"
+
 type MapaAsistenteChatProps = {
   proyectoId: string
   tramos: CanalTramo[]
@@ -43,157 +45,119 @@ function textoPartes(parts: MapaAsistenteUIMessage["parts"]): string {
     .join("")
 }
 
-function MapaAsistenteChatInner({
-  proyectoId,
-  tramos,
-  puntosAvance,
-  className,
-}: Omit<MapaAsistenteChatProps, "variant">) {
-  const { aplicarCoordenadasEnMapa } = useMapaUbicacionResidente()
-  const [input, setInput] = useState("")
-  const [adjunto, setAdjunto] = useState<File | null>(null)
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
-  const [resumenMapa, setResumenMapa] = useState<ResumenPropuestaPuntoEnMapa | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-
-  const transport = useMemo(
-    () =>
-      new DefaultChatTransport<MapaAsistenteUIMessage>({
-        api: `/api/${proyectoId}/mapa/asistente`,
-      }),
-    [proyectoId]
-  )
-
-  const onData = useCallback(
-    (part: { type: string; data?: unknown }) => {
-      if (part.type !== "data-map-coords" || !part.data) return
-      const data = part.data as {
-        lat: number
-        lng: number
-        precision_m: number
-      }
-      aplicarCoordenadasEnMapa({
-        lat: data.lat,
-        lng: data.lng,
-        precision_m: data.precision_m,
-      })
-      setResumenMapa(resumenPropuestaPuntoEnMapa(tramos, puntosAvance, data.lat, data.lng))
-    },
-    [aplicarCoordenadasEnMapa, tramos, puntosAvance]
-  )
-
-  const { messages, sendMessage, status, error } = useChat<MapaAsistenteUIMessage>({
-    transport,
-    onData,
-  })
-
-  const enviando = status === "streaming" || status === "submitted"
-
-  function limpiarAdjunto() {
-    setAdjunto(null)
-    if (previewUrl) URL.revokeObjectURL(previewUrl)
-    setPreviewUrl(null)
-    if (fileInputRef.current) fileInputRef.current.value = ""
-  }
-
-  function onSeleccionarArchivo(file: File | null) {
-    limpiarAdjunto()
-    if (!file) return
-    if (!file.type.startsWith("image/")) return
-    setAdjunto(file)
-    setPreviewUrl(URL.createObjectURL(file))
-  }
-
-  async function enviar() {
-    const text = input.trim()
-    if (!text && !adjunto) return
-
-    setInput("")
-    const fileList = (() => {
-      if (!adjunto) return undefined
-      const dt = new DataTransfer()
-      dt.items.add(adjunto)
-      return dt.files
-    })()
-    limpiarAdjunto()
-
-    if (fileList && fileList.length > 0) {
-      await sendMessage({
-        text: text || "Analiza esta captura GPS y ubica el punto en el mapa.",
-        files: fileList,
-      })
-      return
-    }
-    await sendMessage({ text })
-  }
-
+function ListaMensajesAsistente({
+  layout,
+  messages,
+  resumenMapa,
+  enviando,
+  error,
+  textoTamano,
+}: {
+  layout: MapaAsistenteChatLayout
+  messages: MapaAsistenteUIMessage[]
+  resumenMapa: ResumenPropuestaPuntoEnMapa | null
+  enviando: boolean
+  error: Error | undefined
+  textoTamano: string
+}) {
   return (
-    <div className={cn("flex flex-col", className)}>
-      <ScrollArea className="max-h-64 min-h-40 rounded-md border border-foreground/10 bg-background/80 p-3">
-        <div className="space-y-3 pr-2">
-          {messages.length === 0 ? (
-            <p className="text-xs text-muted-foreground">
-              Suba una captura GPS, pregunte por avance en el mapa, jornadas de maquinaria (horas,
-              equipos, tramos por fecha) o contexto de la obra. Los datos operativos se leen de la
-              app al enviar el mensaje. Coordenadas detectadas → pin en el mapa; confirme con
-              «Registrar punto».
-            </p>
+    <div className={cn("space-y-3", layout === "sheet" ? "pb-2" : "pr-2")}>
+      {messages.length === 0 ? (
+        <p className={cn("text-muted-foreground", layout === "sheet" ? "text-sm" : "text-xs")}>
+          Suba una captura GPS, pregunte por avance en el mapa, jornadas de maquinaria (horas,
+          equipos, tramos por fecha) o contexto de la obra. Los datos operativos se leen de la app
+          al enviar el mensaje. Coordenadas detectadas → pin en el mapa; confirme con «Registrar
+          punto».
+        </p>
+      ) : null}
+      {messages.map((message) => (
+        <div
+          key={message.id}
+          className={cn(
+            "rounded-lg px-2.5 py-2 leading-relaxed",
+            textoTamano,
+            message.role === "user"
+              ? "ml-6 bg-primary/10 text-foreground"
+              : "mr-2 bg-muted/60 text-foreground sm:mr-6"
+          )}
+        >
+          {message.role === "assistant" ? (
+            <span className="mb-1 flex items-center gap-1 font-medium text-[11px] text-muted-foreground">
+              <Bot className="size-3.5" aria-hidden />
+              Asistente
+            </span>
           ) : null}
-          {messages.map((message) => (
-            <div
-              key={message.id}
-              className={cn(
-                "rounded-lg px-2.5 py-2 text-xs leading-relaxed",
-                message.role === "user"
-                  ? "ml-6 bg-primary/10 text-foreground"
-                  : "mr-6 bg-muted/60 text-foreground"
-              )}
-            >
-              {message.role === "assistant" ? (
-                <span className="mb-1 flex items-center gap-1 font-medium text-[11px] text-muted-foreground">
-                  <Bot className="size-3.5" aria-hidden />
-                  Asistente
-                </span>
-              ) : null}
-              <p className="whitespace-pre-wrap">{textoPartes(message.parts)}</p>
-            </div>
-          ))}
-          {resumenMapa ? (
-            <div
-              className={cn(
-                "rounded-lg border px-2.5 py-2 text-xs",
-                resumenMapa.puedeRegistrar
-                  ? "border-emerald-500/30 bg-emerald-500/10"
-                  : "border-amber-500/30 bg-amber-500/10"
-              )}
-            >
-              <p className="font-medium">{resumenMapa.titulo}</p>
-              <ul className="mt-1 list-inside list-disc space-y-0.5 text-muted-foreground">
-                {resumenMapa.lineas.map((linea) => (
-                  <li key={linea}>{linea}</li>
-                ))}
-              </ul>
-              <p className="mt-2 font-medium text-foreground">
-                Use «Registrar punto» en la barra del mapa para confirmar el registro.
-              </p>
-            </div>
-          ) : null}
-          {enviando ? (
-            <p className="flex items-center gap-1 text-xs text-muted-foreground">
-              <Loader2 className="size-3.5 animate-spin" aria-hidden />
-              Procesando…
-            </p>
-          ) : null}
-          {error ? (
-            <p className="text-xs text-destructive" role="alert">
-              {mensajeErrorAsistenteLegible(error.message)}
-            </p>
-          ) : null}
+          <p className="whitespace-pre-wrap">{textoPartes(message.parts)}</p>
         </div>
-      </ScrollArea>
+      ))}
+      {resumenMapa ? (
+        <div
+          className={cn(
+            "rounded-lg border px-2.5 py-2",
+            textoTamano,
+            resumenMapa.puedeRegistrar
+              ? "border-emerald-500/30 bg-emerald-500/10"
+              : "border-amber-500/30 bg-amber-500/10"
+          )}
+        >
+          <p className="font-medium">{resumenMapa.titulo}</p>
+          <ul className="mt-1 list-inside list-disc space-y-0.5 text-muted-foreground">
+            {resumenMapa.lineas.map((linea) => (
+              <li key={linea}>{linea}</li>
+            ))}
+          </ul>
+          <p className="mt-2 font-medium text-foreground">
+            Use «Registrar punto» en la barra del mapa para confirmar el registro.
+          </p>
+        </div>
+      ) : null}
+      {enviando ? (
+        <p className={cn("flex items-center gap-1 text-muted-foreground", textoTamano)}>
+          <Loader2 className="size-3.5 animate-spin" aria-hidden />
+          Procesando…
+        </p>
+      ) : null}
+      {error ? (
+        <p className={cn("text-destructive", textoTamano)} role="alert">
+          {mensajeErrorAsistenteLegible(error.message)}
+        </p>
+      ) : null}
+    </div>
+  )
+}
 
+function ComposerAsistente({
+  layout,
+  input,
+  setInput,
+  adjunto,
+  previewUrl,
+  enviando,
+  fileInputRef,
+  onSeleccionarArchivo,
+  limpiarAdjunto,
+  enviar,
+}: {
+  layout: MapaAsistenteChatLayout
+  input: string
+  setInput: (value: string) => void
+  adjunto: File | null
+  previewUrl: string | null
+  enviando: boolean
+  fileInputRef: React.RefObject<HTMLInputElement | null>
+  onSeleccionarArchivo: (file: File | null) => void
+  limpiarAdjunto: () => void
+  enviar: () => Promise<void>
+}) {
+  return (
+    <div
+      className={cn(
+        layout === "sheet" &&
+          "shrink-0 border-t border-foreground/10 bg-background px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+      )}
+    >
       {previewUrl ? (
-        <div className="relative mt-2 inline-block w-fit">
+        <div className={cn("relative inline-block w-fit", layout === "sheet" ? "mb-3" : "mt-2")}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={previewUrl}
@@ -213,7 +177,7 @@ function MapaAsistenteChatInner({
         </div>
       ) : null}
 
-      <div className="mt-2 flex gap-2">
+      <div className={cn("flex gap-2", layout === "inline" && "mt-2")}>
         <input
           ref={fileInputRef}
           type="file"
@@ -260,6 +224,146 @@ function MapaAsistenteChatInner({
   )
 }
 
+function MapaAsistenteChatInner({
+  proyectoId,
+  tramos,
+  puntosAvance,
+  layout = "inline",
+  className,
+}: Omit<MapaAsistenteChatProps, "variant"> & { layout?: MapaAsistenteChatLayout }) {
+  const { aplicarCoordenadasEnMapa } = useMapaUbicacionResidente()
+  const [input, setInput] = useState("")
+  const [adjunto, setAdjunto] = useState<File | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [resumenMapa, setResumenMapa] = useState<ResumenPropuestaPuntoEnMapa | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const mensajesScrollRef = useRef<HTMLDivElement>(null)
+
+  const transport = useMemo(
+    () =>
+      new DefaultChatTransport<MapaAsistenteUIMessage>({
+        api: `/api/${proyectoId}/mapa/asistente`,
+      }),
+    [proyectoId]
+  )
+
+  const onData = useCallback(
+    (part: { type: string; data?: unknown }) => {
+      if (part.type !== "data-map-coords" || !part.data) return
+      const data = part.data as {
+        lat: number
+        lng: number
+        precision_m: number
+      }
+      aplicarCoordenadasEnMapa({
+        lat: data.lat,
+        lng: data.lng,
+        precision_m: data.precision_m,
+      })
+      setResumenMapa(resumenPropuestaPuntoEnMapa(tramos, puntosAvance, data.lat, data.lng))
+    },
+    [aplicarCoordenadasEnMapa, tramos, puntosAvance]
+  )
+
+  const { messages, sendMessage, status, error } = useChat<MapaAsistenteUIMessage>({
+    transport,
+    onData,
+  })
+
+  const enviando = status === "streaming" || status === "submitted"
+  const textoTamano = layout === "sheet" ? "text-sm" : "text-xs"
+
+  useEffect(() => {
+    if (layout !== "sheet") return
+    const el = mensajesScrollRef.current
+    if (!el) return
+    el.scrollTop = el.scrollHeight
+  }, [layout, messages, status, resumenMapa, error])
+
+  function limpiarAdjunto() {
+    setAdjunto(null)
+    if (previewUrl) URL.revokeObjectURL(previewUrl)
+    setPreviewUrl(null)
+    if (fileInputRef.current) fileInputRef.current.value = ""
+  }
+
+  function onSeleccionarArchivo(file: File | null) {
+    limpiarAdjunto()
+    if (!file) return
+    if (!file.type.startsWith("image/")) return
+    setAdjunto(file)
+    setPreviewUrl(URL.createObjectURL(file))
+  }
+
+  async function enviar() {
+    const text = input.trim()
+    if (!text && !adjunto) return
+
+    setInput("")
+    const fileList = (() => {
+      if (!adjunto) return undefined
+      const dt = new DataTransfer()
+      dt.items.add(adjunto)
+      return dt.files
+    })()
+    limpiarAdjunto()
+
+    if (fileList && fileList.length > 0) {
+      await sendMessage({
+        text: text || "Analiza esta captura GPS y ubica el punto en el mapa.",
+        files: fileList,
+      })
+      return
+    }
+    await sendMessage({ text })
+  }
+
+  const listaProps = {
+    layout,
+    messages,
+    resumenMapa,
+    enviando,
+    error,
+    textoTamano,
+  }
+
+  const composerProps = {
+    layout,
+    input,
+    setInput,
+    adjunto,
+    previewUrl,
+    enviando,
+    fileInputRef,
+    onSeleccionarArchivo,
+    limpiarAdjunto,
+    enviar,
+  }
+
+  if (layout === "sheet") {
+    return (
+      <div className={cn("flex min-h-0 flex-1 flex-col", className)}>
+        <div
+          ref={mensajesScrollRef}
+          className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pt-1"
+        >
+          <ListaMensajesAsistente {...listaProps} />
+        </div>
+        <ComposerAsistente {...composerProps} />
+      </div>
+    )
+  }
+
+  return (
+    <div className={cn("flex flex-col", className)}>
+      <ScrollArea className="max-h-72 min-h-40 rounded-md border border-foreground/10 bg-background/80 p-3">
+        <ListaMensajesAsistente {...listaProps} />
+      </ScrollArea>
+      <ComposerAsistente {...composerProps} />
+    </div>
+  )
+}
+
 export function MapaAsistenteChat({
   proyectoId,
   tramos,
@@ -267,21 +371,28 @@ export function MapaAsistenteChat({
   variant = "inline",
   className,
 }: MapaAsistenteChatProps) {
+  const [sheetAbierto, setSheetAbierto] = useState(false)
+
   if (variant === "sheet") {
     return (
-      <Sheet>
-        <SheetTrigger asChild>
-          <Button
-            type="button"
-            size="lg"
-            className="fixed bottom-24 right-4 z-[500] min-h-12 gap-2 rounded-full px-4 shadow-lg md:hidden"
-          >
-            <MessageCircle className="size-4" aria-hidden />
-            Asistente
-          </Button>
-        </SheetTrigger>
-        <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto">
-          <SheetHeader>
+      <Sheet open={sheetAbierto} onOpenChange={setSheetAbierto}>
+        {!sheetAbierto ? (
+          <SheetTrigger asChild>
+            <Button
+              type="button"
+              size="lg"
+              className="fixed bottom-24 right-4 z-[500] min-h-12 gap-2 rounded-full px-4 shadow-lg md:hidden"
+            >
+              <MessageCircle className="size-4" aria-hidden />
+              Asistente
+            </Button>
+          </SheetTrigger>
+        ) : null}
+        <SheetContent
+          side="bottom"
+          className="flex h-[min(85dvh,100%)] max-h-[85dvh] flex-col gap-0 overflow-hidden p-0"
+        >
+          <SheetHeader className="shrink-0 space-y-1 px-4 pt-4 pb-2 text-left">
             <SheetTitle>Asistente del mapa</SheetTitle>
             <SheetDescription>
               Imágenes GPS, maquinaria, mapa y contexto contractual. Datos operativos al momento de
@@ -292,7 +403,8 @@ export function MapaAsistenteChat({
             proyectoId={proyectoId}
             tramos={tramos}
             puntosAvance={puntosAvance}
-            className={cn("mt-4 pb-4", className)}
+            layout="sheet"
+            className={className}
           />
         </SheetContent>
       </Sheet>
@@ -316,6 +428,7 @@ export function MapaAsistenteChat({
           proyectoId={proyectoId}
           tramos={tramos}
           puntosAvance={puntosAvance}
+          layout="inline"
         />
       </CardContent>
     </Card>
