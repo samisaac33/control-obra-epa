@@ -25,6 +25,7 @@ import {
   kpisMaquinariaDesasolve,
   resumenPorEquipoDesasolve,
   resumenPorTramoDesasolve,
+  resumenPorTramoDesasolveAlineadoMapa,
 } from "@/src/lib/maquinaria-desasolve-resumen"
 import { formatearNumero } from "@/src/lib/maquinaria-resumen"
 import { rutaObra } from "@/src/lib/rutas-proyecto"
@@ -56,7 +57,8 @@ export function MaquinariaDesasolvePageClient() {
   const [isResident, setIsResident] = useState(false)
   const [eliminandoId, setEliminandoId] = useState<string | null>(null)
   const [errorEliminar, setErrorEliminar] = useState<string | null>(null)
-  const { jornadas, periodo, loading, error, recargar } = useJornadasMaquinariaProyecto()
+  const { jornadas, tramosMapa, periodo, loading, error, recargar } =
+    useJornadasMaquinariaProyecto()
   const { equipos } = useEquiposMaquinariaProyecto()
 
   useEffect(() => {
@@ -89,9 +91,25 @@ export function MaquinariaDesasolvePageClient() {
     }
   }
 
-  const kpis = useMemo(() => kpisMaquinariaDesasolve(jornadas), [jornadas])
+  const porTramo = useMemo(() => {
+    if (tramosMapa) {
+      return resumenPorTramoDesasolveAlineadoMapa(
+        jornadas,
+        tramosMapa.tramos,
+        tramosMapa.puntosAvance
+      )
+    }
+    return resumenPorTramoDesasolve(jornadas)
+  }, [jornadas, tramosMapa])
+
+  const kpis = useMemo(() => {
+    const base = kpisMaquinariaDesasolve(jornadas)
+    if (!tramosMapa) return base
+    const totalMetros = porTramo.reduce((sum, fila) => sum + fila.metros, 0)
+    return { ...base, totalMetros }
+  }, [jornadas, tramosMapa, porTramo])
+
   const porEquipo = useMemo(() => resumenPorEquipoDesasolve(jornadas, equipos), [jornadas, equipos])
-  const porTramo = useMemo(() => resumenPorTramoDesasolve(jornadas), [jornadas])
   const porFecha = useMemo(() => agruparJornadasPorFecha(jornadas), [jornadas])
   const equiposPorId = useMemo(() => mapaEquiposPorId(equipos), [equipos])
   const generadoEn = useMemo(() => new Date().toISOString(), [])
