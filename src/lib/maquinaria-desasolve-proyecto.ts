@@ -65,11 +65,22 @@ function metrosDesasoladosEfectivosJornada(
   terminadoPorPuntoFin: ReadonlyMap<string, boolean>
 ): number {
   if (jornada.punto_avance_id) {
-    if (terminadoPorPuntoFin.get(jornada.punto_avance_id) === false) return 0
+    if (terminadoPorPuntoFin.get(jornada.punto_avance_id) !== true) return 0
     const longitudGps = longitudPorPuntoFin.get(jornada.punto_avance_id)
     if (longitudGps != null && longitudGps > 0) return longitudGps
   }
   return jornada.metros_desasolados
+}
+
+/** Horas que entran al consolidado: solo minitramos terminados cuando hay vínculo GPS. */
+export function horasEfectivasJornada(
+  jornada: Pick<TramoRegistroMaquinaria, "punto_avance_id" | "duracion_horas">,
+  terminadoPorPuntoFin: ReadonlyMap<string, boolean>
+): number | null {
+  if (jornada.punto_avance_id) {
+    if (terminadoPorPuntoFin.get(jornada.punto_avance_id) !== true) return null
+  }
+  return jornada.duracion_horas
 }
 
 /**
@@ -154,6 +165,7 @@ export async function cargarJornadasMaquinariaProyecto(
           longitudPorPuntoFin,
           terminadoPorPuntoFin
         ),
+        duracion_horas: horasEfectivasJornada(jornada, terminadoPorPuntoFin),
       }
     })
     .filter((j): j is JornadaMaquinariaProyecto => j != null)
