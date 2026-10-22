@@ -26,6 +26,7 @@ import {
   resumenPropuestaPuntoEnMapa,
   type ResumenPropuestaPuntoEnMapa,
 } from "@/src/lib/mapa-coordenadas-gps"
+import type { MapaAsistentePerfil } from "@/src/lib/mapa-asistente-auth"
 import type { TramoPuntoAvance } from "@/src/lib/tramo-geometria"
 
 type MapaAsistenteChatLayout = "inline" | "sheet"
@@ -35,7 +36,15 @@ type MapaAsistenteChatProps = {
   tramos: CanalTramo[]
   puntosAvance: TramoPuntoAvance[]
   variant?: "inline" | "sheet"
+  perfil?: MapaAsistentePerfil
   className?: string
+}
+
+const COPY_VACIO: Record<MapaAsistentePerfil, string> = {
+  residente:
+    "Suba una captura GPS, pregunte por avance en el mapa, jornadas de maquinaria (horas, equipos, tramos por fecha) o contexto de la obra. Los datos operativos se leen de la app al enviar el mensaje. Coordenadas detectadas → pin en el mapa; confirme con «Registrar punto».",
+  visitante:
+    "Pregunte por avance global, tramos o actividad de maquinaria por fecha. Las respuestas son resumidas según los datos publicados en el mapa al enviar cada mensaje.",
 }
 
 function textoPartes(parts: MapaAsistenteUIMessage["parts"]): string {
@@ -52,6 +61,7 @@ function ListaMensajesAsistente({
   enviando,
   error,
   textoTamano,
+  perfil,
 }: {
   layout: MapaAsistenteChatLayout
   messages: MapaAsistenteUIMessage[]
@@ -59,15 +69,13 @@ function ListaMensajesAsistente({
   enviando: boolean
   error: Error | undefined
   textoTamano: string
+  perfil: MapaAsistentePerfil
 }) {
   return (
     <div className={cn("space-y-3", layout === "sheet" ? "pb-2" : "pr-2")}>
       {messages.length === 0 ? (
         <p className={cn("text-muted-foreground", layout === "sheet" ? "text-sm" : "text-xs")}>
-          Suba una captura GPS, pregunte por avance en el mapa, jornadas de maquinaria (horas,
-          equipos, tramos por fecha) o contexto de la obra. Los datos operativos se leen de la app
-          al enviar el mensaje. Coordenadas detectadas → pin en el mapa; confirme con «Registrar
-          punto».
+          {COPY_VACIO[perfil]}
         </p>
       ) : null}
       {messages.map((message) => (
@@ -137,6 +145,8 @@ function ComposerAsistente({
   onSeleccionarArchivo,
   limpiarAdjunto,
   enviar,
+  permitirAdjunto,
+  placeholder,
 }: {
   layout: MapaAsistenteChatLayout
   input: string
@@ -148,6 +158,8 @@ function ComposerAsistente({
   onSeleccionarArchivo: (file: File | null) => void
   limpiarAdjunto: () => void
   enviar: () => Promise<void>
+  permitirAdjunto: boolean
+  placeholder: string
 }) {
   return (
     <div
@@ -178,28 +190,32 @@ function ComposerAsistente({
       ) : null}
 
       <div className={cn("flex gap-2", layout === "inline" && "mt-2")}>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          className="sr-only"
-          onChange={(e) => onSeleccionarArchivo(e.target.files?.[0] ?? null)}
-        />
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          className="size-11 shrink-0"
-          aria-label="Adjuntar imagen GPS"
-          disabled={enviando}
-          onClick={() => fileInputRef.current?.click()}
-        >
-          <ImagePlus className="size-4" />
-        </Button>
+        {permitirAdjunto ? (
+          <>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="sr-only"
+              onChange={(e) => onSeleccionarArchivo(e.target.files?.[0] ?? null)}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="size-11 shrink-0"
+              aria-label="Adjuntar imagen GPS"
+              disabled={enviando}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <ImagePlus className="size-4" />
+            </Button>
+          </>
+        ) : null}
         <Textarea
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Ej.: horas y tramos de ayer, TDR, avance…"
+          placeholder={placeholder}
           rows={2}
           className="min-h-11 flex-1 resize-none text-sm"
           onKeyDown={(e) => {
@@ -224,14 +240,24 @@ function ComposerAsistente({
   )
 }
 
-function MapaAsistenteChatInner({
+function MapaAsistenteChatEngine({
   proyectoId,
   tramos,
   puntosAvance,
   layout = "inline",
+  perfil,
   className,
-}: Omit<MapaAsistenteChatProps, "variant"> & { layout?: MapaAsistenteChatLayout }) {
-  const { aplicarCoordenadasEnMapa } = useMapaUbicacionResidente()
+  onCoordsFromServer,
+}: {
+  proyectoId: string
+  tramos: CanalTramo[]
+  puntosAvance: TramoPuntoAvance[]
+  layout?: MapaAsistenteChatLayout
+  perfil: MapaAsistentePerfil
+  className?: string
+  onCoordsFromServer?: (coords: { lat: number; lng: number; precision_m: number }) => void
+}) {
+  const esResidente = perfil === "residente"
   const [input, setInput] = useState("")
   const [adjunto, setAdjunto] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
@@ -249,25 +275,22 @@ function MapaAsistenteChatInner({
 
   const onData = useCallback(
     (part: { type: string; data?: unknown }) => {
+      if (!onCoordsFromServer) return
       if (part.type !== "data-map-coords" || !part.data) return
       const data = part.data as {
         lat: number
         lng: number
         precision_m: number
       }
-      aplicarCoordenadasEnMapa({
-        lat: data.lat,
-        lng: data.lng,
-        precision_m: data.precision_m,
-      })
+      onCoordsFromServer(data)
       setResumenMapa(resumenPropuestaPuntoEnMapa(tramos, puntosAvance, data.lat, data.lng))
     },
-    [aplicarCoordenadasEnMapa, tramos, puntosAvance]
+    [onCoordsFromServer, tramos, puntosAvance]
   )
 
   const { messages, sendMessage, status, error } = useChat<MapaAsistenteUIMessage>({
     transport,
-    onData,
+    onData: onCoordsFromServer ? onData : undefined,
   })
 
   const enviando = status === "streaming" || status === "submitted"
@@ -321,10 +344,11 @@ function MapaAsistenteChatInner({
   const listaProps = {
     layout,
     messages,
-    resumenMapa,
+    resumenMapa: esResidente ? resumenMapa : null,
     enviando,
     error,
     textoTamano,
+    perfil,
   }
 
   const composerProps = {
@@ -338,6 +362,10 @@ function MapaAsistenteChatInner({
     onSeleccionarArchivo,
     limpiarAdjunto,
     enviar,
+    permitirAdjunto: esResidente,
+    placeholder: esResidente
+      ? "Ej.: horas y tramos de ayer, TDR, avance…"
+      : "Ej.: avance global, actividad del lunes…",
   }
 
   if (layout === "sheet") {
@@ -364,14 +392,68 @@ function MapaAsistenteChatInner({
   )
 }
 
+function MapaAsistenteChatInnerResidente(
+  props: Omit<MapaAsistenteChatProps, "variant" | "perfil"> & {
+    layout?: MapaAsistenteChatLayout
+  }
+) {
+  const { aplicarCoordenadasEnMapa } = useMapaUbicacionResidente()
+  const onCoordsFromServer = useCallback(
+    (data: { lat: number; lng: number; precision_m: number }) => {
+      aplicarCoordenadasEnMapa(data)
+    },
+    [aplicarCoordenadasEnMapa]
+  )
+  return (
+    <MapaAsistenteChatEngine
+      {...props}
+      perfil="residente"
+      onCoordsFromServer={onCoordsFromServer}
+    />
+  )
+}
+
+function MapaAsistenteChatInner(props: {
+  perfil: MapaAsistentePerfil
+  proyectoId: string
+  tramos: CanalTramo[]
+  puntosAvance: TramoPuntoAvance[]
+  layout?: MapaAsistenteChatLayout
+  className?: string
+}) {
+  if (props.perfil === "visitante") {
+    return <MapaAsistenteChatEngine {...props} perfil="visitante" />
+  }
+  return <MapaAsistenteChatInnerResidente {...props} />
+}
+
+const UI_PERFIL: Record<
+  MapaAsistentePerfil,
+  { titulo: string; descripcion: string; fab: string }
+> = {
+  residente: {
+    titulo: "Asistente del mapa",
+    descripcion:
+      "Consultas sobre mapa, maquinaria y obra; capturas GPS. Cifras según registros al enviar cada mensaje.",
+    fab: "Asistente",
+  },
+  visitante: {
+    titulo: "Consulta de avance",
+    descripcion: "Respuestas resumidas según los datos publicados en el mapa al enviar cada mensaje.",
+    fab: "Consulta",
+  },
+}
+
 export function MapaAsistenteChat({
   proyectoId,
   tramos,
   puntosAvance,
   variant = "inline",
+  perfil = "residente",
   className,
 }: MapaAsistenteChatProps) {
   const [sheetAbierto, setSheetAbierto] = useState(false)
+  const ui = UI_PERFIL[perfil]
 
   if (variant === "sheet") {
     return (
@@ -384,7 +466,7 @@ export function MapaAsistenteChat({
               className="fixed bottom-24 right-4 z-[500] min-h-12 gap-2 rounded-full px-4 shadow-lg md:hidden"
             >
               <MessageCircle className="size-4" aria-hidden />
-              Asistente
+              {ui.fab}
             </Button>
           </SheetTrigger>
         ) : null}
@@ -393,13 +475,11 @@ export function MapaAsistenteChat({
           className="flex h-[min(85dvh,100%)] max-h-[85dvh] flex-col gap-0 overflow-hidden p-0"
         >
           <SheetHeader className="shrink-0 space-y-1 px-4 pt-4 pb-2 text-left">
-            <SheetTitle>Asistente del mapa</SheetTitle>
-            <SheetDescription>
-              Imágenes GPS, maquinaria, mapa y contexto contractual. Datos operativos al momento de
-              cada pregunta.
-            </SheetDescription>
+            <SheetTitle>{ui.titulo}</SheetTitle>
+            <SheetDescription>{ui.descripcion}</SheetDescription>
           </SheetHeader>
           <MapaAsistenteChatInner
+            perfil={perfil}
             proyectoId={proyectoId}
             tramos={tramos}
             puntosAvance={puntosAvance}
@@ -416,15 +496,13 @@ export function MapaAsistenteChat({
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 text-base">
           <MessageCircle className="size-4" aria-hidden />
-          Asistente del mapa
+          {ui.titulo}
         </CardTitle>
-        <CardDescription>
-          Consultas sobre mapa, maquinaria y obra; capturas GPS. Cifras según registros en Supabase
-          al enviar cada mensaje.
-        </CardDescription>
+        <CardDescription>{ui.descripcion}</CardDescription>
       </CardHeader>
       <CardContent>
         <MapaAsistenteChatInner
+          perfil={perfil}
           proyectoId={proyectoId}
           tramos={tramos}
           puntosAvance={puntosAvance}

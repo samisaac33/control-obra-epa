@@ -128,6 +128,34 @@ export async function validarCookieVisita(request: NextRequest, nowMs = Date.now
   return validarValorCookieVisita(value, nowMs)
 }
 
+export function valorCookieDesdeRequest(request: Request, name: string): string | undefined {
+  const header = request.headers.get("cookie")
+  if (!header) return undefined
+  for (const part of header.split(";")) {
+    const trimmed = part.trim()
+    if (!trimmed) continue
+    const eq = trimmed.indexOf("=")
+    if (eq <= 0) continue
+    const key = trimmed.slice(0, eq)
+    if (key !== name) continue
+    const raw = trimmed.slice(eq + 1)
+    try {
+      return decodeURIComponent(raw)
+    } catch {
+      return raw
+    }
+  }
+  return undefined
+}
+
+export async function validarCookieVisitaDesdeRequest(
+  request: Request,
+  nowMs = Date.now()
+): Promise<boolean> {
+  const value = valorCookieDesdeRequest(request, VISITA_COOKIE_NAME)
+  return validarValorCookieVisita(value, nowMs)
+}
+
 export function opcionesCookieVisita() {
   return {
     httpOnly: true,

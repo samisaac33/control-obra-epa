@@ -1,6 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
 
 import { contextoDocumentalDesasolve } from "@/src/data/desasolve/contexto-obra"
+import { getProyecto } from "@/src/data/proyectos/catalog"
+import type { MapaAsistentePerfil } from "@/src/lib/mapa-asistente-auth"
 import { tramosMapaDesasolveSinExcluidos } from "@/src/data/tramos/tramos-excluidos"
 import type { CanalTramo } from "@/src/data/tramos/types"
 import { cargarTramosMapaProyecto } from "@/src/lib/cargar-tramos-mapa-proyecto"
@@ -18,6 +20,7 @@ import {
   formatearDetalleJornadasDia,
   formatearMetrosDesasolveResumen,
   kpisMaquinariaDesasolve,
+  type DetalleJornadasDia,
 } from "@/src/lib/maquinaria-desasolve-resumen"
 import {
   cargarJornadasMaquinariaProyecto,
@@ -34,7 +37,33 @@ import { etiquetaEstadoTramo } from "@/src/data/tramos/types"
 import type { TramoPuntoAvance } from "@/src/lib/tramo-geometria"
 
 const MAX_CARACTERES_CONTEXTO_OPERATIVO = 10_000
+const MAX_CARACTERES_CONTEXTO_VISITANTE = 4_000
 const MAX_LINEAS_PUNTOS_GPS = 25
+
+function contextoIntroVisitante(proyectoId: string): string {
+  const proyecto = getProyecto(proyectoId)
+  return [
+    "### Consulta visitante (solo lectura)",
+    `Obra: ${proyecto.nombreObra}`,
+    `Sistema: ${proyecto.sistema}`,
+    "Leyenda mapa: pendiente (violeta), en ejecución (naranja), terminado (verde).",
+    "Los KPIs y maquinaria provienen del mismo registro público del mapa.",
+  ].join("\n")
+}
+
+function formatearMaquinariaBreveVisitante(detalle: DetalleJornadasDia): string {
+  const tramos =
+    detalle.porTramo.length > 0
+      ? detalle.porTramo.map((t) => `tramo ${t.tramo_codigo}`).join(", ")
+      : "ninguno"
+  return [
+    `Fecha ${detalle.fecha}:`,
+    `- Equipos distintos: ${detalle.equiposDistintos}`,
+    `- Horas: ${formatearNumero(detalle.totalHoras, 1)} h`,
+    `- Metros: ${formatearMetrosDesasolveResumen(detalle.totalMetros)}`,
+    `- Tramos intervenidos: ${tramos}`,
+  ].join("\n")
+}
 
 function recortarTexto(texto: string, max: number): string {
   if (texto.length <= max) return texto
@@ -101,8 +130,14 @@ export async function construirContextoAsistenteDesasolve(
   supabase: SupabaseClient,
   proyectoId: string,
   ultimoTextoUsuario: string,
-  ahora: Date = new Date()
+  options?: {
+    ahora?: Date
+    perfil?: MapaAsistentePerfil
+  }
 ): Promise<string> {
+  const ahora = options?.ahora ?? new Date()
+  const perfil = options?.perfil ?? "residente"
+  const esVisitante = perfil === "visitante"
   const intencion = detectarIntencionFechaConsulta(ultimoTextoUsuario, ahora)
   const fechas = fechasObjetivo(intencion, ahora)
 
@@ -139,9 +174,11 @@ export async function construirContextoAsistenteDesasolve(
     }
   }
 
-  const partes: string[] = [
-    contextoDocumentalDesasolve(),
-    "",
+  const partes: string[] = esVisitante
+    ? [contextoIntroVisitante(proyectoId), ""]
+    : [contextoDocumentalDesasolve(), ""]
+
+  partes.push(
     "### Datos operativos (snapshot al momento de la consulta)",
     `Zona horaria de fechas: ${etiquetaZonaHorariaAsistente()}`,
     `Interpretación temporal de la pregunta: ${JSON.stringify(intencion)}`,
@@ -159,46 +196,58 @@ export async function construirContextoAsistenteDesasolve(
     `- Horas registradas: ${formatearNumero(kpisMaq.totalHoras, 1)} h`,
     `- Metros desasolados: ${formatearMetrosDesasolveResumen(kpisMaq.totalMetros)}`,
     `- Tramos con al menos una jornada: ${kpisMaq.tramosConJornada}`,
-    `- Incidencias: ${kpisMaq.totalIncidencias}`,
-    "",
-    "#### Tramos (mapa)",
-    ...lineasTramos.map((l) => `- ${l}`),
-  ]
+    `- Incidencias: ${kpisMaq.totalIncidencias}`
+  )
+
+  if (!esVisitante) {
+    partes.push("", "#### Tramos (mapa)", ...lineasTramos.map((l) => `- ${l}`))
+  }
 
   if (intencion.tipo === "dia") {
     const detalle = detalleJornadasDia(intencion.fechas[0], jornadas, equipos)
-    partes.push("", "#### Maquinaria — detalle del día solicitado", formatearDetalleJornadasDia(detalle))
+    partes.push(
+      "",
+      "#### Maquinaria — día solicitado",
+      esVisitante ? formatearMaquinariaBreveVisitante(detalle) : formatearDetalleJornadasDia(detalle)
+    )
   } else if (intencion.tipo === "rango") {
     partes.push("", "#### Maquinaria — rango de fechas", bloqueResumenUltimosDias(jornadas, fechas))
-    for (const f of [...fechas].sort()) {
-      const detalle = detalleJornadasDia(f, jornadas, equipos)
-      if (detalle.lineasJornada.length === 0 && detalle.incidencias === 0) continue
-      partes.push("", formatearDetalleJornadasDia(detalle))
+    if (!esVisitante) {
+      for (const f of [...fechas].sort()) {
+        const detalle = detalleJornadasDia(f, jornadas, equipos)
+        if (detalle.lineasJornada.length === 0 && detalle.incidencias === 0) continue
+        partes.push("", formatearDetalleJornadasDia(detalle))
+      }
     }
   } else {
     partes.push("", "#### Maquinaria — últimos 7 días", bloqueResumenUltimosDias(jornadas, fechas))
   }
 
-  const puntosLineas = puntosGpsPorFechas(puntosAvance, tramoPorId, fechas)
-  const puntosMostrar =
-    puntosLineas.length > MAX_LINEAS_PUNTOS_GPS
-      ? [
-          ...puntosLineas.slice(0, MAX_LINEAS_PUNTOS_GPS),
-          `… y ${puntosLineas.length - MAX_LINEAS_PUNTOS_GPS} punto(s) más (ver mapa).`,
-        ]
-      : puntosLineas
-  partes.push(
-    "",
-    "#### Puntos GPS confirmados en fechas relevantes",
-    puntosMostrar.length > 0
-      ? puntosMostrar.join("\n")
-      : "Ningún punto GPS confirmado en esas fechas (según created_at en zona Ecuador)."
-  )
+  if (!esVisitante) {
+    const puntosLineas = puntosGpsPorFechas(puntosAvance, tramoPorId, fechas)
+    const puntosMostrar =
+      puntosLineas.length > MAX_LINEAS_PUNTOS_GPS
+        ? [
+            ...puntosLineas.slice(0, MAX_LINEAS_PUNTOS_GPS),
+            `… y ${puntosLineas.length - MAX_LINEAS_PUNTOS_GPS} punto(s) más (ver mapa).`,
+          ]
+        : puntosLineas
+    partes.push(
+      "",
+      "#### Puntos GPS confirmados en fechas relevantes",
+      puntosMostrar.length > 0
+        ? puntosMostrar.join("\n")
+        : "Ningún punto GPS confirmado en esas fechas (según created_at en zona Ecuador)."
+    )
+  }
 
   partes.push(
     "",
-    "Instrucción interna: responda solo con cifras y tramos presentes arriba; si falta un dato, indíquelo."
+    esVisitante
+      ? "Instrucción interna: responda en forma breve; solo cifras presentes arriba."
+      : "Instrucción interna: responda solo con cifras y tramos presentes arriba; si falta un dato, indíquelo."
   )
 
-  return recortarTexto(partes.join("\n"), MAX_CARACTERES_CONTEXTO_OPERATIVO)
+  const maxChars = esVisitante ? MAX_CARACTERES_CONTEXTO_VISITANTE : MAX_CARACTERES_CONTEXTO_OPERATIVO
+  return recortarTexto(partes.join("\n"), maxChars)
 }
