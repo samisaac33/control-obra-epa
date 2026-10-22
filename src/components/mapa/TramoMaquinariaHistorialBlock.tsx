@@ -10,8 +10,10 @@ import {
 } from "@/src/lib/proyecto-equipos-maquinaria"
 import {
   idsRegistrosMaquinariaCanonicosPorMinitramo,
+  mapaMinitramoTerminadoPorPuntoFin,
   tramoTienePuntosGpsConfirmados,
 } from "@/src/lib/mapa-jornada-minitramo"
+import { horasEfectivasJornada } from "@/src/lib/maquinaria-desasolve-proyecto"
 import type { CanalTramo } from "@/src/data/tramos/types"
 import type { TramoPuntoAvance } from "@/src/lib/tramo-geometria"
 import {
@@ -70,14 +72,20 @@ export function TramoMaquinariaHistorialBlock({
     return registros.filter((r) => !r.es_incidencia && !visibles.has(r.id))
   }, [registros, registrosEnConsolidado, tramoConGps])
 
+  const terminadoPorPuntoFin = useMemo(
+    () => mapaMinitramoTerminadoPorPuntoFin([tramo as CanalTramo], puntosAvance),
+    [tramo, puntosAvance]
+  )
+
   const totalHorasConsolidado = useMemo(() => {
     let total = 0
     for (const r of registrosEnConsolidado) {
       if (r.es_incidencia) continue
-      if (r.duracion_horas != null) total += r.duracion_horas
+      const horas = horasEfectivasJornada(r, terminadoPorPuntoFin)
+      if (horas != null) total += horas
     }
     return total
-  }, [registrosEnConsolidado])
+  }, [registrosEnConsolidado, terminadoPorPuntoFin])
 
   const cargarCatalogoEquipos = useCallback(async () => {
     try {
@@ -173,6 +181,9 @@ export function TramoMaquinariaHistorialBlock({
         <ul className="space-y-2">
           {[...registrosEnConsolidado, ...registrosExcluidosDelConsolidado].map((registro) => {
             const excluido = registrosExcluidosDelConsolidado.some((r) => r.id === registro.id)
+            const horasEnConsolidado = excluido
+              ? null
+              : horasEfectivasJornada(registro, terminadoPorPuntoFin)
             return (
             <li
               key={registro.id}
@@ -198,13 +209,22 @@ export function TramoMaquinariaHistorialBlock({
                   </p>
                 </div>
               </div>
-              {(registro.duracion_horas != null || registro.observaciones) && (
+              {(horasEnConsolidado != null ||
+                registro.duracion_horas != null ||
+                registro.observaciones) && (
                 <dl className="mt-2 space-y-0.5 text-xs text-muted-foreground">
-                  {registro.duracion_horas != null ? (
+                  {horasEnConsolidado != null ? (
                     <div className="flex justify-between gap-2">
-                      <dt>Horas de trabajo</dt>
+                      <dt>Horas en consolidado</dt>
                       <dd className="font-medium text-foreground">
-                        {registro.duracion_horas.toFixed(1)} h
+                        {horasEnConsolidado.toFixed(1)} h
+                      </dd>
+                    </div>
+                  ) : registro.duracion_horas != null && !excluido ? (
+                    <div className="flex justify-between gap-2">
+                      <dt>Horas registradas</dt>
+                      <dd className="text-amber-800 dark:text-amber-200">
+                        {registro.duracion_horas.toFixed(1)} h (minitramo no terminado, no suma)
                       </dd>
                     </div>
                   ) : null}

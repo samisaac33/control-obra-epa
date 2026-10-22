@@ -3,7 +3,11 @@ import {
   idsRegistrosMaquinariaCanonicosPorMinitramo,
   tramoTienePuntosGpsConfirmados,
 } from "@/src/lib/mapa-jornada-minitramo"
-import type { JornadaMaquinariaProyecto } from "@/src/lib/maquinaria-desasolve-proyecto"
+import {
+  horasEfectivasJornada,
+  type JornadaMaquinariaProyecto,
+} from "@/src/lib/maquinaria-desasolve-proyecto"
+import { mapaMinitramoTerminadoPorPuntoFin } from "@/src/lib/mapa-jornada-minitramo"
 import { kpisMaquinariaDesasolve } from "@/src/lib/maquinaria-desasolve-resumen"
 import type { TramoPuntoAvance } from "@/src/lib/tramo-geometria"
 import type { TramoRegistroMaquinaria } from "@/src/lib/tramo-maquinaria-historial"
@@ -17,7 +21,7 @@ function sumaHorasOperativas(registros: readonly Pick<TramoRegistroMaquinaria, "
   return total
 }
 
-/** Horas que suma /maquinaria (jornadas operativas del consolidado). */
+/** Horas que suma /maquinaria (`duracion_horas` ya normalizada: solo minitramos terminados con GPS). */
 export function totalHorasOperativasConsolidadas(
   jornadas: JornadaMaquinariaProyecto[]
 ): number {
@@ -25,8 +29,7 @@ export function totalHorasOperativasConsolidadas(
 }
 
 /**
- * Horas ligadas a minitramos con la misma regla canónica que el mapa
- * (una jornada por minitramo, sin duplicados manuales legacy).
+ * Horas canónicas con regla de minitramo terminado (comparación contra BD cruda en auditoría).
  */
 export function totalHorasRegistrosCanonicosMapa(
   tramos: CanalTramo[],
@@ -34,10 +37,12 @@ export function totalHorasRegistrosCanonicosMapa(
   registros: readonly TramoRegistroMaquinaria[]
 ): number {
   const ids = idsRegistrosMaquinariaCanonicosPorMinitramo(tramos, puntos, [...registros])
+  const terminadoPorPuntoFin = mapaMinitramoTerminadoPorPuntoFin(tramos, puntos)
   let total = 0
   for (const r of registros) {
     if (r.es_incidencia || !ids.has(r.id)) continue
-    if (r.duracion_horas != null) total += r.duracion_horas
+    const horas = horasEfectivasJornada(r, terminadoPorPuntoFin)
+    if (horas != null) total += horas
   }
   return total
 }
@@ -71,11 +76,14 @@ export function auditarHorasMaquinaria(params: {
   let horasManualesTramosSinGps = 0
   let horasExcluidasEnTramosConGps = 0
 
+  const terminadoPorPuntoFin = mapaMinitramoTerminadoPorPuntoFin(tramos, puntos)
+
   for (const r of registrosCrudos) {
     if (r.es_incidencia) continue
     if (idsConsolidados.has(r.id)) {
       if (!idsCanonicos.has(r.id) && !tramoTienePuntosGpsConfirmados(r.tramo_id, puntos)) {
-        if (r.duracion_horas != null) horasManualesTramosSinGps += r.duracion_horas
+        const horas = horasEfectivasJornada(r, terminadoPorPuntoFin)
+        if (horas != null) horasManualesTramosSinGps += horas
       }
       continue
     }

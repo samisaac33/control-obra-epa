@@ -11,9 +11,11 @@ import {
 } from "../src/lib/maquinaria-horas-consolidado"
 import {
   filtrarJornadasMaquinariaParaConsolidado,
+  horasEfectivasJornada,
   type JornadaMaquinariaProyecto,
 } from "../src/lib/maquinaria-desasolve-proyecto"
 import { kpisMaquinariaDesasolve } from "../src/lib/maquinaria-desasolve-resumen"
+import { mapaMinitramoTerminadoPorPuntoFin } from "../src/lib/mapa-jornada-minitramo"
 import { minitramosDesdePuntos, type TramoPuntoAvance } from "../src/lib/tramo-geometria"
 
 const tramo: CanalTramo = {
@@ -71,6 +73,7 @@ const c = punto({
 
 const puntos = [a, b, c]
 const minitramos = minitramosDesdePuntos(puntos, tramo.id, tramo)
+const terminadoPorPuntoFin = mapaMinitramoTerminadoPorPuntoFin([tramo], puntos)
 
 function jornada(
   id: string,
@@ -98,6 +101,14 @@ function jornada(
   }
 }
 
+function consolidarConHorasEfectivas(crudas: JornadaMaquinariaProyecto[]): JornadaMaquinariaProyecto[] {
+  const normalizadas = crudas.map((j) => ({
+    ...j,
+    duracion_horas: horasEfectivasJornada(j, terminadoPorPuntoFin),
+  }))
+  return filtrarJornadasMaquinariaParaConsolidado([tramo], puntos, normalizadas)
+}
+
 const crudas: JornadaMaquinariaProyecto[] = [
   jornada("j-b", "b", 8),
   jornada("j-c", "c", 6),
@@ -107,7 +118,7 @@ const crudas: JornadaMaquinariaProyecto[] = [
   }),
 ]
 
-const consolidadas = filtrarJornadasMaquinariaParaConsolidado([tramo], puntos, crudas)
+const consolidadas = consolidarConHorasEfectivas(crudas)
 
 assert.equal(consolidadas.length, 2, "excluye jornada manual duplicada en tramo GPS")
 assert.equal(totalHorasOperativasConsolidadas(consolidadas), 14)
@@ -127,5 +138,33 @@ const audit = auditarHorasMaquinaria({
 assert.equal(audit.coherente, true)
 assert.equal(audit.horasExcluidasEnTramosConGps, 10)
 assert.equal(audit.horasConsolidado, kpisMaquinariaDesasolve(consolidadas).totalHoras)
+
+const bEnEjecucion = punto({
+  id: "b",
+  rol: "b",
+  abscisa_m: 1030,
+  lat: -0.895,
+  lng: -80.49,
+  created_at: "2026-01-02T00:00:00Z",
+  punto_enlace_id: "a",
+  estado_minitramo: "en_ejecucion",
+})
+const puntosMix = [a, bEnEjecucion, c]
+const terminadoMix = mapaMinitramoTerminadoPorPuntoFin([tramo], puntosMix)
+const crudasMix: JornadaMaquinariaProyecto[] = [jornada("j-b", "b", 8), jornada("j-c", "c", 6)]
+const consolidadasMix = filtrarJornadasMaquinariaParaConsolidado(
+  [tramo],
+  puntosMix,
+  crudasMix.map((j) => ({
+    ...j,
+    duracion_horas: horasEfectivasJornada(j, terminadoMix),
+  }))
+)
+
+assert.equal(
+  totalHorasOperativasConsolidadas(consolidadasMix),
+  6,
+  "no suma horas de minitramo en_ejecucion (8 h excluidas, 6 h terminado)"
+)
 
 console.log("OK maquinaria-horas-consolidado")
