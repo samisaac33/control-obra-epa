@@ -7,14 +7,20 @@ import {
 } from "ai"
 
 import { getProyecto } from "@/src/data/proyectos/catalog"
-import { autorizarMapaAsistente } from "@/src/lib/mapa-asistente-auth"
+import {
+  autorizarAsistenteMapa,
+  type MapaAsistentePerfil,
+} from "@/src/lib/mapa-asistente-auth"
 import { construirContextoAsistenteDesasolve } from "@/src/lib/mapa-asistente-contexto"
 import { createClient } from "@/src/lib/supabase/server"
 import {
   coordsDesdeTextoUsuario,
   extraerCoordenadasDesdeImagen,
 } from "@/src/lib/mapa-asistente-extraccion"
-import { registrarSolicitudAsistente } from "@/src/lib/mapa-asistente-rate-limit"
+import {
+  MAX_REQUESTS_VISITANTE,
+  registrarSolicitudAsistente,
+} from "@/src/lib/mapa-asistente-rate-limit"
 import type { MapaAsistenteUIMessage } from "@/src/lib/mapa-asistente-types"
 import type { CoordenadasMapaAplicables } from "@/src/lib/mapa-coordenadas-gps"
 import {
@@ -30,6 +36,7 @@ import { ipDesdeRequest } from "@/src/lib/visita-rate-limit"
 export const maxDuration = 60
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024
+const MAX_OUTPUT_TOKENS_VISITANTE = 640
 
 type RouteParams = { params: Promise<{ proyectoId: string }> }
 
@@ -78,10 +85,32 @@ function imagenUltimoMensajeUsuario(
 
 function contextoSistemaCompleto(
   proyectoId: string,
+  perfil: MapaAsistentePerfil,
   coords: CoordenadasMapaAplicables | null,
-  contextoObra: string
+  contextoObra: string,
+  options?: { imagenRechazadaVisitante?: boolean }
 ): string {
   const proyecto = getProyecto(proyectoId)
+
+  if (perfil === "visitante") {
+    const imagenNota = options?.imagenRechazadaVisitante
+      ? "\nNota: el visitante adjuntó una imagen; indique amablemente que la consulta visitante es solo por texto."
+      : ""
+    return `Eres un asistente informativo del mapa de avance del proyecto "${proyecto.nombreObra}" (${proyectoId}) para técnicos contratistas (solo lectura).
+Sistema: ${proyecto.sistema}
+
+Responde siempre en español, tono profesional y conciso.
+Alcance: avance por tramos, KPIs del mapa y resumen de maquinaria según datos publicados en la app.
+Reglas:
+- Respuestas BREVES: máximo ~6 viñetas o ~150 palabras; sin párrafos largos ni encabezados Markdown extensos.
+- Usa solo cifras del bloque «Datos operativos»; no inventes.
+- No menciones registro GPS, «Registrar punto» ni edición de jornadas.
+- Si falta un dato, indícalo en una frase.${imagenNota}
+
+---
+${contextoObra}`
+  }
+
   const coordsBlock = coords
     ? `
 Coordenadas detectadas en esta solicitud (ya convertidas a WGS84):
@@ -119,6 +148,7 @@ async function streamTextChatConFallback(options: {
   messages: ModelMessages
   originalMessages: MapaAsistenteUIMessage[]
   writer: { merge: (stream: ReadableStream) => void }
+  maxOutputTokens?: number
 }): Promise<void> {
   const modelos = modelosGoogleChatEnOrden()
   let ultimoError: unknown
@@ -127,6 +157,7 @@ async function streamTextChatConFallback(options: {
     const result = streamText({
       model: crearModeloGoogle(modelos[i]),
       maxRetries: 0,
+      maxOutputTokens: options.maxOutputTokens,
       system: options.system,
       messages: options.messages,
     })
@@ -156,13 +187,16 @@ export async function POST(request: Request, { params }: RouteParams) {
   }
 
   const { proyectoId } = await params
-  const auth = await autorizarMapaAsistente(proyectoId)
+  const auth = await autorizarAsistenteMapa(request, proyectoId)
   if (!auth.ok) {
     return Response.json({ error: auth.error }, { status: auth.status })
   }
 
   const ip = ipDesdeRequest(request)
-  const rate = registrarSolicitudAsistente(`${auth.userEmail}:${ip}`)
+  const rateKey = `${auth.rateLimitKey}:${ip}`
+  const rate = registrarSolicitudAsistente(rateKey, {
+    maxRequests: auth.perfil === "visitante" ? MAX_REQUESTS_VISITANTE : undefined,
+  })
   if (!rate.allowed) {
     return Response.json(
       { error: "Demasiadas solicitudes al asistente. Espere unos minutos." },
@@ -185,45 +219,53 @@ export async function POST(request: Request, { params }: RouteParams) {
     return Response.json({ error: "Faltan mensajes." }, { status: 400 })
   }
 
+  const esVisitante = auth.perfil === "visitante"
   let coords: CoordenadasMapaAplicables | null = null
   let coordsError: string | null = null
+  let imagenRechazadaVisitante = false
 
-  try {
-    const imagen = imagenUltimoMensajeUsuario(messages)
-    if (imagen) {
-      const result = await extraerCoordenadasDesdeImagen(imagen.base64, imagen.mediaType)
-      if (result.coords) {
-        coords = result.coords
+  if (!esVisitante) {
+    try {
+      const imagen = imagenUltimoMensajeUsuario(messages)
+      if (imagen) {
+        const result = await extraerCoordenadasDesdeImagen(imagen.base64, imagen.mediaType)
+        if (result.coords) {
+          coords = result.coords
+        } else {
+          coordsError = result.error ?? "No se pudieron extraer coordenadas."
+        }
       } else {
-        coordsError = result.error ?? "No se pudieron extraer coordenadas."
+        const texto = textoUltimoMensajeUsuario(messages)
+        coords = coordsDesdeTextoUsuario(texto)
       }
-    } else {
-      const texto = textoUltimoMensajeUsuario(messages)
-      coords = coordsDesdeTextoUsuario(texto)
+    } catch (err) {
+      return Response.json(
+        { error: err instanceof Error ? err.message : "Error al procesar coordenadas." },
+        { status: 400 }
+      )
     }
-  } catch (err) {
-    return Response.json(
-      { error: err instanceof Error ? err.message : "Error al procesar coordenadas." },
-      { status: 400 }
-    )
+  } else if (imagenUltimoMensajeUsuario(messages)) {
+    imagenRechazadaVisitante = true
   }
 
   const textoUsuario = textoUltimoMensajeUsuario(messages)
   let contextoObra = ""
   try {
     const supabase = await createClient()
-    contextoObra = await construirContextoAsistenteDesasolve(
-      supabase,
-      proyectoId,
-      textoUsuario
-    )
+    contextoObra = await construirContextoAsistenteDesasolve(supabase, proyectoId, textoUsuario, {
+      perfil: auth.perfil,
+    })
   } catch (err) {
     console.error("[mapa-asistente] contexto operativo:", err)
     contextoObra =
       "### Datos operativos\nNo se pudo cargar el snapshot desde Supabase en este momento. Responda solo con lo que el usuario indique en la conversación y sugiera reintentar."
   }
 
-  const system = contextoSistemaCompleto(proyectoId, coords, contextoObra)
+  const system = contextoSistemaCompleto(proyectoId, auth.perfil, coords, contextoObra, {
+    imagenRechazadaVisitante,
+  })
+  const maxOutputTokens = esVisitante ? MAX_OUTPUT_TOKENS_VISITANTE : undefined
+
   if (coordsError) {
     const systemConError = `${system}\n\nNota: ${coordsError} Sugiera revisar la captura o ingresar coordenadas manualmente.`
     const modelMessages = await convertToModelMessages(messages as UIMessage[])
@@ -237,6 +279,7 @@ export async function POST(request: Request, { params }: RouteParams) {
             messages: modelMessages,
             originalMessages: messages,
             writer,
+            maxOutputTokens,
           })
         },
       }),
@@ -249,7 +292,7 @@ export async function POST(request: Request, { params }: RouteParams) {
       originalMessages: messages,
       onError: (error) => mensajeErrorAsistenteLegible(String(error)),
       execute: async ({ writer }) => {
-        if (coords) {
+        if (coords && !esVisitante) {
           writer.write({
             type: "data-map-coords",
             data: coords,
@@ -261,6 +304,7 @@ export async function POST(request: Request, { params }: RouteParams) {
           messages: modelMessages,
           originalMessages: messages,
           writer,
+          maxOutputTokens,
         })
       },
     }),

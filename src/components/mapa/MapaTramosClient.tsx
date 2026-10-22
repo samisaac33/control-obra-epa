@@ -931,6 +931,15 @@ export function MapaTramosClient() {
                     </p>
                   )}
                   {visitanteMovil ? null : <MapaTramosLeyenda compact={visitanteMovil} />}
+                  <div className="hidden md:block">
+                    <MapaAsistenteChat
+                      proyectoId={proyectoId}
+                      tramos={tramos}
+                      puntosAvance={puntosAvance}
+                      perfil="visitante"
+                      variant="inline"
+                    />
+                  </div>
                   {visitanteMovil ? null : (
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                       <div className="min-w-0 sm:flex-1">
@@ -962,6 +971,13 @@ export function MapaTramosClient() {
                     {mapaLeaflet}
                     {previewTramoMovil}
                   </MapaTramosMapaConBarra>
+                  <MapaAsistenteChat
+                    proyectoId={proyectoId}
+                    tramos={tramos}
+                    puntosAvance={puntosAvance}
+                    perfil="visitante"
+                    variant="sheet"
+                  />
                 </>
               ) : (
                 <MapaUbicacionResidenteProvider {...ubicacionResidenteProps}>

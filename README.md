@@ -21,7 +21,7 @@ cp .env.example .env.local
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `NEXT_PUBLIC_RESIDENTE_EMAIL` (correo autorizado para editar)
-- **Asistente multimodal en `/mapa` (residente):** usa **Google AI directo** (facturación/cuota en tu cuenta Google).
+- **Asistente / consulta en `/mapa`:** usa **Google AI directo** (facturación/cuota en tu cuenta Google). **Residente:** asistente completo (GPS, contexto contractual, respuestas detalladas). **Visitante:** consulta breve sobre KPIs y maquinaria (requiere cookie PIN si `VISITANTE_*` está configurado, igual que el resto del mapa).
   - Cree una API key en [Google AI Studio](https://aistudio.google.com/apikey).
   - En Vercel → **Environment Variables** → **`GOOGLE_GENERATIVE_AI_API_KEY`** = esa clave (Production y Preview). **Redeploy**.
   - No necesita AI Gateway ni `AI_GATEWAY_API_KEY` para el asistente.
