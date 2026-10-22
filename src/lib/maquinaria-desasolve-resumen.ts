@@ -37,6 +37,12 @@ export type ResumenTramoDesasolve = {
   horas: number
 }
 
+/** Una fila por tramo y por equipo (p. ej. tramo 19 · brazo largo y tramo 19 · brazo corto). */
+export type ResumenTramoEquipoDesasolve = ResumenTramoDesasolve & {
+  claveEquipo: string
+  nombreEquipo: string
+}
+
 function claveEquipo(jornada: JornadaMaquinariaProyecto): string {
   return jornada.equipo_id ?? jornada.equipo.trim().toLowerCase()
 }
@@ -114,6 +120,41 @@ export function resumenPorTramoDesasolve(jornadas: JornadaMaquinariaProyecto[]):
     (a, b) =>
       Number(a.tramo_codigo) - Number(b.tramo_codigo) ||
       a.tramo_codigo.localeCompare(b.tramo_codigo, undefined, { numeric: true })
+  )
+}
+
+export function resumenPorTramoEquipoDesasolve(
+  jornadas: JornadaMaquinariaProyecto[],
+  equipos: ProyectoEquipoMaquinaria[]
+): ResumenTramoEquipoDesasolve[] {
+  const equiposPorId = mapaEquiposPorId(equipos)
+  const map = new Map<string, ResumenTramoEquipoDesasolve>()
+
+  for (const j of jornadasOperativas(jornadas)) {
+    const claveEq = claveEquipo(j)
+    const clave = `${j.tramo_id}\0${claveEq}`
+    const nombreEquipo = nombreEquipoParaMostrar(j, equiposPorId)
+    const prev = map.get(clave) ?? {
+      tramo_id: j.tramo_id,
+      tramo_codigo: j.tramo_codigo,
+      tramo_canal: j.tramo_canal,
+      claveEquipo: claveEq,
+      nombreEquipo,
+      jornadas: 0,
+      metros: 0,
+      horas: 0,
+    }
+    prev.jornadas += 1
+    prev.metros += j.metros_desasolados
+    if (j.duracion_horas != null) prev.horas += j.duracion_horas
+    map.set(clave, prev)
+  }
+
+  return [...map.values()].sort(
+    (a, b) =>
+      Number(a.tramo_codigo) - Number(b.tramo_codigo) ||
+      a.tramo_codigo.localeCompare(b.tramo_codigo, undefined, { numeric: true }) ||
+      a.nombreEquipo.localeCompare(b.nombreEquipo, "es")
   )
 }
 

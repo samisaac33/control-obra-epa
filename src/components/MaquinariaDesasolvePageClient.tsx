@@ -24,8 +24,8 @@ import {
   formatearMetrosDesasolveResumen,
   kpisMaquinariaDesasolve,
   resumenPorEquipoDesasolve,
-  resumenPorTramoDesasolve,
   resumenPorTramoDesasolveAlineadoMapa,
+  resumenPorTramoEquipoDesasolve,
 } from "@/src/lib/maquinaria-desasolve-resumen"
 import { formatearNumero } from "@/src/lib/maquinaria-resumen"
 import { rutaObra } from "@/src/lib/rutas-proyecto"
@@ -91,23 +91,26 @@ export function MaquinariaDesasolvePageClient() {
     }
   }
 
-  const porTramo = useMemo(() => {
-    if (tramosMapa) {
-      return resumenPorTramoDesasolveAlineadoMapa(
-        jornadas,
-        tramosMapa.tramos,
-        tramosMapa.puntosAvance
-      )
-    }
-    return resumenPorTramoDesasolve(jornadas)
+  const porTramoTotalesMapa = useMemo(() => {
+    if (!tramosMapa) return null
+    return resumenPorTramoDesasolveAlineadoMapa(
+      jornadas,
+      tramosMapa.tramos,
+      tramosMapa.puntosAvance
+    )
   }, [jornadas, tramosMapa])
+
+  const porTramoEquipo = useMemo(
+    () => resumenPorTramoEquipoDesasolve(jornadas, equipos),
+    [jornadas, equipos]
+  )
 
   const kpis = useMemo(() => {
     const base = kpisMaquinariaDesasolve(jornadas)
-    if (!tramosMapa) return base
-    const totalMetros = porTramo.reduce((sum, fila) => sum + fila.metros, 0)
+    if (!porTramoTotalesMapa) return base
+    const totalMetros = porTramoTotalesMapa.reduce((sum, fila) => sum + fila.metros, 0)
     return { ...base, totalMetros }
-  }, [jornadas, tramosMapa, porTramo])
+  }, [jornadas, porTramoTotalesMapa])
 
   const porEquipo = useMemo(() => resumenPorEquipoDesasolve(jornadas, equipos), [jornadas, equipos])
   const porFecha = useMemo(() => agruparJornadasPorFecha(jornadas), [jornadas])
@@ -304,29 +307,34 @@ export function MaquinariaDesasolvePageClient() {
             </section>
           ) : null}
 
-          {!loading && porTramo.length > 0 ? (
+          {!loading && porTramoEquipo.length > 0 ? (
             <section aria-labelledby="resumen-tramo-desasolve-title" className="print:hidden">
-              <SeccionTitulo etiqueta="Por tramo" titulo="Metros desazolvados por tramo de canal" />
+              <SeccionTitulo
+                etiqueta="Por tramo"
+                titulo="Jornadas por tramo y maquinaria"
+              />
               <Card className="border-foreground/10">
                 <CardContent className="overflow-x-auto pt-4">
-                  <table className="w-full min-w-[28rem] text-sm">
+                  <table className="w-full min-w-[32rem] text-sm">
                     <thead>
                       <tr className="border-b border-foreground/10 text-left text-xs uppercase tracking-wider text-muted-foreground">
                         <th className="pb-2 pr-3 font-medium">Tramo</th>
                         <th className="pb-2 pr-3 font-medium">Canal</th>
+                        <th className="pb-2 pr-3 font-medium">Maquinaria</th>
                         <th className="pb-2 pr-3 font-medium text-right">Jornadas</th>
                         <th className="pb-2 pr-3 font-medium text-right">Metros</th>
                         <th className="pb-2 font-medium text-right">Horas</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {porTramo.map((fila) => (
+                      {porTramoEquipo.map((fila) => (
                         <tr
-                          key={`${fila.tramo_codigo}-${fila.tramo_canal}`}
+                          key={`${fila.tramo_id}-${fila.claveEquipo}`}
                           className="border-b border-foreground/5 last:border-0"
                         >
                           <td className="py-2.5 pr-3 font-mono font-medium tabular-nums">{fila.tramo_codigo}</td>
                           <td className="py-2.5 pr-3 text-muted-foreground">{fila.tramo_canal}</td>
+                          <td className="py-2.5 pr-3 font-medium">{fila.nombreEquipo}</td>
                           <td className="py-2.5 pr-3 text-right tabular-nums">{fila.jornadas}</td>
                           <td className="py-2.5 pr-3 text-right font-mono tabular-nums">
                             {formatearMetrosDesasolveResumen(fila.metros)}
