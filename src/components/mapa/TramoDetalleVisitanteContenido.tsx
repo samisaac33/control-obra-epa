@@ -44,8 +44,8 @@ export function TramoDetalleVisitanteContenido({
 
       <div className="mt-6">
         <TramoMaquinariaHistorialBlock
-          tramoId={tramo.id}
-          proyectoId={tramo.proyecto_id}
+          tramo={tramo}
+          puntosAvance={puntosAvance}
           isResident={false}
         />
       </div>
