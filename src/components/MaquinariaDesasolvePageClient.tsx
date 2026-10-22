@@ -309,13 +309,14 @@ export function MaquinariaDesasolvePageClient() {
               <SeccionTitulo etiqueta="Por tramo" titulo="Metros desazolvados por tramo de canal" />
               <Card className="border-foreground/10">
                 <CardContent className="overflow-x-auto pt-4">
-                  <table className="w-full min-w-[24rem] text-sm">
+                  <table className="w-full min-w-[28rem] text-sm">
                     <thead>
                       <tr className="border-b border-foreground/10 text-left text-xs uppercase tracking-wider text-muted-foreground">
                         <th className="pb-2 pr-3 font-medium">Tramo</th>
                         <th className="pb-2 pr-3 font-medium">Canal</th>
                         <th className="pb-2 pr-3 font-medium text-right">Jornadas</th>
-                        <th className="pb-2 font-medium text-right">Metros</th>
+                        <th className="pb-2 pr-3 font-medium text-right">Metros</th>
+                        <th className="pb-2 font-medium text-right">Horas</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -327,8 +328,11 @@ export function MaquinariaDesasolvePageClient() {
                           <td className="py-2.5 pr-3 font-mono font-medium tabular-nums">{fila.tramo_codigo}</td>
                           <td className="py-2.5 pr-3 text-muted-foreground">{fila.tramo_canal}</td>
                           <td className="py-2.5 pr-3 text-right tabular-nums">{fila.jornadas}</td>
-                          <td className="py-2.5 text-right font-mono tabular-nums">
+                          <td className="py-2.5 pr-3 text-right font-mono tabular-nums">
                             {formatearMetrosDesasolveResumen(fila.metros)}
+                          </td>
+                          <td className="py-2.5 text-right font-mono tabular-nums">
+                            {fila.horas > 0 ? formatearNumero(fila.horas, 1) : "—"}
                           </td>
                         </tr>
                       ))}

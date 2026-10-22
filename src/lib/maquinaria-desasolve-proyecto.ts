@@ -96,7 +96,14 @@ export function filtrarJornadasMaquinariaParaConsolidado(
 export function capMetrosResumenTramoConMapa(
   tramos: CanalTramo[],
   puntos: TramoPuntoAvance[],
-  resumen: { tramo_id: string; metros: number; jornadas: number; tramo_codigo: string; tramo_canal: string }[]
+  resumen: {
+    tramo_id: string
+    metros: number
+    jornadas: number
+    horas: number
+    tramo_codigo: string
+    tramo_canal: string
+  }[]
 ): typeof resumen {
   const tramoPorId = new Map(tramos.map((t) => [t.id, t]))
   return resumen.map((fila) => {
