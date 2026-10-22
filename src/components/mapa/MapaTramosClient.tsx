@@ -83,6 +83,10 @@ import {
   guardarJornadaMinitramo,
 } from "@/src/lib/tramo-maquinaria-historial"
 import { rutaObra } from "@/src/lib/rutas-proyecto"
+import { proyectoTieneModulo } from "@/src/data/proyectos/catalog"
+import type { CanalAbscisa } from "@/src/data/auditoria/types"
+import { cargarCanalAbscisasProyecto } from "@/src/lib/cargar-canal-abscisas"
+import { AbscisaDetalleSheet } from "@/src/components/mapa/AbscisaDetalleSheet"
 import { tramosMapaDesasolveSinExcluidos } from "@/src/data/tramos/tramos-excluidos"
 import {
   calcularKpisTramos,
@@ -177,6 +181,11 @@ export function MapaTramosClient() {
   const [mostrarPuntosAvance, setMostrarPuntosAvance] = useState(false)
   const [ocultarMinitramosTerminados, setOcultarMinitramosTerminados] = useState(false)
   const [mapaConsolidado, setMapaConsolidado] = useState(true)
+  const blindajeMapa = proyectoTieneModulo(proyectoId, "auditoriaAntiglosa")
+  const [mostrarAbscisas, setMostrarAbscisas] = useState(false)
+  const [abscisas, setAbscisas] = useState<CanalAbscisa[]>([])
+  const [abscisaSheet, setAbscisaSheet] = useState<CanalAbscisa | null>(null)
+  const [abscisaSheetAbierta, setAbscisaSheetAbierta] = useState(false)
   const [ubicacionResidente, setUbicacionResidente] = useState<UbicacionUsuario | null>(null)
   const [seguirUbicacionResidente, setSeguirUbicacionResidente] = useState(false)
   const [origenDesdeMapa, setOrigenDesdeMapa] = useState<RequiereOrigenDesdeMapaPayload | null>(
@@ -190,6 +199,16 @@ export function MapaTramosClient() {
   const [jornadaPorPuntoFin, setJornadaPorPuntoFin] = useState(
     () => new Map<string, JornadaMinitramoMapa>()
   )
+  const cargarAbscisas = useCallback(async () => {
+    if (!blindajeMapa) return
+    try {
+      const rows = await cargarCanalAbscisasProyecto(supabase, proyectoId)
+      setAbscisas(rows)
+    } catch {
+      setAbscisas([])
+    }
+  }, [blindajeMapa, proyectoId, supabase])
+
   const cargarDatos = useCallback(async () => {
     setLoading(true)
     setError(null)
@@ -200,6 +219,7 @@ export function MapaTramosClient() {
       )
       setTramos(tramosNormalizados)
       setPuntosAvance(puntos)
+      await cargarAbscisas()
       setPuntosRefreshKey((k) => k + 1)
       setTramoSeleccionado((prev) => {
         if (!prev) return prev
@@ -213,7 +233,7 @@ export function MapaTramosClient() {
     } finally {
       setLoading(false)
     }
-  }, [proyectoId, supabase])
+  }, [cargarAbscisas, proyectoId, supabase])
 
   useEffect(() => {
     void cargarDatos()
@@ -880,6 +900,13 @@ export function MapaTramosClient() {
       }
       onPantallaCompletaChange={isResident ? setMapaPantallaCompleta : undefined}
       barraInferiorMapa={filtrosVisitanteMovil}
+      abscisas={abscisas}
+      mostrarAbscisas={mostrarAbscisas}
+      abscisaSeleccionadaId={abscisaSheet?.id ?? null}
+      onAbscisaClick={(a) => {
+        setAbscisaSheet(a)
+        setAbscisaSheetAbierta(true)
+      }}
     />
   )
 
@@ -964,6 +991,9 @@ export function MapaTramosClient() {
                       idPrefix="visitante"
                       perfil="visitante"
                       className="sm:max-w-md sm:flex-1"
+                      habilitarCapaAbscisas={blindajeMapa}
+                      mostrarAbscisas={mostrarAbscisas}
+                      onMostrarAbscisasChange={setMostrarAbscisas}
                     />
                     </div>
                   )}
@@ -997,6 +1027,9 @@ export function MapaTramosClient() {
                       mapaConsolidado={mapaConsolidado}
                       onMapaConsolidadoChange={setMapaConsolidado}
                       idPrefix="residente"
+                      habilitarCapaAbscisas={blindajeMapa}
+                      mostrarAbscisas={mostrarAbscisas}
+                      onMostrarAbscisasChange={setMostrarAbscisas}
                     />
                     <MapaUbicacionResidentePanel />
                     <MapaBuscarCoordenadasResidente />
@@ -1145,6 +1178,16 @@ export function MapaTramosClient() {
         onCancel={() => {
           setOrigenDesdeMapa(null)
           setGpsPendienteTrasOrigen(null)
+        }}
+      />
+
+      <AbscisaDetalleSheet
+        abscisa={abscisaSheet}
+        open={abscisaSheetAbierta}
+        onOpenChange={setAbscisaSheetAbierta}
+        onActualizada={(a) => {
+          setAbscisas((prev) => prev.map((x) => (x.id === a.id ? a : x)))
+          setAbscisaSheet(a)
         }}
       />
 

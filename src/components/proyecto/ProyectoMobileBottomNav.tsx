@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Camera, LayoutDashboard, Map, Truck } from "lucide-react"
+import { Camera, LayoutDashboard, Map, Truck, ShieldCheck } from "lucide-react"
 
 import { useProyecto } from "@/src/contexts/ProyectoContext"
 import { PROYECTO_DESASOLVE_CANALES } from "@/src/data/proyectos/catalog"
@@ -14,8 +14,10 @@ import { cn } from "@/lib/utils"
 const ICONOS = {
   "": LayoutDashboard,
   mapa: Map,
+  desalojo: Truck,
   fotos: Camera,
   maquinaria: Truck,
+  auditoria: ShieldCheck,
 } as const
 
 export function useMostrarBottomNavDesasolve(): boolean {

@@ -22,6 +22,9 @@
     "test:mapa-asistente-contexto": "tsx scripts/test-mapa-asistente-contexto.ts",
     "test:maquinaria-consolidado": "tsx scripts/test-maquinaria-informe-consolidado.ts",
     "test:maquinaria-jimmy-equipos": "tsx scripts/test-maquinaria-informe-jimmy-equipos.ts",
+    "test:auditoria-volumetrica": "tsx scripts/test-auditoria-volumetrica.ts",
+    "generate:abscisas": "tsx scripts/generate-canal-abscisas.ts",
+    "generate:abscisas:dry-run": "tsx scripts/generate-canal-abscisas.ts --dry-run",
     "postinstall": "node scripts/patch-hyphenate.mjs"
   },
   "dependencies": {

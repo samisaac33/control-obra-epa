@@ -2,7 +2,8 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Camera, ChevronRight, LayoutDashboard, Map, Truck } from "lucide-react"
+import { Camera, ChevronRight, LayoutDashboard, Map, ShieldCheck, Timer, Truck } from "lucide-react"
+import { AuditConsistencyCard } from "@/src/components/auditoria/AuditConsistencyCard"
 import { useCallback, useEffect, useMemo, useState } from "react"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -23,6 +24,24 @@ const accesos = [
     label: "Mapa de avance",
     descripcion: "Tramos de canal georreferenciados con estado y avance por longitud",
     icon: Map,
+  },
+  {
+    segment: "desalojo",
+    label: "Despacho volquetas",
+    descripcion: "Tickets de transporte con GPS y radio contractual 5 km",
+    icon: Truck,
+  },
+  {
+    segment: "auditoria",
+    label: "Auditoría antiglosa",
+    descripcion: "Triangulación volumétrica CGE y reporte diario PDF",
+    icon: ShieldCheck,
+  },
+  {
+    segment: "salva-plazos",
+    label: "Salva-plazos",
+    descripcion: "Eventos de fuerza mayor y texto para Libro de Obra",
+    icon: Timer,
   },
   {
     segment: "fotos",
@@ -170,6 +189,15 @@ export function HomeProyectoDesasolve() {
               )}
             </CardContent>
           </Card>
+        </section>
+
+        <section aria-labelledby="auditoria-home-title">
+          <SeccionTitulo
+            id="auditoria-home-title"
+            etiqueta="Blindaje CGE"
+            titulo="Consistencia volumétrica"
+          />
+          <AuditConsistencyCard compacto />
         </section>
 
         <section aria-labelledby="accesos-desasolve-title">

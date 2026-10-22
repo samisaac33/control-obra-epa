@@ -18,6 +18,9 @@ type MapaOpcionesCapasMapaProps = {
   className?: string
   /** Visitante: oculta MTT y No consolidado; renombra filtro 1–24. */
   perfil?: "completo" | "visitante"
+  mostrarAbscisas?: boolean
+  onMostrarAbscisasChange?: (value: boolean) => void
+  habilitarCapaAbscisas?: boolean
 }
 
 type OpcionCheckboxProps = {
@@ -60,6 +63,9 @@ export function MapaOpcionesCapasMapa({
   idPrefix,
   className,
   perfil = "completo",
+  mostrarAbscisas = false,
+  onMostrarAbscisasChange,
+  habilitarCapaAbscisas = false,
 }: MapaOpcionesCapasMapaProps) {
   const esVisitante = perfil === "visitante"
 
@@ -112,6 +118,15 @@ export function MapaOpcionesCapasMapa({
           />
         </>
       )}
+      {habilitarCapaAbscisas && onMostrarAbscisasChange ? (
+        <OpcionCheckbox
+          id={`${idPrefix}-abscisas-20m`}
+          checked={mostrarAbscisas}
+          onChange={onMostrarAbscisasChange}
+          titulo="Abscisas 20 m (antiglosa)"
+          ariaLabel="Mostrar segmentos de abscisa cada veinte metros"
+        />
+      ) : null}
     </div>
   )
 }

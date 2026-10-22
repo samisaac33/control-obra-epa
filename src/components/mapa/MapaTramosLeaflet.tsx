@@ -48,6 +48,8 @@ import {
   type UbicacionUsuario,
 } from "@/src/components/mapa/UbicacionUsuarioEnMapa"
 import { htmlMarcadorPuntoAvance } from "@/src/lib/mapa-punto-marker"
+import { CanalAbscisasLayer } from "@/src/components/mapa/CanalAbscisasLayer"
+import type { CanalAbscisa } from "@/src/data/auditoria/types"
 
 import "leaflet/dist/leaflet.css"
 
@@ -85,6 +87,10 @@ type MapaTramosLeafletProps = {
   onPantallaCompletaChange?: (activo: boolean) => void
   /** Barra inferior sobre el canvas del mapa (normal y pantalla completa). */
   barraInferiorMapa?: ReactNode
+  abscisas?: CanalAbscisa[]
+  mostrarAbscisas?: boolean
+  abscisaSeleccionadaId?: string | null
+  onAbscisaClick?: (abscisa: CanalAbscisa) => void
 }
 
 type HoverVisitanteMapa = {
@@ -409,6 +415,10 @@ export function MapaTramosLeaflet({
   controlesPantallaCompleta,
   onPantallaCompletaChange,
   barraInferiorMapa,
+  abscisas = [],
+  mostrarAbscisas = false,
+  abscisaSeleccionadaId = null,
+  onAbscisaClick,
 }: MapaTramosLeafletProps) {
   const idsParpadeoFrente = puntoIdsParpadeoFrente ?? new Set<string>()
   const jornadasMapa = jornadaPorPuntoFin ?? new Map<string, JornadaMinitramoMapa>()
@@ -601,6 +611,13 @@ export function MapaTramosLeaflet({
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+        {mostrarAbscisas && abscisas.length > 0 ? (
+          <CanalAbscisasLayer
+            abscisas={abscisas}
+            abscisaSeleccionadaId={abscisaSeleccionadaId}
+            onAbscisaClick={onAbscisaClick}
+          />
+        ) : null}
         <InvalidarTamanoMapa pantallaCompleta={pantallaCompleta} />
         <MapaEtiquetasTramoPorZoom
           tramos={tramos}

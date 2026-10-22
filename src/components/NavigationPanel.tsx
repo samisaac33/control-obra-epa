@@ -10,6 +10,8 @@ import {
   LayoutDashboard,
   Map,
   Truck,
+  ShieldCheck,
+  Timer,
 } from "lucide-react"
 
 import { useProyecto } from "@/src/contexts/ProyectoContext"
@@ -30,6 +32,9 @@ const items: {
   { segment: "mapa", label: "Mapa de avance", icon: Map, modulo: "mapaTramos" },
   { segment: "fotos", label: "Registro Fotográfico", icon: Camera, modulo: "fotos" },
   { segment: "libro-obra", label: "Informe de evidencias de obra", icon: BookOpen, modulo: "libroObra" },
+  { segment: "auditoria", label: "Auditoría antiglosa", icon: ShieldCheck, modulo: "auditoriaAntiglosa" },
+  { segment: "desalojo", label: "Despacho volquetas", icon: Truck, modulo: "desalojo" },
+  { segment: "salva-plazos", label: "Salva-plazos", icon: Timer, modulo: "salvaPlazos" },
 ]
 
 type NavigationPanelProps = {
