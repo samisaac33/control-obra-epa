@@ -244,7 +244,7 @@ export function MaquinariaDesasolvePageClient() {
                   <KpiCard
                     label="Horas registradas"
                     valor={formatearNumero(kpis.totalHoras, 1)}
-                    detalle="Suma de duración en horas cuando se indicó"
+                    detalle="Suma de horas de jornadas del mapa (sin duplicados manuales en tramos GPS)"
                     compact={kpiCompact}
                   />
                   <KpiCard

@@ -1,23 +1,21 @@
 "use client"
 
-import { FormEvent, useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { Trash2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { RegistrarJornadaTramoFields } from "@/src/components/mapa/RegistrarJornadaTramoFields"
-import {
-  estadoInicialJornada,
-  jornadaInputDesdeFormState,
-  type RegistrarJornadaFormState,
-  validarJornadaFormState,
-} from "@/src/components/mapa/registrar-jornada-tramo-utils"
 import {
   cargarEquiposMaquinariaProyecto,
   type ProyectoEquipoMaquinaria,
 } from "@/src/lib/proyecto-equipos-maquinaria"
 import {
+  idsRegistrosMaquinariaCanonicosPorMinitramo,
+  tramoTienePuntosGpsConfirmados,
+} from "@/src/lib/mapa-jornada-minitramo"
+import type { CanalTramo } from "@/src/data/tramos/types"
+import type { TramoPuntoAvance } from "@/src/lib/tramo-geometria"
+import {
   cargarRegistrosMaquinariaTramo,
-  crearRegistroMaquinariaTramo,
   eliminarRegistroMaquinariaTramo,
   formatearFechaRegistro,
   formatearMetrosDesasolados,
@@ -28,30 +26,58 @@ import {
 import { createClient } from "@/src/lib/supabase/client"
 
 type TramoMaquinariaHistorialBlockProps = {
-  tramoId: string
-  proyectoId: string
+  tramo: Pick<CanalTramo, "id" | "proyecto_id" | "geometria" | "origen_extremo">
+  puntosAvance: TramoPuntoAvance[]
   isResident: boolean
   refreshKey?: number
 }
 
 export function TramoMaquinariaHistorialBlock({
-  tramoId,
-  proyectoId,
+  tramo,
+  puntosAvance,
   isResident,
   refreshKey = 0,
 }: TramoMaquinariaHistorialBlockProps) {
+  const tramoId = tramo.id
+  const proyectoId = tramo.proyecto_id
   const supabase = useMemo(() => createClient(), [])
   const [registros, setRegistros] = useState<TramoRegistroMaquinaria[]>([])
   const [loading, setLoading] = useState(true)
-  const [guardando, setGuardando] = useState(false)
   const [eliminandoId, setEliminandoId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const [formularioRegistroAbierto, setFormularioRegistroAbierto] = useState(false)
-  const [jornadaForm, setJornadaForm] = useState<RegistrarJornadaFormState>(() => estadoInicialJornada())
   const [equiposCatalogo, setEquiposCatalogo] = useState<ProyectoEquipoMaquinaria[]>([])
 
   const equiposPorId = useMemo(() => mapaEquiposPorId(equiposCatalogo), [equiposCatalogo])
+  const tramoConGps = useMemo(
+    () => tramoTienePuntosGpsConfirmados(tramoId, puntosAvance),
+    [tramoId, puntosAvance]
+  )
+
+  const registrosEnConsolidado = useMemo(() => {
+    if (!tramoConGps) return registros
+    const ids = idsRegistrosMaquinariaCanonicosPorMinitramo(
+      [tramo as CanalTramo],
+      puntosAvance,
+      registros
+    )
+    return registros.filter((r) => r.es_incidencia || ids.has(r.id))
+  }, [registros, tramoConGps, tramo, puntosAvance])
+
+  const registrosExcluidosDelConsolidado = useMemo(() => {
+    if (!tramoConGps) return []
+    const visibles = new Set(registrosEnConsolidado.map((r) => r.id))
+    return registros.filter((r) => !r.es_incidencia && !visibles.has(r.id))
+  }, [registros, registrosEnConsolidado, tramoConGps])
+
+  const totalHorasConsolidado = useMemo(() => {
+    let total = 0
+    for (const r of registrosEnConsolidado) {
+      if (r.es_incidencia) continue
+      if (r.duracion_horas != null) total += r.duracion_horas
+    }
+    return total
+  }, [registrosEnConsolidado])
 
   const cargarCatalogoEquipos = useCallback(async () => {
     try {
@@ -81,53 +107,6 @@ export function TramoMaquinariaHistorialBlock({
     void cargarCatalogoEquipos()
   }, [cargar, cargarCatalogoEquipos, refreshKey])
 
-  useEffect(() => {
-    setFormularioRegistroAbierto(false)
-    setJornadaForm(estadoInicialJornada())
-  }, [tramoId])
-
-  useEffect(() => {
-    if (!formularioRegistroAbierto || !isResident) return
-    void cargarEquiposMaquinariaProyecto(supabase, proyectoId, { soloActivos: true }).then(
-      setEquiposCatalogo
-    )
-  }, [formularioRegistroAbierto, isResident, proyectoId, supabase])
-
-  function resetFormularioJornada() {
-    setJornadaForm(estadoInicialJornada())
-  }
-
-  async function handleSubmit(event: FormEvent) {
-    event.preventDefault()
-    if (!isResident) return
-
-    const equipos =
-      equiposCatalogo.length > 0
-        ? equiposCatalogo
-        : await cargarEquiposMaquinariaProyecto(supabase, proyectoId, { soloActivos: true })
-
-    const validacion = validarJornadaFormState(jornadaForm, equipos)
-    if (validacion) {
-      setError(validacion)
-      return
-    }
-
-    const input = jornadaInputDesdeFormState(jornadaForm, equipos)
-    if (!input) return
-
-    setGuardando(true)
-    setError(null)
-    try {
-      await crearRegistroMaquinariaTramo(supabase, tramoId, input)
-      resetFormularioJornada()
-      await cargar()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "No se pudo guardar el registro.")
-    } finally {
-      setGuardando(false)
-    }
-  }
-
   async function handleEliminar(id: string) {
     if (!isResident) return
     if (!window.confirm("¿Eliminar este registro de maquinaria?")) return
@@ -143,21 +122,35 @@ export function TramoMaquinariaHistorialBlock({
     }
   }
 
-  const totalMetros = registros.reduce((sum, r) => sum + r.metros_desasolados, 0)
+  const totalMetrosConsolidado = registrosEnConsolidado.reduce(
+    (sum, r) => (r.es_incidencia ? sum : sum + r.metros_desasolados),
+    0
+  )
 
   return (
     <section className="space-y-3">
       <div>
         <h3 className="text-sm font-medium">Historial de maquinaria</h3>
         <p className="text-xs text-muted-foreground">
-          Jornadas de desasolve registradas en este tramo
-          {registros.length > 0 ? (
+          {tramoConGps
+            ? "Las jornadas operativas se registran al confirmar un punto (minitramo). Lo que ves aquí coincide con /maquinaria."
+            : "Jornadas de desasolve registradas en este tramo."}
+          {registrosEnConsolidado.some((r) => !r.es_incidencia) ? (
             <>
               {" "}
-              · total registrado: {formatearMetrosDesasolados(totalMetros)}
+              · horas en consolidado:{" "}
+              {totalHorasConsolidado > 0 ? `${totalHorasConsolidado.toFixed(1)} h` : "—"}
+              {" · "}
+              metros: {formatearMetrosDesasolados(totalMetrosConsolidado)}
             </>
           ) : null}
         </p>
+        {registrosExcluidosDelConsolidado.length > 0 ? (
+          <p className="mt-1 text-xs text-amber-800 dark:text-amber-200">
+            {registrosExcluidosDelConsolidado.length} registro(s) manual(es) antiguo(s) no entran
+            en /maquinaria (evita duplicar horas). Puede eliminarlos con la papelera.
+          </p>
+        ) : null}
       </div>
 
       {error ? (
@@ -168,18 +161,26 @@ export function TramoMaquinariaHistorialBlock({
 
       {loading ? (
         <p className="text-xs text-muted-foreground">Cargando historial…</p>
-      ) : registros.length === 0 ? (
+      ) : registrosEnConsolidado.length === 0 && registrosExcluidosDelConsolidado.length === 0 ? (
         <p className="rounded-lg border border-dashed border-foreground/15 bg-muted/20 px-3 py-2.5 text-sm text-muted-foreground">
           {isResident
-            ? "Aún no hay jornadas registradas. Agregue la primera abajo."
+            ? tramoConGps
+              ? "Aún no hay jornadas en este tramo. Regístrelas al confirmar un punto en el mapa."
+              : "Aún no hay jornadas registradas."
             : "Aún no hay jornadas de maquinaria registradas en este tramo."}
         </p>
       ) : (
         <ul className="space-y-2">
-          {registros.map((registro) => (
+          {[...registrosEnConsolidado, ...registrosExcluidosDelConsolidado].map((registro) => {
+            const excluido = registrosExcluidosDelConsolidado.some((r) => r.id === registro.id)
+            return (
             <li
               key={registro.id}
-              className="rounded-lg border border-foreground/10 bg-background px-3 py-2.5 text-sm"
+              className={
+                excluido
+                  ? "rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2.5 text-sm"
+                  : "rounded-lg border border-foreground/10 bg-background px-3 py-2.5 text-sm"
+              }
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
@@ -215,6 +216,11 @@ export function TramoMaquinariaHistorialBlock({
                   ) : null}
                 </dl>
               )}
+              {excluido ? (
+                <p className="mt-2 text-xs text-amber-800 dark:text-amber-200">
+                  No suma en /maquinaria (registro manual duplicado).
+                </p>
+              ) : null}
               {isResident ? (
                 <Button
                   type="button"
@@ -229,52 +235,10 @@ export function TramoMaquinariaHistorialBlock({
                 </Button>
               ) : null}
             </li>
-          ))}
+            )
+          })}
         </ul>
       )}
-
-      {isResident ? (
-        <div className="rounded-xl border border-foreground/10 bg-muted/20 p-3">
-          {!formularioRegistroAbierto ? (
-            <Button
-              type="button"
-              variant="secondary"
-              className="w-full"
-              onClick={() => setFormularioRegistroAbierto(true)}
-            >
-              Registrar jornada
-            </Button>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-3">
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-sm font-medium">Registrar jornada</p>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 px-2 text-muted-foreground"
-                  onClick={() => {
-                    setFormularioRegistroAbierto(false)
-                    resetFormularioJornada()
-                  }}
-                >
-                  Cancelar
-                </Button>
-              </div>
-              <RegistrarJornadaTramoFields
-                proyectoId={proyectoId}
-                idPrefix="maq"
-                values={jornadaForm}
-                onChange={(patch) => setJornadaForm((prev) => ({ ...prev, ...patch }))}
-                disabled={guardando}
-              />
-              <Button type="submit" disabled={guardando} className="w-full">
-                {guardando ? "Guardando…" : "Agregar al historial"}
-              </Button>
-            </form>
-          )}
-        </div>
-      ) : null}
     </section>
   )
 }

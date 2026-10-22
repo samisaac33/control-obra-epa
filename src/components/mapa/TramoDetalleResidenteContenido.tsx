@@ -116,8 +116,8 @@ export function TramoDetalleResidenteContenido({
       />
 
       <TramoMaquinariaHistorialBlock
-        tramoId={tramo.id}
-        proyectoId={tramo.proyecto_id}
+        tramo={tramo}
+        puntosAvance={puntosAvance}
         isResident
         refreshKey={puntosRefreshKey}
       />
