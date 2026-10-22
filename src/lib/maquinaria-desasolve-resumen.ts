@@ -34,6 +34,7 @@ export type ResumenTramoDesasolve = {
   tramo_canal: string
   jornadas: number
   metros: number
+  horas: number
 }
 
 function claveEquipo(jornada: JornadaMaquinariaProyecto): string {
@@ -101,9 +102,11 @@ export function resumenPorTramoDesasolve(jornadas: JornadaMaquinariaProyecto[]):
       tramo_canal: j.tramo_canal,
       jornadas: 0,
       metros: 0,
+      horas: 0,
     }
     prev.jornadas += 1
     prev.metros += j.metros_desasolados
+    if (j.duracion_horas != null) prev.horas += j.duracion_horas
     map.set(clave, prev)
   }
 
@@ -200,7 +203,7 @@ export function formatearDetalleJornadasDia(detalle: DetalleJornadasDia): string
     lineas.push("- Tramos intervenidos:")
     for (const t of detalle.porTramo) {
       lineas.push(
-        `  · tramo ${t.tramo_codigo} (${t.tramo_canal}): ${t.jornadas} jornada(s), ${formatearMetrosDesasolveResumen(t.metros)}`
+        `  · tramo ${t.tramo_codigo} (${t.tramo_canal}): ${t.jornadas} jornada(s), ${formatearMetrosDesasolveResumen(t.metros)}${t.horas > 0 ? `, ${formatearNumero(t.horas, 1)} h` : ""}`
       )
     }
   } else {
