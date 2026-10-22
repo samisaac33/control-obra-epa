@@ -1,6 +1,10 @@
 import type { CanalTramo } from "@/src/data/tramos/types"
 import type { ProyectoEquipoMaquinaria } from "@/src/lib/proyecto-equipos-maquinaria"
-import { minitramosDesdePuntos, type TramoPuntoAvance } from "@/src/lib/tramo-geometria"
+import {
+  estadoEfectivoMinitramo,
+  minitramosDesdePuntos,
+  type TramoPuntoAvance,
+} from "@/src/lib/tramo-geometria"
 import {
   mapaEquiposPorId,
   normalizarRegistroMaquinaria,
@@ -58,6 +62,65 @@ function buscarRegistroJornadaLegacyParaPunto(
   )
   if (candidatos.length === 1) return candidatos[0]!
   return null
+}
+
+/** Misma regla que el tooltip del mapa: una jornada canónica por minitramo (GPS o legacy). */
+export function idsRegistrosMaquinariaCanonicosPorMinitramo(
+  tramos: CanalTramo[],
+  puntos: TramoPuntoAvance[],
+  registros: TramoRegistroMaquinaria[]
+): Set<string> {
+  const porTramo = new Map<string, TramoRegistroMaquinaria[]>()
+  for (const registro of registros) {
+    const lista = porTramo.get(registro.tramo_id) ?? []
+    lista.push(registro)
+    porTramo.set(registro.tramo_id, lista)
+  }
+
+  const ids = new Set<string>()
+  for (const tramo of tramos) {
+    const regsTramo = porTramo.get(tramo.id) ?? []
+    const minitramos = minitramosDesdePuntos(puntos, tramo.id, tramo)
+    const registrosUsados = new Set<string>()
+    for (const mt of minitramos) {
+      let registro =
+        regsTramo.find((r) => r.punto_avance_id === mt.puntoFin.id) ?? null
+      if (!registro) {
+        registro =
+          buscarRegistroJornadaLegacyParaPunto(
+            mt.puntoFin,
+            regsTramo,
+            mt.longitud_m,
+            registrosUsados
+          ) ?? null
+      }
+      if (!registro) continue
+      registrosUsados.add(registro.id)
+      ids.add(registro.id)
+    }
+  }
+  return ids
+}
+
+export function tramoTienePuntosGpsConfirmados(
+  tramoId: string,
+  puntos: TramoPuntoAvance[]
+): boolean {
+  return puntos.some((p) => p.tramo_id === tramoId && p.confirmado)
+}
+
+/** Punto final de minitramo en estado terminado (base del avance en mapa). */
+export function mapaMinitramoTerminadoPorPuntoFin(
+  tramos: CanalTramo[],
+  puntos: TramoPuntoAvance[]
+): Map<string, boolean> {
+  const indice = new Map<string, boolean>()
+  for (const tramo of tramos) {
+    for (const mt of minitramosDesdePuntos(puntos, tramo.id, tramo)) {
+      indice.set(mt.puntoFin.id, estadoEfectivoMinitramo(mt.puntoFin) === "terminado")
+    }
+  }
+  return indice
 }
 
 export async function cargarRegistrosMaquinariaPorTramoIds(

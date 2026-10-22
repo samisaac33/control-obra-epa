@@ -1,4 +1,9 @@
-import type { JornadaMaquinariaProyecto } from "@/src/lib/maquinaria-desasolve-proyecto"
+import type { CanalTramo } from "@/src/data/tramos/types"
+import {
+  capMetrosResumenTramoConMapa,
+  type JornadaMaquinariaProyecto,
+} from "@/src/lib/maquinaria-desasolve-proyecto"
+import type { TramoPuntoAvance } from "@/src/lib/tramo-geometria"
 import {
   mapaEquiposPorId,
   nombreEquipoParaMostrar,
@@ -24,6 +29,7 @@ export type ResumenEquipoDesasolve = {
 }
 
 export type ResumenTramoDesasolve = {
+  tramo_id: string
   tramo_codigo: string
   tramo_canal: string
   jornadas: number
@@ -90,6 +96,7 @@ export function resumenPorTramoDesasolve(jornadas: JornadaMaquinariaProyecto[]):
   for (const j of jornadasOperativas(jornadas)) {
     const clave = j.tramo_id
     const prev = map.get(clave) ?? {
+      tramo_id: j.tramo_id,
       tramo_codigo: j.tramo_codigo,
       tramo_canal: j.tramo_canal,
       jornadas: 0,
@@ -105,6 +112,15 @@ export function resumenPorTramoDesasolve(jornadas: JornadaMaquinariaProyecto[]):
       Number(a.tramo_codigo) - Number(b.tramo_codigo) ||
       a.tramo_codigo.localeCompare(b.tramo_codigo, undefined, { numeric: true })
   )
+}
+
+/** Resumen por tramo con metros acotados al avance GPS del mapa (evita solapes ABC). */
+export function resumenPorTramoDesasolveAlineadoMapa(
+  jornadas: JornadaMaquinariaProyecto[],
+  tramos: CanalTramo[],
+  puntosAvance: TramoPuntoAvance[]
+): ResumenTramoDesasolve[] {
+  return capMetrosResumenTramoConMapa(tramos, puntosAvance, resumenPorTramoDesasolve(jornadas))
 }
 
 export function agruparJornadasPorFecha(

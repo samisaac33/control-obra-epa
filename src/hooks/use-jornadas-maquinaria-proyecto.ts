@@ -9,10 +9,15 @@ import {
   type JornadaMaquinariaProyecto,
   type PeriodoJornadasMaquinaria,
 } from "@/src/lib/maquinaria-desasolve-proyecto"
+import {
+  cargarTramosMapaProyecto,
+  type TramosMapaProyecto,
+} from "@/src/lib/cargar-tramos-mapa-proyecto"
 import { createClient } from "@/src/lib/supabase/client"
 
 export function useJornadasMaquinariaProyecto(): {
   jornadas: JornadaMaquinariaProyecto[]
+  tramosMapa: TramosMapaProyecto | null
   periodo: PeriodoJornadasMaquinaria
   loading: boolean
   error: string | null
@@ -21,6 +26,7 @@ export function useJornadasMaquinariaProyecto(): {
   const { proyectoId } = useProyecto()
   const supabase = useMemo(() => createClient(), [])
   const [jornadas, setJornadas] = useState<JornadaMaquinariaProyecto[]>([])
+  const [tramosMapa, setTramosMapa] = useState<TramosMapaProyecto | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -28,10 +34,13 @@ export function useJornadasMaquinariaProyecto(): {
     setLoading(true)
     setError(null)
     try {
-      const data = await cargarJornadasMaquinariaProyecto(supabase, proyectoId)
+      const mapa = await cargarTramosMapaProyecto(supabase, proyectoId)
+      const data = await cargarJornadasMaquinariaProyecto(supabase, proyectoId, mapa)
+      setTramosMapa(mapa)
       setJornadas(data)
     } catch (err) {
       setJornadas([])
+      setTramosMapa(null)
       setError(err instanceof Error ? err.message : "No se pudieron cargar las jornadas de maquinaria.")
     } finally {
       setLoading(false)
@@ -54,5 +63,5 @@ export function useJornadasMaquinariaProyecto(): {
 
   const periodo = useMemo(() => periodoDesdeJornadas(jornadas), [jornadas])
 
-  return { jornadas, periodo, loading, error, recargar }
+  return { jornadas, tramosMapa, periodo, loading, error, recargar }
 }
