@@ -5,6 +5,10 @@ export type ProyectoModulo =
   | "fotos"
   | "libroObra"
   | "mapaTramos"
+  | "auditoriaAntiglosa"
+  | "desalojo"
+  | "reporteDiario"
+  | "salvaPlazos"
 
 export type ProyectoModulos = Record<ProyectoModulo, boolean>
 
@@ -29,6 +33,10 @@ const MODULOS_P1: ProyectoModulos = {
   fotos: true,
   libroObra: true,
   mapaTramos: false,
+  auditoriaAntiglosa: false,
+  desalojo: false,
+  reporteDiario: false,
+  salvaPlazos: false,
 }
 
 const MODULOS_P2: ProyectoModulos = {
@@ -38,6 +46,10 @@ const MODULOS_P2: ProyectoModulos = {
   fotos: true,
   libroObra: false,
   mapaTramos: true,
+  auditoriaAntiglosa: true,
+  desalojo: true,
+  reporteDiario: true,
+  salvaPlazos: true,
 }
 
 export const PROYECTOS: Record<string, ProyectoConfig> = {
@@ -53,11 +65,12 @@ export const PROYECTOS: Record<string, ProyectoConfig> = {
   },
   [PROYECTO_DESASOLVE_CANALES]: {
     id: PROYECTO_DESASOLVE_CANALES,
-    nombreObra: "Desasolve de canales de riego",
-    numeroContrato: "Pendiente",
+    nombreObra: "Emergencia Severino y Trasvase Manabí — Desazolve",
+    numeroContrato: "EPA-EPA-2026-00134-RES",
     cliente: "Empresa Pública del Agua (EPA EP)",
-    objeto: "Desasolve de canales de riego con excavadoras — Sistema Trasvase Manabí",
-    sistema: "Trasvase Manabí — Canales de riego",
+    objeto:
+      "MANTENIMIENTO DE LA SUBESTACIÓN ELÉCTRICA SEVERINO Y CANALES DEL TRASVASE MANABÍ",
+    sistema: "Trasvase Manabí — Canales Menores y Canal 2 San Antonio By Pass–Cativo (Chone)",
     modulos: MODULOS_P2,
   },
 }

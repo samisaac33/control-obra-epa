@@ -14,6 +14,9 @@ const SECCIONES: { segment: string; titulo: string }[] = [
   { segment: "emergencia", titulo: "Informe de afectación" },
   { segment: "presupuesto", titulo: "Presupuesto" },
   { segment: "libro-obra", titulo: "Informe de evidencias de obra" },
+  { segment: "auditoria", titulo: "Auditoría antiglosa" },
+  { segment: "desalojo", titulo: "Despacho de volquetas" },
+  { segment: "salva-plazos", titulo: "Salva-plazos" },
 ]
 
 export function seccionDesdePathname(pathname: string, proyectoId: string): ProyectoSeccionInfo {
@@ -36,6 +39,7 @@ export function seccionDesdePathname(pathname: string, proyectoId: string): Proy
 export const SECCIONES_NAV_INFERIOR_DESASOLVE = [
   { segment: "", titulo: "Inicio", labelCorto: "Inicio" },
   { segment: "mapa", titulo: "Mapa de avance", labelCorto: "Mapa" },
+  { segment: "desalojo", titulo: "Despacho de volquetas", labelCorto: "Desalojo" },
   { segment: "fotos", titulo: "Registro fotográfico", labelCorto: "Fotos" },
-  { segment: "maquinaria", titulo: "Maquinaria y transporte", labelCorto: "Maquinaria" },
+  { segment: "auditoria", titulo: "Auditoría antiglosa", labelCorto: "CGE" },
 ] as const
