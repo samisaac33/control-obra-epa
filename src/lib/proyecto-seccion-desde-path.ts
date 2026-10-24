@@ -17,6 +17,7 @@ const SECCIONES: { segment: string; titulo: string }[] = [
   { segment: "auditoria", titulo: "Auditoría antiglosa" },
   { segment: "desalojo", titulo: "Despacho de volquetas" },
   { segment: "salva-plazos", titulo: "Salva-plazos" },
+  { segment: "planillas", titulo: "Planillas de pago" },
 ]
 
 export function seccionDesdePathname(pathname: string, proyectoId: string): ProyectoSeccionInfo {

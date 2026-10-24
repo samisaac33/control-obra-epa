@@ -2,7 +2,16 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Camera, ChevronRight, LayoutDashboard, Map, ShieldCheck, Timer, Truck } from "lucide-react"
+import {
+  Camera,
+  ChevronRight,
+  FileStack,
+  LayoutDashboard,
+  Map,
+  ShieldCheck,
+  Timer,
+  Truck,
+} from "lucide-react"
 import { AuditConsistencyCard } from "@/src/components/auditoria/AuditConsistencyCard"
 import { useCallback, useEffect, useMemo, useState } from "react"
 
@@ -30,6 +39,12 @@ const accesos = [
     label: "Despacho volquetas",
     descripcion: "Tickets de transporte con GPS y radio contractual 5 km",
     icon: Truck,
+  },
+  {
+    segment: "planillas",
+    label: "Planillas de pago",
+    descripcion: "Configuración de plazo, dos planillas y generadores documentales",
+    icon: FileStack,
   },
   {
     segment: "auditoria",
