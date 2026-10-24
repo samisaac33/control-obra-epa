@@ -12,6 +12,7 @@ import {
   Truck,
   ShieldCheck,
   Timer,
+  FileStack,
 } from "lucide-react"
 
 import { useProyecto } from "@/src/contexts/ProyectoContext"
@@ -35,6 +36,7 @@ const items: {
   { segment: "auditoria", label: "Auditoría antiglosa", icon: ShieldCheck, modulo: "auditoriaAntiglosa" },
   { segment: "desalojo", label: "Despacho volquetas", icon: Truck, modulo: "desalojo" },
   { segment: "salva-plazos", label: "Salva-plazos", icon: Timer, modulo: "salvaPlazos" },
+  { segment: "planillas", label: "Planillas de pago", icon: FileStack, modulo: "planillaPago" },
 ]
 
 type NavigationPanelProps = {

@@ -9,6 +9,7 @@ export type ProyectoModulo =
   | "desalojo"
   | "reporteDiario"
   | "salvaPlazos"
+  | "planillaPago"
 
 export type ProyectoModulos = Record<ProyectoModulo, boolean>
 
@@ -37,6 +38,7 @@ const MODULOS_P1: ProyectoModulos = {
   desalojo: false,
   reporteDiario: false,
   salvaPlazos: false,
+  planillaPago: false,
 }
 
 const MODULOS_P2: ProyectoModulos = {
@@ -50,6 +52,7 @@ const MODULOS_P2: ProyectoModulos = {
   desalojo: true,
   reporteDiario: true,
   salvaPlazos: true,
+  planillaPago: true,
 }
 
 export const PROYECTOS: Record<string, ProyectoConfig> = {

@@ -17,6 +17,9 @@ type LibroObraClientProps = {
   entradas: LibroObraEntradaDia[]
   generadoEn: string
   errorCarga: string | null
+  defaultDesde?: string
+  defaultHasta?: string
+  tituloDocumento?: string
 }
 
 const INPUT_CLASS =
@@ -35,9 +38,16 @@ function contarEvidencias(entradas: LibroObraEntradaDia[]): number {
   return entradas.reduce((total, entrada) => total + entrada.evidencias.length, 0)
 }
 
-export function LibroObraClient({ entradas, generadoEn, errorCarga }: LibroObraClientProps) {
-  const [desde, setDesde] = useState("")
-  const [hasta, setHasta] = useState("")
+export function LibroObraClient({
+  entradas,
+  generadoEn,
+  errorCarga,
+  defaultDesde = "",
+  defaultHasta = "",
+  tituloDocumento,
+}: LibroObraClientProps) {
+  const [desde, setDesde] = useState(defaultDesde)
+  const [hasta, setHasta] = useState(defaultHasta)
   const [imprimiendo, setImprimiendo] = useState(false)
 
   const entradasFiltradas = useMemo(
@@ -68,10 +78,12 @@ export function LibroObraClient({ entradas, generadoEn, errorCarga }: LibroObraC
             </div>
             <div className="min-w-0 flex-1">
               <h1 className="font-heading text-lg font-semibold tracking-tight text-foreground sm:text-xl">
-                Informe de evidencias de obra
+                {tituloDocumento ?? "Informe de evidencias de obra"}
               </h1>
               <p className="text-sm text-muted-foreground">
-                Fiscalización interna — consolidado del registro fotográfico
+                {tituloDocumento
+                  ? "Documento de planilla — periodo filtrado automáticamente"
+                  : "Fiscalización interna — consolidado del registro fotográfico"}
               </p>
             </div>
           </div>

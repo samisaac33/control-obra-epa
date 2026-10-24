@@ -19,6 +19,8 @@ import { cn } from "@/lib/utils"
 
 type AuditConsistencyCardProps = {
   compacto?: boolean
+  defaultDesde?: string
+  defaultHasta?: string
 }
 
 function hoyIso(): string {
@@ -41,11 +43,15 @@ function badgeSemaforo(nivel: SemaforoRiesgoCge): string {
   }
 }
 
-export function AuditConsistencyCard({ compacto = false }: AuditConsistencyCardProps) {
+export function AuditConsistencyCard({
+  compacto = false,
+  defaultDesde,
+  defaultHasta,
+}: AuditConsistencyCardProps) {
   const { proyectoId } = useProyecto()
   const supabase = useMemo(() => createClient(), [])
-  const [desde, setDesde] = useState(hoyIso())
-  const [hasta, setHasta] = useState(hoyIso())
+  const [desde, setDesde] = useState(defaultDesde ?? hoyIso())
+  const [hasta, setHasta] = useState(defaultHasta ?? hoyIso())
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [resultado, setResultado] = useState<ResultadoTriangulacionVolumetrica | null>(null)
