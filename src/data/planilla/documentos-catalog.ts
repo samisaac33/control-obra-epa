@@ -54,7 +54,8 @@ export const DOCUMENTOS_PLANILLA_CATALOGO: DocumentoPlanillaCatalogo[] = [
     id: "requerimiento_pago",
     titulo: "Requerimiento de pago / medición",
     descripcion: "Formato de medición vinculado a rubros del presupuesto contractual.",
-    estado: "proximamente",
+    estado: "disponible",
+    rutaGenerador: "planillas/documentos/requerimiento-pago",
   },
 ]
 

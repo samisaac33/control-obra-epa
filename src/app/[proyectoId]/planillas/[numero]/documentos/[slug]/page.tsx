@@ -5,6 +5,7 @@ import { PlanillaAuditoriaPeriodoClient } from "@/src/components/planilla/Planil
 import { PlanillaInformeAvanceClient } from "@/src/components/planilla/PlanillaInformeAvanceClient"
 import { PlanillaMemorandoDocument } from "@/src/components/planilla/PlanillaMemorandoDocument"
 import { PlanillaReportesDiariosClient } from "@/src/components/planilla/PlanillaReportesDiariosClient"
+import { PlanillaRequerimientoPagoClient } from "@/src/components/planilla/PlanillaRequerimientoPagoClient"
 import { documentoPlanillaPorId } from "@/src/data/planilla/documentos-catalog"
 import { cargarEvidenciasLibroObra } from "@/src/lib/cargar-evidencias-libro-obra"
 import { consolidarLibroObra } from "@/src/lib/libro-obra"
@@ -26,7 +27,7 @@ export default async function PlanillaDocumentoPage({ params }: PageProps) {
   const doc = documentoPlanillaPorId(tipo)
   if (!doc || doc.estado !== "disponible") notFound()
 
-  const { periodo } = await cargarContextoPlanilla(proyectoId, numero)
+  const { config, periodo, numero: planillaNumero } = await cargarContextoPlanilla(proyectoId, numero)
 
   switch (tipo) {
     case "libro_obra": {
@@ -58,6 +59,14 @@ export default async function PlanillaDocumentoPage({ params }: PageProps) {
       return <PlanillaReportesDiariosClient periodo={periodo} />
     case "auditoria_volumetrica":
       return <PlanillaAuditoriaPeriodoClient periodo={periodo} />
+    case "requerimiento_pago":
+      return (
+        <PlanillaRequerimientoPagoClient
+          config={config}
+          periodo={periodo}
+          planillaNumero={planillaNumero}
+        />
+      )
     default:
       notFound()
   }
