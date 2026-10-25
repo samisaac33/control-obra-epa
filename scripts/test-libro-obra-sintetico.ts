@@ -22,5 +22,8 @@ assert.ok(
   entradas[0].lineasRegistro.some((l) => l.texto.includes("pendiente de anexo manual")),
   "aviso fotos"
 )
+assert.ok(entradas[0].formatoEpa, "formato EPA por día")
+assert.ok(entradas[0].formatoEpa!.trabajosRealizados.length > 20, "trabajos realizados")
+assert.ok(entradas[0].formatoEpa!.equiposUtilizados.length >= 5, "filas equipos EPA")
 
 console.log("test-libro-obra-sintetico: OK")

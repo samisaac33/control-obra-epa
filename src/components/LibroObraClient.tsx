@@ -6,6 +6,7 @@ import { useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { LibroObraDocumento } from "@/src/components/LibroObraDocumento"
+import { useProyecto } from "@/src/contexts/ProyectoContext"
 import { esperarImagenesInformeListas } from "@/src/lib/compress-image-informe"
 import {
   filtrarEntradasLibroObra,
@@ -49,6 +50,7 @@ export function LibroObraClient({
   tituloDocumento,
   variant = "evidencias",
 }: LibroObraClientProps) {
+  const { proyectoActivo } = useProyecto()
   const [desde, setDesde] = useState(defaultDesde)
   const [hasta, setHasta] = useState(defaultHasta)
   const [imprimiendo, setImprimiendo] = useState(false)
@@ -176,6 +178,7 @@ export function LibroObraClient({
           generadoEn={generadoEn}
           rangoEtiqueta={rangoEtiqueta}
           variant={variant}
+          proyecto={proyectoActivo}
         />
       </main>
     </div>

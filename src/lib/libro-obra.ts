@@ -1,3 +1,4 @@
+import type { DatosHojaLibroObraEpa } from "@/src/data/libro-obra-formato-epa"
 import {
   agruparRegistrosFotograficos,
   type EvidenciaGrupo,
@@ -15,6 +16,8 @@ export type LibroObraEntradaDia = {
   evidencias: EvidenciaGrupo[]
   /** Texto operativo (mapa, volquetas, paralizaciones) y plantilla cuando no hay datos. */
   lineasRegistro: LibroObraLineaRegistro[]
+  /** Formato EPA (hoja diaria impresa). */
+  formatoEpa?: DatosHojaLibroObraEpa
 }
 
 export function claveFechaLocal(isoOClave: string): string {
