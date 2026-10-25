@@ -4,6 +4,11 @@ import { Printer } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { MEMBRETE_EPA, RESOLUCION_EMERGENCIA } from "@/src/data/contrato-emergencia-severino-trasvase"
+import {
+  lineaFirmaPersonal,
+  residentesObraCivil,
+  superintendenteObra,
+} from "@/src/data/planilla/personal-tecnico-contratista"
 import type { PlanillaPeriodo } from "@/src/data/planilla/types"
 import { useProyecto } from "@/src/contexts/ProyectoContext"
 
@@ -12,7 +17,9 @@ type PlanillaMemorandoDocumentProps = {
 }
 
 export function PlanillaMemorandoDocument({ periodo }: PlanillaMemorandoDocumentProps) {
-  const { proyectoActivo } = useProyecto()
+  const { proyectoActivo, proyectoId } = useProyecto()
+  const superintendente = superintendenteObra(proyectoId)
+  const residentes = residentesObraCivil(proyectoId)
   const hoy = new Date().toLocaleDateString("es-EC", {
     day: "numeric",
     month: "long",
@@ -57,9 +64,17 @@ export function PlanillaMemorandoDocument({ periodo }: PlanillaMemorandoDocument
           del Contrato y trámite de pago correspondiente.
         </p>
         <p>Atentamente,</p>
+        {residentes.length > 0 ? (
+          <p className="text-xs text-muted-foreground">
+            Residentes de obra civil:{" "}
+            {residentes.map((r) => `${r.titulo} ${r.nombres} ${r.apellidos}`).join(" · ")}
+          </p>
+        ) : null}
         <div className="pt-12">
           <div className="border-t border-foreground/30 pt-2">
-            Superintendente de Obra (Contratista)
+            {superintendente
+              ? lineaFirmaPersonal(superintendente, "Superintendente de Obra (Contratista)")
+              : "Superintendente de Obra (Contratista)"}
           </div>
         </div>
       </article>
