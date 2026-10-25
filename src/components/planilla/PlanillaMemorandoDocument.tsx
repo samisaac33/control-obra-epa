@@ -4,6 +4,13 @@ import { Printer } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { MEMBRETE_EPA, RESOLUCION_EMERGENCIA } from "@/src/data/contrato-emergencia-severino-trasvase"
+import {
+  lineaFirmaPersonal,
+  residenteObraElectrica,
+  residentesObraCivil,
+  superintendenteObra,
+  topografoObra,
+} from "@/src/data/planilla/personal-tecnico-contratista"
 import type { PlanillaPeriodo } from "@/src/data/planilla/types"
 import { useProyecto } from "@/src/contexts/ProyectoContext"
 
@@ -12,7 +19,11 @@ type PlanillaMemorandoDocumentProps = {
 }
 
 export function PlanillaMemorandoDocument({ periodo }: PlanillaMemorandoDocumentProps) {
-  const { proyectoActivo } = useProyecto()
+  const { proyectoActivo, proyectoId } = useProyecto()
+  const superintendente = superintendenteObra(proyectoId)
+  const residentes = residentesObraCivil(proyectoId)
+  const residenteElectrico = residenteObraElectrica(proyectoId)
+  const topografo = topografoObra(proyectoId)
   const hoy = new Date().toLocaleDateString("es-EC", {
     day: "numeric",
     month: "long",
@@ -57,9 +68,29 @@ export function PlanillaMemorandoDocument({ periodo }: PlanillaMemorandoDocument
           del Contrato y trámite de pago correspondiente.
         </p>
         <p>Atentamente,</p>
+        {residentes.length > 0 ? (
+          <p className="text-xs text-muted-foreground">
+            Residentes de obra civil ({residentes.length}):{" "}
+            {residentes.map((r) => `${r.titulo} ${r.nombres} ${r.apellidos}`).join(" · ")}
+          </p>
+        ) : null}
+        {residenteElectrico ? (
+          <p className="text-xs text-muted-foreground">
+            Residente de obra eléctrica (Severino): {residenteElectrico.titulo}{" "}
+            {residenteElectrico.nombres} {residenteElectrico.apellidos}
+          </p>
+        ) : null}
+        {topografo ? (
+          <p className="text-xs text-muted-foreground">
+            Topografía: {topografo.nombres} {topografo.apellidos}
+            {topografo.cedula ? ` · C.I. ${topografo.cedula}` : ""}
+          </p>
+        ) : null}
         <div className="pt-12">
           <div className="border-t border-foreground/30 pt-2">
-            Superintendente de Obra (Contratista)
+            {superintendente
+              ? lineaFirmaPersonal(superintendente, "Superintendente de Obra (Contratista)")
+              : "Superintendente de Obra (Contratista)"}
           </div>
         </div>
       </article>
