@@ -20,6 +20,7 @@ export type PersonalTecnicoContratista = {
   anioGraduacion?: number
   email?: string
   telefono?: string
+  registroSenescyt?: string
   /** Frente o sector asignado (opcional). */
   sectorAsignado?: string
   observaciones?: string
@@ -44,6 +45,7 @@ export const PERSONAL_TECNICO_DESASOLVE: PersonalTecnicoContratista[] = [
     cedula: "1308931110",
     titulo: "Ingeniero Civil",
     universidad: "Universidad Técnica de Manabí",
+    registroSenescyt: "1009-04-533040",
     email: "orleymacias@hotmail.com",
     telefono: "0997366728",
   },
@@ -55,6 +57,7 @@ export const PERSONAL_TECNICO_DESASOLVE: PersonalTecnicoContratista[] = [
     cedula: "1310129182",
     titulo: "Ingeniero Civil",
     universidad: "Universidad Técnica de Manabí",
+    registroSenescyt: "1009-14-1267882",
     anioGraduacion: 2013,
     email: "wesaltos@gmail.com",
     telefono: "0985370189",
@@ -70,35 +73,37 @@ export const PERSONAL_TECNICO_DESASOLVE: PersonalTecnicoContratista[] = [
     universidad: "Escuela Superior Politécnica del Litoral (ESPOL)",
     telefono: "0988386444",
     sectorAsignado: "Frentes civiles — Trasvase Manabí y San Antonio",
-    observaciones: "Maestría en Gestión de Proyectos (ESPAE).",
+    registroSenescyt: "1021-13-86032960",
+    observaciones: "Ingeniero Civil (ESPOL). Maestría en Gestión de Proyectos (ESPAE).",
   },
   {
     id: "velez-ericka",
     rol: "residente_obra_civil",
-    nombres: "Ericka",
+    nombres: "Ericka Mercedes",
     apellidos: "Vélez Carreño",
-    cedula: undefined,
+    cedula: "1350292049",
     titulo: "Ingeniera Civil",
     universidad: "Universidad Técnica de Manabí",
+    registroSenescyt: "1009-2021-2403029",
     anioGraduacion: 2021,
     email: "erickamercedesvelez@gmail.com",
     telefono: "0998993217",
     sectorAsignado: "Frentes civiles — Trasvase Manabí y San Antonio",
-    observaciones: "Registro Senescyt 1009-2021-2403029.",
   },
   {
     id: "carvajal-daniel",
     rol: "residente_obra_electrica",
-    nombres: "Daniel",
+    nombres: "Daniel Alberto",
     apellidos: "Carvajal Cedeño",
-    cedula: undefined,
+    cedula: "1308882503",
     titulo: "Ingeniero Eléctrico",
     universidad: "Universidad Técnica de Manabí",
+    registroSenescyt: "1009-10-978009",
     anioGraduacion: 2009,
     email: "albertodacc@gmail.com",
     telefono: "0991257777",
     sectorAsignado: "Subestación Eléctrica Severino",
-    observaciones: "Registro Senescyt 1009-10-978009 · Registro EEQ EEQ-2021-I-2058.",
+    observaciones: "Registro EEQ EEQ-2021-I-2058.",
   },
   {
     id: "chancay-yandry-patricio",
@@ -106,9 +111,11 @@ export const PERSONAL_TECNICO_DESASOLVE: PersonalTecnicoContratista[] = [
     nombres: "Yandry Patricio",
     apellidos: "Chancay García",
     cedula: "1309566824",
-    titulo: "Topógrafo",
+    titulo: "Ingeniero Civil",
+    universidad: "Universidad Técnica de Manabí",
+    registroSenescyt: "1009-14-1267549",
     sectorAsignado: "Replanteo, control topográfico y cubicación (canales)",
-    observaciones: "Cédula verificada — Manta, 08/01/1990.",
+    observaciones: "Funciones de topografía en obra.",
   },
 ]
 
