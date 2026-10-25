@@ -9,26 +9,19 @@ import { LibroObraDocumento } from "@/src/components/LibroObraDocumento"
 import { useProyecto } from "@/src/contexts/ProyectoContext"
 import { esperarImagenesInformeListas } from "@/src/lib/compress-image-informe"
 import {
-  etiquetaResidenteFrente,
-  frentesLibroObraProyecto,
-  type LibroObraFrenteId,
-} from "@/src/data/planilla/libro-obra-frentes"
-import {
   filtrarEntradasLibroObra,
   formatearFechaLibroObra,
   type LibroObraEntradaDia,
 } from "@/src/lib/libro-obra"
-import type { LibroObraPorFrente } from "@/src/lib/libro-obra-sintetico"
 
 type LibroObraClientProps = {
   entradas?: LibroObraEntradaDia[]
-  porFrente?: LibroObraPorFrente
   generadoEn: string
   errorCarga: string | null
   defaultDesde?: string
   defaultHasta?: string
   tituloDocumento?: string
-  /** Planilla: una entrada por día del periodo con texto operativo + fotos cuando existan. */
+  /** Planilla: una hoja EPA por día (bloques Trasvase + San Antonio; Severino si hay registro). */
   variant?: "evidencias" | "planilla"
 }
 
@@ -50,7 +43,6 @@ function contarEvidencias(entradas: LibroObraEntradaDia[]): number {
 
 export function LibroObraClient({
   entradas: entradasProp = [],
-  porFrente,
   generadoEn,
   errorCarga,
   defaultDesde = "",
@@ -58,27 +50,15 @@ export function LibroObraClient({
   tituloDocumento,
   variant = "evidencias",
 }: LibroObraClientProps) {
-  const { proyectoActivo, proyectoId } = useProyecto()
-  const frentes = useMemo(() => frentesLibroObraProyecto(proyectoId), [proyectoId])
-  const [frenteId, setFrenteId] = useState<LibroObraFrenteId>("trasvase")
+  const { proyectoActivo } = useProyecto()
   const [desde, setDesde] = useState(defaultDesde)
   const [hasta, setHasta] = useState(defaultHasta)
   const [imprimiendo, setImprimiendo] = useState(false)
 
-  const entradasBase = useMemo(() => {
-    if (variant === "planilla" && porFrente) {
-      return porFrente[frenteId] ?? []
-    }
-    return entradasProp
-  }, [variant, porFrente, frenteId, entradasProp])
-
   const entradasFiltradas = useMemo(
-    () => filtrarEntradasLibroObra(entradasBase, desde || undefined, hasta || undefined),
-    [entradasBase, desde, hasta]
+    () => filtrarEntradasLibroObra(entradasProp, desde || undefined, hasta || undefined),
+    [entradasProp, desde, hasta]
   )
-
-  const frenteActivo = frentes.find((f) => f.id === frenteId)
-  const residenteEtiqueta = etiquetaResidenteFrente(proyectoId, frenteId)
 
   const rangoEtiqueta = useMemo(() => etiquetaRango(entradasFiltradas), [entradasFiltradas])
   const totalEvidencias = useMemo(() => contarEvidencias(entradasFiltradas), [entradasFiltradas])
@@ -116,7 +96,7 @@ export function LibroObraClient({
               </h1>
               <p className="text-sm text-muted-foreground">
                 {variant === "planilla"
-                  ? `Libro por frente y residente (${residenteEtiqueta}). Volúmenes VAE 1:1 por tramo; sin textos genéricos de plan maestro.`
+                  ? "Una hoja EPA por día: bloques por frente (Trasvase, San Antonio) y Severino solo si hay registro real. Volúmenes VAE 1:1 por tramo."
                   : tituloDocumento
                     ? "Documento de planilla — periodo filtrado automáticamente"
                     : "Fiscalización interna — consolidado del registro fotográfico"}
@@ -145,27 +125,11 @@ export function LibroObraClient({
             <CardTitle className="text-base">Generar documento</CardTitle>
             <CardDescription>
               {variant === "planilla"
-                ? `Solo días con producción en ${frenteActivo?.titulo ?? "el frente"}. Desazolve, desalojo y tendido proporcionales al Excel VAE (incluye fines de semana).`
+                ? "Solo días con producción VAE, registro de campo o actividad en Severino. Incluye fines de semana según cronograma."
                 : "Una entrada por cada día con evidencias fotográficas. Las fotos se comprimen automáticamente para un PDF más liviano."}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {variant === "planilla" && frentes.length > 1 ? (
-              <label className="flex max-w-md flex-col gap-1 text-sm print:hidden">
-                <span className="font-medium">Frente / residente</span>
-                <select
-                  value={frenteId}
-                  onChange={(e) => setFrenteId(e.target.value as LibroObraFrenteId)}
-                  className={INPUT_CLASS}
-                >
-                  {frentes.map((f) => (
-                    <option key={f.id} value={f.id}>
-                      {f.titulo} — {etiquetaResidenteFrente(proyectoId, f.id)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            ) : null}
             <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
               <label className="flex min-w-[140px] flex-1 flex-col gap-1 text-sm">
                 <span className="font-medium">Desde</span>
@@ -203,7 +167,7 @@ export function LibroObraClient({
 
             <dl className="grid gap-2 text-sm sm:grid-cols-3">
               <div className="rounded-lg border border-foreground/10 bg-muted/30 px-3 py-2">
-                <dt className="text-xs text-muted-foreground">Entradas diarias</dt>
+                <dt className="text-xs text-muted-foreground">Hojas diarias</dt>
                 <dd className="font-semibold">{entradasFiltradas.length}</dd>
               </div>
               <div className="rounded-lg border border-foreground/10 bg-muted/30 px-3 py-2">

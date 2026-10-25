@@ -187,9 +187,44 @@ export function LibroObraHojaEpa({ entrada, proyecto, numeroEntrada }: LibroObra
       </AreaLineada>
 
       <p className="mb-0 text-[7px] font-bold uppercase print:text-[6.5px]">Trabajos realizados</p>
-      <AreaLineada minHeightClass="mb-1 min-h-[5.5rem] print:min-h-[4.75rem]">
-        {epa.trabajosRealizados}
-      </AreaLineada>
+      {epa.bloquesFrente && epa.bloquesFrente.length > 0 ? (
+        <div className="mb-1 space-y-1.5">
+          {epa.bloquesFrente.map((bloque) => (
+            <div key={bloque.id}>
+              <p className="text-[7px] font-bold text-neutral-800 print:text-[6.5px]">
+                {bloque.titulo} — {bloque.residente}
+              </p>
+              <AreaLineada minHeightClass="min-h-[2.5rem] print:min-h-[2rem]">
+                {bloque.trabajosRealizados}
+              </AreaLineada>
+            </div>
+          ))}
+          {epa.bloqueSeverino ? (
+            <div>
+              <p className="text-[7px] font-bold text-neutral-800 print:text-[6.5px]">
+                {epa.bloqueSeverino.titulo} — {epa.bloqueSeverino.residente}
+              </p>
+              <AreaLineada minHeightClass="min-h-[2rem] print:min-h-[1.75rem]">
+                {epa.bloqueSeverino.trabajosRealizados}
+              </AreaLineada>
+            </div>
+          ) : null}
+          {epa.registroCampoDia?.trim() ? (
+            <div>
+              <p className="text-[7px] font-bold text-neutral-800 print:text-[6.5px]">
+                Registro de campo (maquinaria / desalojo)
+              </p>
+              <AreaLineada minHeightClass="min-h-[1.75rem] print:min-h-[1.5rem]">
+                {epa.registroCampoDia}
+              </AreaLineada>
+            </div>
+          ) : null}
+        </div>
+      ) : (
+        <AreaLineada minHeightClass="mb-1 min-h-[5.5rem] print:min-h-[4.75rem]">
+          {epa.trabajosRealizados}
+        </AreaLineada>
+      )}
 
       <table className="mb-1 w-full border-collapse border border-neutral-900">
         <thead>

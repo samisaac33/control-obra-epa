@@ -30,6 +30,19 @@ export type FilaHorasEquipoEpa = {
   total: string
 }
 
+export type BloqueLibroObraFrenteEpa = {
+  id: string
+  titulo: string
+  residente: string
+  trabajosRealizados: string
+}
+
+export type BloqueLibroObraSeverinoEpa = {
+  titulo: string
+  residente: string
+  trabajosRealizados: string
+}
+
 export type DatosHojaLibroObraEpa = {
   equiposUtilizados: FilaCantidadEpa[]
   personalUtilizado: FilaCantidadEpa[]
@@ -39,4 +52,9 @@ export type DatosHojaLibroObraEpa = {
   novedadesObservaciones: string
   comunicaciones: string
   clima: { manana: string; tarde: string; noche: string }
+  /** Libro consolidado: un bloque por frente civil con producción ese día. */
+  bloquesFrente?: BloqueLibroObraFrenteEpa[]
+  bloqueSeverino?: BloqueLibroObraSeverinoEpa | null
+  /** Maquinaria / desalojo / paralización del día (fuera de cronograma VAE). */
+  registroCampoDia?: string
 }

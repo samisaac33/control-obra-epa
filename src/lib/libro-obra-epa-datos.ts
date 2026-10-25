@@ -59,6 +59,13 @@ function filaHorasEquipo(nombre: string, horas: number): FilaHorasEquipoEpa {
   }
 }
 
+export function registroCampoLibroObra(
+  lineas: LibroObraLineaRegistro[],
+  evidencias: EvidenciaGrupo[]
+): string {
+  return trabajosDesdeRegistros(lineas, evidencias)
+}
+
 function trabajosDesdeRegistros(
   lineas: LibroObraLineaRegistro[],
   evidencias: EvidenciaGrupo[]

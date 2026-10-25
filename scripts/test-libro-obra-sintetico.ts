@@ -7,7 +7,7 @@ import { presupuestoDesasolveEmergencia } from "../src/data/planilla/presupuesto
 import { valoresPorDefectoPlanilla } from "../src/data/planilla/planilla-defaults-ejecucion"
 import { PROYECTO_DESASOLVE_CANALES } from "../src/data/proyectos/catalog"
 import { periodoPorNumero } from "../src/lib/planilla-calculo"
-import { consolidarLibroObraPeriodoPlanillaPorFrentes } from "../src/lib/libro-obra-sintetico"
+import { consolidarLibroObraPeriodoPlanillaConsolidado } from "../src/lib/libro-obra-sintetico"
 
 const defs = valoresPorDefectoPlanilla(PROYECTO_DESASOLVE_CANALES)!
 const now = new Date().toISOString()
@@ -20,7 +20,7 @@ const config = {
 }
 const periodo = periodoPorNumero(config, 1)!
 
-const porFrente = consolidarLibroObraPeriodoPlanillaPorFrentes(
+const entradas = consolidarLibroObraPeriodoPlanillaConsolidado(
   PROYECTO_DESASOLVE_CANALES,
   periodo.fecha_inicio,
   periodo.fecha_fin,
@@ -35,9 +35,9 @@ const porFrente = consolidarLibroObraPeriodoPlanillaPorFrentes(
   1
 )
 
-const entradas = porFrente.trasvase ?? []
 assert.ok(entradas.length >= 1)
 assert.ok(entradas[0].formatoEpa)
 assert.ok(entradas[0].formatoEpa!.horasEquipos.length >= 3, "exc + volqueta + tendido")
+assert.ok((entradas[0].formatoEpa!.bloquesFrente?.length ?? 0) >= 1, "bloques por frente")
 
 console.log("test-libro-obra-sintetico: OK")
