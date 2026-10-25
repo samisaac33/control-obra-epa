@@ -5,7 +5,7 @@ export const DOCUMENTOS_PLANILLA_CATALOGO: DocumentoPlanillaCatalogo[] = [
     id: "libro_obra",
     titulo: "Libro de obra (periodo)",
     descripcion:
-      "Consolidado de actividades y evidencias del periodo de planilla, agrupado por día.",
+      "Libro de obra del periodo: una entrada por día (actividades, maquinaria, desalojo) y fotos al cargarlas.",
     estado: "disponible",
     rutaGenerador: "planillas/documentos/libro-obra",
   },

@@ -4,10 +4,17 @@ import {
   type RegistroFotoBase,
 } from "@/src/lib/evidencias-grupo"
 
+export type LibroObraLineaRegistro = {
+  categoria: "actividad" | "maquinaria" | "desalojo" | "paralizacion"
+  texto: string
+}
+
 export type LibroObraEntradaDia = {
   fecha: string
   diaSemana: string
   evidencias: EvidenciaGrupo[]
+  /** Texto operativo (mapa, volquetas, paralizaciones) y plantilla cuando no hay datos. */
+  lineasRegistro: LibroObraLineaRegistro[]
 }
 
 export function claveFechaLocal(isoOClave: string): string {
@@ -75,8 +82,26 @@ export function consolidarLibroObra(registros: RegistroFotoBase[]): LibroObraEnt
         fecha,
         diaSemana: nombreDiaSemana(fecha),
         evidencias,
+        lineasRegistro: [],
       }
     })
+}
+
+function addDaysIso(fechaIso: string, dias: number): string {
+  const d = new Date(`${fechaIso}T12:00:00`)
+  d.setDate(d.getDate() + dias)
+  return d.toISOString().slice(0, 10)
+}
+
+export function fechasCalendarioInclusive(desde: string, hasta: string): string[] {
+  if (!desde || !hasta || desde > hasta) return []
+  const fechas: string[] = []
+  let cursor = desde
+  while (cursor <= hasta) {
+    fechas.push(cursor)
+    cursor = addDaysIso(cursor, 1)
+  }
+  return fechas
 }
 
 export function filtrarEntradasLibroObra(
