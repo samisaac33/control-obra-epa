@@ -20,6 +20,8 @@ type LibroObraClientProps = {
   defaultDesde?: string
   defaultHasta?: string
   tituloDocumento?: string
+  /** Planilla: una entrada por día del periodo con texto operativo + fotos cuando existan. */
+  variant?: "evidencias" | "planilla"
 }
 
 const INPUT_CLASS =
@@ -45,6 +47,7 @@ export function LibroObraClient({
   defaultDesde = "",
   defaultHasta = "",
   tituloDocumento,
+  variant = "evidencias",
 }: LibroObraClientProps) {
   const [desde, setDesde] = useState(defaultDesde)
   const [hasta, setHasta] = useState(defaultHasta)
@@ -81,9 +84,11 @@ export function LibroObraClient({
                 {tituloDocumento ?? "Informe de evidencias de obra"}
               </h1>
               <p className="text-sm text-muted-foreground">
-                {tituloDocumento
-                  ? "Documento de planilla — periodo filtrado automáticamente"
-                  : "Fiscalización interna — consolidado del registro fotográfico"}
+                {variant === "planilla"
+                  ? "Libro de obra automático del periodo (actividades + maquinaria + desalojo). Anexe fotos en módulo Fotos cuando estén listas."
+                  : tituloDocumento
+                    ? "Documento de planilla — periodo filtrado automáticamente"
+                    : "Fiscalización interna — consolidado del registro fotográfico"}
               </p>
             </div>
           </div>
@@ -108,8 +113,9 @@ export function LibroObraClient({
           <CardHeader className="pb-3">
             <CardTitle className="text-base">Generar documento</CardTitle>
             <CardDescription>
-              Una entrada por cada día con evidencias fotográficas. Las fotos se comprimen
-              automáticamente para un PDF más liviano.
+              {variant === "planilla"
+                ? "Una entrada por cada día del periodo de planilla. Las fotos aparecen al cargarlas en el módulo Fotos."
+                : "Una entrada por cada día con evidencias fotográficas. Las fotos se comprimen automáticamente para un PDF más liviano."}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -169,6 +175,7 @@ export function LibroObraClient({
           entradas={entradasFiltradas}
           generadoEn={generadoEn}
           rangoEtiqueta={rangoEtiqueta}
+          variant={variant}
         />
       </main>
     </div>

@@ -13,6 +13,7 @@ type LibroObraDocumentoProps = {
   entradas: LibroObraEntradaDia[]
   generadoEn: string
   rangoEtiqueta: string
+  variant?: "evidencias" | "planilla"
 }
 
 function CampoDocumento({ label, value }: { label: string; value?: string | null }) {
@@ -93,7 +94,17 @@ function EvidenciaBloque({ grupo, indice }: { grupo: EvidenciaGrupo; indice: num
   )
 }
 
-function EntradaDia({ entrada, numero }: { entrada: LibroObraEntradaDia; numero: number }) {
+function EntradaDia({
+  entrada,
+  numero,
+  variant,
+}: {
+  entrada: LibroObraEntradaDia
+  numero: number
+  variant: "evidencias" | "planilla"
+}) {
+  const lineas = entrada.lineasRegistro ?? []
+
   return (
     <section className="libro-obra-dia mb-8 break-inside-avoid-page scroll-mt-4 print:mb-6">
       <header className="mb-3 border-b-2 border-neutral-900 pb-2">
@@ -103,20 +114,46 @@ function EntradaDia({ entrada, numero }: { entrada: LibroObraEntradaDia; numero:
         <h3 className="text-lg font-bold text-neutral-950">{formatearFechaLibroObra(entrada.fecha)}</h3>
       </header>
 
+      {variant === "planilla" && lineas.length > 0 ? (
+        <div className="mb-4 space-y-2 rounded-lg border border-neutral-300 bg-neutral-50 p-3">
+          <h4 className="text-sm font-semibold uppercase tracking-wide text-neutral-700">
+            Actividades y registros del día
+          </h4>
+          <ul className="list-disc space-y-1 pl-5 text-[13px] leading-snug text-neutral-800">
+            {lineas.map((linea, i) => (
+              <li key={`${linea.categoria}-${i}`}>{linea.texto}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
       <div className="space-y-3">
         <h4 className="text-sm font-semibold uppercase tracking-wide text-neutral-700">
           Registro fotográfico ({entrada.evidencias.length}{" "}
           {entrada.evidencias.length === 1 ? "grupo" : "grupos"})
         </h4>
-        {entrada.evidencias.map((grupo, index) => (
-          <EvidenciaBloque key={grupo.grupoId} grupo={grupo} indice={index} />
-        ))}
+        {entrada.evidencias.length === 0 ? (
+          <p className="rounded border border-dashed border-neutral-400 bg-neutral-50 px-3 py-4 text-center text-[13px] text-neutral-600">
+            {variant === "planilla"
+              ? "Sin fotos en sistema para este día. Anexar manualmente al imprimir o cargar en módulo Fotos."
+              : "Sin evidencias fotográficas este día."}
+          </p>
+        ) : (
+          entrada.evidencias.map((grupo, index) => (
+            <EvidenciaBloque key={grupo.grupoId} grupo={grupo} indice={index} />
+          ))
+        )}
       </div>
     </section>
   )
 }
 
-export function LibroObraDocumento({ entradas, generadoEn, rangoEtiqueta }: LibroObraDocumentoProps) {
+export function LibroObraDocumento({
+  entradas,
+  generadoEn,
+  rangoEtiqueta,
+  variant = "evidencias",
+}: LibroObraDocumentoProps) {
   const fechaGeneracion = new Intl.DateTimeFormat("es-EC", {
     timeZone: "America/Guayaquil",
     dateStyle: "long",
@@ -130,7 +167,9 @@ export function LibroObraDocumento({ entradas, generadoEn, rangoEtiqueta }: Libr
     >
       <header className="mb-8 border-b-2 border-neutral-900 pb-4 text-center print:mb-6">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500">
-          Informe de evidencias de obra — fiscalización interna
+          {variant === "planilla"
+            ? "Libro de obra — periodo de planilla"
+            : "Informe de evidencias de obra — fiscalización interna"}
         </p>
         <h1 className="mt-2 font-heading text-xl font-bold leading-tight sm:text-2xl">
           {PROYECTO.nombreObra}
@@ -177,13 +216,20 @@ export function LibroObraDocumento({ entradas, generadoEn, rangoEtiqueta }: Libr
         </p>
       ) : (
         entradas.map((entrada, index) => (
-          <EntradaDia key={entrada.fecha} entrada={entrada} numero={index + 1} />
+          <EntradaDia
+            key={entrada.fecha}
+            entrada={entrada}
+            numero={index + 1}
+            variant={variant}
+          />
         ))
       )}
 
       <footer className="mt-8 border-t border-neutral-300 pt-4 text-center text-xs text-neutral-500 print:mt-6">
         <p>
-          Consolidado automático a partir del registro fotográfico — JBS Consorcio
+          {variant === "planilla"
+            ? "Consolidado automático (actividades, maquinaria, desalojo y fotos disponibles) — JBS Consorcio"
+            : "Consolidado automático a partir del registro fotográfico — JBS Consorcio"}
         </p>
         <p className="mt-1">Uso exclusivo para fiscalización interna. No sustituye firmas oficiales.</p>
       </footer>

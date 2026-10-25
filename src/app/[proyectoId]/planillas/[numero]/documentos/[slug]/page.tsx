@@ -8,8 +8,7 @@ import { PlanillaReportesDiariosClient } from "@/src/components/planilla/Planill
 import { PlanillaMaquinariaConsolidadoClient } from "@/src/components/planilla/PlanillaMaquinariaConsolidadoClient"
 import { PlanillaRequerimientoPagoClient } from "@/src/components/planilla/PlanillaRequerimientoPagoClient"
 import { documentoPlanillaPorId } from "@/src/data/planilla/documentos-catalog"
-import { cargarEvidenciasLibroObra } from "@/src/lib/cargar-evidencias-libro-obra"
-import { consolidarLibroObra } from "@/src/lib/libro-obra"
+import { cargarLibroObraPeriodoPlanilla } from "@/src/lib/cargar-libro-obra-planilla"
 import { cargarContextoPlanilla } from "@/src/lib/planilla-server-context"
 import { tipoDocumentoDesdeSlug } from "@/src/lib/planilla-documento-slug"
 import { createClient } from "@/src/lib/supabase/server"
@@ -32,12 +31,16 @@ export default async function PlanillaDocumentoPage({ params }: PageProps) {
 
   switch (tipo) {
     case "libro_obra": {
-      let entradas: ReturnType<typeof consolidarLibroObra> = []
+      let entradas: Awaited<ReturnType<typeof cargarLibroObraPeriodoPlanilla>> = []
       let errorCarga: string | null = null
       try {
         const supabase = await createClient()
-        const registros = await cargarEvidenciasLibroObra(supabase, proyectoId)
-        entradas = consolidarLibroObra(registros)
+        entradas = await cargarLibroObraPeriodoPlanilla(
+          supabase,
+          proyectoId,
+          periodo.fecha_inicio,
+          periodo.fecha_fin
+        )
       } catch (err) {
         errorCarga = err instanceof Error ? err.message : "Error de carga"
       }
@@ -49,6 +52,7 @@ export default async function PlanillaDocumentoPage({ params }: PageProps) {
           defaultDesde={periodo.fecha_inicio}
           defaultHasta={periodo.fecha_fin}
           tituloDocumento={`Libro de obra — ${periodo.etiqueta}`}
+          variant="planilla"
         />
       )
     }
