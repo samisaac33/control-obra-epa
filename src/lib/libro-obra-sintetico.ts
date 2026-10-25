@@ -25,7 +25,18 @@ import {
   type LibroObraEntradaDia,
   type LibroObraLineaRegistro,
 } from "@/src/lib/libro-obra"
-import { armarDatosHojaLibroObraEpa } from "@/src/lib/libro-obra-epa-datos"
+import {
+  armarTrabajosConsolidadosDesdeBloques,
+  combinarDatosHojaLibroObraEpa,
+  evidenciasRelacionadasSeverino,
+  lineasRelacionadasSeverino,
+  trabajosSeverinoDesdeRegistro,
+} from "@/src/lib/libro-obra-epa-consolidado"
+import { armarDatosHojaLibroObraEpa, registroCampoLibroObra } from "@/src/lib/libro-obra-epa-datos"
+import {
+  etiquetaResidenteFrente,
+} from "@/src/data/planilla/libro-obra-frentes"
+import { nombreCompletoPersonal, residenteObraElectrica } from "@/src/data/planilla/personal-tecnico-contratista"
 import { formatearNumero } from "@/src/lib/maquinaria-resumen"
 
 const AVISO_FOTOS_PENDIENTES =
@@ -171,6 +182,140 @@ function consolidarFrente(
   return entradas
 }
 
+/** Una hoja EPA por día: bloques Trasvase + San Antonio (+ Severino si hay registro). */
+export function consolidarLibroObraPeriodoPlanillaConsolidado(
+  proyectoId: string,
+  desde: string,
+  hasta: string,
+  registrosFoto: RegistroFotoBase[],
+  jornadas: JornadaMaquinariaProyecto[],
+  tickets: TicketDesalojo[],
+  eventosParalizacion: EventoParalizacion[],
+  equipos: ProyectoEquipoMaquinaria[],
+  rubros: Rubro[],
+  config: ProyectoPlanillaConfig,
+  periodo: PlanillaPeriodo,
+  planillaNumero: PlanillaNumero
+): LibroObraEntradaDia[] {
+  const porFoto = new Map(consolidarLibroObra(registrosFoto).map((e) => [e.fecha, e]))
+  const cronogramasPorFrente = new Map<LibroObraFrenteId, Map<string, DiaCronogramaFrente>>()
+
+  for (const f of frentesLibroObraProyecto(proyectoId)) {
+    const cfg = frenteLibroObra(f.id)
+    const cronograma = cronogramaLibroObraFrente(
+      f.id,
+      desde,
+      hasta,
+      rubros,
+      config,
+      periodo,
+      planillaNumero,
+      cfg.rubDesazolve
+    )
+    cronogramasPorFrente.set(f.id, new Map(cronograma.map((d) => [d.fecha, d])))
+  }
+
+  const entradas: LibroObraEntradaDia[] = []
+  const residenteElectrico = residenteObraElectrica(proyectoId)
+
+  for (const fecha of fechasCalendarioInclusive(desde, hasta)) {
+    const evidencias = porFoto.get(fecha)?.evidencias ?? []
+    const lineasRegistro: LibroObraLineaRegistro[] = [
+      ...lineasMaquinariaDia(fecha, jornadas, equipos),
+      ...lineasDesalojoDia(fecha, tickets),
+      ...lineasParalizacionDia(fecha, eventosParalizacion),
+    ]
+
+    const partesDatos = []
+    const bloquesFrente = []
+
+    for (const f of frentesLibroObraProyecto(proyectoId)) {
+      const cfg = frenteLibroObra(f.id)
+      const cronogramaDia = cronogramasPorFrente.get(f.id)?.get(fecha)
+      const tieneCronograma = (cronogramaDia?.actividades.length ?? 0) > 0
+      if (!tieneCronograma) continue
+
+      const datosFrente = armarDatosHojaLibroObraEpa(fecha, [], jornadas, equipos, {
+        evidencias: [],
+        cronogramaDia: cronogramaDia ?? null,
+        frenteTitulo: cfg.titulo,
+        rubDesazolve: cfg.rubDesazolve,
+        rubDesalojo: cfg.rubDesalojo,
+        rubTendido: cfg.rubTendido,
+        ticketsDesalojoDia:
+          f.id === "trasvase"
+            ? tickets.filter((t) => claveFechaLocal(t.fecha_hora_despacho) === fecha)
+            : [],
+      })
+
+      partesDatos.push(datosFrente)
+      bloquesFrente.push({
+        id: f.id,
+        titulo: cfg.titulo,
+        residente: etiquetaResidenteFrente(proyectoId, f.id),
+        trabajosRealizados: datosFrente.trabajosRealizados,
+      })
+    }
+
+    const lineasSev = lineasRelacionadasSeverino(lineasRegistro)
+    const evidenciasSev = evidenciasRelacionadasSeverino(evidencias)
+    const textoSev = trabajosSeverinoDesdeRegistro(lineasSev, evidenciasSev)
+    const bloqueSeverino =
+      textoSev.trim() && residenteElectrico
+        ? {
+            titulo: "Subestación Eléctrica Severino",
+            residente: nombreCompletoPersonal(residenteElectrico),
+            trabajosRealizados: textoSev,
+          }
+        : null
+
+    const hayProduccionCivil = partesDatos.length > 0
+    const hayRegistroCampo = lineasRegistro.some(
+      (l) => l.categoria === "maquinaria" || l.categoria === "desalojo"
+    )
+
+    if (!hayProduccionCivil && !bloqueSeverino && !hayRegistroCampo) {
+      continue
+    }
+
+    const evidenciasCanales = evidencias.filter(
+      (g) => evidenciasRelacionadasSeverino([g]).length === 0
+    )
+    const registroCampo = registroCampoLibroObra(lineasRegistro, evidenciasCanales)
+
+    let formatoEpa = combinarDatosHojaLibroObraEpa(partesDatos)
+    formatoEpa = {
+      ...formatoEpa,
+      bloquesFrente: bloquesFrente,
+      bloqueSeverino,
+      registroCampoDia: hayRegistroCampo ? registroCampo : undefined,
+      visitaProyecto: bloquesFrente
+        .map((b) => `${b.titulo} (${b.residente})`)
+        .concat(bloqueSeverino ? [`${bloqueSeverino.titulo} (${bloqueSeverino.residente})`] : [])
+        .join("; "),
+      trabajosRealizados: armarTrabajosConsolidadosDesdeBloques(
+        bloquesFrente,
+        bloqueSeverino,
+        hayRegistroCampo ? registroCampo : ""
+      ),
+    }
+
+    if (evidencias.length === 0) {
+      lineasRegistro.push({ categoria: "actividad", texto: AVISO_FOTOS_PENDIENTES })
+    }
+
+    entradas.push({
+      fecha,
+      diaSemana: nombreDiaSemana(fecha),
+      evidencias,
+      lineasRegistro,
+      formatoEpa,
+    })
+  }
+
+  return entradas
+}
+
 export function consolidarLibroObraPeriodoPlanillaPorFrentes(
   proyectoId: string,
   desde: string,
@@ -223,7 +368,7 @@ export function consolidarLibroObraPeriodoPlanilla(
   }
 ): LibroObraEntradaDia[] {
   if (opts?.rubros && opts.config && opts.periodo && opts.planillaNumero && opts.proyectoId) {
-    const porFrente = consolidarLibroObraPeriodoPlanillaPorFrentes(
+    return consolidarLibroObraPeriodoPlanillaConsolidado(
       opts.proyectoId,
       desde,
       hasta,
@@ -237,7 +382,6 @@ export function consolidarLibroObraPeriodoPlanilla(
       opts.periodo,
       opts.planillaNumero
     )
-    return porFrente.trasvase ?? []
   }
 
   const porFoto = new Map(consolidarLibroObra(registrosFoto).map((e) => [e.fecha, e]))

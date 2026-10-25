@@ -7,12 +7,10 @@ import { cargarEvidenciasLibroObra } from "@/src/lib/cargar-evidencias-libro-obr
 import { cargarEventosParalizacionProyecto } from "@/src/lib/cargar-eventos-paralizacion"
 import { cargarPlanillaConfigProyecto } from "@/src/lib/cargar-planilla-config"
 import { cargarTicketsDesalojoProyecto } from "@/src/lib/cargar-tickets-desalojo"
-import {
-  consolidarLibroObraPeriodoPlanillaPorFrentes,
-  type LibroObraPorFrente,
-} from "@/src/lib/libro-obra-sintetico"
+import { consolidarLibroObraPeriodoPlanillaConsolidado } from "@/src/lib/libro-obra-sintetico"
 import { cargarJornadasMaquinariaProyecto } from "@/src/lib/maquinaria-desasolve-proyecto"
 import { cargarEquiposMaquinariaProyecto } from "@/src/lib/proyecto-equipos-maquinaria"
+import type { LibroObraEntradaDia } from "@/src/lib/libro-obra"
 
 function configPlanillaLibroObra(
   proyectoId: string,
@@ -35,12 +33,12 @@ function configPlanillaLibroObra(
   }
 }
 
-export async function cargarLibroObraPeriodoPlanillaPorFrentes(
+export async function cargarLibroObraPeriodoPlanilla(
   supabase: SupabaseClient,
   proyectoId: string,
   periodo: PlanillaPeriodo,
   planillaNumero: PlanillaNumero
-): Promise<LibroObraPorFrente> {
+): Promise<LibroObraEntradaDia[]> {
   const [registrosFoto, jornadas, tickets, eventos, equipos, configDb] = await Promise.all([
     cargarEvidenciasLibroObra(supabase, proyectoId),
     cargarJornadasMaquinariaProyecto(supabase, proyectoId),
@@ -54,11 +52,11 @@ export async function cargarLibroObraPeriodoPlanillaPorFrentes(
   ])
 
   const config = configPlanillaLibroObra(proyectoId, configDb)
-  if (!config) return {}
+  if (!config) return []
 
   const rubros = presupuestoRubrosPorProyecto(proyectoId)
 
-  return consolidarLibroObraPeriodoPlanillaPorFrentes(
+  return consolidarLibroObraPeriodoPlanillaConsolidado(
     proyectoId,
     periodo.fecha_inicio,
     periodo.fecha_fin,

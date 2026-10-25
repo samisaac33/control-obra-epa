@@ -75,11 +75,6 @@ export function LibroObraDocumento({
         <p className="mb-4 text-center text-[10px] text-neutral-500 print:hidden">
           Período {rangoEtiqueta} — generado {fechaGeneracion}
         </p>
-        {entradas[0]?.frenteId ? (
-          <p className="mb-2 hidden text-center text-[9px] font-semibold uppercase print:block">
-            Frente: {entradas[0].frenteId === "san_antonio" ? "San Antonio" : "Trasvase Manabí"}
-          </p>
-        ) : null}
         {entradas.length === 0 ? (
           <p className="py-12 text-center text-sm text-neutral-600">
             No hay días en el rango seleccionado para el libro de obra.
