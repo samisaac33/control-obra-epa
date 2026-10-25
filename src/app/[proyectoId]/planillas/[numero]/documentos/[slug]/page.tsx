@@ -5,6 +5,7 @@ import { PlanillaAuditoriaPeriodoClient } from "@/src/components/planilla/Planil
 import { PlanillaInformeAvanceClient } from "@/src/components/planilla/PlanillaInformeAvanceClient"
 import { PlanillaMemorandoDocument } from "@/src/components/planilla/PlanillaMemorandoDocument"
 import { PlanillaReportesDiariosClient } from "@/src/components/planilla/PlanillaReportesDiariosClient"
+import { PlanillaMaquinariaConsolidadoClient } from "@/src/components/planilla/PlanillaMaquinariaConsolidadoClient"
 import { PlanillaRequerimientoPagoClient } from "@/src/components/planilla/PlanillaRequerimientoPagoClient"
 import { documentoPlanillaPorId } from "@/src/data/planilla/documentos-catalog"
 import { cargarEvidenciasLibroObra } from "@/src/lib/cargar-evidencias-libro-obra"
@@ -62,6 +63,14 @@ export default async function PlanillaDocumentoPage({ params }: PageProps) {
     case "requerimiento_pago":
       return (
         <PlanillaRequerimientoPagoClient
+          config={config}
+          periodo={periodo}
+          planillaNumero={planillaNumero}
+        />
+      )
+    case "maquinaria_consolidado":
+      return (
+        <PlanillaMaquinariaConsolidadoClient
           config={config}
           periodo={periodo}
           planillaNumero={planillaNumero}
