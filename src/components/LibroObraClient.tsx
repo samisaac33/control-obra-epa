@@ -63,14 +63,23 @@ export function LibroObraClient({
   const rangoEtiqueta = useMemo(() => etiquetaRango(entradasFiltradas), [entradasFiltradas])
   const totalEvidencias = useMemo(() => contarEvidencias(entradasFiltradas), [entradasFiltradas])
 
-  async function handleImprimir() {
-    setImprimiendo(true)
-    try {
-      await esperarImagenesInformeListas()
+  function handleImprimir() {
+    document.getElementById("libro-obra-documento")?.scrollIntoView({ block: "start" })
+
+    const hayImagenesInforme =
+      totalEvidencias > 0 && document.querySelectorAll(".libro-obra-imagen").length > 0
+
+    // iOS/Android: print() debe dispararse en el mismo gesto del usuario; un await previo lo bloquea.
+    if (!hayImagenesInforme) {
       window.print()
-    } finally {
-      setImprimiendo(false)
+      return
     }
+
+    setImprimiendo(true)
+    void esperarImagenesInformeListas().then(() => {
+      setImprimiendo(false)
+      window.print()
+    })
   }
 
   return (
@@ -150,7 +159,7 @@ export function LibroObraClient({
               >
                 Limpiar filtros
               </Button>
-              <Button type="button" onClick={() => void handleImprimir()} disabled={imprimiendo}>
+              <Button type="button" onClick={handleImprimir} disabled={imprimiendo}>
                 <Printer className="size-4" aria-hidden />
                 {imprimiendo ? "Comprimiendo fotos…" : "Imprimir / Guardar PDF"}
               </Button>
