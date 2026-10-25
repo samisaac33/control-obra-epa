@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { FileStack, ChevronRight } from "lucide-react"
+import { CalendarRange, ChevronRight, FileStack } from "lucide-react"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { PlanillaAnalisisIntegralCard } from "@/src/components/planilla/PlanillaAnalisisIntegralCard"
@@ -100,6 +100,24 @@ export function PlanillasHubClient() {
       />
 
       {analisis ? <PlanillaAnalisisIntegralCard analisis={analisis} /> : null}
+
+      {config ? (
+        <Link
+          href={rutaObra(proyectoId, "planillas/plan-maestro")}
+          className="group flex items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 p-4 transition-colors hover:border-primary/40 hover:bg-primary/10"
+        >
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
+            <CalendarRange className="size-5" aria-hidden />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="font-semibold text-foreground">Plan maestro de ejecución</p>
+            <p className="text-sm text-muted-foreground">
+              Cronograma diario 60 días, flujo desazolve/reconformación/desalojo y roles por frente.
+            </p>
+          </div>
+          <ChevronRight className="size-4 text-muted-foreground group-hover:text-primary" aria-hidden />
+        </Link>
+      ) : null}
 
       {config && periodos.length > 0 ? (
         <Card className="border-foreground/10">
