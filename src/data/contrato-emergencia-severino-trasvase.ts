@@ -16,6 +16,17 @@ export const RADIO_DESALOJO_MAX_KM = 5.0
 
 export const PLAZO_CALENDARIO_DIAS = 60
 
+/** Inicio del plazo contractual (autorización de obra). */
+export const FECHA_INICIO_PLAZO_EJECUCION = "2026-10-26"
+
+/** Anticipo del 35 % devengado antes del inicio de obra. */
+export const FECHA_PAGO_ANTICIPO = "2026-10-23"
+
+export const PORCENTAJE_ANTICIPO_CONTRATO = 35
+
+/** Avance físico acumulado objetivo al cierre de la Planilla 1 (residente de obra). */
+export const PORCENTAJE_AVANCE_PLANILLA_1_EJECUCION = 60.13
+
 export const CAPACIDAD_VOLQUETA_M3_DEFAULT = 8.0
 
 /** Rendimiento nominal contractual m³/h por tipo de excavadora (referencia planillaje). */

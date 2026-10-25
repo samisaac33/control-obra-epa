@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { PLAZO_CALENDARIO_DIAS } from "@/src/data/contrato-emergencia-severino-trasvase"
+import { valoresPorDefectoPlanilla } from "@/src/data/planilla/planilla-defaults-ejecucion"
 import type { ProyectoPlanillaConfig } from "@/src/data/planilla/types"
 import { useProyecto } from "@/src/contexts/ProyectoContext"
 import { guardarPlanillaConfigProyecto } from "@/src/lib/cargar-planilla-config"
@@ -23,13 +24,20 @@ type PlanillaConfigFormProps = {
 export function PlanillaConfigForm({ configInicial, onGuardado }: PlanillaConfigFormProps) {
   const { proyectoId } = useProyecto()
   const supabase = useMemo(() => createClient(), [])
-  const [fechaInicio, setFechaInicio] = useState(configInicial?.fecha_inicio_plazo ?? "")
+  const porDefecto = useMemo(() => valoresPorDefectoPlanilla(proyectoId), [proyectoId])
+  const [fechaInicio, setFechaInicio] = useState(
+    configInicial?.fecha_inicio_plazo ?? porDefecto?.fecha_inicio_plazo ?? ""
+  )
   const [pctPlanilla1, setPctPlanilla1] = useState(
     configInicial?.porcentaje_avance_planilla_1 != null
       ? String(configInicial.porcentaje_avance_planilla_1)
-      : "50"
+      : porDefecto != null
+        ? String(porDefecto.porcentaje_avance_planilla_1)
+        : "50"
   )
-  const [observaciones, setObservaciones] = useState(configInicial?.observaciones ?? "")
+  const [observaciones, setObservaciones] = useState(
+    configInicial?.observaciones ?? porDefecto?.observaciones ?? ""
+  )
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -79,7 +87,8 @@ export function PlanillaConfigForm({ configInicial, onGuardado }: PlanillaConfig
         <CardTitle className="text-base">Parámetros de planillaje</CardTitle>
         <CardDescription>
           Fecha de inicio del plazo ({PLAZO_CALENDARIO_DIAS} días) y avance físico objetivo de la
-          Planilla 1. La Planilla 2 cierra al 100 %.
+          Planilla 1. La Planilla 2 cierra al 100 %. Si aún no guardó en base de datos, se
+          precargan los datos de ejecución contractual del proyecto Severino–Trasvase.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -100,7 +109,7 @@ export function PlanillaConfigForm({ configInicial, onGuardado }: PlanillaConfig
               inputMode="decimal"
               value={pctPlanilla1}
               onChange={(e) => setPctPlanilla1(e.target.value)}
-              placeholder="Ej. 50"
+              placeholder="Ej. 60,13"
             />
           </div>
         </div>
