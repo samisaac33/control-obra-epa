@@ -3,6 +3,7 @@ import {
   calcularV1DesdeAbscisas,
   calcularV2DesdeTickets,
   calcularV3DesdeJornadas,
+  evaluarSemaforoV1V2Desasolve,
   semaforoDesdeRatio,
   triangulacionVolumetrica,
 } from "../src/lib/auditoria-volumetrica"
@@ -82,6 +83,13 @@ console.log("V1", v1, "V2", v2, "V3", v3)
 
 const tri = triangulacionVolumetrica(abscisas, tickets, jornadas, rango)
 console.log("Semaforo V1V2", tri.semaforoV1V2, tri.mensajeV1V2)
+
+if (evaluarSemaforoV1V2Desasolve(220, 8).semaforo !== "verde") {
+  throw new Error("V2 << V1 reconformación debería ser verde")
+}
+if (evaluarSemaforoV1V2Desasolve(100, 110).semaforo !== "rojo") {
+  throw new Error("V2 > V1 debería ser rojo")
+}
 
 if (semaforoDesdeRatio(0.05) !== "verde") throw new Error("Umbral verde falló")
 if (semaforoDesdeRatio(0.15) !== "amarillo") throw new Error("Umbral amarillo falló")

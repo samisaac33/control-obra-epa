@@ -1,642 +1,620 @@
 # Plan maestro de ejecución — Emergencia Severino y Trasvase Manabí
 
-**Resolución:** EPA-EPA-2026-00134-RES · **Proyecto app:** desasolve-canales
+**Resolución:** EPA-EPA-2026-00134-RES · **Proyecto:** desasolve-canales
 **Inicio plazo:** 2026-10-26 · **Fin plazo:** 2026-12-24 (60 días)
-**Anticipo:** 35 % (2026-10-23) · **Monto oferta ref.:** USD 1,793,881.01 sin IVA
+**Anticipo:** 35 % (2026-10-23) · **Oferta ref.:** USD 1,793,881.01 sin IVA
 **Planilla 1:** 2026-10-26 → 2026-11-24 (meta **60.13 %** acumulado)
 **Planilla 2:** 2026-11-25 → 2026-12-24 (meta **100 %** acumulado)
 
 ---
 
-## 1. Respuesta operativa — desalojo y volqueta única
+## Flujo de material en desasolve
 
-### 1.1 Qué exige el contrato
+Por tramo o abscisa documentar: V_excavado ≈ V_reconformado_in_situ + V_desalojado_botadero (+ V_tendido si aplica).
+Con reconformación mayoritaria, **1 volqueta del equipo mínimo suele ser suficiente** para picos de excedente; refuerzo o subcontrato solo si el excedente diario supera la capacidad de viajes (botadero ≤ 5 km).
+Medición rub. 3/7 = m³ **efectivamente transportados** (tickets TK). No igualar automáticamente al volumen topográfico V₁ del desazolve.
+V₁ >> V₂ es **esperado**. Alerta si V₂ > V₁ o si hay tickets sin respaldo de excedente en libro de obra / fotos.
 
-- El **equipo mínimo ofertado** incluye **1 volqueta** (MACK DM690S, Rosa Moreira). Eso acredita **disponibilidad mínima** ante EPA, no el límite máximo de flota en campo.
-- Los rubros **3 y 7** (desalojo) están **emparejados 1:1 en m³** con desazolve (rub. 2 y 6): todo material excavado debe salir con **ticket georreferenciado** (módulo desalojo, radio **≤ 5 km**).
-- En la app, la **antiglosa** compara V₁ (abscisas), V₂ (viajes volqueta) y V₃ (horómetro excavadora). Una sola placa no puede simular volumen que no movió.
-
-### 1.2 ¿Hay que subcontratar?
-
-| Escenario | Conclusión |
-|-----------|------------|
-| **Cumplir solo con la volqueta del equipo mínimo** | Solo es viable si el **ritmo real de desazolve** es bajo (cuellos de botadero, acceso, clima) **o** si la volqueta hace **múltiples turnos** y aun así el volumen del periodo no exige más camiones. |
-| **Meta Planilla 1** | Si el 60,13 % del rubro desalojo fuera ritmo pleno (~359,138 m³ en P1), el coeficiente APU 0,008 (confirmar unidad en PDF) exige del orden de **2,873 h-máquina** en el periodo (~**12.0 camiones** a 8 h/día) — **una volqueta no alcanza** a ese teórico. |
-| **Recomendación práctica** | **Sí: ampliar capacidad de transporte** vía (a) **más unidades del mismo arrendador** (Rosa Moreira u otro con RUC/contrato documentado), (b) **subcontrato de transporte** autorizado por EPA, o (c) **resecuenciar frentes** para no excavar más de lo que la flota puede evacuar el mismo día. Todas las placas deben registrarse en **tickets**; el mínimo contractual sigue siendo la volqueta comprometida. |
-
-### 1.3 Reglas de oro desalojo
-
-1. **No desacoplar** excavación y evacuación más de lo acordado en sitio (material acumulado = riesgo y desvío V₂/V₃).
-2. **Botaderos** cargados en Supabase antes de producción masiva.
-3. **Decisión documentada** (libro de obra): flota adicional, turnos, o subcontrato — con aprobación EPA si el contrato lo exige.
-4. Revisar semanalmente **Informe consolidado maquinaria** y **conciliación antiglosa** en planilla.
+- Excavadora retira asolve del cauce (rub. 2 / 6 — incluye reconformación de taludes).
+- Material apto se coloca y compacta/reconforma muros y taludes del mismo canal (misma partida).
+- Solo el excedente (no reutilizable in situ, acumulaciones, material fuera de especificación) va a volqueta → botadero (rub. 3 / 7).
+- Rub. 4 / 8 (tendido): aplicar según tramo cuando el presupuesto exija tendido de material desalojado (no confundir con reconformación in situ del rub. 2/6).
 
 ---
 
-## 2. Organización y frentes (sin cabos sueltos)
+## Desalojo y subcontrato
 
-| Rol / frente | Responsable | Entregables diarios |
-|--------------|-------------|---------------------|
-| Superintendencia | Macías Loor | Decisiones, salva-plazos, interfaz EPA |
-| Trasvase campo | Saltos | GPS, jornadas, desazolve/desalojo/tendido |
-| Trasvase medición/planilla | Vélez | Libro de obra, medición, requerimiento pago |
-| San Antonio + coordinación | Amén | Frente mayores + alineación inter-frentes |
-| Severino eléctrico | Carvajal | Rubros 9–18, pruebas, actas |
-| Topografía | Chancay | Replanteo rub. 1/5, control V₁ |
-
-### Cadena diaria obligatoria (canales)
-
-Replanteo → Desazolve (GPS minitramo) → Ticket volqueta (V₂) → Tendido → Reporte CGE → Evidencias libro de obra
-
-### Cadena Severino (paralela)
-
-Pruebas iniciales → Muestreo aceite → Termovacío/filtrado → Apertura/inspección → Reparaciones → Pruebas finales → Energización/entrega
+Radio contractual botadero: ≤ 5 km. Equipo mínimo: 1 volqueta (compromiso Rosa Moreira).
+Subcontratar transporte adicional solo si el excedente diario supera la capacidad de esa flota (viajes × 8 m³) o si EPA exige formalizar un tercero; todas las placas en tickets.
+No subcontratar por defecto: con reconformación mayoritaria la volqueta mínima atiende picos; el riesgo es excavar más excedente del que se puede evacuar, no el rubro teórico 1:1 del presupuesto.
 
 ---
 
-## 3. Cronograma diario (60 días de obra)
+## Organización (sin cabos sueltos)
 
-Cada fila es el **mínimo a verificar ese día**. Ajuste tramos concretos en el mapa (semana_programada, maquinaria_asignada).
+Cadena diaria canales: replanteo → desazolve + reconformación muro → (si hay) ticket excedente → tendido si rubro aplica → reporte CGE → libro de obra.
+Cadena Severino (Carvajal): pruebas → aceite → termovacío → inspección → cierre eléctrico (paralelo al civil).
+
+- Superintendencia — Macías Loor
+- Trasvase campo — Saltos
+- Trasvase medición/planilla — Vélez
+- San Antonio + coordinación — Amén
+- Severino — Carvajal Cedeño
+- Topografía — Chancay García
+
+---
+
+## Cronograma diario (60 días)
+
+Flujo de material en desasolve: ver sección anterior.
 
 
-### Semana 1 (días 1–7)
+### Semana 1
 
 #### Día 1 — 2026-10-26 (lun) · Planilla 1
 
 **Foco:** Movilización y arranque formal
 
-- **Trasvase:** Confirmar frentes prioritarios en mapa (tramos semana 1). Replanteo/nivelación km 0 en tramos de arranque (rub. 1). Excavadora DOOSAN + VOLVO: prueba de jornada, horómetro base. Volqueta MACK: ruta botadero ≤ 5 km, registro ticket piloto.
+- **Trasvase:** Confirmar frentes prioritarios en mapa (tramos semana 1). Replanteo/nivelación km 0 en tramos de arranque (rub. 1). Excavadora DOOSAN + VOLVO: prueba de jornada, horómetro base. Volqueta MACK: ruta botadero ≤ 5 km, ticket piloto solo si hay excedente real.
 - **San Antonio:** Recorrido canal San Antonio con Amén; definir accesos y seguridad. Replanteo tramo inicial (rub. 5).
 - **Severino:** Carvajal: inspección visual, permisos de ingreso EPA, plan de pruebas. Verificar arribo TTR/Megger (arrendamiento Portotrans/Electric-Transformer).
-- **Transversal:** Acta de inicio / comunicación EPA (Macías). Cargar botaderos en sistema (tabla proyecto_botaderos). Capacitación residentes: GPS, jornadas, tickets desalojo, reporte CGE.
+- **Transversal:** Acta de inicio / comunicación EPA (Macías). Cargar botaderos en sistema (tabla proyecto_botaderos). Capacitación: GPS, jornadas, tickets solo para excedente, reporte CGE. Acordar criterio de reconformación in situ vs excedente a botadero (topógrafo + residente).
 
 #### Día 2 — 2026-10-27 (mar) · Planilla 1
 
 **Foco:** Movilización y arranque formal
 
-- **Trasvase:** Confirmar frentes prioritarios en mapa (tramos semana 1). Replanteo/nivelación km 0 en tramos de arranque (rub. 1). Excavadora DOOSAN + VOLVO: prueba de jornada, horómetro base. Volqueta MACK: ruta botadero ≤ 5 km, registro ticket piloto.
+- **Trasvase:** Confirmar frentes prioritarios en mapa (tramos semana 1). Replanteo/nivelación km 0 en tramos de arranque (rub. 1). Excavadora DOOSAN + VOLVO: prueba de jornada, horómetro base. Volqueta MACK: ruta botadero ≤ 5 km, ticket piloto solo si hay excedente real.
 - **San Antonio:** Recorrido canal San Antonio con Amén; definir accesos y seguridad. Replanteo tramo inicial (rub. 5).
 - **Severino:** Carvajal: inspección visual, permisos de ingreso EPA, plan de pruebas. Verificar arribo TTR/Megger (arrendamiento Portotrans/Electric-Transformer).
-- **Transversal:** Acta de inicio / comunicación EPA (Macías). Cargar botaderos en sistema (tabla proyecto_botaderos). Capacitación residentes: GPS, jornadas, tickets desalojo, reporte CGE.
+- **Transversal:** Acta de inicio / comunicación EPA (Macías). Cargar botaderos en sistema (tabla proyecto_botaderos). Capacitación: GPS, jornadas, tickets solo para excedente, reporte CGE. Acordar criterio de reconformación in situ vs excedente a botadero (topógrafo + residente).
 
 #### Día 3 — 2026-10-28 (mié) · Planilla 1
 
 **Foco:** Movilización y arranque formal
 
-- **Trasvase:** Confirmar frentes prioritarios en mapa (tramos semana 1). Replanteo/nivelación km 0 en tramos de arranque (rub. 1). Excavadora DOOSAN + VOLVO: prueba de jornada, horómetro base. Volqueta MACK: ruta botadero ≤ 5 km, registro ticket piloto.
+- **Trasvase:** Confirmar frentes prioritarios en mapa (tramos semana 1). Replanteo/nivelación km 0 en tramos de arranque (rub. 1). Excavadora DOOSAN + VOLVO: prueba de jornada, horómetro base. Volqueta MACK: ruta botadero ≤ 5 km, ticket piloto solo si hay excedente real.
 - **San Antonio:** Recorrido canal San Antonio con Amén; definir accesos y seguridad. Replanteo tramo inicial (rub. 5).
 - **Severino:** Carvajal: inspección visual, permisos de ingreso EPA, plan de pruebas. Verificar arribo TTR/Megger (arrendamiento Portotrans/Electric-Transformer).
-- **Transversal:** Acta de inicio / comunicación EPA (Macías). Cargar botaderos en sistema (tabla proyecto_botaderos). Capacitación residentes: GPS, jornadas, tickets desalojo, reporte CGE.
+- **Transversal:** Acta de inicio / comunicación EPA (Macías). Cargar botaderos en sistema (tabla proyecto_botaderos). Capacitación: GPS, jornadas, tickets solo para excedente, reporte CGE. Acordar criterio de reconformación in situ vs excedente a botadero (topógrafo + residente).
 
 #### Día 4 — 2026-10-29 (jue) · Planilla 1
 
-**Foco:** Ritmo de producción + cadena desazolve → desalojo → tendido
+**Foco:** Producción: excavación + reconformación de muros; desalojo solo excedente
 
-- **Trasvase:** Desazolve minitramos (rub. 2); confirmar puntos GPS terminados. Volqueta(s): tickets V₂ por abscisa; placa y botadero en cada viaje. Tractor D7G + moto 120G: tendido material (rub. 4) en tramos cerrados. Vélez: libro de obra, evidencias, cuadro avance vs 60,13 % acumulado.
-- **San Antonio:** Desazolve mayores (rub. 6) según acceso; coordinación con Amén. Desalojo rub. 7 y tendido rub. 8 en mismo ciclo que Trasvase.
-- **Severino:** Pruebas eléctricas iniciales (rub. 9) si aceite/condiciones lo permiten. Muestreo aceite (rub. 10–11) según ventanas del laboratorio.
-- **Transversal:** Reporte diario CGE (conciliación V₁/V₂/V₃). Revisión consolidado maquinaria planilla vs horómetros. Evaluar flota volqueta: ¿suficiente 1 unidad? Ajustar arrendamiento.
+- **Trasvase:** Desazolve y reconformación de taludes in situ (rub. 2); cerrar minitramos GPS. Registrar en libro de obra fotos de muro reconformado antes de considerar excedente. Volqueta: ticket V₂ únicamente por m³ que salen del frente a botadero. Tractor/motoniveladora según tramo (rub. 4) cuando corresponda al presupuesto. Vélez: cuadro avance vs 60,13 % y balance material por tramo.
+- **San Antonio:** Desazolve mayores + reconformación (rub. 6); desalojo rub. 7 solo excedente.
+- **Severino:** Pruebas eléctricas iniciales (rub. 9) si condiciones lo permiten. Muestreo aceite (rub. 10–11) según ventanas del laboratorio.
+- **Transversal:** Reporte diario CGE: V₁ vs V₂ con nota de reconformación (V₂ << V₁ OK). Consolidado maquinaria planilla vs horómetros.
 
 #### Día 5 — 2026-10-30 (vie) · Planilla 1
 
-**Foco:** Ritmo de producción + cadena desazolve → desalojo → tendido
+**Foco:** Producción: excavación + reconformación de muros; desalojo solo excedente
 
-- **Trasvase:** Desazolve minitramos (rub. 2); confirmar puntos GPS terminados. Volqueta(s): tickets V₂ por abscisa; placa y botadero en cada viaje. Tractor D7G + moto 120G: tendido material (rub. 4) en tramos cerrados. Vélez: libro de obra, evidencias, cuadro avance vs 60,13 % acumulado.
-- **San Antonio:** Desazolve mayores (rub. 6) según acceso; coordinación con Amén. Desalojo rub. 7 y tendido rub. 8 en mismo ciclo que Trasvase.
-- **Severino:** Pruebas eléctricas iniciales (rub. 9) si aceite/condiciones lo permiten. Muestreo aceite (rub. 10–11) según ventanas del laboratorio.
-- **Transversal:** Reporte diario CGE (conciliación V₁/V₂/V₃). Revisión consolidado maquinaria planilla vs horómetros. Evaluar flota volqueta: ¿suficiente 1 unidad? Ajustar arrendamiento.
+- **Trasvase:** Desazolve y reconformación de taludes in situ (rub. 2); cerrar minitramos GPS. Registrar en libro de obra fotos de muro reconformado antes de considerar excedente. Volqueta: ticket V₂ únicamente por m³ que salen del frente a botadero. Tractor/motoniveladora según tramo (rub. 4) cuando corresponda al presupuesto. Vélez: cuadro avance vs 60,13 % y balance material por tramo.
+- **San Antonio:** Desazolve mayores + reconformación (rub. 6); desalojo rub. 7 solo excedente.
+- **Severino:** Pruebas eléctricas iniciales (rub. 9) si condiciones lo permiten. Muestreo aceite (rub. 10–11) según ventanas del laboratorio.
+- **Transversal:** Reporte diario CGE: V₁ vs V₂ con nota de reconformación (V₂ << V₁ OK). Consolidado maquinaria planilla vs horómetros.
 
 #### Día 6 — 2026-10-31 (sáb) · Planilla 1
 
-**Foco:** Ritmo de producción + cadena desazolve → desalojo → tendido
+**Foco:** Producción: excavación + reconformación de muros; desalojo solo excedente
 
-- **Trasvase:** Desazolve minitramos (rub. 2); confirmar puntos GPS terminados. Volqueta(s): tickets V₂ por abscisa; placa y botadero en cada viaje. Tractor D7G + moto 120G: tendido material (rub. 4) en tramos cerrados. Vélez: libro de obra, evidencias, cuadro avance vs 60,13 % acumulado.
-- **San Antonio:** Desazolve mayores (rub. 6) según acceso; coordinación con Amén. Desalojo rub. 7 y tendido rub. 8 en mismo ciclo que Trasvase.
-- **Severino:** Pruebas eléctricas iniciales (rub. 9) si aceite/condiciones lo permiten. Muestreo aceite (rub. 10–11) según ventanas del laboratorio.
-- **Transversal:** Reporte diario CGE (conciliación V₁/V₂/V₃). Revisión consolidado maquinaria planilla vs horómetros. Evaluar flota volqueta: ¿suficiente 1 unidad? Ajustar arrendamiento.
+- **Trasvase:** Desazolve y reconformación de taludes in situ (rub. 2); cerrar minitramos GPS. Registrar en libro de obra fotos de muro reconformado antes de considerar excedente. Volqueta: ticket V₂ únicamente por m³ que salen del frente a botadero. Tractor/motoniveladora según tramo (rub. 4) cuando corresponda al presupuesto. Vélez: cuadro avance vs 60,13 % y balance material por tramo.
+- **San Antonio:** Desazolve mayores + reconformación (rub. 6); desalojo rub. 7 solo excedente.
+- **Severino:** Pruebas eléctricas iniciales (rub. 9) si condiciones lo permiten. Muestreo aceite (rub. 10–11) según ventanas del laboratorio.
+- **Transversal:** Reporte diario CGE: V₁ vs V₂ con nota de reconformación (V₂ << V₁ OK). Consolidado maquinaria planilla vs horómetros.
 
 #### Día 7 — 2026-11-01 (dom) · Planilla 1
 
-**Foco:** Ritmo de producción + cadena desazolve → desalojo → tendido
+**Foco:** Producción: excavación + reconformación de muros; desalojo solo excedente
 
-- **Trasvase:** Desazolve minitramos (rub. 2); confirmar puntos GPS terminados. Volqueta(s): tickets V₂ por abscisa; placa y botadero en cada viaje. Tractor D7G + moto 120G: tendido material (rub. 4) en tramos cerrados. Vélez: libro de obra, evidencias, cuadro avance vs 60,13 % acumulado.
-- **San Antonio:** Desazolve mayores (rub. 6) según acceso; coordinación con Amén. Desalojo rub. 7 y tendido rub. 8 en mismo ciclo que Trasvase.
-- **Severino:** Pruebas eléctricas iniciales (rub. 9) si aceite/condiciones lo permiten. Muestreo aceite (rub. 10–11) según ventanas del laboratorio.
-- **Transversal:** Reporte diario CGE (conciliación V₁/V₂/V₃). Revisión consolidado maquinaria planilla vs horómetros. Evaluar flota volqueta: ¿suficiente 1 unidad? Ajustar arrendamiento.
+- **Trasvase:** Desazolve y reconformación de taludes in situ (rub. 2); cerrar minitramos GPS. Registrar en libro de obra fotos de muro reconformado antes de considerar excedente. Volqueta: ticket V₂ únicamente por m³ que salen del frente a botadero. Tractor/motoniveladora según tramo (rub. 4) cuando corresponda al presupuesto. Vélez: cuadro avance vs 60,13 % y balance material por tramo.
+- **San Antonio:** Desazolve mayores + reconformación (rub. 6); desalojo rub. 7 solo excedente.
+- **Severino:** Pruebas eléctricas iniciales (rub. 9) si condiciones lo permiten. Muestreo aceite (rub. 10–11) según ventanas del laboratorio.
+- **Transversal:** Reporte diario CGE: V₁ vs V₂ con nota de reconformación (V₂ << V₁ OK). Consolidado maquinaria planilla vs horómetros.
 
 
-### Semana 2 (días 8–14)
+### Semana 2
 
 #### Día 8 — 2026-11-02 (lun) · Planilla 1
 
-**Foco:** Ritmo de producción + cadena desazolve → desalojo → tendido
+**Foco:** Producción: excavación + reconformación de muros; desalojo solo excedente
 
-- **Trasvase:** Desazolve minitramos (rub. 2); confirmar puntos GPS terminados. Volqueta(s): tickets V₂ por abscisa; placa y botadero en cada viaje. Tractor D7G + moto 120G: tendido material (rub. 4) en tramos cerrados. Vélez: libro de obra, evidencias, cuadro avance vs 60,13 % acumulado.
-- **San Antonio:** Desazolve mayores (rub. 6) según acceso; coordinación con Amén. Desalojo rub. 7 y tendido rub. 8 en mismo ciclo que Trasvase.
-- **Severino:** Pruebas eléctricas iniciales (rub. 9) si aceite/condiciones lo permiten. Muestreo aceite (rub. 10–11) según ventanas del laboratorio.
-- **Transversal:** Reporte diario CGE (conciliación V₁/V₂/V₃). Revisión consolidado maquinaria planilla vs horómetros. Evaluar flota volqueta: ¿suficiente 1 unidad? Ajustar arrendamiento.
+- **Trasvase:** Desazolve y reconformación de taludes in situ (rub. 2); cerrar minitramos GPS. Registrar en libro de obra fotos de muro reconformado antes de considerar excedente. Volqueta: ticket V₂ únicamente por m³ que salen del frente a botadero. Tractor/motoniveladora según tramo (rub. 4) cuando corresponda al presupuesto. Vélez: cuadro avance vs 60,13 % y balance material por tramo.
+- **San Antonio:** Desazolve mayores + reconformación (rub. 6); desalojo rub. 7 solo excedente.
+- **Severino:** Pruebas eléctricas iniciales (rub. 9) si condiciones lo permiten. Muestreo aceite (rub. 10–11) según ventanas del laboratorio.
+- **Transversal:** Reporte diario CGE: V₁ vs V₂ con nota de reconformación (V₂ << V₁ OK). Consolidado maquinaria planilla vs horómetros.
 
 #### Día 9 — 2026-11-03 (mar) · Planilla 1
 
-**Foco:** Ritmo de producción + cadena desazolve → desalojo → tendido
+**Foco:** Producción: excavación + reconformación de muros; desalojo solo excedente
 
-- **Trasvase:** Desazolve minitramos (rub. 2); confirmar puntos GPS terminados. Volqueta(s): tickets V₂ por abscisa; placa y botadero en cada viaje. Tractor D7G + moto 120G: tendido material (rub. 4) en tramos cerrados. Vélez: libro de obra, evidencias, cuadro avance vs 60,13 % acumulado.
-- **San Antonio:** Desazolve mayores (rub. 6) según acceso; coordinación con Amén. Desalojo rub. 7 y tendido rub. 8 en mismo ciclo que Trasvase.
-- **Severino:** Pruebas eléctricas iniciales (rub. 9) si aceite/condiciones lo permiten. Muestreo aceite (rub. 10–11) según ventanas del laboratorio.
-- **Transversal:** Reporte diario CGE (conciliación V₁/V₂/V₃). Revisión consolidado maquinaria planilla vs horómetros. Evaluar flota volqueta: ¿suficiente 1 unidad? Ajustar arrendamiento.
+- **Trasvase:** Desazolve y reconformación de taludes in situ (rub. 2); cerrar minitramos GPS. Registrar en libro de obra fotos de muro reconformado antes de considerar excedente. Volqueta: ticket V₂ únicamente por m³ que salen del frente a botadero. Tractor/motoniveladora según tramo (rub. 4) cuando corresponda al presupuesto. Vélez: cuadro avance vs 60,13 % y balance material por tramo.
+- **San Antonio:** Desazolve mayores + reconformación (rub. 6); desalojo rub. 7 solo excedente.
+- **Severino:** Pruebas eléctricas iniciales (rub. 9) si condiciones lo permiten. Muestreo aceite (rub. 10–11) según ventanas del laboratorio.
+- **Transversal:** Reporte diario CGE: V₁ vs V₂ con nota de reconformación (V₂ << V₁ OK). Consolidado maquinaria planilla vs horómetros.
 
 #### Día 10 — 2026-11-04 (mié) · Planilla 1
 
-**Foco:** Ritmo de producción + cadena desazolve → desalojo → tendido
+**Foco:** Producción: excavación + reconformación de muros; desalojo solo excedente
 
-- **Trasvase:** Desazolve minitramos (rub. 2); confirmar puntos GPS terminados. Volqueta(s): tickets V₂ por abscisa; placa y botadero en cada viaje. Tractor D7G + moto 120G: tendido material (rub. 4) en tramos cerrados. Vélez: libro de obra, evidencias, cuadro avance vs 60,13 % acumulado.
-- **San Antonio:** Desazolve mayores (rub. 6) según acceso; coordinación con Amén. Desalojo rub. 7 y tendido rub. 8 en mismo ciclo que Trasvase.
-- **Severino:** Pruebas eléctricas iniciales (rub. 9) si aceite/condiciones lo permiten. Muestreo aceite (rub. 10–11) según ventanas del laboratorio.
-- **Transversal:** Reporte diario CGE (conciliación V₁/V₂/V₃). Revisión consolidado maquinaria planilla vs horómetros. Evaluar flota volqueta: ¿suficiente 1 unidad? Ajustar arrendamiento.
+- **Trasvase:** Desazolve y reconformación de taludes in situ (rub. 2); cerrar minitramos GPS. Registrar en libro de obra fotos de muro reconformado antes de considerar excedente. Volqueta: ticket V₂ únicamente por m³ que salen del frente a botadero. Tractor/motoniveladora según tramo (rub. 4) cuando corresponda al presupuesto. Vélez: cuadro avance vs 60,13 % y balance material por tramo.
+- **San Antonio:** Desazolve mayores + reconformación (rub. 6); desalojo rub. 7 solo excedente.
+- **Severino:** Pruebas eléctricas iniciales (rub. 9) si condiciones lo permiten. Muestreo aceite (rub. 10–11) según ventanas del laboratorio.
+- **Transversal:** Reporte diario CGE: V₁ vs V₂ con nota de reconformación (V₂ << V₁ OK). Consolidado maquinaria planilla vs horómetros.
 
 #### Día 11 — 2026-11-05 (jue) · Planilla 1
 
-**Foco:** Pico Planilla 1 — sostenibilidad logística
+**Foco:** Pico Planilla 1 — sostener balance material
 
-- **Trasvase:** Secuenciar 2 excavadoras en tramos no solapados (evitar doble jornada GPS). Programar refuerzo volqueta si V₂ < V₁ (triangulación antiglosa). Topografía Chancay: control cubicación y replanteo continuo.
-- **San Antonio:** Avance mayores donde replanteo lo habilite; fotos y minitramos.
-- **Severino:** Termovacío/filtrado aceite (rub. 12) ventana según cronograma Severino. Apertura tapa transformador (rub. 13) solo con prerequisitos cumplidos.
-- **Transversal:** Salva-plazos si paralización/lluvia (registro eventos). Preparar medición rubros planilla 1 (requerimiento de pago).
+- **Trasvase:** Secuenciar 2 excavadoras; priorizar reconformación antes de sacar material. Refuerzo volqueta solo si cola de excedente supera 1 unidad (turnos o 2.ª placa). Topografía Chancay: cubicación V₁ y estimado % excedente por tramo.
+- **San Antonio:** Avance mayores; mismo criterio excedente vs muro.
+- **Severino:** Termovacío/filtrado aceite (rub. 12) según cronograma Severino. Apertura tapa (rub. 13) con prerequisitos cumplidos.
+- **Transversal:** Salva-plazos si paralización/lluvia. Preparar medición: rub. 2/6 por avance; rub. 3/7 por tickets acumulados.
 
 #### Día 12 — 2026-11-06 (vie) · Planilla 1
 
-**Foco:** Pico Planilla 1 — sostenibilidad logística
+**Foco:** Pico Planilla 1 — sostener balance material
 
-- **Trasvase:** Secuenciar 2 excavadoras en tramos no solapados (evitar doble jornada GPS). Programar refuerzo volqueta si V₂ < V₁ (triangulación antiglosa). Topografía Chancay: control cubicación y replanteo continuo.
-- **San Antonio:** Avance mayores donde replanteo lo habilite; fotos y minitramos.
-- **Severino:** Termovacío/filtrado aceite (rub. 12) ventana según cronograma Severino. Apertura tapa transformador (rub. 13) solo con prerequisitos cumplidos.
-- **Transversal:** Salva-plazos si paralización/lluvia (registro eventos). Preparar medición rubros planilla 1 (requerimiento de pago).
+- **Trasvase:** Secuenciar 2 excavadoras; priorizar reconformación antes de sacar material. Refuerzo volqueta solo si cola de excedente supera 1 unidad (turnos o 2.ª placa). Topografía Chancay: cubicación V₁ y estimado % excedente por tramo.
+- **San Antonio:** Avance mayores; mismo criterio excedente vs muro.
+- **Severino:** Termovacío/filtrado aceite (rub. 12) según cronograma Severino. Apertura tapa (rub. 13) con prerequisitos cumplidos.
+- **Transversal:** Salva-plazos si paralización/lluvia. Preparar medición: rub. 2/6 por avance; rub. 3/7 por tickets acumulados.
 
 #### Día 13 — 2026-11-07 (sáb) · Planilla 1
 
-**Foco:** Pico Planilla 1 — sostenibilidad logística
+**Foco:** Pico Planilla 1 — sostener balance material
 
-- **Trasvase:** Secuenciar 2 excavadoras en tramos no solapados (evitar doble jornada GPS). Programar refuerzo volqueta si V₂ < V₁ (triangulación antiglosa). Topografía Chancay: control cubicación y replanteo continuo.
-- **San Antonio:** Avance mayores donde replanteo lo habilite; fotos y minitramos.
-- **Severino:** Termovacío/filtrado aceite (rub. 12) ventana según cronograma Severino. Apertura tapa transformador (rub. 13) solo con prerequisitos cumplidos.
-- **Transversal:** Salva-plazos si paralización/lluvia (registro eventos). Preparar medición rubros planilla 1 (requerimiento de pago).
+- **Trasvase:** Secuenciar 2 excavadoras; priorizar reconformación antes de sacar material. Refuerzo volqueta solo si cola de excedente supera 1 unidad (turnos o 2.ª placa). Topografía Chancay: cubicación V₁ y estimado % excedente por tramo.
+- **San Antonio:** Avance mayores; mismo criterio excedente vs muro.
+- **Severino:** Termovacío/filtrado aceite (rub. 12) según cronograma Severino. Apertura tapa (rub. 13) con prerequisitos cumplidos.
+- **Transversal:** Salva-plazos si paralización/lluvia. Preparar medición: rub. 2/6 por avance; rub. 3/7 por tickets acumulados.
 
 #### Día 14 — 2026-11-08 (dom) · Planilla 1
 
-**Foco:** Pico Planilla 1 — sostenibilidad logística
+**Foco:** Pico Planilla 1 — sostener balance material
 
-- **Trasvase:** Secuenciar 2 excavadoras en tramos no solapados (evitar doble jornada GPS). Programar refuerzo volqueta si V₂ < V₁ (triangulación antiglosa). Topografía Chancay: control cubicación y replanteo continuo.
-- **San Antonio:** Avance mayores donde replanteo lo habilite; fotos y minitramos.
-- **Severino:** Termovacío/filtrado aceite (rub. 12) ventana según cronograma Severino. Apertura tapa transformador (rub. 13) solo con prerequisitos cumplidos.
-- **Transversal:** Salva-plazos si paralización/lluvia (registro eventos). Preparar medición rubros planilla 1 (requerimiento de pago).
+- **Trasvase:** Secuenciar 2 excavadoras; priorizar reconformación antes de sacar material. Refuerzo volqueta solo si cola de excedente supera 1 unidad (turnos o 2.ª placa). Topografía Chancay: cubicación V₁ y estimado % excedente por tramo.
+- **San Antonio:** Avance mayores; mismo criterio excedente vs muro.
+- **Severino:** Termovacío/filtrado aceite (rub. 12) según cronograma Severino. Apertura tapa (rub. 13) con prerequisitos cumplidos.
+- **Transversal:** Salva-plazos si paralización/lluvia. Preparar medición: rub. 2/6 por avance; rub. 3/7 por tickets acumulados.
 
 
-### Semana 3 (días 15–21)
+### Semana 3
 
 #### Día 15 — 2026-11-09 (lun) · Planilla 1
 
-**Foco:** Pico Planilla 1 — sostenibilidad logística
+**Foco:** Pico Planilla 1 — sostener balance material
 
-- **Trasvase:** Secuenciar 2 excavadoras en tramos no solapados (evitar doble jornada GPS). Programar refuerzo volqueta si V₂ < V₁ (triangulación antiglosa). Topografía Chancay: control cubicación y replanteo continuo.
-- **San Antonio:** Avance mayores donde replanteo lo habilite; fotos y minitramos.
-- **Severino:** Termovacío/filtrado aceite (rub. 12) ventana según cronograma Severino. Apertura tapa transformador (rub. 13) solo con prerequisitos cumplidos.
-- **Transversal:** Salva-plazos si paralización/lluvia (registro eventos). Preparar medición rubros planilla 1 (requerimiento de pago).
+- **Trasvase:** Secuenciar 2 excavadoras; priorizar reconformación antes de sacar material. Refuerzo volqueta solo si cola de excedente supera 1 unidad (turnos o 2.ª placa). Topografía Chancay: cubicación V₁ y estimado % excedente por tramo.
+- **San Antonio:** Avance mayores; mismo criterio excedente vs muro.
+- **Severino:** Termovacío/filtrado aceite (rub. 12) según cronograma Severino. Apertura tapa (rub. 13) con prerequisitos cumplidos.
+- **Transversal:** Salva-plazos si paralización/lluvia. Preparar medición: rub. 2/6 por avance; rub. 3/7 por tickets acumulados.
 
 #### Día 16 — 2026-11-10 (mar) · Planilla 1
 
-**Foco:** Pico Planilla 1 — sostenibilidad logística
+**Foco:** Pico Planilla 1 — sostener balance material
 
-- **Trasvase:** Secuenciar 2 excavadoras en tramos no solapados (evitar doble jornada GPS). Programar refuerzo volqueta si V₂ < V₁ (triangulación antiglosa). Topografía Chancay: control cubicación y replanteo continuo.
-- **San Antonio:** Avance mayores donde replanteo lo habilite; fotos y minitramos.
-- **Severino:** Termovacío/filtrado aceite (rub. 12) ventana según cronograma Severino. Apertura tapa transformador (rub. 13) solo con prerequisitos cumplidos.
-- **Transversal:** Salva-plazos si paralización/lluvia (registro eventos). Preparar medición rubros planilla 1 (requerimiento de pago).
+- **Trasvase:** Secuenciar 2 excavadoras; priorizar reconformación antes de sacar material. Refuerzo volqueta solo si cola de excedente supera 1 unidad (turnos o 2.ª placa). Topografía Chancay: cubicación V₁ y estimado % excedente por tramo.
+- **San Antonio:** Avance mayores; mismo criterio excedente vs muro.
+- **Severino:** Termovacío/filtrado aceite (rub. 12) según cronograma Severino. Apertura tapa (rub. 13) con prerequisitos cumplidos.
+- **Transversal:** Salva-plazos si paralización/lluvia. Preparar medición: rub. 2/6 por avance; rub. 3/7 por tickets acumulados.
 
 #### Día 17 — 2026-11-11 (mié) · Planilla 1
 
-**Foco:** Pico Planilla 1 — sostenibilidad logística
+**Foco:** Pico Planilla 1 — sostener balance material
 
-- **Trasvase:** Secuenciar 2 excavadoras en tramos no solapados (evitar doble jornada GPS). Programar refuerzo volqueta si V₂ < V₁ (triangulación antiglosa). Topografía Chancay: control cubicación y replanteo continuo.
-- **San Antonio:** Avance mayores donde replanteo lo habilite; fotos y minitramos.
-- **Severino:** Termovacío/filtrado aceite (rub. 12) ventana según cronograma Severino. Apertura tapa transformador (rub. 13) solo con prerequisitos cumplidos.
-- **Transversal:** Salva-plazos si paralización/lluvia (registro eventos). Preparar medición rubros planilla 1 (requerimiento de pago).
+- **Trasvase:** Secuenciar 2 excavadoras; priorizar reconformación antes de sacar material. Refuerzo volqueta solo si cola de excedente supera 1 unidad (turnos o 2.ª placa). Topografía Chancay: cubicación V₁ y estimado % excedente por tramo.
+- **San Antonio:** Avance mayores; mismo criterio excedente vs muro.
+- **Severino:** Termovacío/filtrado aceite (rub. 12) según cronograma Severino. Apertura tapa (rub. 13) con prerequisitos cumplidos.
+- **Transversal:** Salva-plazos si paralización/lluvia. Preparar medición: rub. 2/6 por avance; rub. 3/7 por tickets acumulados.
 
 #### Día 18 — 2026-11-12 (jue) · Planilla 1
 
-**Foco:** Pico Planilla 1 — sostenibilidad logística
+**Foco:** Pico Planilla 1 — sostener balance material
 
-- **Trasvase:** Secuenciar 2 excavadoras en tramos no solapados (evitar doble jornada GPS). Programar refuerzo volqueta si V₂ < V₁ (triangulación antiglosa). Topografía Chancay: control cubicación y replanteo continuo.
-- **San Antonio:** Avance mayores donde replanteo lo habilite; fotos y minitramos.
-- **Severino:** Termovacío/filtrado aceite (rub. 12) ventana según cronograma Severino. Apertura tapa transformador (rub. 13) solo con prerequisitos cumplidos.
-- **Transversal:** Salva-plazos si paralización/lluvia (registro eventos). Preparar medición rubros planilla 1 (requerimiento de pago).
+- **Trasvase:** Secuenciar 2 excavadoras; priorizar reconformación antes de sacar material. Refuerzo volqueta solo si cola de excedente supera 1 unidad (turnos o 2.ª placa). Topografía Chancay: cubicación V₁ y estimado % excedente por tramo.
+- **San Antonio:** Avance mayores; mismo criterio excedente vs muro.
+- **Severino:** Termovacío/filtrado aceite (rub. 12) según cronograma Severino. Apertura tapa (rub. 13) con prerequisitos cumplidos.
+- **Transversal:** Salva-plazos si paralización/lluvia. Preparar medición: rub. 2/6 por avance; rub. 3/7 por tickets acumulados.
 
 #### Día 19 — 2026-11-13 (vie) · Planilla 1
 
-**Foco:** Pico Planilla 1 — sostenibilidad logística
+**Foco:** Pico Planilla 1 — sostener balance material
 
-- **Trasvase:** Secuenciar 2 excavadoras en tramos no solapados (evitar doble jornada GPS). Programar refuerzo volqueta si V₂ < V₁ (triangulación antiglosa). Topografía Chancay: control cubicación y replanteo continuo.
-- **San Antonio:** Avance mayores donde replanteo lo habilite; fotos y minitramos.
-- **Severino:** Termovacío/filtrado aceite (rub. 12) ventana según cronograma Severino. Apertura tapa transformador (rub. 13) solo con prerequisitos cumplidos.
-- **Transversal:** Salva-plazos si paralización/lluvia (registro eventos). Preparar medición rubros planilla 1 (requerimiento de pago).
+- **Trasvase:** Secuenciar 2 excavadoras; priorizar reconformación antes de sacar material. Refuerzo volqueta solo si cola de excedente supera 1 unidad (turnos o 2.ª placa). Topografía Chancay: cubicación V₁ y estimado % excedente por tramo.
+- **San Antonio:** Avance mayores; mismo criterio excedente vs muro.
+- **Severino:** Termovacío/filtrado aceite (rub. 12) según cronograma Severino. Apertura tapa (rub. 13) con prerequisitos cumplidos.
+- **Transversal:** Salva-plazos si paralización/lluvia. Preparar medición: rub. 2/6 por avance; rub. 3/7 por tickets acumulados.
 
 #### Día 20 — 2026-11-14 (sáb) · Planilla 1
 
-**Foco:** Pico Planilla 1 — sostenibilidad logística
+**Foco:** Pico Planilla 1 — sostener balance material
 
-- **Trasvase:** Secuenciar 2 excavadoras en tramos no solapados (evitar doble jornada GPS). Programar refuerzo volqueta si V₂ < V₁ (triangulación antiglosa). Topografía Chancay: control cubicación y replanteo continuo.
-- **San Antonio:** Avance mayores donde replanteo lo habilite; fotos y minitramos.
-- **Severino:** Termovacío/filtrado aceite (rub. 12) ventana según cronograma Severino. Apertura tapa transformador (rub. 13) solo con prerequisitos cumplidos.
-- **Transversal:** Salva-plazos si paralización/lluvia (registro eventos). Preparar medición rubros planilla 1 (requerimiento de pago).
+- **Trasvase:** Secuenciar 2 excavadoras; priorizar reconformación antes de sacar material. Refuerzo volqueta solo si cola de excedente supera 1 unidad (turnos o 2.ª placa). Topografía Chancay: cubicación V₁ y estimado % excedente por tramo.
+- **San Antonio:** Avance mayores; mismo criterio excedente vs muro.
+- **Severino:** Termovacío/filtrado aceite (rub. 12) según cronograma Severino. Apertura tapa (rub. 13) con prerequisitos cumplidos.
+- **Transversal:** Salva-plazos si paralización/lluvia. Preparar medición: rub. 2/6 por avance; rub. 3/7 por tickets acumulados.
 
 #### Día 21 — 2026-11-15 (dom) · Planilla 1
 
 **Foco:** Cierre Planilla 1 (meta 60,13 % acumulado)
 
-- **Trasvase:** Cerrar minitramos abiertos; no dejar tramos en ejecución sin evidencia. Conciliación final V₁/V₂/V₃ del periodo 26-oct – 24-nov.
-- **San Antonio:** Cierre físico parcial al % objetivo; respaldo fotográfico.
-- **Severino:** Avance rubros 9–15 según secuencia Severino; no mezclar con cierre civil.
-- **Transversal:** Memorando presentación planilla 1 + paquete documental. Revisión equipo mínimo vs informe consolidado maquinaria.
+- **Trasvase:** Cerrar minitramos; evidencia de reconformación + tickets de excedente. Conciliación V₁/V₂/V₃ con acta de balance material del periodo.
+- **San Antonio:** Cierre parcial al % objetivo.
+- **Severino:** Avance rubros 9–15.
+- **Transversal:** Memorando planilla 1 + paquete documental. Informe consolidado maquinaria.
 
 
-### Semana 4 (días 22–28)
+### Semana 4
 
 #### Día 22 — 2026-11-16 (lun) · Planilla 1
 
 **Foco:** Cierre Planilla 1 (meta 60,13 % acumulado)
 
-- **Trasvase:** Cerrar minitramos abiertos; no dejar tramos en ejecución sin evidencia. Conciliación final V₁/V₂/V₃ del periodo 26-oct – 24-nov.
-- **San Antonio:** Cierre físico parcial al % objetivo; respaldo fotográfico.
-- **Severino:** Avance rubros 9–15 según secuencia Severino; no mezclar con cierre civil.
-- **Transversal:** Memorando presentación planilla 1 + paquete documental. Revisión equipo mínimo vs informe consolidado maquinaria.
+- **Trasvase:** Cerrar minitramos; evidencia de reconformación + tickets de excedente. Conciliación V₁/V₂/V₃ con acta de balance material del periodo.
+- **San Antonio:** Cierre parcial al % objetivo.
+- **Severino:** Avance rubros 9–15.
+- **Transversal:** Memorando planilla 1 + paquete documental. Informe consolidado maquinaria.
 
 #### Día 23 — 2026-11-17 (mar) · Planilla 1
 
 **Foco:** Cierre Planilla 1 (meta 60,13 % acumulado)
 
-- **Trasvase:** Cerrar minitramos abiertos; no dejar tramos en ejecución sin evidencia. Conciliación final V₁/V₂/V₃ del periodo 26-oct – 24-nov.
-- **San Antonio:** Cierre físico parcial al % objetivo; respaldo fotográfico.
-- **Severino:** Avance rubros 9–15 según secuencia Severino; no mezclar con cierre civil.
-- **Transversal:** Memorando presentación planilla 1 + paquete documental. Revisión equipo mínimo vs informe consolidado maquinaria.
+- **Trasvase:** Cerrar minitramos; evidencia de reconformación + tickets de excedente. Conciliación V₁/V₂/V₃ con acta de balance material del periodo.
+- **San Antonio:** Cierre parcial al % objetivo.
+- **Severino:** Avance rubros 9–15.
+- **Transversal:** Memorando planilla 1 + paquete documental. Informe consolidado maquinaria.
 
 #### Día 24 — 2026-11-18 (mié) · Planilla 1
 
 **Foco:** Cierre Planilla 1 (meta 60,13 % acumulado)
 
-- **Trasvase:** Cerrar minitramos abiertos; no dejar tramos en ejecución sin evidencia. Conciliación final V₁/V₂/V₃ del periodo 26-oct – 24-nov.
-- **San Antonio:** Cierre físico parcial al % objetivo; respaldo fotográfico.
-- **Severino:** Avance rubros 9–15 según secuencia Severino; no mezclar con cierre civil.
-- **Transversal:** Memorando presentación planilla 1 + paquete documental. Revisión equipo mínimo vs informe consolidado maquinaria.
+- **Trasvase:** Cerrar minitramos; evidencia de reconformación + tickets de excedente. Conciliación V₁/V₂/V₃ con acta de balance material del periodo.
+- **San Antonio:** Cierre parcial al % objetivo.
+- **Severino:** Avance rubros 9–15.
+- **Transversal:** Memorando planilla 1 + paquete documental. Informe consolidado maquinaria.
 
 #### Día 25 — 2026-11-19 (jue) · Planilla 1
 
 **Foco:** Cierre Planilla 1 (meta 60,13 % acumulado)
 
-- **Trasvase:** Cerrar minitramos abiertos; no dejar tramos en ejecución sin evidencia. Conciliación final V₁/V₂/V₃ del periodo 26-oct – 24-nov.
-- **San Antonio:** Cierre físico parcial al % objetivo; respaldo fotográfico.
-- **Severino:** Avance rubros 9–15 según secuencia Severino; no mezclar con cierre civil.
-- **Transversal:** Memorando presentación planilla 1 + paquete documental. Revisión equipo mínimo vs informe consolidado maquinaria.
+- **Trasvase:** Cerrar minitramos; evidencia de reconformación + tickets de excedente. Conciliación V₁/V₂/V₃ con acta de balance material del periodo.
+- **San Antonio:** Cierre parcial al % objetivo.
+- **Severino:** Avance rubros 9–15.
+- **Transversal:** Memorando planilla 1 + paquete documental. Informe consolidado maquinaria.
 
 #### Día 26 — 2026-11-20 (vie) · Planilla 1
 
 **Foco:** Cierre Planilla 1 (meta 60,13 % acumulado)
 
-- **Trasvase:** Cerrar minitramos abiertos; no dejar tramos en ejecución sin evidencia. Conciliación final V₁/V₂/V₃ del periodo 26-oct – 24-nov.
-- **San Antonio:** Cierre físico parcial al % objetivo; respaldo fotográfico.
-- **Severino:** Avance rubros 9–15 según secuencia Severino; no mezclar con cierre civil.
-- **Transversal:** Memorando presentación planilla 1 + paquete documental. Revisión equipo mínimo vs informe consolidado maquinaria.
+- **Trasvase:** Cerrar minitramos; evidencia de reconformación + tickets de excedente. Conciliación V₁/V₂/V₃ con acta de balance material del periodo.
+- **San Antonio:** Cierre parcial al % objetivo.
+- **Severino:** Avance rubros 9–15.
+- **Transversal:** Memorando planilla 1 + paquete documental. Informe consolidado maquinaria.
 
 #### Día 27 — 2026-11-21 (sáb) · Planilla 1
 
 **Foco:** Cierre Planilla 1 (meta 60,13 % acumulado)
 
-- **Trasvase:** Cerrar minitramos abiertos; no dejar tramos en ejecución sin evidencia. Conciliación final V₁/V₂/V₃ del periodo 26-oct – 24-nov.
-- **San Antonio:** Cierre físico parcial al % objetivo; respaldo fotográfico.
-- **Severino:** Avance rubros 9–15 según secuencia Severino; no mezclar con cierre civil.
-- **Transversal:** Memorando presentación planilla 1 + paquete documental. Revisión equipo mínimo vs informe consolidado maquinaria.
+- **Trasvase:** Cerrar minitramos; evidencia de reconformación + tickets de excedente. Conciliación V₁/V₂/V₃ con acta de balance material del periodo.
+- **San Antonio:** Cierre parcial al % objetivo.
+- **Severino:** Avance rubros 9–15.
+- **Transversal:** Memorando planilla 1 + paquete documental. Informe consolidado maquinaria.
 
 #### Día 28 — 2026-11-22 (dom) · Planilla 1
 
 **Foco:** Cierre Planilla 1 (meta 60,13 % acumulado)
 
-- **Trasvase:** Cerrar minitramos abiertos; no dejar tramos en ejecución sin evidencia. Conciliación final V₁/V₂/V₃ del periodo 26-oct – 24-nov.
-- **San Antonio:** Cierre físico parcial al % objetivo; respaldo fotográfico.
-- **Severino:** Avance rubros 9–15 según secuencia Severino; no mezclar con cierre civil.
-- **Transversal:** Memorando presentación planilla 1 + paquete documental. Revisión equipo mínimo vs informe consolidado maquinaria.
+- **Trasvase:** Cerrar minitramos; evidencia de reconformación + tickets de excedente. Conciliación V₁/V₂/V₃ con acta de balance material del periodo.
+- **San Antonio:** Cierre parcial al % objetivo.
+- **Severino:** Avance rubros 9–15.
+- **Transversal:** Memorando planilla 1 + paquete documental. Informe consolidado maquinaria.
 
 
-### Semana 5 (días 29–35)
+### Semana 5
 
 #### Día 29 — 2026-11-23 (lun) · Planilla 1
 
 **Foco:** Cierre Planilla 1 (meta 60,13 % acumulado)
 
-- **Trasvase:** Cerrar minitramos abiertos; no dejar tramos en ejecución sin evidencia. Conciliación final V₁/V₂/V₃ del periodo 26-oct – 24-nov.
-- **San Antonio:** Cierre físico parcial al % objetivo; respaldo fotográfico.
-- **Severino:** Avance rubros 9–15 según secuencia Severino; no mezclar con cierre civil.
-- **Transversal:** Memorando presentación planilla 1 + paquete documental. Revisión equipo mínimo vs informe consolidado maquinaria.
+- **Trasvase:** Cerrar minitramos; evidencia de reconformación + tickets de excedente. Conciliación V₁/V₂/V₃ con acta de balance material del periodo.
+- **San Antonio:** Cierre parcial al % objetivo.
+- **Severino:** Avance rubros 9–15.
+- **Transversal:** Memorando planilla 1 + paquete documental. Informe consolidado maquinaria.
 
 #### Día 30 — 2026-11-24 (mar) · Planilla 1
 
 **Foco:** Cierre Planilla 1 (meta 60,13 % acumulado)
 
-- **Trasvase:** Cerrar minitramos abiertos; no dejar tramos en ejecución sin evidencia. Conciliación final V₁/V₂/V₃ del periodo 26-oct – 24-nov.
-- **San Antonio:** Cierre físico parcial al % objetivo; respaldo fotográfico.
-- **Severino:** Avance rubros 9–15 según secuencia Severino; no mezclar con cierre civil.
-- **Transversal:** Memorando presentación planilla 1 + paquete documental. Revisión equipo mínimo vs informe consolidado maquinaria.
+- **Trasvase:** Cerrar minitramos; evidencia de reconformación + tickets de excedente. Conciliación V₁/V₂/V₃ con acta de balance material del periodo.
+- **San Antonio:** Cierre parcial al % objetivo.
+- **Severino:** Avance rubros 9–15.
+- **Transversal:** Memorando planilla 1 + paquete documental. Informe consolidado maquinaria.
 
 #### Día 31 — 2026-11-25 (mié) · Planilla 2
 
-**Foco:** Planilla 2 — remate Trasvase/San Antonio
+**Foco:** Planilla 2 — remate civil
 
-- **Trasvase:** Desazolve y desalojo rubros 2–4 hasta 100 % acumulado contractual. Remate tramos rezagados; auditoría volumétrica continua.
-- **San Antonio:** Cierre rubros 6–8; coordinación replanteo final (rub. 5).
-- **Severino:** Inspección interna, ajustes, pruebas finales (rub. 14–17). Grúa/planta termovacío si aplica ET (verificar arrendamientos pendientes).
-- **Transversal:** Actualizar cronograma mapa (semana_programada por tramo). Control plazo: días restantes vs saldo físico.
+- **Trasvase:** Remate desazolve/reconformación y excedente a botadero (rub. 2–4). Auditoría volumétrica con criterio reconformación.
+- **San Antonio:** Cierre rubros 6–8.
+- **Severino:** Inspección interna, pruebas finales (rub. 14–17).
+- **Transversal:** Cronograma mapa; control plazo vs saldo.
 
 #### Día 32 — 2026-11-26 (jue) · Planilla 2
 
-**Foco:** Planilla 2 — remate Trasvase/San Antonio
+**Foco:** Planilla 2 — remate civil
 
-- **Trasvase:** Desazolve y desalojo rubros 2–4 hasta 100 % acumulado contractual. Remate tramos rezagados; auditoría volumétrica continua.
-- **San Antonio:** Cierre rubros 6–8; coordinación replanteo final (rub. 5).
-- **Severino:** Inspección interna, ajustes, pruebas finales (rub. 14–17). Grúa/planta termovacío si aplica ET (verificar arrendamientos pendientes).
-- **Transversal:** Actualizar cronograma mapa (semana_programada por tramo). Control plazo: días restantes vs saldo físico.
+- **Trasvase:** Remate desazolve/reconformación y excedente a botadero (rub. 2–4). Auditoría volumétrica con criterio reconformación.
+- **San Antonio:** Cierre rubros 6–8.
+- **Severino:** Inspección interna, pruebas finales (rub. 14–17).
+- **Transversal:** Cronograma mapa; control plazo vs saldo.
 
 #### Día 33 — 2026-11-27 (vie) · Planilla 2
 
-**Foco:** Planilla 2 — remate Trasvase/San Antonio
+**Foco:** Planilla 2 — remate civil
 
-- **Trasvase:** Desazolve y desalojo rubros 2–4 hasta 100 % acumulado contractual. Remate tramos rezagados; auditoría volumétrica continua.
-- **San Antonio:** Cierre rubros 6–8; coordinación replanteo final (rub. 5).
-- **Severino:** Inspección interna, ajustes, pruebas finales (rub. 14–17). Grúa/planta termovacío si aplica ET (verificar arrendamientos pendientes).
-- **Transversal:** Actualizar cronograma mapa (semana_programada por tramo). Control plazo: días restantes vs saldo físico.
+- **Trasvase:** Remate desazolve/reconformación y excedente a botadero (rub. 2–4). Auditoría volumétrica con criterio reconformación.
+- **San Antonio:** Cierre rubros 6–8.
+- **Severino:** Inspección interna, pruebas finales (rub. 14–17).
+- **Transversal:** Cronograma mapa; control plazo vs saldo.
 
 #### Día 34 — 2026-11-28 (sáb) · Planilla 2
 
-**Foco:** Planilla 2 — remate Trasvase/San Antonio
+**Foco:** Planilla 2 — remate civil
 
-- **Trasvase:** Desazolve y desalojo rubros 2–4 hasta 100 % acumulado contractual. Remate tramos rezagados; auditoría volumétrica continua.
-- **San Antonio:** Cierre rubros 6–8; coordinación replanteo final (rub. 5).
-- **Severino:** Inspección interna, ajustes, pruebas finales (rub. 14–17). Grúa/planta termovacío si aplica ET (verificar arrendamientos pendientes).
-- **Transversal:** Actualizar cronograma mapa (semana_programada por tramo). Control plazo: días restantes vs saldo físico.
+- **Trasvase:** Remate desazolve/reconformación y excedente a botadero (rub. 2–4). Auditoría volumétrica con criterio reconformación.
+- **San Antonio:** Cierre rubros 6–8.
+- **Severino:** Inspección interna, pruebas finales (rub. 14–17).
+- **Transversal:** Cronograma mapa; control plazo vs saldo.
 
 #### Día 35 — 2026-11-29 (dom) · Planilla 2
 
-**Foco:** Planilla 2 — remate Trasvase/San Antonio
+**Foco:** Planilla 2 — remate civil
 
-- **Trasvase:** Desazolve y desalojo rubros 2–4 hasta 100 % acumulado contractual. Remate tramos rezagados; auditoría volumétrica continua.
-- **San Antonio:** Cierre rubros 6–8; coordinación replanteo final (rub. 5).
-- **Severino:** Inspección interna, ajustes, pruebas finales (rub. 14–17). Grúa/planta termovacío si aplica ET (verificar arrendamientos pendientes).
-- **Transversal:** Actualizar cronograma mapa (semana_programada por tramo). Control plazo: días restantes vs saldo físico.
+- **Trasvase:** Remate desazolve/reconformación y excedente a botadero (rub. 2–4). Auditoría volumétrica con criterio reconformación.
+- **San Antonio:** Cierre rubros 6–8.
+- **Severino:** Inspección interna, pruebas finales (rub. 14–17).
+- **Transversal:** Cronograma mapa; control plazo vs saldo.
 
 
-### Semana 6 (días 36–42)
+### Semana 6
 
 #### Día 36 — 2026-11-30 (lun) · Planilla 2
 
-**Foco:** Planilla 2 — remate Trasvase/San Antonio
+**Foco:** Planilla 2 — remate civil
 
-- **Trasvase:** Desazolve y desalojo rubros 2–4 hasta 100 % acumulado contractual. Remate tramos rezagados; auditoría volumétrica continua.
-- **San Antonio:** Cierre rubros 6–8; coordinación replanteo final (rub. 5).
-- **Severino:** Inspección interna, ajustes, pruebas finales (rub. 14–17). Grúa/planta termovacío si aplica ET (verificar arrendamientos pendientes).
-- **Transversal:** Actualizar cronograma mapa (semana_programada por tramo). Control plazo: días restantes vs saldo físico.
+- **Trasvase:** Remate desazolve/reconformación y excedente a botadero (rub. 2–4). Auditoría volumétrica con criterio reconformación.
+- **San Antonio:** Cierre rubros 6–8.
+- **Severino:** Inspección interna, pruebas finales (rub. 14–17).
+- **Transversal:** Cronograma mapa; control plazo vs saldo.
 
 #### Día 37 — 2026-12-01 (mar) · Planilla 2
 
-**Foco:** Planilla 2 — remate Trasvase/San Antonio
+**Foco:** Planilla 2 — remate civil
 
-- **Trasvase:** Desazolve y desalojo rubros 2–4 hasta 100 % acumulado contractual. Remate tramos rezagados; auditoría volumétrica continua.
-- **San Antonio:** Cierre rubros 6–8; coordinación replanteo final (rub. 5).
-- **Severino:** Inspección interna, ajustes, pruebas finales (rub. 14–17). Grúa/planta termovacío si aplica ET (verificar arrendamientos pendientes).
-- **Transversal:** Actualizar cronograma mapa (semana_programada por tramo). Control plazo: días restantes vs saldo físico.
+- **Trasvase:** Remate desazolve/reconformación y excedente a botadero (rub. 2–4). Auditoría volumétrica con criterio reconformación.
+- **San Antonio:** Cierre rubros 6–8.
+- **Severino:** Inspección interna, pruebas finales (rub. 14–17).
+- **Transversal:** Cronograma mapa; control plazo vs saldo.
 
 #### Día 38 — 2026-12-02 (mié) · Planilla 2
 
-**Foco:** Planilla 2 — remate Trasvase/San Antonio
+**Foco:** Planilla 2 — remate civil
 
-- **Trasvase:** Desazolve y desalojo rubros 2–4 hasta 100 % acumulado contractual. Remate tramos rezagados; auditoría volumétrica continua.
-- **San Antonio:** Cierre rubros 6–8; coordinación replanteo final (rub. 5).
-- **Severino:** Inspección interna, ajustes, pruebas finales (rub. 14–17). Grúa/planta termovacío si aplica ET (verificar arrendamientos pendientes).
-- **Transversal:** Actualizar cronograma mapa (semana_programada por tramo). Control plazo: días restantes vs saldo físico.
+- **Trasvase:** Remate desazolve/reconformación y excedente a botadero (rub. 2–4). Auditoría volumétrica con criterio reconformación.
+- **San Antonio:** Cierre rubros 6–8.
+- **Severino:** Inspección interna, pruebas finales (rub. 14–17).
+- **Transversal:** Cronograma mapa; control plazo vs saldo.
 
 #### Día 39 — 2026-12-03 (jue) · Planilla 2
 
-**Foco:** Planilla 2 — remate Trasvase/San Antonio
+**Foco:** Planilla 2 — remate civil
 
-- **Trasvase:** Desazolve y desalojo rubros 2–4 hasta 100 % acumulado contractual. Remate tramos rezagados; auditoría volumétrica continua.
-- **San Antonio:** Cierre rubros 6–8; coordinación replanteo final (rub. 5).
-- **Severino:** Inspección interna, ajustes, pruebas finales (rub. 14–17). Grúa/planta termovacío si aplica ET (verificar arrendamientos pendientes).
-- **Transversal:** Actualizar cronograma mapa (semana_programada por tramo). Control plazo: días restantes vs saldo físico.
+- **Trasvase:** Remate desazolve/reconformación y excedente a botadero (rub. 2–4). Auditoría volumétrica con criterio reconformación.
+- **San Antonio:** Cierre rubros 6–8.
+- **Severino:** Inspección interna, pruebas finales (rub. 14–17).
+- **Transversal:** Cronograma mapa; control plazo vs saldo.
 
 #### Día 40 — 2026-12-04 (vie) · Planilla 2
 
-**Foco:** Planilla 2 — remate Trasvase/San Antonio
+**Foco:** Planilla 2 — remate civil
 
-- **Trasvase:** Desazolve y desalojo rubros 2–4 hasta 100 % acumulado contractual. Remate tramos rezagados; auditoría volumétrica continua.
-- **San Antonio:** Cierre rubros 6–8; coordinación replanteo final (rub. 5).
-- **Severino:** Inspección interna, ajustes, pruebas finales (rub. 14–17). Grúa/planta termovacío si aplica ET (verificar arrendamientos pendientes).
-- **Transversal:** Actualizar cronograma mapa (semana_programada por tramo). Control plazo: días restantes vs saldo físico.
+- **Trasvase:** Remate desazolve/reconformación y excedente a botadero (rub. 2–4). Auditoría volumétrica con criterio reconformación.
+- **San Antonio:** Cierre rubros 6–8.
+- **Severino:** Inspección interna, pruebas finales (rub. 14–17).
+- **Transversal:** Cronograma mapa; control plazo vs saldo.
 
 #### Día 41 — 2026-12-05 (sáb) · Planilla 2
 
-**Foco:** Planilla 2 — remate Trasvase/San Antonio
+**Foco:** Planilla 2 — remate civil
 
-- **Trasvase:** Desazolve y desalojo rubros 2–4 hasta 100 % acumulado contractual. Remate tramos rezagados; auditoría volumétrica continua.
-- **San Antonio:** Cierre rubros 6–8; coordinación replanteo final (rub. 5).
-- **Severino:** Inspección interna, ajustes, pruebas finales (rub. 14–17). Grúa/planta termovacío si aplica ET (verificar arrendamientos pendientes).
-- **Transversal:** Actualizar cronograma mapa (semana_programada por tramo). Control plazo: días restantes vs saldo físico.
+- **Trasvase:** Remate desazolve/reconformación y excedente a botadero (rub. 2–4). Auditoría volumétrica con criterio reconformación.
+- **San Antonio:** Cierre rubros 6–8.
+- **Severino:** Inspección interna, pruebas finales (rub. 14–17).
+- **Transversal:** Cronograma mapa; control plazo vs saldo.
 
 #### Día 42 — 2026-12-06 (dom) · Planilla 2
 
-**Foco:** Planilla 2 — remate Trasvase/San Antonio
+**Foco:** Planilla 2 — remate civil
 
-- **Trasvase:** Desazolve y desalojo rubros 2–4 hasta 100 % acumulado contractual. Remate tramos rezagados; auditoría volumétrica continua.
-- **San Antonio:** Cierre rubros 6–8; coordinación replanteo final (rub. 5).
-- **Severino:** Inspección interna, ajustes, pruebas finales (rub. 14–17). Grúa/planta termovacío si aplica ET (verificar arrendamientos pendientes).
-- **Transversal:** Actualizar cronograma mapa (semana_programada por tramo). Control plazo: días restantes vs saldo físico.
+- **Trasvase:** Remate desazolve/reconformación y excedente a botadero (rub. 2–4). Auditoría volumétrica con criterio reconformación.
+- **San Antonio:** Cierre rubros 6–8.
+- **Severino:** Inspección interna, pruebas finales (rub. 14–17).
+- **Transversal:** Cronograma mapa; control plazo vs saldo.
 
 
-### Semana 7 (días 43–49)
+### Semana 7
 
 #### Día 43 — 2026-12-07 (lun) · Planilla 2
 
-**Foco:** Planilla 2 — remate Trasvase/San Antonio
+**Foco:** Planilla 2 — remate civil
 
-- **Trasvase:** Desazolve y desalojo rubros 2–4 hasta 100 % acumulado contractual. Remate tramos rezagados; auditoría volumétrica continua.
-- **San Antonio:** Cierre rubros 6–8; coordinación replanteo final (rub. 5).
-- **Severino:** Inspección interna, ajustes, pruebas finales (rub. 14–17). Grúa/planta termovacío si aplica ET (verificar arrendamientos pendientes).
-- **Transversal:** Actualizar cronograma mapa (semana_programada por tramo). Control plazo: días restantes vs saldo físico.
+- **Trasvase:** Remate desazolve/reconformación y excedente a botadero (rub. 2–4). Auditoría volumétrica con criterio reconformación.
+- **San Antonio:** Cierre rubros 6–8.
+- **Severino:** Inspección interna, pruebas finales (rub. 14–17).
+- **Transversal:** Cronograma mapa; control plazo vs saldo.
 
 #### Día 44 — 2026-12-08 (mar) · Planilla 2
 
-**Foco:** Planilla 2 — remate Trasvase/San Antonio
+**Foco:** Planilla 2 — remate civil
 
-- **Trasvase:** Desazolve y desalojo rubros 2–4 hasta 100 % acumulado contractual. Remate tramos rezagados; auditoría volumétrica continua.
-- **San Antonio:** Cierre rubros 6–8; coordinación replanteo final (rub. 5).
-- **Severino:** Inspección interna, ajustes, pruebas finales (rub. 14–17). Grúa/planta termovacío si aplica ET (verificar arrendamientos pendientes).
-- **Transversal:** Actualizar cronograma mapa (semana_programada por tramo). Control plazo: días restantes vs saldo físico.
+- **Trasvase:** Remate desazolve/reconformación y excedente a botadero (rub. 2–4). Auditoría volumétrica con criterio reconformación.
+- **San Antonio:** Cierre rubros 6–8.
+- **Severino:** Inspección interna, pruebas finales (rub. 14–17).
+- **Transversal:** Cronograma mapa; control plazo vs saldo.
 
 #### Día 45 — 2026-12-09 (mié) · Planilla 2
 
-**Foco:** Planilla 2 — remate Trasvase/San Antonio
+**Foco:** Planilla 2 — remate civil
 
-- **Trasvase:** Desazolve y desalojo rubros 2–4 hasta 100 % acumulado contractual. Remate tramos rezagados; auditoría volumétrica continua.
-- **San Antonio:** Cierre rubros 6–8; coordinación replanteo final (rub. 5).
-- **Severino:** Inspección interna, ajustes, pruebas finales (rub. 14–17). Grúa/planta termovacío si aplica ET (verificar arrendamientos pendientes).
-- **Transversal:** Actualizar cronograma mapa (semana_programada por tramo). Control plazo: días restantes vs saldo físico.
+- **Trasvase:** Remate desazolve/reconformación y excedente a botadero (rub. 2–4). Auditoría volumétrica con criterio reconformación.
+- **San Antonio:** Cierre rubros 6–8.
+- **Severino:** Inspección interna, pruebas finales (rub. 14–17).
+- **Transversal:** Cronograma mapa; control plazo vs saldo.
 
 #### Día 46 — 2026-12-10 (jue) · Planilla 2
 
 **Foco:** Planilla 2 — cierre contractual (100 %)
 
-- **Trasvase:** Últimos tramos; limpieza y reconformación taludes. Replanteo final rub. 1.
+- **Trasvase:** Últimos tramos; replanteo final rub. 1.
 - **San Antonio:** Remate encauzamiento; replanteo rub. 5.
-- **Severino:** Cierre transformador, pruebas finales rub. 17–18, entrega EPA.
-- **Transversal:** Planilla 2, requerimiento pago final, libro de obra completo. Acta entrega-recepción y archivo EPA.
+- **Severino:** Cierre Severino rub. 17–18.
+- **Transversal:** Planilla 2, acta entrega-recepción.
 
 #### Día 47 — 2026-12-11 (vie) · Planilla 2
 
 **Foco:** Planilla 2 — cierre contractual (100 %)
 
-- **Trasvase:** Últimos tramos; limpieza y reconformación taludes. Replanteo final rub. 1.
+- **Trasvase:** Últimos tramos; replanteo final rub. 1.
 - **San Antonio:** Remate encauzamiento; replanteo rub. 5.
-- **Severino:** Cierre transformador, pruebas finales rub. 17–18, entrega EPA.
-- **Transversal:** Planilla 2, requerimiento pago final, libro de obra completo. Acta entrega-recepción y archivo EPA.
+- **Severino:** Cierre Severino rub. 17–18.
+- **Transversal:** Planilla 2, acta entrega-recepción.
 
 #### Día 48 — 2026-12-12 (sáb) · Planilla 2
 
 **Foco:** Planilla 2 — cierre contractual (100 %)
 
-- **Trasvase:** Últimos tramos; limpieza y reconformación taludes. Replanteo final rub. 1.
+- **Trasvase:** Últimos tramos; replanteo final rub. 1.
 - **San Antonio:** Remate encauzamiento; replanteo rub. 5.
-- **Severino:** Cierre transformador, pruebas finales rub. 17–18, entrega EPA.
-- **Transversal:** Planilla 2, requerimiento pago final, libro de obra completo. Acta entrega-recepción y archivo EPA.
+- **Severino:** Cierre Severino rub. 17–18.
+- **Transversal:** Planilla 2, acta entrega-recepción.
 
 #### Día 49 — 2026-12-13 (dom) · Planilla 2
 
 **Foco:** Planilla 2 — cierre contractual (100 %)
 
-- **Trasvase:** Últimos tramos; limpieza y reconformación taludes. Replanteo final rub. 1.
+- **Trasvase:** Últimos tramos; replanteo final rub. 1.
 - **San Antonio:** Remate encauzamiento; replanteo rub. 5.
-- **Severino:** Cierre transformador, pruebas finales rub. 17–18, entrega EPA.
-- **Transversal:** Planilla 2, requerimiento pago final, libro de obra completo. Acta entrega-recepción y archivo EPA.
+- **Severino:** Cierre Severino rub. 17–18.
+- **Transversal:** Planilla 2, acta entrega-recepción.
 
 
-### Semana 8 (días 50–56)
+### Semana 8
 
 #### Día 50 — 2026-12-14 (lun) · Planilla 2
 
 **Foco:** Planilla 2 — cierre contractual (100 %)
 
-- **Trasvase:** Últimos tramos; limpieza y reconformación taludes. Replanteo final rub. 1.
+- **Trasvase:** Últimos tramos; replanteo final rub. 1.
 - **San Antonio:** Remate encauzamiento; replanteo rub. 5.
-- **Severino:** Cierre transformador, pruebas finales rub. 17–18, entrega EPA.
-- **Transversal:** Planilla 2, requerimiento pago final, libro de obra completo. Acta entrega-recepción y archivo EPA.
+- **Severino:** Cierre Severino rub. 17–18.
+- **Transversal:** Planilla 2, acta entrega-recepción.
 
 #### Día 51 — 2026-12-15 (mar) · Planilla 2
 
 **Foco:** Planilla 2 — cierre contractual (100 %)
 
-- **Trasvase:** Últimos tramos; limpieza y reconformación taludes. Replanteo final rub. 1.
+- **Trasvase:** Últimos tramos; replanteo final rub. 1.
 - **San Antonio:** Remate encauzamiento; replanteo rub. 5.
-- **Severino:** Cierre transformador, pruebas finales rub. 17–18, entrega EPA.
-- **Transversal:** Planilla 2, requerimiento pago final, libro de obra completo. Acta entrega-recepción y archivo EPA.
+- **Severino:** Cierre Severino rub. 17–18.
+- **Transversal:** Planilla 2, acta entrega-recepción.
 
 #### Día 52 — 2026-12-16 (mié) · Planilla 2
 
 **Foco:** Planilla 2 — cierre contractual (100 %)
 
-- **Trasvase:** Últimos tramos; limpieza y reconformación taludes. Replanteo final rub. 1.
+- **Trasvase:** Últimos tramos; replanteo final rub. 1.
 - **San Antonio:** Remate encauzamiento; replanteo rub. 5.
-- **Severino:** Cierre transformador, pruebas finales rub. 17–18, entrega EPA.
-- **Transversal:** Planilla 2, requerimiento pago final, libro de obra completo. Acta entrega-recepción y archivo EPA.
+- **Severino:** Cierre Severino rub. 17–18.
+- **Transversal:** Planilla 2, acta entrega-recepción.
 
 #### Día 53 — 2026-12-17 (jue) · Planilla 2
 
 **Foco:** Planilla 2 — cierre contractual (100 %)
 
-- **Trasvase:** Últimos tramos; limpieza y reconformación taludes. Replanteo final rub. 1.
+- **Trasvase:** Últimos tramos; replanteo final rub. 1.
 - **San Antonio:** Remate encauzamiento; replanteo rub. 5.
-- **Severino:** Cierre transformador, pruebas finales rub. 17–18, entrega EPA.
-- **Transversal:** Planilla 2, requerimiento pago final, libro de obra completo. Acta entrega-recepción y archivo EPA.
+- **Severino:** Cierre Severino rub. 17–18.
+- **Transversal:** Planilla 2, acta entrega-recepción.
 
 #### Día 54 — 2026-12-18 (vie) · Planilla 2
 
 **Foco:** Planilla 2 — cierre contractual (100 %)
 
-- **Trasvase:** Últimos tramos; limpieza y reconformación taludes. Replanteo final rub. 1.
+- **Trasvase:** Últimos tramos; replanteo final rub. 1.
 - **San Antonio:** Remate encauzamiento; replanteo rub. 5.
-- **Severino:** Cierre transformador, pruebas finales rub. 17–18, entrega EPA.
-- **Transversal:** Planilla 2, requerimiento pago final, libro de obra completo. Acta entrega-recepción y archivo EPA.
+- **Severino:** Cierre Severino rub. 17–18.
+- **Transversal:** Planilla 2, acta entrega-recepción.
 
 #### Día 55 — 2026-12-19 (sáb) · Planilla 2
 
 **Foco:** Planilla 2 — cierre contractual (100 %)
 
-- **Trasvase:** Últimos tramos; limpieza y reconformación taludes. Replanteo final rub. 1.
+- **Trasvase:** Últimos tramos; replanteo final rub. 1.
 - **San Antonio:** Remate encauzamiento; replanteo rub. 5.
-- **Severino:** Cierre transformador, pruebas finales rub. 17–18, entrega EPA.
-- **Transversal:** Planilla 2, requerimiento pago final, libro de obra completo. Acta entrega-recepción y archivo EPA.
+- **Severino:** Cierre Severino rub. 17–18.
+- **Transversal:** Planilla 2, acta entrega-recepción.
 
 #### Día 56 — 2026-12-20 (dom) · Planilla 2
 
 **Foco:** Planilla 2 — cierre contractual (100 %)
 
-- **Trasvase:** Últimos tramos; limpieza y reconformación taludes. Replanteo final rub. 1.
+- **Trasvase:** Últimos tramos; replanteo final rub. 1.
 - **San Antonio:** Remate encauzamiento; replanteo rub. 5.
-- **Severino:** Cierre transformador, pruebas finales rub. 17–18, entrega EPA.
-- **Transversal:** Planilla 2, requerimiento pago final, libro de obra completo. Acta entrega-recepción y archivo EPA.
+- **Severino:** Cierre Severino rub. 17–18.
+- **Transversal:** Planilla 2, acta entrega-recepción.
 
 
-### Semana 9 (días 57–60)
+### Semana 9
 
 #### Día 57 — 2026-12-21 (lun) · Planilla 2
 
 **Foco:** Planilla 2 — cierre contractual (100 %)
 
-- **Trasvase:** Últimos tramos; limpieza y reconformación taludes. Replanteo final rub. 1.
+- **Trasvase:** Últimos tramos; replanteo final rub. 1.
 - **San Antonio:** Remate encauzamiento; replanteo rub. 5.
-- **Severino:** Cierre transformador, pruebas finales rub. 17–18, entrega EPA.
-- **Transversal:** Planilla 2, requerimiento pago final, libro de obra completo. Acta entrega-recepción y archivo EPA.
+- **Severino:** Cierre Severino rub. 17–18.
+- **Transversal:** Planilla 2, acta entrega-recepción.
 
 #### Día 58 — 2026-12-22 (mar) · Planilla 2
 
 **Foco:** Planilla 2 — cierre contractual (100 %)
 
-- **Trasvase:** Últimos tramos; limpieza y reconformación taludes. Replanteo final rub. 1.
+- **Trasvase:** Últimos tramos; replanteo final rub. 1.
 - **San Antonio:** Remate encauzamiento; replanteo rub. 5.
-- **Severino:** Cierre transformador, pruebas finales rub. 17–18, entrega EPA.
-- **Transversal:** Planilla 2, requerimiento pago final, libro de obra completo. Acta entrega-recepción y archivo EPA.
+- **Severino:** Cierre Severino rub. 17–18.
+- **Transversal:** Planilla 2, acta entrega-recepción.
 
 #### Día 59 — 2026-12-23 (mié) · Planilla 2
 
 **Foco:** Planilla 2 — cierre contractual (100 %)
 
-- **Trasvase:** Últimos tramos; limpieza y reconformación taludes. Replanteo final rub. 1.
+- **Trasvase:** Últimos tramos; replanteo final rub. 1.
 - **San Antonio:** Remate encauzamiento; replanteo rub. 5.
-- **Severino:** Cierre transformador, pruebas finales rub. 17–18, entrega EPA.
-- **Transversal:** Planilla 2, requerimiento pago final, libro de obra completo. Acta entrega-recepción y archivo EPA.
+- **Severino:** Cierre Severino rub. 17–18.
+- **Transversal:** Planilla 2, acta entrega-recepción.
 
 #### Día 60 — 2026-12-24 (jue) · Planilla 2
 
 **Foco:** Planilla 2 — cierre contractual (100 %)
 
-- **Trasvase:** Últimos tramos; limpieza y reconformación taludes. Replanteo final rub. 1.
+- **Trasvase:** Últimos tramos; replanteo final rub. 1.
 - **San Antonio:** Remate encauzamiento; replanteo rub. 5.
-- **Severino:** Cierre transformador, pruebas finales rub. 17–18, entrega EPA.
-- **Transversal:** Planilla 2, requerimiento pago final, libro de obra completo. Acta entrega-recepción y archivo EPA.
+- **Severino:** Cierre Severino rub. 17–18.
+- **Transversal:** Planilla 2, acta entrega-recepción.
 
 ---
 
-## 4. Hitos contractuales (checklist)
-
-- [ ] Botaderos autorizados cargados en sistema
-- [ ] Equipo mínimo en sitio (compromisos arrendamiento)
-- [ ] Plan transporte desalojo (1 + N volquetas) aprobado internamente
-- [ ] Planilla 1 presentada antes fin nov-2026
-- [ ] 100 % físico y planilla 2 antes 2026-12-24
-- [ ] Severino: secuencia rubros 9–18 con actas de prueba
-- [ ] Cierre antiglosa sin observaciones críticas V₁/V₂/V₃
-
----
-
-*Documento generado desde datos contractuales del repositorio. Regenerar: npx tsx scripts/generate-plan-maestro-ejecucion.ts.*
+*Regenerar: npx tsx scripts/generate-plan-maestro-ejecucion.ts · Fuente: src/data/planilla/plan-maestro-ejecucion-desasolve.ts*
