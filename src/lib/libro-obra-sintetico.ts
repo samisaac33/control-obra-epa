@@ -14,6 +14,7 @@ import {
   type LibroObraEntradaDia,
   type LibroObraLineaRegistro,
 } from "@/src/lib/libro-obra"
+import { armarDatosHojaLibroObraEpa } from "@/src/lib/libro-obra-epa-datos"
 import { formatearNumero } from "@/src/lib/maquinaria-resumen"
 
 const PLANTILLA_ACTIVIDAD_DIA =
@@ -115,6 +116,7 @@ export function consolidarLibroObraPeriodoPlanilla(
       diaSemana: nombreDiaSemana(fecha),
       evidencias,
       lineasRegistro,
+      formatoEpa: armarDatosHojaLibroObraEpa(fecha, lineasRegistro, jornadas, equipos),
     }
   })
 }
