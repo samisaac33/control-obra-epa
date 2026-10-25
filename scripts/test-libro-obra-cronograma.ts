@@ -8,7 +8,11 @@ import { valoresPorDefectoPlanilla } from "../src/data/planilla/planilla-default
 import { TRAMOS_DESAZOLVE_VAE, VOLUMEN_TOTAL_TRASVASE_M3 } from "../src/data/planilla/canales-desazolve-tramos-vae"
 import { PROYECTO_DESASOLVE_CANALES } from "../src/data/proyectos/catalog"
 import { periodoPorNumero } from "../src/lib/planilla-calculo"
-import { cronogramaLibroObraFrente } from "../src/lib/libro-obra-cronograma-frente"
+import {
+  cronogramaLibroObraFrente,
+  viajesVolquetaPorDiaUnaUnidad,
+  volquetasFlotaParaM3Desalojo,
+} from "../src/lib/libro-obra-cronograma-frente"
 import { consolidarLibroObraPeriodoPlanillaPorFrentes } from "../src/lib/libro-obra-sintetico"
 
 assert.equal(TRAMOS_DESAZOLVE_VAE.length, 25)
