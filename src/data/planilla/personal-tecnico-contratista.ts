@@ -20,7 +20,9 @@ export type PersonalTecnicoContratista = {
   anioGraduacion?: number
   email?: string
   telefono?: string
+  /** Registro Senescyt del título principal (habitualmente tercer nivel). */
   registroSenescyt?: string
+  registroSenescytPosgrado?: string
   /** Frente o sector asignado (opcional). */
   sectorAsignado?: string
   observaciones?: string
@@ -71,11 +73,13 @@ export const PERSONAL_TECNICO_DESASOLVE: PersonalTecnicoContratista[] = [
     cedula: "1310297393",
     titulo: "Ingeniero Civil",
     universidad: "Escuela Superior Politécnica del Litoral (ESPOL)",
+    anioGraduacion: 2010,
     telefono: "0988386444",
     sectorAsignado:
       "Canal de encauzamiento San Antonio (canales mayores) — residente de frente + coordinación inter-frentes",
-    registroSenescyt: "1021-13-86032960",
-    observaciones: "Ingeniero Civil (ESPOL). Maestría en Gestión de Proyectos (ESPAE).",
+    registroSenescyt: "1021-10-971825",
+    registroSenescytPosgrado: "1021-13-86032960",
+    observaciones: "Maestría en Gestión de Proyectos (ESPAE).",
   },
   {
     id: "velez-ericka",
