@@ -312,7 +312,7 @@ function formatoPk(m: number): string {
 }
 
 export function textoTrabajosDesdeCronograma(
-  frenteTitulo: string,
+  _frenteTitulo: string,
   actividades: ActividadTramoCronograma[]
 ): string {
   if (actividades.length === 0) {
@@ -328,11 +328,8 @@ export function textoTrabajosDesdeCronograma(
     return `- Tramo «${a.tramoNombre}» (producción del día): desazolve y reconformación de taludes ${m3} m³; avance lineal ${mlDia} m (PK ${pkIni}–${pkFin} m de ${pkTot} m); desalojo ${m3} m³; tendido de material ${m3} m³; ${a.volquetas} volqueta(s) asignada(s) a este tramo.`
   })
 
-  return (
-    `Frente: ${frenteTitulo}.\n` +
-    `Programación de ejecución (libro programático — cuadre planilla VAE):\n` +
-    lineas.join("\n")
-  )
+  // El encabezado del bloque EPA ya muestra frente y residente; no repetir aquí.
+  return lineas.join("\n")
 }
 
 export function equiposDesdeCronograma(actividades: ActividadTramoCronograma[]): {
