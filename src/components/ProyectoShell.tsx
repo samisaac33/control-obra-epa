@@ -25,11 +25,11 @@ function ProyectoShellLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
       <Sidebar />
-      <div className="flex h-dvh min-h-0 min-w-0 flex-1 flex-col overflow-hidden md:pl-64">
+      <div className="proyecto-shell-viewport flex h-dvh min-h-0 min-w-0 flex-1 flex-col overflow-hidden md:pl-64">
         <AppHeader />
         <main
           className={cn(
-            "flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overflow-x-hidden overscroll-y-contain",
+            "proyecto-shell-main flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overflow-x-hidden overscroll-y-contain",
             esMapa && "transition-[padding-top] duration-300 ease-out motion-reduce:transition-none",
             bottomNavDesasolve && "pb-[calc(3.5rem+env(safe-area-inset-bottom,0px))]"
           )}

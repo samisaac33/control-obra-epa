@@ -145,8 +145,27 @@
     color: black !important;
   }
 
+  html,
+  body {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .proyecto-shell-viewport,
+  .proyecto-shell-main {
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
+    min-height: 0 !important;
+  }
+
   main {
     overflow: visible !important;
+  }
+
+  #libro-obra-documento {
+    display: block !important;
+    visibility: visible !important;
   }
 
   .md\:pl-64 {
