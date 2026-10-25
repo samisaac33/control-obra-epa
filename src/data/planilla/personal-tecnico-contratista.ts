@@ -3,6 +3,7 @@ import { PROYECTO_DESASOLVE_CANALES } from "@/src/data/proyectos/catalog"
 export type RolPersonalContratista =
   | "superintendente_obra"
   | "residente_obra_civil"
+  | "residente_obra_electrica"
   | "topografo"
   | "ingeniero_electrico"
   | "otro"
@@ -12,7 +13,8 @@ export type PersonalTecnicoContratista = {
   rol: RolPersonalContratista
   nombres: string
   apellidos: string
-  cedula: string
+  /** Sin guiones; omitir si aún no consta en documentos entregados. */
+  cedula?: string
   titulo: string
   universidad?: string
   anioGraduacion?: number
@@ -28,7 +30,8 @@ export function nombreCompletoPersonal(p: PersonalTecnicoContratista): string {
 }
 
 export function lineaFirmaPersonal(p: PersonalTecnicoContratista, rolEtiqueta: string): string {
-  return `${nombreCompletoPersonal(p)} · ${rolEtiqueta} · C.I. ${p.cedula}`
+  const ci = p.cedula ? ` · C.I. ${p.cedula}` : ""
+  return `${nombreCompletoPersonal(p)} · ${rolEtiqueta}${ci}`
 }
 
 /** Personal del consorcio — Emergencia Severino y Trasvase Manabí. */
@@ -55,6 +58,7 @@ export const PERSONAL_TECNICO_DESASOLVE: PersonalTecnicoContratista[] = [
     anioGraduacion: 2013,
     email: "wesaltos@gmail.com",
     telefono: "0985370189",
+    sectorAsignado: "Frentes civiles — Trasvase Manabí y San Antonio",
   },
   {
     id: "amen-hugo-enrique",
@@ -64,9 +68,47 @@ export const PERSONAL_TECNICO_DESASOLVE: PersonalTecnicoContratista[] = [
     cedula: "1310297393",
     titulo: "Ingeniero Civil",
     universidad: "Escuela Superior Politécnica del Litoral (ESPOL)",
-    email: undefined,
     telefono: "0988386444",
+    sectorAsignado: "Frentes civiles — Trasvase Manabí y San Antonio",
     observaciones: "Maestría en Gestión de Proyectos (ESPAE).",
+  },
+  {
+    id: "velez-ericka",
+    rol: "residente_obra_civil",
+    nombres: "Ericka",
+    apellidos: "Vélez Carreño",
+    cedula: undefined,
+    titulo: "Ingeniera Civil",
+    universidad: "Universidad Técnica de Manabí",
+    anioGraduacion: 2021,
+    email: "erickamercedesvelez@gmail.com",
+    telefono: "0998993217",
+    sectorAsignado: "Frentes civiles — Trasvase Manabí y San Antonio",
+    observaciones: "Registro Senescyt 1009-2021-2403029.",
+  },
+  {
+    id: "carvajal-daniel",
+    rol: "residente_obra_electrica",
+    nombres: "Daniel",
+    apellidos: "Carvajal Cedeño",
+    cedula: undefined,
+    titulo: "Ingeniero Eléctrico",
+    universidad: "Universidad Técnica de Manabí",
+    anioGraduacion: 2009,
+    email: "albertodacc@gmail.com",
+    telefono: "0991257777",
+    sectorAsignado: "Subestación Eléctrica Severino",
+    observaciones: "Registro Senescyt 1009-10-978009 · Registro EEQ EEQ-2021-I-2058.",
+  },
+  {
+    id: "chancay-yandry-patricio",
+    rol: "topografo",
+    nombres: "Yandry Patricio",
+    apellidos: "Chancay García",
+    cedula: "1309566824",
+    titulo: "Topógrafo",
+    sectorAsignado: "Replanteo, control topográfico y cubicación (canales)",
+    observaciones: "Cédula verificada — Manta, 08/01/1990.",
   },
 ]
 
@@ -90,4 +132,12 @@ export function superintendenteObra(proyectoId: string): PersonalTecnicoContrati
 
 export function residentesObraCivil(proyectoId: string): PersonalTecnicoContratista[] {
   return personalPorRol(proyectoId, "residente_obra_civil")
+}
+
+export function residenteObraElectrica(proyectoId: string): PersonalTecnicoContratista | null {
+  return personalPorRol(proyectoId, "residente_obra_electrica")[0] ?? null
+}
+
+export function topografoObra(proyectoId: string): PersonalTecnicoContratista | null {
+  return personalPorRol(proyectoId, "topografo")[0] ?? null
 }
