@@ -32,6 +32,8 @@ export type OpcionesHojaLibroObraEpa = {
   rubDesazolve?: number
   rubDesalojo?: number
   rubTendido?: number
+  /** Planilla EPA: solo motor VAE; no mezclar jornadas, fotos ni tickets en trabajos/horas. */
+  soloProgramatico?: boolean
 }
 
 function filaHorasEquipo(nombre: string, horas: number): FilaHorasEquipoEpa {
@@ -104,7 +106,8 @@ function armarDesdeCronograma(
   evidencias: EvidenciaGrupo[],
   detalle: ReturnType<typeof detalleJornadasDia>,
   jornadas: JornadaMaquinariaProyecto[],
-  equiposCatalogo: ProyectoEquipoMaquinaria[]
+  equiposCatalogo: ProyectoEquipoMaquinaria[],
+  soloProgramatico: boolean
 ): DatosHojaLibroObraEpa {
   const acts = cronograma.actividades
   let trabajos = textoTrabajosDesdeCronograma(frenteTitulo, acts)
@@ -114,9 +117,11 @@ function armarDesdeCronograma(
   )
   trabajos += `\n\nMediciones VAE (1:1): desazolve rub. ${rubDesazolve}; desalojo rub. ${rubDesalojo}; tendido rub. ${rubTendido}.`
 
-  const registroCampo = trabajosDesdeRegistros(lineas, evidencias)
-  if (lineas.some((l) => l.categoria === "maquinaria" || l.categoria === "desalojo")) {
-    trabajos += `\n\n${registroCampo}`
+  if (
+    !soloProgramatico &&
+    lineas.some((l) => l.categoria === "maquinaria" || l.categoria === "desalojo")
+  ) {
+    trabajos += `\n\n${trabajosDesdeRegistros(lineas, evidencias)}`
   }
 
   const eq = equiposDesdeCronograma(acts)
@@ -167,22 +172,32 @@ function armarDesdeCronograma(
     horasEquipos.push(filaHorasEquipo(`GPS ${rtk.marca} ${rtk.modelo}`, HORAS_JORNADA_COMPLETA))
   }
 
-  const equiposPorId = mapaEquiposPorId(equiposCatalogo)
-  for (const j of jornadas.filter((x) => x.fecha === cronograma.fecha && !x.es_incidencia)) {
-    const nombre = nombreEquipoParaMostrar(j, equiposPorId)
-    if (!horasEquipos.some((h) => h.equipo === nombre)) {
-      const horas = j.duracion_horas ?? HORAS_JORNADA_COMPLETA
-      horasEquipos.push(filaHorasEquipo(nombre, horas))
+  if (!soloProgramatico) {
+    const equiposPorId = mapaEquiposPorId(equiposCatalogo)
+    for (const j of jornadas.filter((x) => x.fecha === cronograma.fecha && !x.es_incidencia)) {
+      const nombre = nombreEquipoParaMostrar(j, equiposPorId)
+      if (!horasEquipos.some((h) => h.equipo === nombre)) {
+        const horas = j.duracion_horas ?? HORAS_JORNADA_COMPLETA
+        horasEquipos.push(filaHorasEquipo(nombre, horas))
+      }
     }
   }
+
+  const tramosResumen = acts
+    .map((a) => `${a.tramoNombre} (PK ${formatearNumero(a.pkHastaM, 0)} m)`)
+    .join("; ")
 
   return {
     equiposUtilizados,
     personalUtilizado,
     trabajosRealizados: trabajos,
     horasEquipos,
-    visitaProyecto: `Residente de frente — ${frenteTitulo}. Tramos activos: ${acts.map((a) => a.tramoNombre).join("; ")}.`,
-    novedadesObservaciones: novedadesDesdeLineas(lineas, detalle.incidencias),
+    visitaProyecto: soloProgramatico
+      ? `Supervisión programada — ${frenteTitulo}. Tramos con producción del día: ${tramosResumen}.`
+      : `Residente de frente — ${frenteTitulo}. Tramos activos: ${acts.map((a) => a.tramoNombre).join("; ")}.`,
+    novedadesObservaciones: soloProgramatico
+      ? ""
+      : novedadesDesdeLineas(lineas, detalle.incidencias),
     comunicaciones: "",
     clima: { manana: "", tarde: "", noche: "" },
   }
@@ -202,6 +217,7 @@ export function armarDatosHojaLibroObraEpa(
     rubDesazolve = 2,
     rubDesalojo = 3,
     rubTendido = 4,
+    soloProgramatico = false,
   } = opciones
 
   const detalle = detalleJornadasDia(fecha, jornadas, equiposCatalogo)
@@ -217,7 +233,8 @@ export function armarDatosHojaLibroObraEpa(
       evidencias,
       detalle,
       jornadas,
-      equiposCatalogo
+      equiposCatalogo,
+      soloProgramatico
     )
   }
 

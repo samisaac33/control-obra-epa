@@ -28,15 +28,11 @@ import {
 import {
   armarTrabajosConsolidadosDesdeBloques,
   combinarDatosHojaLibroObraEpa,
-  evidenciasRelacionadasSeverino,
-  lineasRelacionadasSeverino,
-  trabajosSeverinoDesdeRegistro,
 } from "@/src/lib/libro-obra-epa-consolidado"
-import { armarDatosHojaLibroObraEpa, registroCampoLibroObra } from "@/src/lib/libro-obra-epa-datos"
+import { armarDatosHojaLibroObraEpa } from "@/src/lib/libro-obra-epa-datos"
 import {
   etiquetaResidenteFrente,
 } from "@/src/data/planilla/libro-obra-frentes"
-import { nombreCompletoPersonal, residenteObraElectrica } from "@/src/data/planilla/personal-tecnico-contratista"
 import { formatearNumero } from "@/src/lib/maquinaria-resumen"
 
 const AVISO_FOTOS_PENDIENTES =
@@ -216,7 +212,6 @@ export function consolidarLibroObraPeriodoPlanillaConsolidado(
   }
 
   const entradas: LibroObraEntradaDia[] = []
-  const residenteElectrico = residenteObraElectrica(proyectoId)
 
   for (const fecha of fechasCalendarioInclusive(desde, hasta)) {
     const evidencias = porFoto.get(fecha)?.evidencias ?? []
@@ -235,17 +230,14 @@ export function consolidarLibroObraPeriodoPlanillaConsolidado(
       const tieneCronograma = (cronogramaDia?.actividades.length ?? 0) > 0
       if (!tieneCronograma) continue
 
-      const datosFrente = armarDatosHojaLibroObraEpa(fecha, [], jornadas, equipos, {
+      const datosFrente = armarDatosHojaLibroObraEpa(fecha, [], [], [], {
         evidencias: [],
         cronogramaDia: cronogramaDia ?? null,
         frenteTitulo: cfg.titulo,
         rubDesazolve: cfg.rubDesazolve,
         rubDesalojo: cfg.rubDesalojo,
         rubTendido: cfg.rubTendido,
-        ticketsDesalojoDia:
-          f.id === "trasvase"
-            ? tickets.filter((t) => claveFechaLocal(t.fecha_hora_despacho) === fecha)
-            : [],
+        soloProgramatico: true,
       })
 
       partesDatos.push(datosFrente)
@@ -257,47 +249,19 @@ export function consolidarLibroObraPeriodoPlanillaConsolidado(
       })
     }
 
-    const lineasSev = lineasRelacionadasSeverino(lineasRegistro)
-    const evidenciasSev = evidenciasRelacionadasSeverino(evidencias)
-    const textoSev = trabajosSeverinoDesdeRegistro(lineasSev, evidenciasSev)
-    const bloqueSeverino =
-      textoSev.trim() && residenteElectrico
-        ? {
-            titulo: "Subestación Eléctrica Severino",
-            residente: nombreCompletoPersonal(residenteElectrico),
-            trabajosRealizados: textoSev,
-          }
-        : null
-
     const hayProduccionCivil = partesDatos.length > 0
-    const hayRegistroCampo = lineasRegistro.some(
-      (l) => l.categoria === "maquinaria" || l.categoria === "desalojo"
-    )
-
-    if (!hayProduccionCivil && !bloqueSeverino && !hayRegistroCampo) {
+    if (!hayProduccionCivil) {
       continue
     }
-
-    const evidenciasCanales = evidencias.filter(
-      (g) => evidenciasRelacionadasSeverino([g]).length === 0
-    )
-    const registroCampo = registroCampoLibroObra(lineasRegistro, evidenciasCanales)
 
     let formatoEpa = combinarDatosHojaLibroObraEpa(partesDatos)
     formatoEpa = {
       ...formatoEpa,
       bloquesFrente: bloquesFrente,
-      bloqueSeverino,
-      registroCampoDia: hayRegistroCampo ? registroCampo : undefined,
-      visitaProyecto: bloquesFrente
-        .map((b) => `${b.titulo} (${b.residente})`)
-        .concat(bloqueSeverino ? [`${bloqueSeverino.titulo} (${bloqueSeverino.residente})`] : [])
-        .join("; "),
-      trabajosRealizados: armarTrabajosConsolidadosDesdeBloques(
-        bloquesFrente,
-        bloqueSeverino,
-        hayRegistroCampo ? registroCampo : ""
-      ),
+      bloqueSeverino: null,
+      registroCampoDia: undefined,
+      visitaProyecto: bloquesFrente.map((b) => `${b.titulo} (${b.residente})`).join("; "),
+      trabajosRealizados: armarTrabajosConsolidadosDesdeBloques(bloquesFrente, null, ""),
     }
 
     if (evidencias.length === 0) {

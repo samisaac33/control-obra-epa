@@ -52,7 +52,12 @@ export type ActividadTramoCronograma = {
   m3Desazolve: number
   m3Desalojo: number
   m3Tendido: number
+  /** Avance lineal del día a lo largo del tramo. */
   metrosLineales: number
+  /** Progreso acumulado al cierre del día (m), referencia PK 0+000 = inicio tramo. */
+  pkDesdeM: number
+  pkHastaM: number
+  longitudTramoM: number
   volquetas: number
 }
 
@@ -73,20 +78,51 @@ function cantidadPeriodoRubro(
   return lineas.find((l) => l.rubroId === rubroId)?.cantidadPeriodo ?? 0
 }
 
-function metrosDesdeM3(tramo: TramoDesazolveVae, m3: number): number {
+export function metrosDesdeM3Tramo(tramo: TramoDesazolveVae, m3: number): number {
   if (m3 <= 0 || tramo.volumenM3 <= 0) return 0
   return (m3 / tramo.volumenM3) * tramo.longitudM
 }
 
-function actividadDesdeM3(tramo: TramoDesazolveVae, m3: number): ActividadTramoCronograma {
-  const m3r = Math.round(m3 * 100) / 100
+/**
+ * Reparte el volumen del periodo en objetivos diarios distintos (suma exacta al total).
+ * Curva determinística: arranque, pico y remate — evita el mismo m³ todos los días.
+ */
+export function objetivosM3PorDiaProgramatico(nDias: number, volumenTotal: number): number[] {
+  if (nDias <= 0) return []
+  if (nDias === 1) return [Math.round(volumenTotal * 100) / 100]
+
+  const raw = Array.from({ length: nDias }, (_, i) => {
+    const fase = i / (nDias - 1)
+    const campana = 0.52 + 0.48 * Math.sin(fase * Math.PI)
+    const ondulacion = 0.14 * Math.sin(i * 1.713 + 0.35) + 0.09 * Math.cos(i * 2.41)
+    return Math.max(0.12, campana + ondulacion)
+  })
+  const sumPesos = raw.reduce((a, b) => a + b, 0)
+  const targets = raw.map((w) => (w / sumPesos) * volumenTotal)
+  const redondeados = targets.map((t) => Math.round(t * 100) / 100)
+  const drift = volumenTotal - redondeados.reduce((a, b) => a + b, 0)
+  redondeados[redondeados.length - 1] = Math.round((redondeados[redondeados.length - 1]! + drift) * 100) / 100
+  return redondeados
+}
+
+function actividadDesdeM3(
+  tramo: TramoDesazolveVae,
+  m3DelDia: number,
+  acumM3Antes: number
+): ActividadTramoCronograma {
+  const m3r = Math.round(m3DelDia * 100) / 100
+  const pkDesde = metrosDesdeM3Tramo(tramo, acumM3Antes)
+  const pkHasta = metrosDesdeM3Tramo(tramo, acumM3Antes + m3r)
   return {
     tramoId: tramo.id,
     tramoNombre: tramo.nombre,
     m3Desazolve: m3r,
     m3Desalojo: m3r,
     m3Tendido: m3r,
-    metrosLineales: Math.round(metrosDesdeM3(tramo, m3r) * 10) / 10,
+    metrosLineales: Math.round((pkHasta - pkDesde) * 10) / 10,
+    pkDesdeM: Math.round(pkDesde * 10) / 10,
+    pkHastaM: Math.round(pkHasta * 10) / 10,
+    longitudTramoM: tramo.longitudM,
     volquetas: 0,
   }
 }
@@ -120,8 +156,8 @@ export function asignarVolquetasFlotaEnActividades(
 }
 
 /**
- * Distribuye el volumen del periodo (rubro desazolve, VAE) entre tramos y días calendario
- * (incluye sábados y domingos). Desalojo y tendido = mismo m³ (1:1 Excel).
+ * Libro programático: secuencia de tramos (orden catálogo VAE), objetivos diarios variables,
+ * hasta N tramos simultáneos en trasvase. Cuadra Σ m³ del periodo con el requerimiento de pago.
  */
 export function cronogramaLibroObraFrente(
   frente: FrenteDesazolveVae,
@@ -149,62 +185,90 @@ export function cronogramaLibroObraFrente(
   }
 
   const restante = new Map(cupoTramo)
-  const m3PorDia = volumenPeriodo / dias.length
+  const acumM3 = new Map<string, number>()
+  for (const t of tramos) acumM3.set(t.id, 0)
+
+  const objetivosDiarios = objetivosM3PorDiaProgramatico(dias.length, volumenPeriodo)
   const maxSimultaneos = frente === "trasvase" ? TRAMOS_SIMULTANEOS_TRASVASE : 1
   const porFecha = new Map<string, ActividadTramoCronograma[]>()
   let pendienteGlobal = volumenPeriodo
 
-  for (const fecha of dias) {
+  for (let diaIndex = 0; diaIndex < dias.length; diaIndex++) {
+    const fecha = dias[diaIndex]!
     if (pendienteGlobal <= 0.001) {
       porFecha.set(fecha, [])
       continue
     }
 
-    const objetivoDia = Math.min(m3PorDia, pendienteGlobal)
-    const cola = tramos
-      .filter((t) => (restante.get(t.id) ?? 0) > 0.01)
-      .sort((a, b) => (restante.get(b.id) ?? 0) - (restante.get(a.id) ?? 0))
-
-    if (cola.length === 0) {
+    const objetivoDia = Math.min(objetivosDiarios[diaIndex] ?? pendienteGlobal, pendienteGlobal)
+    const colaOrdenada = tramos.filter((t) => (restante.get(t.id) ?? 0) > 0.01)
+    if (colaOrdenada.length === 0) {
       porFecha.set(fecha, [])
       continue
     }
 
+    const activos = colaOrdenada.slice(0, maxSimultaneos)
+    const pesoActivos = activos.map((t) => restante.get(t.id) ?? 0)
+    const sumPeso = pesoActivos.reduce((a, b) => a + b, 0)
+
     const acts: ActividadTramoCronograma[] = []
     let asignadoDia = 0
-    let faltante = objetivoDia
-    const activosIds = new Set<string>()
 
-    function registrar(tramo: TramoDesazolveVae, m3: number) {
-      if (m3 <= 0.001) return
+    for (let i = 0; i < activos.length; i++) {
+      const tramo = activos[i]!
       const rest = restante.get(tramo.id) ?? 0
-      const uso = Math.min(rest, m3)
-      if (uso <= 0.001) return
+      if (rest <= 0.001) continue
+
+      let cuota =
+        sumPeso > 0 && activos.length > 1
+          ? (objetivoDia * (pesoActivos[i] ?? 0)) / sumPeso
+          : objetivoDia / activos.length
+
+      if (i === activos.length - 1) {
+        cuota = Math.max(0, objetivoDia - asignadoDia)
+      }
+
+      const uso = Math.min(rest, cuota, pendienteGlobal - asignadoDia)
+      if (uso <= 0.001) continue
+
+      const acumAntes = acumM3.get(tramo.id) ?? 0
       restante.set(tramo.id, rest - uso)
+      acumM3.set(tramo.id, acumAntes + uso)
       asignadoDia += uso
-      faltante -= uso
-      activosIds.add(tramo.id)
+
       const prev = acts.find((a) => a.tramoId === tramo.id)
       if (prev) {
         const idx = acts.indexOf(prev)
-        acts[idx] = actividadDesdeM3(tramo, prev.m3Desazolve + uso)
+        const m3Total = prev.m3Desazolve + uso
+        const acumRebuilt = acumAntes - prev.m3Desazolve
+        acts[idx] = actividadDesdeM3(tramo, m3Total, acumRebuilt)
       } else {
-        acts.push(actividadDesdeM3(tramo, uso))
+        acts.push(actividadDesdeM3(tramo, uso, acumAntes))
       }
     }
 
-    while (faltante > 0.01 && activosIds.size < maxSimultaneos) {
-      const candidatos = cola.filter((t) => (restante.get(t.id) ?? 0) > 0.01)
-      if (candidatos.length === 0) break
-      const tramo = candidatos[0]!
-      const share = faltante / (maxSimultaneos - activosIds.size)
-      registrar(tramo, share)
-    }
-
-    while (faltante > 0.01) {
-      const candidatos = cola.filter((t) => (restante.get(t.id) ?? 0) > 0.01)
-      if (candidatos.length === 0) break
-      registrar(candidatos[0]!, faltante)
+    if (asignadoDia < objetivoDia - 0.01) {
+      let faltante = objetivoDia - asignadoDia
+      for (const tramo of colaOrdenada) {
+        if (faltante <= 0.01) break
+        const rest = restante.get(tramo.id) ?? 0
+        if (rest <= 0.001) continue
+        const uso = Math.min(rest, faltante, pendienteGlobal - asignadoDia)
+        if (uso <= 0.001) continue
+        const acumAntes = acumM3.get(tramo.id) ?? 0
+        restante.set(tramo.id, rest - uso)
+        acumM3.set(tramo.id, acumAntes + uso)
+        asignadoDia += uso
+        faltante -= uso
+        const prev = acts.find((a) => a.tramoId === tramo.id)
+        if (prev) {
+          const idx = acts.indexOf(prev)
+          const acumRebuilt = acumAntes - prev.m3Desazolve
+          acts[idx] = actividadDesdeM3(tramo, prev.m3Desazolve + uso, acumRebuilt)
+        } else {
+          acts.push(actividadDesdeM3(tramo, uso, acumAntes))
+        }
+      }
     }
 
     pendienteGlobal -= asignadoDia
@@ -214,16 +278,23 @@ export function cronogramaLibroObraFrente(
   if (pendienteGlobal > 0.5) {
     const ultimaFecha = [...dias].reverse().find((f) => (porFecha.get(f)?.length ?? 0) > 0)
     if (ultimaFecha) {
-      const acts = porFecha.get(ultimaFecha) ?? []
-      const tramo = tramos.find((t) => (restante.get(t.id) ?? 0) > 0.01) ?? tramos[0]!
-      const prev = acts.find((a) => a.tramoId === tramo.id)
-      const add = Math.min(restante.get(tramo.id) ?? pendienteGlobal, pendienteGlobal)
-      restante.set(tramo.id, (restante.get(tramo.id) ?? 0) - add)
-      if (prev) {
-        const idx = acts.indexOf(prev)
-        acts[idx] = actividadDesdeM3(tramo, prev.m3Desazolve + add)
-      } else {
-        acts.push(actividadDesdeM3(tramo, add))
+      const acts = [...(porFecha.get(ultimaFecha) ?? [])]
+      for (const tramo of tramos) {
+        const rest = restante.get(tramo.id) ?? 0
+        if (rest <= 0.001 || pendienteGlobal <= 0.001) continue
+        const add = Math.min(rest, pendienteGlobal)
+        const acumAntes = acumM3.get(tramo.id) ?? 0
+        restante.set(tramo.id, rest - add)
+        acumM3.set(tramo.id, acumAntes + add)
+        pendienteGlobal -= add
+        const prev = acts.find((a) => a.tramoId === tramo.id)
+        if (prev) {
+          const idx = acts.indexOf(prev)
+          const acumRebuilt = acumAntes - prev.m3Desazolve
+          acts[idx] = actividadDesdeM3(tramo, prev.m3Desazolve + add, acumRebuilt)
+        } else {
+          acts.push(actividadDesdeM3(tramo, add, acumAntes))
+        }
       }
       porFecha.set(ultimaFecha, asignarVolquetasFlotaEnActividades(acts))
     }
@@ -236,6 +307,10 @@ export function cronogramaLibroObraFrente(
   }))
 }
 
+function formatoPk(m: number): string {
+  return formatearNumero(m, 0)
+}
+
 export function textoTrabajosDesdeCronograma(
   frenteTitulo: string,
   actividades: ActividadTramoCronograma[]
@@ -246,11 +321,18 @@ export function textoTrabajosDesdeCronograma(
 
   const lineas = actividades.map((a) => {
     const m3 = formatearNumero(a.m3Desazolve, 1)
-    const ml = formatearNumero(a.metrosLineales, 0)
-    return `- Tramo «${a.tramoNombre}»: desazolve y reconformación de taludes ${m3} m³ (avance ref. ${ml} m); desalojo ${m3} m³; tendido de material ${m3} m³; ${a.volquetas} volqueta(s) en este tramo.`
+    const mlDia = formatearNumero(a.metrosLineales, 0)
+    const pkIni = formatoPk(a.pkDesdeM)
+    const pkFin = formatoPk(a.pkHastaM)
+    const pkTot = formatoPk(a.longitudTramoM)
+    return `- Tramo «${a.tramoNombre}» (producción del día): desazolve y reconformación de taludes ${m3} m³; avance lineal ${mlDia} m (PK ${pkIni}–${pkFin} m de ${pkTot} m); desalojo ${m3} m³; tendido de material ${m3} m³; ${a.volquetas} volqueta(s) asignada(s) a este tramo.`
   })
 
-  return `Frente: ${frenteTitulo}.\nSe ejecutó:\n${lineas.join("\n")}`
+  return (
+    `Frente: ${frenteTitulo}.\n` +
+    `Programación de ejecución (libro programático — cuadre planilla VAE):\n` +
+    lineas.join("\n")
+  )
 }
 
 export function equiposDesdeCronograma(actividades: ActividadTramoCronograma[]): {

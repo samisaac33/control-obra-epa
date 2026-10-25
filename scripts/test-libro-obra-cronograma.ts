@@ -101,6 +101,18 @@ assert.ok(!textoTrasvase.includes("Acordar criterio"), "sin supuestos administra
 assert.ok(textoTrasvase.includes("Tramo «"), "trabajos por tramo")
 assert.ok(bloques.some((b) => b.id === "san_antonio"))
 
+const e27 = entradas.find((e) => e.fecha === "2026-10-27")
+const e30 = entradas.find((e) => e.fecha === "2026-10-30")
+assert.ok(e27 && e30, "entradas 27 y 30 oct")
+const m3_27 =
+  cronograma.find((d) => d.fecha === "2026-10-27")?.actividades.reduce((s, a) => s + a.m3Desazolve, 0) ?? 0
+const m3_30 =
+  cronograma.find((d) => d.fecha === "2026-10-30")?.actividades.reduce((s, a) => s + a.m3Desazolve, 0) ?? 0
+assert.notEqual(Math.round(m3_27), Math.round(m3_30), "m³ trasvase distintos entre 27 y 30 oct")
+const t27 = e27.formatoEpa!.bloquesFrente!.find((b) => b.id === "trasvase")!.trabajosRealizados
+assert.ok(t27.includes("producción del día"), "texto programático")
+assert.ok(t27.includes("PK "), "referencia PK")
+
 console.log("test-libro-obra-cronograma: OK", {
   hojasConsolidadas: entradas.length,
   volquetasDia1: flotaDia1,

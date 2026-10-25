@@ -96,7 +96,7 @@ export function LibroObraClient({
               </h1>
               <p className="text-sm text-muted-foreground">
                 {variant === "planilla"
-                  ? "Una hoja EPA por día: bloques por frente (Trasvase, San Antonio) y Severino solo si hay registro real. Volúmenes VAE 1:1 por tramo."
+                  ? "Una hoja EPA por día (libro programático VAE): bloques por frente, m³ y PK distintos por fecha; no depende de cargas del residente."
                   : tituloDocumento
                     ? "Documento de planilla — periodo filtrado automáticamente"
                     : "Fiscalización interna — consolidado del registro fotográfico"}

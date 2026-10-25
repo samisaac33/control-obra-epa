@@ -28,20 +28,41 @@ function mergeFilasCantidad(base: FilaCantidadEpa[], extra: FilaCantidadEpa[]): 
 }
 
 function mergeHorasEquipos(listas: FilaHorasEquipoEpa[][]): FilaHorasEquipoEpa[] {
-  const map = new Map<string, FilaHorasEquipoEpa>()
+  const out: FilaHorasEquipoEpa[] = []
+  const seen = new Set<string>()
   for (const lista of listas) {
     for (const f of lista) {
-      const prev = map.get(f.equipo)
-      if (!prev) {
-        map.set(f.equipo, f)
-        continue
-      }
-      if (f.equipo.toLowerCase().includes("volqueta")) {
-        map.set(f.equipo, f)
-      }
+      if (f.equipo.toLowerCase().includes("volqueta")) continue
+      if (seen.has(f.equipo)) continue
+      seen.add(f.equipo)
+      out.push(f)
     }
   }
-  return [...map.values()]
+  const volSample = listas.flat().find((f) => f.equipo.toLowerCase().includes("volqueta"))
+  if (volSample) {
+    out.push(volSample)
+  }
+  return out
+}
+
+function consolidarFilaVolquetas(
+  horas: FilaHorasEquipoEpa[],
+  volquetasTotal: number | null
+): FilaHorasEquipoEpa[] {
+  const base = horas.filter((h) => !h.equipo.toLowerCase().includes("volqueta"))
+  if (!volquetasTotal || volquetasTotal <= 0) return base
+  const ref = horas.find((h) => h.equipo.toLowerCase().includes("volqueta"))
+  const etiqueta =
+    volquetasTotal > 1 ? `Volquetas (${volquetasTotal} unidades)` : (ref?.equipo ?? "Volqueta")
+  return [
+    ...base,
+    {
+      equipo: etiqueta,
+      manana: ref?.manana ?? "8:00 - 12:30",
+      tarde: ref?.tarde ?? "13:00 - 17:30",
+      total: ref?.total ?? "9 horas",
+    },
+  ]
 }
 
 export function combinarDatosHojaLibroObraEpa(
@@ -74,6 +95,12 @@ export function combinarDatosHojaLibroObraEpa(
       visitaProyecto: [merged.visitaProyecto, p.visitaProyecto].filter(Boolean).join("\n"),
       trabajosRealizados: [merged.trabajosRealizados, p.trabajosRealizados].filter(Boolean).join("\n\n"),
     }
+  }
+  const volquetasTotal =
+    merged.equiposUtilizados.find((e) => e.etiqueta === "VOLQUETAS")?.cantidad ?? null
+  merged = {
+    ...merged,
+    horasEquipos: consolidarFilaVolquetas(merged.horasEquipos, volquetasTotal),
   }
   return merged
 }
