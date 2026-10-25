@@ -130,6 +130,11 @@
 }
 
 @media print {
+  @page {
+    size: A4 portrait;
+    margin: 8mm 10mm;
+  }
+
   aside,
   header:not(#libro-obra-documento header):not(#maquinaria-documento header) {
     display: none !important;
