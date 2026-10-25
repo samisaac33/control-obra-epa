@@ -61,7 +61,7 @@ export const PERSONAL_TECNICO_DESASOLVE: PersonalTecnicoContratista[] = [
     anioGraduacion: 2013,
     email: "wesaltos@gmail.com",
     telefono: "0985370189",
-    sectorAsignado: "Frentes civiles — Trasvase Manabí y San Antonio",
+    sectorAsignado: "Trasvase Manabí (canales menores) — residente de frente, obra en campo",
   },
   {
     id: "amen-hugo-enrique",
@@ -72,7 +72,8 @@ export const PERSONAL_TECNICO_DESASOLVE: PersonalTecnicoContratista[] = [
     titulo: "Ingeniero Civil",
     universidad: "Escuela Superior Politécnica del Litoral (ESPOL)",
     telefono: "0988386444",
-    sectorAsignado: "Frentes civiles — Trasvase Manabí y San Antonio",
+    sectorAsignado:
+      "Canal de encauzamiento San Antonio (canales mayores) — residente de frente + coordinación inter-frentes",
     registroSenescyt: "1021-13-86032960",
     observaciones: "Ingeniero Civil (ESPOL). Maestría en Gestión de Proyectos (ESPAE).",
   },
@@ -88,7 +89,8 @@ export const PERSONAL_TECNICO_DESASOLVE: PersonalTecnicoContratista[] = [
     anioGraduacion: 2021,
     email: "erickamercedesvelez@gmail.com",
     telefono: "0998993217",
-    sectorAsignado: "Frentes civiles — Trasvase Manabí y San Antonio",
+    sectorAsignado:
+      "Trasvase Manabí (canales menores) — medición, libro de obra, cuadros de planilla y respaldo documental",
   },
   {
     id: "carvajal-daniel",

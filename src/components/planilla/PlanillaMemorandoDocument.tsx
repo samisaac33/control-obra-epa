@@ -69,10 +69,14 @@ export function PlanillaMemorandoDocument({ periodo }: PlanillaMemorandoDocument
         </p>
         <p>Atentamente,</p>
         {residentes.length > 0 ? (
-          <p className="text-xs text-muted-foreground">
-            Residentes de obra civil ({residentes.length}):{" "}
-            {residentes.map((r) => `${r.titulo} ${r.nombres} ${r.apellidos}`).join(" · ")}
-          </p>
+          <ul className="list-inside list-disc text-xs text-muted-foreground">
+            {residentes.map((r) => (
+              <li key={r.id}>
+                {r.titulo} {r.nombres} {r.apellidos}
+                {r.sectorAsignado ? ` — ${r.sectorAsignado}` : ""}
+              </li>
+            ))}
+          </ul>
         ) : null}
         {residenteElectrico ? (
           <p className="text-xs text-muted-foreground">
