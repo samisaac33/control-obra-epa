@@ -42,7 +42,8 @@ export const DOCUMENTOS_PLANILLA_CATALOGO: DocumentoPlanillaCatalogo[] = [
     id: "maquinaria_consolidado",
     titulo: "Informe consolidado de maquinaria",
     descripcion: "Horas-máquina y equipos imputables al periodo de la planilla.",
-    estado: "proximamente",
+    estado: "disponible",
+    rutaGenerador: "planillas/documentos/maquinaria-consolidado",
   },
   {
     id: "anexo_fotografico",
