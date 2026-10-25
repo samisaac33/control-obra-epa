@@ -1,4 +1,5 @@
 import type { TicketDesalojo, EventoParalizacion } from "@/src/data/auditoria/types"
+import type { DiaPlanMaestro } from "@/src/data/planilla/plan-maestro-ejecucion-desasolve"
 import type { RegistroFotoBase } from "@/src/lib/evidencias-grupo"
 import type { JornadaMaquinariaProyecto } from "@/src/lib/maquinaria-desasolve-proyecto"
 import {
@@ -92,7 +93,8 @@ export function consolidarLibroObraPeriodoPlanilla(
   jornadas: JornadaMaquinariaProyecto[],
   tickets: TicketDesalojo[],
   eventosParalizacion: EventoParalizacion[],
-  equipos: ProyectoEquipoMaquinaria[]
+  equipos: ProyectoEquipoMaquinaria[],
+  planPorFecha?: Map<string, DiaPlanMaestro>
 ): LibroObraEntradaDia[] {
   const porFoto = new Map(consolidarLibroObra(registrosFoto).map((e) => [e.fecha, e]))
 
@@ -116,7 +118,11 @@ export function consolidarLibroObraPeriodoPlanilla(
       diaSemana: nombreDiaSemana(fecha),
       evidencias,
       lineasRegistro,
-      formatoEpa: armarDatosHojaLibroObraEpa(fecha, lineasRegistro, jornadas, equipos),
+      formatoEpa: armarDatosHojaLibroObraEpa(fecha, lineasRegistro, jornadas, equipos, {
+        evidencias,
+        planDia: planPorFecha?.get(fecha) ?? null,
+        ticketsDesalojoDia: tickets.filter((t) => claveFechaLocal(t.fecha_hora_despacho) === fecha),
+      }),
     }
   })
 }

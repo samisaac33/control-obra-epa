@@ -70,7 +70,7 @@ export function LibroObraDocumento({
     return (
       <div
         id="libro-obra-documento"
-        className="mx-auto max-w-[210mm] bg-white px-2 py-4 text-neutral-950 shadow-sm ring-1 ring-neutral-200 print:mx-0 print:max-w-none print:px-0 print:py-0 print:shadow-none print:ring-0"
+        className="libro-obra-documento-planilla mx-auto max-w-[210mm] bg-white px-3 py-4 text-neutral-950 shadow-sm ring-1 ring-neutral-200 print:mx-0 print:max-w-none print:px-0 print:py-0 print:shadow-none print:ring-0"
       >
         <p className="mb-4 text-center text-[10px] text-neutral-500 print:hidden">
           Período {rangoEtiqueta} — generado {fechaGeneracion}

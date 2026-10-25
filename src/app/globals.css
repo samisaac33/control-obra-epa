@@ -163,9 +163,34 @@
     visibility: visible !important;
   }
 
+  .libro-obra-hoja-epa {
+    break-inside: avoid-page;
+    page-break-inside: avoid;
+    padding: 6mm 8mm 5mm;
+  }
+
+  .libro-obra-documento-planilla {
+    font-family: ui-sans-serif, system-ui, sans-serif;
+  }
+
+  .libro-obra-epa-lineado {
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent,
+      transparent calc(1.25em - 1px),
+      rgb(212 212 212) calc(1.25em - 1px),
+      rgb(212 212 212) 1.25em
+    );
+    background-position: 0 0.35em;
+  }
+
   .libro-obra-dia {
     break-inside: avoid-page;
     page-break-inside: avoid;
+  }
+
+  nav[aria-label="Navegación principal del proyecto"] {
+    display: none !important;
   }
 
   .maquinaria-matriz-landscape:not(:first-of-type) {

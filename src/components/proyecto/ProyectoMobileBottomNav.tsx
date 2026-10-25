@@ -40,7 +40,7 @@ export function ProyectoMobileBottomNav() {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-foreground/10 bg-card/95 shadow-[0_-4px_24px_-4px_rgba(0,0,0,0.08)] ring-1 ring-foreground/5 backdrop-blur-md supports-backdrop-filter:bg-card/90 md:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-foreground/10 bg-card/95 shadow-[0_-4px_24px_-4px_rgba(0,0,0,0.08)] ring-1 ring-foreground/5 backdrop-blur-md supports-backdrop-filter:bg-card/90 md:hidden print:hidden"
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
       aria-label="Navegación principal del proyecto"
     >
