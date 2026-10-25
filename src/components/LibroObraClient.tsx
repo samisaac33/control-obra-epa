@@ -9,13 +9,20 @@ import { LibroObraDocumento } from "@/src/components/LibroObraDocumento"
 import { useProyecto } from "@/src/contexts/ProyectoContext"
 import { esperarImagenesInformeListas } from "@/src/lib/compress-image-informe"
 import {
+  etiquetaResidenteFrente,
+  frentesLibroObraProyecto,
+  type LibroObraFrenteId,
+} from "@/src/data/planilla/libro-obra-frentes"
+import {
   filtrarEntradasLibroObra,
   formatearFechaLibroObra,
   type LibroObraEntradaDia,
 } from "@/src/lib/libro-obra"
+import type { LibroObraPorFrente } from "@/src/lib/libro-obra-sintetico"
 
 type LibroObraClientProps = {
-  entradas: LibroObraEntradaDia[]
+  entradas?: LibroObraEntradaDia[]
+  porFrente?: LibroObraPorFrente
   generadoEn: string
   errorCarga: string | null
   defaultDesde?: string
@@ -42,7 +49,8 @@ function contarEvidencias(entradas: LibroObraEntradaDia[]): number {
 }
 
 export function LibroObraClient({
-  entradas,
+  entradas: entradasProp = [],
+  porFrente,
   generadoEn,
   errorCarga,
   defaultDesde = "",
@@ -50,15 +58,27 @@ export function LibroObraClient({
   tituloDocumento,
   variant = "evidencias",
 }: LibroObraClientProps) {
-  const { proyectoActivo } = useProyecto()
+  const { proyectoActivo, proyectoId } = useProyecto()
+  const frentes = useMemo(() => frentesLibroObraProyecto(proyectoId), [proyectoId])
+  const [frenteId, setFrenteId] = useState<LibroObraFrenteId>("trasvase")
   const [desde, setDesde] = useState(defaultDesde)
   const [hasta, setHasta] = useState(defaultHasta)
   const [imprimiendo, setImprimiendo] = useState(false)
 
+  const entradasBase = useMemo(() => {
+    if (variant === "planilla" && porFrente) {
+      return porFrente[frenteId] ?? []
+    }
+    return entradasProp
+  }, [variant, porFrente, frenteId, entradasProp])
+
   const entradasFiltradas = useMemo(
-    () => filtrarEntradasLibroObra(entradas, desde || undefined, hasta || undefined),
-    [entradas, desde, hasta]
+    () => filtrarEntradasLibroObra(entradasBase, desde || undefined, hasta || undefined),
+    [entradasBase, desde, hasta]
   )
+
+  const frenteActivo = frentes.find((f) => f.id === frenteId)
+  const residenteEtiqueta = etiquetaResidenteFrente(proyectoId, frenteId)
 
   const rangoEtiqueta = useMemo(() => etiquetaRango(entradasFiltradas), [entradasFiltradas])
   const totalEvidencias = useMemo(() => contarEvidencias(entradasFiltradas), [entradasFiltradas])
@@ -96,7 +116,7 @@ export function LibroObraClient({
               </h1>
               <p className="text-sm text-muted-foreground">
                 {variant === "planilla"
-                  ? "Libro de obra automático del periodo (actividades + maquinaria + desalojo). Anexe fotos en módulo Fotos cuando estén listas."
+                  ? `Libro por frente y residente (${residenteEtiqueta}). Volúmenes VAE 1:1 por tramo; sin textos genéricos de plan maestro.`
                   : tituloDocumento
                     ? "Documento de planilla — periodo filtrado automáticamente"
                     : "Fiscalización interna — consolidado del registro fotográfico"}
@@ -125,11 +145,27 @@ export function LibroObraClient({
             <CardTitle className="text-base">Generar documento</CardTitle>
             <CardDescription>
               {variant === "planilla"
-                ? "Una entrada por cada día del periodo de planilla. Las fotos aparecen al cargarlas en el módulo Fotos."
+                ? `Solo días con producción en ${frenteActivo?.titulo ?? "el frente"}. Desazolve, desalojo y tendido proporcionales al Excel VAE (incluye fines de semana).`
                 : "Una entrada por cada día con evidencias fotográficas. Las fotos se comprimen automáticamente para un PDF más liviano."}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {variant === "planilla" && frentes.length > 1 ? (
+              <label className="flex max-w-md flex-col gap-1 text-sm print:hidden">
+                <span className="font-medium">Frente / residente</span>
+                <select
+                  value={frenteId}
+                  onChange={(e) => setFrenteId(e.target.value as LibroObraFrenteId)}
+                  className={INPUT_CLASS}
+                >
+                  {frentes.map((f) => (
+                    <option key={f.id} value={f.id}>
+                      {f.titulo} — {etiquetaResidenteFrente(proyectoId, f.id)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
             <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
               <label className="flex min-w-[140px] flex-1 flex-col gap-1 text-sm">
                 <span className="font-medium">Desde</span>

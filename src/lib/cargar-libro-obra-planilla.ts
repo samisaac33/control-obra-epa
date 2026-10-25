@@ -1,18 +1,20 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
 
+import { presupuestoRubrosPorProyecto } from "@/src/data/planilla/presupuesto-por-proyecto"
 import { valoresPorDefectoPlanilla } from "@/src/data/planilla/planilla-defaults-ejecucion"
-import { diasPlanMaestroEjecucion } from "@/src/data/planilla/plan-maestro-ejecucion-desasolve"
-import type { ProyectoPlanillaConfig } from "@/src/data/planilla/types"
+import type { PlanillaNumero, PlanillaPeriodo, ProyectoPlanillaConfig } from "@/src/data/planilla/types"
 import { cargarEvidenciasLibroObra } from "@/src/lib/cargar-evidencias-libro-obra"
 import { cargarEventosParalizacionProyecto } from "@/src/lib/cargar-eventos-paralizacion"
 import { cargarPlanillaConfigProyecto } from "@/src/lib/cargar-planilla-config"
 import { cargarTicketsDesalojoProyecto } from "@/src/lib/cargar-tickets-desalojo"
-import { consolidarLibroObraPeriodoPlanilla } from "@/src/lib/libro-obra-sintetico"
+import {
+  consolidarLibroObraPeriodoPlanillaPorFrentes,
+  type LibroObraPorFrente,
+} from "@/src/lib/libro-obra-sintetico"
 import { cargarJornadasMaquinariaProyecto } from "@/src/lib/maquinaria-desasolve-proyecto"
 import { cargarEquiposMaquinariaProyecto } from "@/src/lib/proyecto-equipos-maquinaria"
-import type { LibroObraEntradaDia } from "@/src/lib/libro-obra"
 
-function configPlanMaestroLibroObra(
+function configPlanillaLibroObra(
   proyectoId: string,
   configDb: ProyectoPlanillaConfig | null
 ): ProyectoPlanillaConfig | null {
@@ -33,34 +35,41 @@ function configPlanMaestroLibroObra(
   }
 }
 
-export async function cargarLibroObraPeriodoPlanilla(
+export async function cargarLibroObraPeriodoPlanillaPorFrentes(
   supabase: SupabaseClient,
   proyectoId: string,
-  desde: string,
-  hasta: string
-): Promise<LibroObraEntradaDia[]> {
+  periodo: PlanillaPeriodo,
+  planillaNumero: PlanillaNumero
+): Promise<LibroObraPorFrente> {
   const [registrosFoto, jornadas, tickets, eventos, equipos, configDb] = await Promise.all([
     cargarEvidenciasLibroObra(supabase, proyectoId),
     cargarJornadasMaquinariaProyecto(supabase, proyectoId),
-    cargarTicketsDesalojoProyecto(supabase, proyectoId, { desde, hasta }),
+    cargarTicketsDesalojoProyecto(supabase, proyectoId, {
+      desde: periodo.fecha_inicio,
+      hasta: periodo.fecha_fin,
+    }),
     cargarEventosParalizacionProyecto(supabase, proyectoId),
     cargarEquiposMaquinariaProyecto(supabase, proyectoId),
     cargarPlanillaConfigProyecto(supabase, proyectoId),
   ])
 
-  const configPlan = configPlanMaestroLibroObra(proyectoId, configDb)
-  const planPorFecha = configPlan
-    ? new Map(diasPlanMaestroEjecucion(configPlan).map((d) => [d.fecha, d]))
-    : undefined
+  const config = configPlanillaLibroObra(proyectoId, configDb)
+  if (!config) return {}
 
-  return consolidarLibroObraPeriodoPlanilla(
-    desde,
-    hasta,
+  const rubros = presupuestoRubrosPorProyecto(proyectoId)
+
+  return consolidarLibroObraPeriodoPlanillaPorFrentes(
+    proyectoId,
+    periodo.fecha_inicio,
+    periodo.fecha_fin,
     registrosFoto,
     jornadas,
     tickets,
     eventos,
     equipos,
-    planPorFecha
+    rubros,
+    config,
+    periodo,
+    planillaNumero
   )
 }

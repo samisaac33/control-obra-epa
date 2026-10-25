@@ -1,6 +1,16 @@
+import type { Rubro } from "@/data/presupuesto"
 import type { TicketDesalojo, EventoParalizacion } from "@/src/data/auditoria/types"
-import type { DiaPlanMaestro } from "@/src/data/planilla/plan-maestro-ejecucion-desasolve"
+import {
+  frenteLibroObra,
+  frentesLibroObraProyecto,
+  type LibroObraFrenteId,
+} from "@/src/data/planilla/libro-obra-frentes"
+import type { PlanillaNumero, PlanillaPeriodo, ProyectoPlanillaConfig } from "@/src/data/planilla/types"
 import type { RegistroFotoBase } from "@/src/lib/evidencias-grupo"
+import {
+  cronogramaLibroObraFrente,
+  type DiaCronogramaFrente,
+} from "@/src/lib/libro-obra-cronograma-frente"
 import type { JornadaMaquinariaProyecto } from "@/src/lib/maquinaria-desasolve-proyecto"
 import {
   detalleJornadasDia,
@@ -18,11 +28,10 @@ import {
 import { armarDatosHojaLibroObraEpa } from "@/src/lib/libro-obra-epa-datos"
 import { formatearNumero } from "@/src/lib/maquinaria-resumen"
 
-const PLANTILLA_ACTIVIDAD_DIA =
-  "Actividades contractuales programadas: replanteo y nivelación, limpieza y desazolve de canales con reconformación de taludes in situ, desalojo de material excedente (rub. 3/7 según VAE) y tendido cuando aplique. Coordinación residente de obra, topografía y registro en sistema de control."
-
 const AVISO_FOTOS_PENDIENTES =
-  "Registro fotográfico: pendiente de anexo manual (cargar en módulo Fotos del proyecto)."
+  "Registro fotográfico: pendiente (cargar en módulo Fotos del proyecto)."
+
+export type LibroObraPorFrente = Partial<Record<LibroObraFrenteId, LibroObraEntradaDia[]>>
 
 function lineasDesalojoDia(fecha: string, tickets: TicketDesalojo[]): LibroObraLineaRegistro[] {
   const delDia = tickets.filter((t) => claveFechaLocal(t.fecha_hora_despacho) === fecha)
@@ -33,7 +42,7 @@ function lineasDesalojoDia(fecha: string, tickets: TicketDesalojo[]): LibroObraL
   return [
     {
       categoria: "desalojo",
-      texto: `Desalojo: ${delDia.length} ticket(s), ${formatearNumero(m3, 0)} m³ declarados, placa(s) ${placas}.`,
+      texto: `Desalojo registrado: ${delDia.length} ticket(s), ${formatearNumero(m3, 0)} m³, placa(s) ${placas}.`,
     },
   ]
 }
@@ -47,7 +56,7 @@ function lineasParalizacionDia(fecha: string, eventos: EventoParalizacion[]): Li
     const texto =
       ev.texto_libro_obra?.trim() ||
       ev.descripcion?.trim() ||
-      `Evento de paralización (${ev.tipo_evento}) registrado en sistema.`
+      `Paralización (${ev.tipo_evento}) registrada en sistema.`
     lineas.push({ categoria: "paralizacion", texto })
   }
   return lineas
@@ -64,10 +73,10 @@ function lineasMaquinariaDia(
   const lineas: LibroObraLineaRegistro[] = [
     {
       categoria: "maquinaria",
-      texto: `Maquinaria (mapa): ${detalle.equiposDistintos} equipo(s), ${formatearNumero(detalle.totalHoras, 1)} h, ${formatearMetrosDesasolveResumen(detalle.totalMetros)} desasolados.`,
+      texto: `Registro GPS/mapa: ${detalle.equiposDistintos} equipo(s), ${formatearNumero(detalle.totalHoras, 1)} h, ${formatearMetrosDesasolveResumen(detalle.totalMetros)}.`,
     },
   ]
-  for (const t of detalle.porTramo.slice(0, 6)) {
+  for (const t of detalle.porTramo.slice(0, 8)) {
     lineas.push({
       categoria: "maquinaria",
       texto: `Tramo ${t.tramo_codigo} (${t.tramo_canal}): ${formatearMetrosDesasolveResumen(t.metros)}${t.horas > 0 ? `, ${formatearNumero(t.horas, 1)} h` : ""}.`,
@@ -76,16 +85,127 @@ function lineasMaquinariaDia(
   if (detalle.incidencias > 0) {
     lineas.push({
       categoria: "maquinaria",
-      texto: `Incidencias de maquinaria registradas: ${detalle.incidencias}.`,
+      texto: `Incidencias de maquinaria: ${detalle.incidencias}.`,
     })
   }
   return lineas
 }
 
-/**
- * Libro de obra del periodo de planilla: un día por fecha del rango,
- * con datos de app + plantilla; fotos se anexan cuando existan.
- */
+function diaTieneProduccion(
+  cronograma: DiaCronogramaFrente | undefined,
+  lineas: LibroObraLineaRegistro[]
+): boolean {
+  if (cronograma && cronograma.actividades.length > 0) return true
+  return lineas.some((l) => l.categoria === "maquinaria" || l.categoria === "desalojo")
+}
+
+function consolidarFrente(
+  frenteId: LibroObraFrenteId,
+  desde: string,
+  hasta: string,
+  registrosFoto: RegistroFotoBase[],
+  jornadas: JornadaMaquinariaProyecto[],
+  tickets: TicketDesalojo[],
+  eventosParalizacion: EventoParalizacion[],
+  equipos: ProyectoEquipoMaquinaria[],
+  rubros: Rubro[],
+  config: ProyectoPlanillaConfig,
+  periodo: PlanillaPeriodo,
+  planillaNumero: PlanillaNumero
+): LibroObraEntradaDia[] {
+  const cfg = frenteLibroObra(frenteId)
+  const porFoto = new Map(consolidarLibroObra(registrosFoto).map((e) => [e.fecha, e]))
+  const cronograma = cronogramaLibroObraFrente(
+    frenteId,
+    desde,
+    hasta,
+    rubros,
+    config,
+    periodo,
+    planillaNumero,
+    cfg.rubDesazolve
+  )
+  const cronogramaPorFecha = new Map(cronograma.map((d) => [d.fecha, d]))
+
+  const entradas: LibroObraEntradaDia[] = []
+
+  for (const fecha of fechasCalendarioInclusive(desde, hasta)) {
+    const cronogramaDia = cronogramaPorFecha.get(fecha)
+    const evidencias = porFoto.get(fecha)?.evidencias ?? []
+
+    const lineasRegistro: LibroObraLineaRegistro[] = [
+      ...lineasMaquinariaDia(fecha, jornadas, equipos),
+      ...(frenteId === "trasvase" ? lineasDesalojoDia(fecha, tickets) : []),
+      ...lineasParalizacionDia(fecha, eventosParalizacion),
+    ]
+
+    if (!diaTieneProduccion(cronogramaDia, lineasRegistro)) {
+      continue
+    }
+
+    if (evidencias.length === 0) {
+      lineasRegistro.push({ categoria: "actividad", texto: AVISO_FOTOS_PENDIENTES })
+    }
+
+    entradas.push({
+      fecha,
+      diaSemana: nombreDiaSemana(fecha),
+      evidencias,
+      lineasRegistro,
+      frenteId,
+      formatoEpa: armarDatosHojaLibroObraEpa(fecha, lineasRegistro, jornadas, equipos, {
+        evidencias,
+        cronogramaDia: cronogramaDia ?? null,
+        frenteTitulo: cfg.titulo,
+        rubDesazolve: cfg.rubDesazolve,
+        rubDesalojo: cfg.rubDesalojo,
+        rubTendido: cfg.rubTendido,
+        ticketsDesalojoDia:
+          frenteId === "trasvase"
+            ? tickets.filter((t) => claveFechaLocal(t.fecha_hora_despacho) === fecha)
+            : [],
+      }),
+    })
+  }
+
+  return entradas
+}
+
+export function consolidarLibroObraPeriodoPlanillaPorFrentes(
+  proyectoId: string,
+  desde: string,
+  hasta: string,
+  registrosFoto: RegistroFotoBase[],
+  jornadas: JornadaMaquinariaProyecto[],
+  tickets: TicketDesalojo[],
+  eventosParalizacion: EventoParalizacion[],
+  equipos: ProyectoEquipoMaquinaria[],
+  rubros: Rubro[],
+  config: ProyectoPlanillaConfig,
+  periodo: PlanillaPeriodo,
+  planillaNumero: PlanillaNumero
+): LibroObraPorFrente {
+  const out: LibroObraPorFrente = {}
+  for (const f of frentesLibroObraProyecto(proyectoId)) {
+    out[f.id] = consolidarFrente(
+      f.id,
+      desde,
+      hasta,
+      registrosFoto,
+      jornadas,
+      tickets,
+      eventosParalizacion,
+      equipos,
+      rubros,
+      config,
+      periodo,
+      planillaNumero
+    )
+  }
+  return out
+}
+
+/** Compatibilidad: libro único = frente Trasvase. */
 export function consolidarLibroObraPeriodoPlanilla(
   desde: string,
   hasta: string,
@@ -94,35 +214,46 @@ export function consolidarLibroObraPeriodoPlanilla(
   tickets: TicketDesalojo[],
   eventosParalizacion: EventoParalizacion[],
   equipos: ProyectoEquipoMaquinaria[],
-  planPorFecha?: Map<string, DiaPlanMaestro>
+  opts?: {
+    rubros?: Rubro[]
+    config?: ProyectoPlanillaConfig
+    periodo?: PlanillaPeriodo
+    planillaNumero?: PlanillaNumero
+    proyectoId?: string
+  }
 ): LibroObraEntradaDia[] {
+  if (opts?.rubros && opts.config && opts.periodo && opts.planillaNumero && opts.proyectoId) {
+    const porFrente = consolidarLibroObraPeriodoPlanillaPorFrentes(
+      opts.proyectoId,
+      desde,
+      hasta,
+      registrosFoto,
+      jornadas,
+      tickets,
+      eventosParalizacion,
+      equipos,
+      opts.rubros,
+      opts.config,
+      opts.periodo,
+      opts.planillaNumero
+    )
+    return porFrente.trasvase ?? []
+  }
+
   const porFoto = new Map(consolidarLibroObra(registrosFoto).map((e) => [e.fecha, e]))
-
   return fechasCalendarioInclusive(desde, hasta).map((fecha) => {
-    const base = porFoto.get(fecha)
-    const evidencias = base?.evidencias ?? []
-
+    const evidencias = porFoto.get(fecha)?.evidencias ?? []
     const lineasRegistro: LibroObraLineaRegistro[] = [
-      { categoria: "actividad", texto: PLANTILLA_ACTIVIDAD_DIA },
       ...lineasMaquinariaDia(fecha, jornadas, equipos),
       ...lineasDesalojoDia(fecha, tickets),
       ...lineasParalizacionDia(fecha, eventosParalizacion),
     ]
-
-    if (evidencias.length === 0) {
-      lineasRegistro.push({ categoria: "actividad", texto: AVISO_FOTOS_PENDIENTES })
-    }
-
     return {
       fecha,
       diaSemana: nombreDiaSemana(fecha),
       evidencias,
       lineasRegistro,
-      formatoEpa: armarDatosHojaLibroObraEpa(fecha, lineasRegistro, jornadas, equipos, {
-        evidencias,
-        planDia: planPorFecha?.get(fecha) ?? null,
-        ticketsDesalojoDia: tickets.filter((t) => claveFechaLocal(t.fecha_hora_despacho) === fecha),
-      }),
+      formatoEpa: armarDatosHojaLibroObraEpa(fecha, lineasRegistro, jornadas, equipos, { evidencias }),
     }
   })
 }

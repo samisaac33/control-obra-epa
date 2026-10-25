@@ -1,4 +1,5 @@
 import type { DatosHojaLibroObraEpa } from "@/src/data/libro-obra-formato-epa"
+import type { LibroObraFrenteId } from "@/src/data/planilla/libro-obra-frentes"
 import {
   agruparRegistrosFotograficos,
   type EvidenciaGrupo,
@@ -14,8 +15,10 @@ export type LibroObraEntradaDia = {
   fecha: string
   diaSemana: string
   evidencias: EvidenciaGrupo[]
-  /** Texto operativo (mapa, volquetas, paralizaciones) y plantilla cuando no hay datos. */
+  /** Texto operativo (mapa, volquetas, paralizaciones). */
   lineasRegistro: LibroObraLineaRegistro[]
+  /** Frente / residente (planilla desazolve). */
+  frenteId?: LibroObraFrenteId
   /** Formato EPA (hoja diaria impresa). */
   formatoEpa?: DatosHojaLibroObraEpa
 }
