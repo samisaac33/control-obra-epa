@@ -357,11 +357,6 @@ export function textoTrabajosDesdeCronograma(
     return "Sin actividades programadas en este frente para la fecha (jornada de descanso o frente sin producción)."
   }
 
-  const notaBrazo =
-    frente === "trasvase"
-      ? `Distribución desazolve: ${formatearNumero(FRACCION_BRAZO_LARGO_TRASVASE * 100, 0)} % brazo largo (${AVANCE_M_H_BRAZO_LARGO_TRASVASE} m/h ref.), ${formatearNumero(FRACCION_BRAZO_CORTO_TRASVASE * 100, 0)} % brazo corto.`
-      : `Desazolve 100 % brazo largo (${AVANCE_M_H_BRAZO_LARGO_SAN_ANTONIO} m/h ref.).`
-
   const lineas = actividades.map((a) => {
     const m3 = formatearNumero(a.m3Desazolve, 1)
     const mlDia = formatearNumero(a.metrosLineales, 0)
@@ -371,7 +366,7 @@ export function textoTrabajosDesdeCronograma(
     return `- Tramo «${a.tramoNombre}» (1 excavadora): producción del día ${m3} m³; avance lineal ${mlDia} m (PK ${pkIni}–${pkFin} m de ${pkTot} m); desalojo ${m3} m³; tendido ${m3} m³; ${a.volquetas} volquetas.`
   })
 
-  return `${notaBrazo}\n${lineas.join("\n")}`
+  return lineas.join("\n")
 }
 
 export function equiposDesdeCronograma(

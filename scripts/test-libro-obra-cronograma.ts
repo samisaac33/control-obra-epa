@@ -119,7 +119,9 @@ const textoTrasvase = bloques.find((b) => b.id === "trasvase")?.trabajosRealizad
 assert.ok(!textoTrasvase.includes("Coordinación:"), "sin plan maestro genérico")
 assert.ok(!textoTrasvase.includes("Acordar criterio"), "sin supuestos administrativos")
 assert.ok(textoTrasvase.includes("Tramo «"), "trabajos por tramo")
-assert.ok(textoTrasvase.includes("93"), "nota brazo largo/corto trasvase")
+assert.ok(!textoTrasvase.includes("Distribución desazolve"), "sin nota brazo largo/corto")
+const textoSan = bloques.find((b) => b.id === "san_antonio")?.trabajosRealizados ?? ""
+assert.ok(!textoSan.includes("Desazolve 100 % brazo largo"), "sin nota brazo san antonio")
 assert.ok(bloques.some((b) => b.id === "san_antonio"))
 
 const e27 = entradas.find((e) => e.fecha === "2026-10-27")
