@@ -62,7 +62,7 @@ export const DOCUMENTOS_PLANILLA_CATALOGO: DocumentoPlanillaCatalogo[] = [
     id: "cronograma_valorado_vigente",
     titulo: "Cronograma ejecutado (vigente)",
     descripcion:
-      "PDF oficial del cronograma ejecutado (avance planilla 1 al 51,63 %). Descarga y visor integrado.",
+      "Archivo Excel oficial del cronograma ejecutado (avance planilla 1 al 51,63 %). Descarga y visor integrado.",
     estado: "disponible",
     rutaGenerador: "planillas/documentos/cronograma-valorado-vigente",
   },
