@@ -1,6 +1,7 @@
 import {
-  formatearNumeroCronograma,
-  formatearUsdCronograma,
+  formatearCantidadCeldaCronogramaEpa,
+  formatearPctCeldaCronogramaEpa,
+  formatearUsdCeldaCronogramaEpa,
 } from "@/src/lib/planilla-cronograma-valorado-formato"
 import type { ResumenCronogramaEpa } from "@/src/lib/planilla-cronograma-epa"
 
@@ -20,7 +21,11 @@ const headDiasSub = `${cell} bg-[#e2efda] text-center`
 
 export function CronogramaEpaHoja({ datos, firmaContratista, className = "" }: CronogramaEpaHojaProps) {
   const { encabezado: e } = datos
+  const tituloVertical = e.tituloVertical
   const [d1, d2] = e.etiquetasDias
+  const fmtCant = (v: number) => formatearCantidadCeldaCronogramaEpa(tituloVertical, v)
+  const fmtUsd = (v: number) => formatearUsdCeldaCronogramaEpa(tituloVertical, v)
+  const fmtPct = (v: number) => formatearPctCeldaCronogramaEpa(v)
 
   return (
     <section
@@ -70,9 +75,7 @@ export function CronogramaEpaHoja({ datos, firmaContratista, className = "" }: C
                         <td className={`${cell} uppercase`} colSpan={4}>
                           {fila.titulo}
                         </td>
-                        <td className={`${cell} text-right`}>
-                          {formatearNumeroCronograma(fila.montoTotalSeccion)}
-                        </td>
+                        <td className={`${cell} text-right`}>{fmtUsd(fila.montoTotalSeccion)}</td>
                         <td className={cell} colSpan={2} />
                       </tr>
                     )
@@ -82,24 +85,14 @@ export function CronogramaEpaHoja({ datos, firmaContratista, className = "" }: C
                       <td className={`${cell} text-center`}>{fila.rubro}</td>
                       <td className={cell}>{fila.detalle}</td>
                       <td className={`${cell} text-center`}>{fila.unidad}</td>
-                      <td className={`${cell} text-right`}>
-                        {formatearNumeroCronograma(fila.cantidad)}
-                      </td>
-                      <td className={`${cell} text-right`}>
-                        {formatearNumeroCronograma(fila.precioUnitario)}
-                      </td>
-                      <td className={`${cell} text-right`}>
-                        {formatearNumeroCronograma(fila.total)}
+                      <td className={`${cell} text-right`}>{fmtCant(fila.cantidad)}</td>
+                      <td className={`${cell} text-right`}>{fmtUsd(fila.precioUnitario)}</td>
+                      <td className={`${cell} text-right`}>{fmtUsd(fila.total)}</td>
+                      <td className={`${cell} bg-[#e2efda]/60 text-right`}>
+                        {fila.montosPeriodo[0] > 0 ? fmtUsd(fila.montosPeriodo[0]) : ""}
                       </td>
                       <td className={`${cell} bg-[#e2efda]/60 text-right`}>
-                        {fila.montosPeriodo[0] > 0
-                          ? formatearNumeroCronograma(fila.montosPeriodo[0])
-                          : ""}
-                      </td>
-                      <td className={`${cell} bg-[#e2efda]/60 text-right`}>
-                        {fila.montosPeriodo[1] > 0
-                          ? formatearNumeroCronograma(fila.montosPeriodo[1])
-                          : ""}
+                        {fila.montosPeriodo[1] > 0 ? fmtUsd(fila.montosPeriodo[1]) : ""}
                       </td>
                     </tr>
                   )
@@ -108,9 +101,7 @@ export function CronogramaEpaHoja({ datos, firmaContratista, className = "" }: C
                   <td className={cell} colSpan={5}>
                     TOTAL
                   </td>
-                  <td className={`${cell} text-right`}>
-                    {formatearUsdCronograma(datos.montoTotalContrato)}
-                  </td>
+                  <td className={`${cell} text-right`}>{fmtUsd(datos.montoTotalContrato)}</td>
                   <td className={cell} colSpan={2} />
                 </tr>
                 <tr className="shrink-0">
@@ -118,48 +109,32 @@ export function CronogramaEpaHoja({ datos, firmaContratista, className = "" }: C
                     INVERSIÓN MENSUAL
                   </td>
                   <td className={cell} />
-                  <td className={`${cell} text-right`}>
-                    {formatearNumeroCronograma(datos.inversionPeriodo[0])}
-                  </td>
-                  <td className={`${cell} text-right`}>
-                    {formatearNumeroCronograma(datos.inversionPeriodo[1])}
-                  </td>
+                  <td className={`${cell} text-right`}>{fmtUsd(datos.inversionPeriodo[0])}</td>
+                  <td className={`${cell} text-right`}>{fmtUsd(datos.inversionPeriodo[1])}</td>
                 </tr>
                 <tr className="shrink-0">
                   <td className={`${cell} font-semibold`} colSpan={5}>
                     AVANCE PARCIAL %
                   </td>
                   <td className={cell} />
-                  <td className={`${cell} text-right`}>
-                    {formatearNumeroCronograma(datos.avanceParcialPct[0], 2)}
-                  </td>
-                  <td className={`${cell} text-right`}>
-                    {formatearNumeroCronograma(datos.avanceParcialPct[1], 2)}
-                  </td>
+                  <td className={`${cell} text-right`}>{fmtPct(datos.avanceParcialPct[0])}</td>
+                  <td className={`${cell} text-right`}>{fmtPct(datos.avanceParcialPct[1])}</td>
                 </tr>
                 <tr className="shrink-0">
                   <td className={`${cell} font-semibold`} colSpan={5}>
                     INVERSIÓN ACUMULADA
                   </td>
                   <td className={cell} />
-                  <td className={`${cell} text-right`}>
-                    {formatearNumeroCronograma(datos.inversionAcumulada[0])}
-                  </td>
-                  <td className={`${cell} text-right`}>
-                    {formatearNumeroCronograma(datos.inversionAcumulada[1])}
-                  </td>
+                  <td className={`${cell} text-right`}>{fmtUsd(datos.inversionAcumulada[0])}</td>
+                  <td className={`${cell} text-right`}>{fmtUsd(datos.inversionAcumulada[1])}</td>
                 </tr>
                 <tr className="shrink-0">
                   <td className={`${cell} font-semibold`} colSpan={5}>
                     AVANCE ACUMULADO %
                   </td>
                   <td className={cell} />
-                  <td className={`${cell} text-right`}>
-                    {formatearNumeroCronograma(datos.avanceAcumuladoPct[0], 2)}
-                  </td>
-                  <td className={`${cell} text-right`}>
-                    {formatearNumeroCronograma(datos.avanceAcumuladoPct[1], 2)}
-                  </td>
+                  <td className={`${cell} text-right`}>{fmtPct(datos.avanceAcumuladoPct[0])}</td>
+                  <td className={`${cell} text-right`}>{fmtPct(datos.avanceAcumuladoPct[1])}</td>
                 </tr>
               </tbody>
             </table>

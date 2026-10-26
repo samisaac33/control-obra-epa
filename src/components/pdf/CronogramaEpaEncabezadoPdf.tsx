@@ -82,7 +82,7 @@ function MetaRow4({
 }
 
 export function CronogramaEpaEncabezadoPdf({ encabezado: e, logos }: Props) {
-  const monto = montoContratoCeldasEpa(e.montoContratoUsd)
+  const monto = montoContratoCeldasEpa(e.montoContratoUsd, e.tituloVertical)
 
   return (
     <View style={styles.encabezadoWrap}>

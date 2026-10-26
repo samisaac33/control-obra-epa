@@ -5,7 +5,11 @@ import {
   LOGO_EPA_PUBLIC_PATH,
 } from "@/src/data/brand/logos-proyecto"
 import { MEMBRETE_EPA } from "@/src/data/contrato-emergencia-severino-trasvase"
-import { formatearNumeroCronograma } from "@/src/lib/planilla-cronograma-valorado-formato"
+import {
+  CRONOGRAMA_EJECUTADO_DECIMALES,
+  esResumenCronogramaEjecutadoEpa,
+  formatearNumeroCronograma,
+} from "@/src/lib/planilla-cronograma-valorado-formato"
 import type { EncabezadoCronogramaEpa } from "@/src/lib/planilla-cronograma-epa"
 
 function formatearFechaContrato(iso: string): string {
@@ -25,7 +29,10 @@ type Props = {
 }
 
 export function CronogramaEpaEncabezadoTabla({ encabezado: e, unirConTablaRubros }: Props) {
-  const montoSoloNumero = formatearNumeroCronograma(e.montoContratoUsd)
+  const decMonto = esResumenCronogramaEjecutadoEpa(e.tituloVertical)
+    ? CRONOGRAMA_EJECUTADO_DECIMALES
+    : 2
+  const montoSoloNumero = formatearNumeroCronograma(e.montoContratoUsd, decMonto)
 
   return (
     <table
@@ -97,8 +104,15 @@ export function CronogramaEpaEncabezadoTabla({ encabezado: e, unirConTablaRubros
 }
 
 /** Monto en celdas separadas ($ | valor) para PDF. */
-export function montoContratoCeldasEpa(montoUsd: number): { simbolo: string; valor: string } {
-  return { simbolo: "$", valor: formatearNumeroCronograma(montoUsd) }
+export function montoContratoCeldasEpa(
+  montoUsd: number,
+  tituloVertical?: string,
+): { simbolo: string; valor: string } {
+  const dec =
+    tituloVertical && esResumenCronogramaEjecutadoEpa(tituloVertical)
+      ? CRONOGRAMA_EJECUTADO_DECIMALES
+      : 2
+  return { simbolo: "$", valor: formatearNumeroCronograma(montoUsd, dec) }
 }
 
 export { formatearFechaContrato as formatearFechaContratoEpa }
