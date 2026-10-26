@@ -25,7 +25,7 @@ export const FECHA_PAGO_ANTICIPO = "2026-10-23"
 export const PORCENTAJE_ANTICIPO_CONTRATO = 35
 
 /** Avance físico acumulado objetivo al cierre de la Planilla 1 (residente de obra). */
-export const PORCENTAJE_AVANCE_PLANILLA_1_EJECUCION = 60.13
+export const PORCENTAJE_AVANCE_PLANILLA_1_EJECUCION = 51.63
 
 export const CAPACIDAD_VOLQUETA_M3_DEFAULT = 8.0
 
