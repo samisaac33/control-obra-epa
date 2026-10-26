@@ -24,11 +24,17 @@ export const FECHA_PAGO_ANTICIPO = "2026-10-23"
 
 export const PORCENTAJE_ANTICIPO_CONTRATO = 35
 
-/** Avance acumulado Planilla 1 (cronograma ejecutado compartido, medición y plan maestro). */
-export const PORCENTAJE_AVANCE_PLANILLA_1_EJECUCION = 51.63
+/** Excel / PDF programado de referencia (baseline fiscalización). */
+export const PORCENTAJE_CRONOGRAMA_PROGRAMADO_PLANILLA_1 = 51.63
+
+/** Cronograma ejecutado EPA y reparto valorado vigente calculado. */
+export const PORCENTAJE_CRONOGRAMA_EJECUTADO_PLANILLA_1 = 61.34
+
+/** Avance acumulado Planilla 1 (medición, plan maestro, defaults). */
+export const PORCENTAJE_AVANCE_PLANILLA_1_EJECUCION = PORCENTAJE_CRONOGRAMA_EJECUTADO_PLANILLA_1
 
 /** Reparto volumétrico programático del libro de obra EPA — Planilla 1. */
-export const PORCENTAJE_AVANCE_LIBRO_OBRA_PLANILLA_1 = 61.34
+export const PORCENTAJE_AVANCE_LIBRO_OBRA_PLANILLA_1 = PORCENTAJE_CRONOGRAMA_EJECUTADO_PLANILLA_1
 
 export const CAPACIDAD_VOLQUETA_M3_DEFAULT = 8.0
 

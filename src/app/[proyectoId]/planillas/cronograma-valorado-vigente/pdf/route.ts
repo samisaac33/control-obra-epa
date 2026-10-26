@@ -1,5 +1,5 @@
 import { proyectoTieneModulo } from "@/src/data/proyectos/catalog"
-import { respuestaCronogramaEjecutadoVigenteDocumento } from "@/lib/planilla/servir-cronograma-ejecutado-documento"
+import { respuestaCronogramaProgramadoPdfDocumento } from "@/lib/planilla/servir-cronograma-programado-documento"
 
 export const dynamic = "force-dynamic"
 
@@ -7,7 +7,7 @@ type RouteContext = {
   params: Promise<{ proyectoId: string }>
 }
 
-/** Compatibilidad: enlace antiguo sirve el PDF oficial estático. */
+/** Compatibilidad: enlace antiguo → PDF programado (Excel 51,63 %). */
 export async function GET(_request: Request, context: RouteContext) {
   const { proyectoId } = await context.params
 
@@ -15,5 +15,5 @@ export async function GET(_request: Request, context: RouteContext) {
     return new Response("No encontrado", { status: 404 })
   }
 
-  return respuestaCronogramaEjecutadoVigenteDocumento()
+  return respuestaCronogramaProgramadoPdfDocumento()
 }

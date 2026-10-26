@@ -2,19 +2,17 @@
  * npx tsx scripts/test-cronograma-ejecutado-documento.ts
  */
 import assert from "node:assert/strict"
-import { existsSync } from "node:fs"
-import path from "node:path"
 
-import { PORCENTAJE_AVANCE_LIBRO_OBRA_PLANILLA_1 } from "../src/data/contrato-emergencia-severino-trasvase"
 import {
-  AVANCE_PLANILLA_1_CRONOGRAMA_EJECUTADO_PCT,
-  CRONOGRAMA_EJECUTADO_VIGENTE_PUBLIC_PATH,
-} from "../src/data/planilla/cronograma-ejecutado-documento"
+  PORCENTAJE_CRONOGRAMA_EJECUTADO_PLANILLA_1,
+  PORCENTAJE_AVANCE_LIBRO_OBRA_PLANILLA_1,
+  PORCENTAJE_AVANCE_PLANILLA_1_EJECUCION,
+} from "../src/data/contrato-emergencia-severino-trasvase"
+import { AVANCE_PLANILLA_1_CRONOGRAMA_EJECUTADO_PCT } from "../src/data/planilla/cronograma-ejecutado-documento"
 
-assert.equal(AVANCE_PLANILLA_1_CRONOGRAMA_EJECUTADO_PCT, 51.63)
+assert.equal(AVANCE_PLANILLA_1_CRONOGRAMA_EJECUTADO_PCT, 61.34)
+assert.equal(PORCENTAJE_CRONOGRAMA_EJECUTADO_PLANILLA_1, 61.34)
 assert.equal(PORCENTAJE_AVANCE_LIBRO_OBRA_PLANILLA_1, 61.34)
-
-const abs = path.join(process.cwd(), "public", CRONOGRAMA_EJECUTADO_VIGENTE_PUBLIC_PATH.replace(/^\//, ""))
-assert.ok(existsSync(abs), `Falta PDF oficial: ${CRONOGRAMA_EJECUTADO_VIGENTE_PUBLIC_PATH}`)
+assert.equal(PORCENTAJE_AVANCE_PLANILLA_1_EJECUCION, 61.34)
 
 console.log("test-cronograma-ejecutado-documento: OK")

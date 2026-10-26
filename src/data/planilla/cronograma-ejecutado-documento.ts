@@ -1,13 +1,9 @@
-/** Avance del Excel oficial de cronograma ejecutado (independiente del libro de obra). */
-export const AVANCE_PLANILLA_1_CRONOGRAMA_EJECUTADO_PCT = 51.63
+import { PORCENTAJE_CRONOGRAMA_EJECUTADO_PLANILLA_1 } from "@/src/data/contrato-emergencia-severino-trasvase"
 
-/** Archivo oficial de cronograma ejecutado (Excel compartido por fiscalización). */
-export const CRONOGRAMA_EJECUTADO_VIGENTE_PUBLIC_PATH =
-  "/documentos/planillas/cronograma-ejecutado-vigente.xlsx"
+/** Avance EPA del cronograma ejecutado generado (planilla 1). */
+export const AVANCE_PLANILLA_1_CRONOGRAMA_EJECUTADO_PCT =
+  PORCENTAJE_CRONOGRAMA_EJECUTADO_PLANILLA_1
 
-export const CRONOGRAMA_EJECUTADO_VIGENTE_MIME =
-  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-
-export function nombreArchivoCronogramaEjecutadoVigente(): string {
-  return "cronograma-ejecutado-vigente.xlsx"
+export function nombreArchivoCronogramaEjecutadoEpaPdf(planillaNumero: number): string {
+  return `cronograma-ejecutado-epa-planilla-${planillaNumero}.pdf`
 }

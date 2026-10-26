@@ -256,6 +256,24 @@ function CronogramaEpaPdfPage({
   )
 }
 
+type SoloProps = {
+  datos: ResumenCronogramaEpa
+  firmaContratista?: string
+  logos: LogosCronogramaEpaPdf
+}
+
+export function PlanillaCronogramaEpaSoloPdfDocument({
+  datos,
+  firmaContratista,
+  logos,
+}: SoloProps) {
+  return (
+    <Document title={datos.encabezado.tituloVertical}>
+      <CronogramaEpaPdfPage datos={datos} firmaContratista={firmaContratista} logos={logos} />
+    </Document>
+  )
+}
+
 export function PlanillaCronogramaEpaPdfDocument({
   programado,
   ejecutado,
