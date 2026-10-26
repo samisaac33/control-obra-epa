@@ -120,8 +120,10 @@ assert.ok(!textoTrasvase.includes("Coordinación:"), "sin plan maestro genérico
 assert.ok(!textoTrasvase.includes("Acordar criterio"), "sin supuestos administrativos")
 assert.ok(textoTrasvase.includes("Tramo «"), "trabajos por tramo")
 assert.ok(!textoTrasvase.includes("Distribución desazolve"), "sin nota brazo largo/corto")
+assert.ok(!textoTrasvase.includes("Mediciones VAE"), "sin pie de rubros VAE")
 const textoSan = bloques.find((b) => b.id === "san_antonio")?.trabajosRealizados ?? ""
 assert.ok(!textoSan.includes("Desazolve 100 % brazo largo"), "sin nota brazo san antonio")
+assert.ok(!textoSan.includes("Mediciones VAE"), "sin pie de rubros VAE san antonio")
 assert.ok(bloques.some((b) => b.id === "san_antonio"))
 
 const e27 = entradas.find((e) => e.fecha === "2026-10-27")
