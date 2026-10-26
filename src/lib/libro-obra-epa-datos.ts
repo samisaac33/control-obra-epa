@@ -135,7 +135,8 @@ function armarDesdeCronograma(
     cantidad: conteo.get(etiqueta) ?? null,
   }))
 
-  const operadores = eq.excavadoras + (eq.volquetas > 0 ? 1 : 0)
+  /** 1 operador por excavadora; choferes van en fila CHOFERES (volquetas). */
+  const operadores = eq.excavadoras
   const personalUtilizado: FilaCantidadEpa[] = FILAS_PERSONAL_UTILIZADO_EPA.map((etiqueta) => {
     if (etiqueta === "OPERADORES") return { etiqueta, cantidad: operadores > 0 ? operadores : null }
     if (etiqueta === "RESIDENTES") return { etiqueta, cantidad: 1 }
