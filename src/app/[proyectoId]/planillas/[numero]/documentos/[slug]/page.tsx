@@ -83,7 +83,9 @@ export default async function PlanillaDocumentoPage({ params }: PageProps) {
         />
       )
     case "cronograma_valorado_vigente":
-      return <PlanillaCronogramaValoradoClient config={config} />
+      return (
+        <PlanillaCronogramaValoradoClient config={config} planillaNumero={planillaNumero} />
+      )
     default:
       notFound()
   }

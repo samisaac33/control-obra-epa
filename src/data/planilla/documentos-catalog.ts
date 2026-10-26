@@ -60,9 +60,9 @@ export const DOCUMENTOS_PLANILLA_CATALOGO: DocumentoPlanillaCatalogo[] = [
   },
   {
     id: "cronograma_valorado_vigente",
-    titulo: "Cronograma valorado de trabajos vigente",
+    titulo: "Cronogramas programado y ejecutado (EPA)",
     descripcion:
-      "Oferta adjudicada VAE: rubros, precios, totales e inversión por planilla 1 y 2. Incluye PDF firmado contractual.",
+      "Dos hojas formato EPA: cronograma valorado programado y cronograma ejecutado (columnas DIAS 30/60, firmas). PDF de 2 páginas.",
     estado: "disponible",
     rutaGenerador: "planillas/documentos/cronograma-valorado-vigente",
   },
