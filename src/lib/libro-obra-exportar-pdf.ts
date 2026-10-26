@@ -3,6 +3,7 @@ import { jsPDF } from "jspdf"
 import {
   aplicarEstilosCalculadosAlClon,
   prepararDocumentoClonadoParaPdf,
+  sanitizarColoresEnClon,
 } from "@/src/lib/libro-obra-pdf-capture-styles"
 
 const MARGEN_MM = 6
@@ -112,7 +113,9 @@ async function canvasDeHoja(
     onclone: (_doc: Document, clonedHoja: HTMLElement) => {
       prepararDocumentoClonadoParaPdf(_doc)
       aplicarEstilosCalculadosAlClon(hoja, clonedHoja)
-      clonedHoja.style.background = "#ffffff"
+      sanitizarColoresEnClon(clonedHoja)
+      clonedHoja.style.backgroundColor = "#ffffff"
+      clonedHoja.style.color = "#0a0a0a"
       clonedHoja.style.margin = "0"
     },
   })
