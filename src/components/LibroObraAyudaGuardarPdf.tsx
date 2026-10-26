@@ -11,10 +11,11 @@ export function LibroObraAyudaGuardarPdf({ variant = "evidencias" }: LibroObraAy
     return (
       <p className="rounded-lg border border-muted bg-muted/40 px-3 py-2 text-xs leading-relaxed text-muted-foreground print:hidden">
         <Smartphone className="mr-1 inline size-3.5 align-text-bottom" aria-hidden />
-        <span className="font-medium text-foreground">1. Generar PDF</span> crea el archivo en el
-        teléfono (puede tardar un poco con muchas hojas). Luego{" "}
-        <span className="font-medium text-foreground">2. Guardar en Archivos</span> abre el menú de
-        iOS para guardarlo, sin pasar por Imprimir de Safari.
+        <span className="font-medium text-foreground">1. Generar PDF</span> arma el documento.
+        Luego <span className="font-medium text-foreground">2. Abrir PDF</span> lo muestra en
+        Safari (como archivo PDF, no como adjunto). En el visor: icono{" "}
+        <span className="font-medium text-foreground">Compartir</span> →{" "}
+        <span className="font-medium text-foreground">Guardar en Archivos</span>.
       </p>
     )
   }

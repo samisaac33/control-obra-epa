@@ -113,7 +113,7 @@ export function LibroObraClient({
     void entregarPdfLibroObra(pdfListo, nombreArchivoLibroObra(desde, hasta)).catch((err) => {
       if (err instanceof DOMException && err.name === "AbortError") return
       setErrorPdf(
-        err instanceof Error ? err.message : "No se pudo abrir el menú para guardar el PDF."
+        err instanceof Error ? err.message : "No se pudo abrir el PDF. Intente de nuevo."
       )
     })
   }
@@ -222,7 +222,7 @@ export function LibroObraClient({
                     disabled={!pdfListo || generandoPdf}
                   >
                     <Save className="size-4" aria-hidden />
-                    2. Guardar en Archivos
+                    2. Abrir PDF
                   </Button>
                 </>
               ) : (
@@ -245,7 +245,8 @@ export function LibroObraClient({
               <p className="text-sm font-medium text-emerald-800" role="status">
                 PDF listo ({entradasFiltradas.length}{" "}
                 {entradasFiltradas.length === 1 ? "hoja" : "hojas"}). Pulse{" "}
-                <span className="font-semibold">Guardar en Archivos</span>.
+                <span className="font-semibold">Abrir PDF</span> y luego el icono Compartir →{" "}
+                Guardar en Archivos.
               </p>
             ) : null}
             <LibroObraAyudaGuardarPdf variant={variant} />

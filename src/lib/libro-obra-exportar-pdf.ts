@@ -198,18 +198,28 @@ export async function generarBlobPdfLibroObra(
   return pdf.output("blob")
 }
 
+/**
+ * Entrega el PDF como documento (visor nativo), no como adjunto del menú Compartir.
+ * En iPhone Safari abre el PDF; el usuario usa Compartir → Guardar en Archivos.
+ * En escritorio intenta descarga directa.
+ */
 export async function entregarPdfLibroObra(blob: Blob, nombreArchivo: string): Promise<void> {
-  const file = new File([blob], nombreArchivo, { type: "application/pdf" })
+  const url = URL.createObjectURL(blob)
+  const esMovil =
+    typeof navigator !== "undefined" &&
+    /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
 
-  if (typeof navigator.share === "function" && navigator.canShare?.({ files: [file] })) {
-    await navigator.share({
-      files: [file],
-      title: "Libro de obra",
-    })
+  if (esMovil) {
+    const abierta = window.open(url, "_blank")
+    if (!abierta) {
+      // Safari a veces bloquea popups: navegar en la misma pestaña
+      window.location.assign(url)
+    } else {
+      window.setTimeout(() => URL.revokeObjectURL(url), 120_000)
+    }
     return
   }
 
-  const url = URL.createObjectURL(blob)
   const enlace = document.createElement("a")
   enlace.href = url
   enlace.download = nombreArchivo
@@ -217,7 +227,7 @@ export async function entregarPdfLibroObra(blob: Blob, nombreArchivo: string): P
   document.body.appendChild(enlace)
   enlace.click()
   enlace.remove()
-  URL.revokeObjectURL(url)
+  window.setTimeout(() => URL.revokeObjectURL(url), 60_000)
 }
 
 export function nombreArchivoLibroObra(desde: string, hasta: string): string {
