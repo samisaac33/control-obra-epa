@@ -1,13 +1,18 @@
 "use client"
 
-import { BookOpen, Printer } from "lucide-react"
-import { useEffect, useMemo, useState } from "react"
+import { BookOpen, Printer, Save } from "lucide-react"
+import { useMemo, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { LibroObraAyudaGuardarPdf } from "@/src/components/LibroObraAyudaGuardarPdf"
 import { LibroObraDocumento } from "@/src/components/LibroObraDocumento"
 import { useProyecto } from "@/src/contexts/ProyectoContext"
+import {
+  entregarPdfLibroObra,
+  generarBlobPdfLibroObra,
+  nombreArchivoLibroObra,
+} from "@/src/lib/libro-obra-exportar-pdf"
 import {
   filtrarEntradasLibroObra,
   formatearFechaLibroObra,
@@ -53,6 +58,10 @@ export function LibroObraClient({
   const { proyectoActivo } = useProyecto()
   const [desde, setDesde] = useState(defaultDesde)
   const [hasta, setHasta] = useState(defaultHasta)
+  const [generandoPdf, setGenerandoPdf] = useState(false)
+  const [errorPdf, setErrorPdf] = useState<string | null>(null)
+  /** iOS exige un segundo toque para Compartir tras generar el PDF de forma asíncrona. */
+  const [pdfListo, setPdfListo] = useState<Blob | null>(null)
   const entradasFiltradas = useMemo(
     () => filtrarEntradasLibroObra(entradasProp, desde || undefined, hasta || undefined),
     [entradasProp, desde, hasta]
@@ -61,17 +70,58 @@ export function LibroObraClient({
   const rangoEtiqueta = useMemo(() => etiquetaRango(entradasFiltradas), [entradasFiltradas])
   const totalEvidencias = useMemo(() => contarEvidencias(entradasFiltradas), [entradasFiltradas])
 
-  useEffect(() => {
-    document.body.classList.remove("libro-obra-modo-impresion")
-  }, [])
+  async function handleGuardarPlanilla() {
+    const elemento = document.getElementById("libro-obra-documento")
+    if (!elemento || generandoPdf) return
+
+    setErrorPdf(null)
+    setPdfListo(null)
+    setGenerandoPdf(true)
+    try {
+      const blob = await generarBlobPdfLibroObra(elemento)
+      setPdfListo(blob)
+      try {
+        await entregarPdfLibroObra(blob, nombreArchivoLibroObra(desde, hasta))
+        setPdfListo(null)
+      } catch (err) {
+        if (err instanceof DOMException && err.name === "AbortError") {
+          setPdfListo(null)
+          return
+        }
+        // En iPhone el share/download suele requerir un toque directo sobre el botón de abajo.
+      }
+    } catch (err) {
+      setPdfListo(null)
+      setErrorPdf(
+        err instanceof Error
+          ? err.message
+          : "No se pudo generar el PDF. Intente de nuevo en unos segundos."
+      )
+    } finally {
+      setGenerandoPdf(false)
+    }
+  }
+
+  function handleEntregarPdfListo() {
+    if (!pdfListo) return
+    void entregarPdfLibroObra(pdfListo, nombreArchivoLibroObra(desde, hasta))
+      .then(() => setPdfListo(null))
+      .catch((err) => {
+        if (err instanceof DOMException && err.name === "AbortError") {
+          setPdfListo(null)
+          return
+        }
+        setErrorPdf(
+          err instanceof Error ? err.message : "No se pudo abrir el menú para guardar el PDF."
+        )
+      })
+  }
 
   function handleImprimir() {
-    document.body.classList.add("libro-obra-modo-impresion")
-    const quitarModo = () => {
-      document.body.classList.remove("libro-obra-modo-impresion")
+    if (variant === "planilla") {
+      void handleGuardarPlanilla()
+      return
     }
-    window.addEventListener("afterprint", quitarModo, { once: true })
-    window.setTimeout(quitarModo, 3_000)
     window.print()
   }
 
@@ -156,12 +206,37 @@ export function LibroObraClient({
                 type="button"
                 className="w-full shrink-0 sm:w-auto"
                 onClick={handleImprimir}
+                disabled={generandoPdf || (variant === "planilla" && entradasFiltradas.length === 0)}
               >
-                <Printer className="size-4" aria-hidden />
-                Imprimir / Guardar PDF
+                {variant === "planilla" ? (
+                  <Save className="size-4" aria-hidden />
+                ) : (
+                  <Printer className="size-4" aria-hidden />
+                )}
+                {generandoPdf
+                  ? "Generando PDF…"
+                  : variant === "planilla"
+                    ? "Guardar"
+                    : "Imprimir / Guardar PDF"}
               </Button>
             </div>
-            <LibroObraAyudaGuardarPdf />
+            {pdfListo ? (
+              <Button
+                type="button"
+                className="w-full"
+                variant="secondary"
+                onClick={handleEntregarPdfListo}
+              >
+                <Save className="size-4" aria-hidden />
+                Tocá aquí para guardar el PDF
+              </Button>
+            ) : null}
+            {errorPdf ? (
+              <p className="text-sm text-destructive" role="alert">
+                {errorPdf}
+              </p>
+            ) : null}
+            <LibroObraAyudaGuardarPdf variant={variant} />
 
             <dl className="grid gap-2 text-sm sm:grid-cols-3">
               <div className="rounded-lg border border-foreground/10 bg-muted/30 px-3 py-2">
