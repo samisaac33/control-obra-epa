@@ -20,117 +20,88 @@ export const cronogramaEpaPdfStyles = StyleSheet.create({
     padding: 8,
     backgroundColor: "#ffffff",
   },
-  outerBorder: {
-    borderWidth: 1,
-    borderColor: CRONOGRAMA_EPA_COLORS.border,
-    flex: 1,
-    flexDirection: "row",
-    padding: 2,
-  },
-  stripVertical: {
-    width: 18,
-    backgroundColor: CRONOGRAMA_EPA_COLORS.stripGray,
-    borderWidth: 0.5,
-    borderColor: CRONOGRAMA_EPA_COLORS.border,
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 3,
-  },
-  stripVerticalText: {
-    fontFamily: "Helvetica-Bold",
-    fontSize: 6.5,
-    textTransform: "uppercase",
-    transform: "rotate(-90deg)",
-    width: 120,
-    textAlign: "center",
-  },
   main: {
     flex: 1,
     flexDirection: "column",
   },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
+  encabezadoWrap: {
+    borderWidth: 0.5,
+    borderColor: CRONOGRAMA_EPA_COLORS.border,
+    borderBottomWidth: 0,
+  },
+  encTitleRow: {
     borderBottomWidth: 0.5,
     borderBottomColor: CRONOGRAMA_EPA_COLORS.border,
-    paddingBottom: 3,
-    marginBottom: 2,
+    paddingVertical: 2,
+    paddingHorizontal: 3,
   },
-  logosLeft: {
-    width: 72,
-  },
-  logoEpa: {
-    width: 68,
-    height: 22,
-    objectFit: "contain",
-    marginBottom: 2,
-  },
-  logoConsorcio: {
-    width: 52,
-    height: 28,
-    objectFit: "contain",
-  },
-  headerCenter: {
-    flex: 1,
-    paddingHorizontal: 4,
-    alignItems: "center",
-  },
-  objetoTitulo: {
+  encTituloDoc: {
     fontFamily: "Helvetica-Bold",
-    fontSize: 7,
+    fontSize: 8,
     textAlign: "center",
     textTransform: "uppercase",
   },
-  metaLeft: {
-    width: 118,
-    fontSize: 5.5,
-    paddingRight: 3,
-  },
-  metaLine: {
-    marginBottom: 1,
-  },
-  metaLabel: {
+  encObjeto: {
     fontFamily: "Helvetica-Bold",
+    fontSize: 6.5,
+    textAlign: "center",
+    textTransform: "uppercase",
   },
-  metaRightTable: {
-    width: 128,
-    borderWidth: 0.5,
-    borderColor: CRONOGRAMA_EPA_COLORS.border,
+  encMetaBlock: {
+    flexDirection: "row",
+    alignItems: "stretch",
   },
-  metaRightRow: {
+  encLogoCol: {
+    width: 54,
+    borderRightWidth: 0.5,
+    borderRightColor: CRONOGRAMA_EPA_COLORS.border,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 2,
+  },
+  logoEpaEnc: {
+    width: 48,
+    height: 36,
+    objectFit: "contain",
+  },
+  logoConsorcioEnc: {
+    width: 44,
+    height: 44,
+    objectFit: "contain",
+  },
+  encMetaCenter: {
+    flex: 1,
+    flexDirection: "column",
+  },
+  encMetaRow: {
     flexDirection: "row",
     borderBottomWidth: 0.5,
     borderBottomColor: CRONOGRAMA_EPA_COLORS.border,
+    minHeight: 11,
   },
-  metaRightRowLast: {
+  encMetaRowLast: {
     flexDirection: "row",
+    minHeight: 11,
   },
-  metaRightLabel: {
-    width: "52%",
-    padding: 1.5,
-    fontFamily: "Helvetica-Bold",
+  encCell: {
+    paddingVertical: 1.5,
+    paddingHorizontal: 2,
     fontSize: 5,
     borderRightWidth: 0.5,
     borderRightColor: CRONOGRAMA_EPA_COLORS.border,
+    justifyContent: "center",
   },
-  metaRightValue: {
-    flex: 1,
-    padding: 1.5,
+  encCellLast: {
+    paddingVertical: 1.5,
+    paddingHorizontal: 2,
     fontSize: 5,
-  },
-  logoTopRight: {
-    position: "absolute",
-    top: 10,
-    right: 12,
-    width: 48,
-    height: 48,
-    objectFit: "contain",
+    justifyContent: "center",
   },
   table: {
     width: "100%",
     borderWidth: 0.5,
     borderColor: CRONOGRAMA_EPA_COLORS.border,
-    marginTop: 2,
+    borderTopWidth: 0,
   },
   row: {
     flexDirection: "row",

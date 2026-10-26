@@ -1,4 +1,4 @@
-import { Document, Image, Page, Text, View } from "@react-pdf/renderer"
+import { Document, Page, Text, View } from "@react-pdf/renderer"
 import type { ReactNode } from "react"
 
 import type { LogosCronogramaEpaPdf } from "@/lib/planilla/cronograma-epa-logos-pdf"
@@ -8,6 +8,7 @@ import {
 } from "@/src/lib/planilla-cronograma-valorado-formato"
 import type { ResumenCronogramaEpa } from "@/src/lib/planilla-cronograma-epa"
 
+import { CronogramaEpaEncabezadoPdf } from "./CronogramaEpaEncabezadoPdf"
 import {
   CRONOGRAMA_EPA_COL_WIDTH as W,
   CRONOGRAMA_EPA_COLORS,
@@ -19,12 +20,6 @@ type Props = {
   ejecutado: ResumenCronogramaEpa
   firmaContratista?: string
   logos: LogosCronogramaEpaPdf
-}
-
-function formatearFecha(iso: string): string {
-  const [y, m, d] = iso.split("-")
-  if (!y || !m || !d) return iso
-  return `${d}/${m}/${y}`
 }
 
 function Cell({
@@ -45,15 +40,6 @@ function Cell({
   )
 }
 
-function MetaRow({ label, value, last }: { label: string; value: string; last?: boolean }) {
-  return (
-    <View style={last ? styles.metaRightRowLast : styles.metaRightRow}>
-      <Text style={styles.metaRightLabel}>{label}</Text>
-      <Text style={styles.metaRightValue}>{value}</Text>
-    </View>
-  )
-}
-
 function CronogramaEpaPdfPage({
   datos,
   firmaContratista,
@@ -69,59 +55,10 @@ function CronogramaEpaPdfPage({
 
   return (
     <Page size="A4" orientation="landscape" style={styles.page}>
-      <View style={styles.outerBorder}>
-        <View style={styles.stripVertical}>
-          <Text style={styles.stripVerticalText}>{e.tituloVertical}</Text>
-        </View>
+      <View style={styles.main}>
+        <CronogramaEpaEncabezadoPdf encabezado={e} logos={logos} />
 
-        <View style={styles.main}>
-          <View style={styles.headerRow}>
-            <View style={styles.logosLeft}>
-              <Image src={logos.epa} style={styles.logoEpa} />
-            </View>
-            <View style={styles.headerCenter}>
-              <Text style={styles.objetoTitulo}>{e.objeto}</Text>
-            </View>
-            <View style={{ width: 52, alignItems: "flex-end" }}>
-              <Image src={logos.consorcio} style={styles.logoConsorcio} />
-            </View>
-          </View>
-
-          <View style={{ flexDirection: "row", marginBottom: 2 }}>
-            <View style={styles.metaLeft}>
-              <Text style={styles.metaLine}>
-                <Text style={styles.metaLabel}>CONTRATISTA: </Text>
-                {e.contratista}
-              </Text>
-              <Text style={styles.metaLine}>
-                <Text style={styles.metaLabel}>FISCALIZADOR: </Text>
-                {e.fiscalizador}
-              </Text>
-              <Text style={styles.metaLine}>
-                <Text style={styles.metaLabel}>ADMINISTRADOR: </Text>
-                {e.administrador}
-              </Text>
-              {e.planillaEtiqueta ? (
-                <Text style={styles.metaLine}>
-                  <Text style={styles.metaLabel}>PLANILLA N°: </Text>
-                  {e.planillaEtiqueta}
-                </Text>
-              ) : null}
-            </View>
-            <View style={{ flex: 1 }} />
-            <View style={styles.metaRightTable}>
-              <MetaRow label="Monto Contrato USD:" value={formatearUsdCronograma(e.montoContratoUsd)} />
-              <MetaRow label="N° de Contrato:" value={e.numeroContrato} />
-              <MetaRow label="Fecha de Inicio:" value={formatearFecha(e.fechaInicioContrato)} />
-              <MetaRow
-                label="Fecha de Finalización:"
-                value={formatearFecha(e.fechaFinContrato)}
-                last
-              />
-            </View>
-          </View>
-
-          <View style={styles.table}>
+        <View style={styles.table}>
             <View style={[styles.row, { alignItems: "stretch", minHeight: 18 }]}>
               <Cell flex={W.rubro} style={styles.cellHeadBlue}>
                 RUBRO
@@ -313,7 +250,6 @@ function CronogramaEpaPdfPage({
               <Text style={styles.firmaLinea}>{e.administrador}</Text>
               <Text style={styles.firmaRol}>ADMINISTRADOR DE CONTRATO</Text>
             </View>
-          </View>
         </View>
       </View>
     </Page>
