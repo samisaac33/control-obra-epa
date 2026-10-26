@@ -1,6 +1,6 @@
 "use client"
 
-import { BookOpen, Printer, Save } from "lucide-react"
+import { BookOpen, Printer } from "lucide-react"
 import { useMemo, useState } from "react"
 
 import { Button } from "@/components/ui/button"
@@ -68,7 +68,7 @@ export function LibroObraClient({
   const rangoEtiqueta = useMemo(() => etiquetaRango(entradasFiltradas), [entradasFiltradas])
   const totalEvidencias = useMemo(() => contarEvidencias(entradasFiltradas), [entradasFiltradas])
 
-  async function handleGuardarPlanilla() {
+  async function handleImprimirPlanilla() {
     const elemento = document.getElementById("libro-obra-documento")
     if (!elemento || generandoPdf) return
 
@@ -94,7 +94,7 @@ export function LibroObraClient({
 
   function handleImprimir() {
     if (variant === "planilla") {
-      void handleGuardarPlanilla()
+      void handleImprimirPlanilla()
       return
     }
     handleImprimirEvidencias()
@@ -183,15 +183,11 @@ export function LibroObraClient({
                 onClick={handleImprimir}
                 disabled={generandoPdf || (variant === "planilla" && entradasFiltradas.length === 0)}
               >
-                {variant === "planilla" ? (
-                  <Save className="size-4" aria-hidden />
-                ) : (
-                  <Printer className="size-4" aria-hidden />
-                )}
+                <Printer className="size-4" aria-hidden />
                 {generandoPdf
                   ? "Generando PDF…"
                   : variant === "planilla"
-                    ? "Guardar"
+                    ? "Imprimir"
                     : "Imprimir / Guardar PDF"}
               </Button>
             </div>

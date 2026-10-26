@@ -1,5 +1,3 @@
-import { prepararDocumentoClonadoParaPdf } from "@/src/lib/libro-obra-pdf-capture-styles"
-
 async function esperarImagenesElemento(root: HTMLElement): Promise<void> {
   const imagenes = [...root.querySelectorAll("img")]
   await Promise.all(
@@ -31,9 +29,6 @@ export async function generarBlobPdfLibroObra(elemento: HTMLElement): Promise<Bl
         useCORS: true,
         logging: false,
         backgroundColor: "#ffffff",
-        onclone: (doc) => {
-          prepararDocumentoClonadoParaPdf(doc)
-        },
       },
       jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
       pagebreak: { mode: ["css", "legacy"], after: ".libro-obra-hoja-epa" },
