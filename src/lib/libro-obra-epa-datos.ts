@@ -110,7 +110,7 @@ function armarDesdeCronograma(
   soloProgramatico: boolean
 ): DatosHojaLibroObraEpa {
   const acts = cronograma.actividades
-  let trabajos = textoTrabajosDesdeCronograma(frenteTitulo, acts)
+  let trabajos = textoTrabajosDesdeCronograma(cronograma.frente, acts)
   trabajos = trabajos.replace(
     /\(rub\. desalojo VAE\)/g,
     `(rub. ${rubDesalojo})`
@@ -135,7 +135,7 @@ function armarDesdeCronograma(
     cantidad: conteo.get(etiqueta) ?? null,
   }))
 
-  const operadores = eq.excavadoras + (eq.volquetas > 0 ? 1 : 0)
+  const operadores = eq.excavadoras
   const personalUtilizado: FilaCantidadEpa[] = FILAS_PERSONAL_UTILIZADO_EPA.map((etiqueta) => {
     if (etiqueta === "OPERADORES") return { etiqueta, cantidad: operadores > 0 ? operadores : null }
     if (etiqueta === "RESIDENTES") return { etiqueta, cantidad: 1 }
@@ -147,8 +147,12 @@ function armarDesdeCronograma(
 
   const horasEquipos: FilaHorasEquipoEpa[] = []
   const exc = EQUIPO_MINIMO_ARRENDAMIENTO.filter((e) => e.categoria === "desazolve")
-  for (let i = 0; i < Math.min(eq.excavadoras, exc.length); i++) {
-    horasEquipos.push(filaHorasEquipo(`${exc[i]!.marca} ${exc[i]!.modelo}`.trim(), HORAS_JORNADA_COMPLETA))
+  for (let i = 0; i < eq.excavadoras; i++) {
+    const base = exc[i]
+    const nombre = base
+      ? `${base.marca} ${base.modelo}`.trim()
+      : `Excavadora brazo largo #${i + 1}`
+    horasEquipos.push(filaHorasEquipo(nombre, HORAS_JORNADA_COMPLETA))
   }
   if (eq.volquetas > 0) {
     const v = EQUIPO_MINIMO_ARRENDAMIENTO.find((e) => e.categoria === "desalojo")
