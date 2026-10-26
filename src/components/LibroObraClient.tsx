@@ -1,7 +1,7 @@
 "use client"
 
 import { BookOpen, Printer } from "lucide-react"
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -61,18 +61,22 @@ export function LibroObraClient({
   const rangoEtiqueta = useMemo(() => etiquetaRango(entradasFiltradas), [entradasFiltradas])
   const totalEvidencias = useMemo(() => contarEvidencias(entradasFiltradas), [entradasFiltradas])
 
+  useEffect(() => {
+    document.body.classList.remove("libro-obra-modo-impresion")
+  }, [])
+
   function handleImprimir() {
-    // No hacer scroll al documento: en móvil solo bajaba la vista y parecía que el botón fallaba.
     document.body.classList.add("libro-obra-modo-impresion")
     const quitarModo = () => {
       document.body.classList.remove("libro-obra-modo-impresion")
     }
     window.addEventListener("afterprint", quitarModo, { once: true })
+    window.setTimeout(quitarModo, 3_000)
     window.print()
   }
 
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-[oklch(0.98_0.002_264)] text-foreground">
+    <div className="flex w-full min-w-0 flex-col bg-[oklch(0.98_0.002_264)] text-foreground">
       <header className="libro-obra-toolbar shrink-0 border-b border-foreground/10 bg-card/80 shadow-sm ring-1 ring-foreground/5 backdrop-blur-sm print:hidden">
         <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-5 sm:px-6 lg:px-8">
           <div className="flex min-w-0 items-start gap-3">
@@ -95,7 +99,7 @@ export function LibroObraClient({
         </div>
       </header>
 
-      <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
         {errorCarga ? (
           <Card className="border-destructive/30 bg-destructive/5 print:hidden">
             <CardHeader className="pb-2">
@@ -109,7 +113,7 @@ export function LibroObraClient({
           </Card>
         ) : null}
 
-        <Card className="libro-obra-toolbar sticky top-0 z-20 border-foreground/10 bg-card shadow-sm print:hidden">
+        <Card className="libro-obra-toolbar border-foreground/10 print:hidden">
           <CardHeader className="pb-3">
             <CardTitle className="text-base">Generar documento</CardTitle>
             <CardDescription>
@@ -183,7 +187,7 @@ export function LibroObraClient({
           variant={variant}
           proyecto={proyectoActivo}
         />
-      </main>
+      </div>
     </div>
   )
 }
