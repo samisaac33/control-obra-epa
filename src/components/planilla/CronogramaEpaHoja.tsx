@@ -25,7 +25,7 @@ type CronogramaEpaHojaProps = {
 }
 
 const cell =
-  "border border-black/80 px-0.5 py-px align-middle text-[8px] leading-tight sm:text-[9px] print:text-[7.5px]"
+  "border border-black px-0.5 py-px align-middle text-[8px] leading-tight sm:text-[9px] print:text-[7.5px]"
 const head = `${cell} bg-[#d9e2f3] font-bold text-center`
 const headDias = `${cell} bg-[#c6e0b4] font-bold text-center`
 const headDiasSub = `${cell} bg-[#e2efda] text-center`
@@ -51,73 +51,70 @@ export function CronogramaEpaHoja({ datos, firmaContratista, className = "" }: C
 
           <div className="min-w-0 flex-1">
             <div className="grid grid-cols-[auto_1fr_auto] items-start gap-2 border-b border-black/60 pb-1">
-              <div className="flex flex-col gap-1">
-                <Image
-                  src={LOGO_EPA_PUBLIC_PATH}
-                  alt={MEMBRETE_EPA}
-                  width={88}
-                  height={36}
-                  className="h-9 w-auto object-contain"
-                />
-                <Image
-                  src={LOGO_CONSORCIO_STH_MANABI_PUBLIC_PATH}
-                  alt={e.contratista}
-                  width={88}
-                  height={32}
-                  className="h-8 w-auto object-contain"
-                />
-              </div>
+              <Image
+                src={LOGO_EPA_PUBLIC_PATH}
+                alt={MEMBRETE_EPA}
+                width={88}
+                height={36}
+                className="h-9 w-auto object-contain"
+              />
               <div className="text-center">
                 <p className="text-[10px] font-bold uppercase leading-tight print:text-[9px]">
                   {e.objeto}
                 </p>
               </div>
-              <div className="w-[140px] shrink-0 text-[8px] print:text-[7px]">
-                <table className="w-full border-collapse">
-                  <tbody>
-                    <tr>
-                      <td className="border border-black/60 px-1 font-semibold">CONTRATISTA:</td>
-                      <td className="border border-black/60 px-1">{e.contratista}</td>
-                    </tr>
-                    <tr>
-                      <td className="border border-black/60 px-1 font-semibold">FISCALIZADOR:</td>
-                      <td className="border border-black/60 px-1">{e.fiscalizador}</td>
-                    </tr>
-                    <tr>
-                      <td className="border border-black/60 px-1 font-semibold">ADMINISTRADOR:</td>
-                      <td className="border border-black/60 px-1">{e.administrador}</td>
-                    </tr>
-                    {e.planillaEtiqueta ? (
-                      <tr>
-                        <td className="border border-black/60 px-1 font-semibold">PLANILLA N°:</td>
-                        <td className="border border-black/60 px-1">{e.planillaEtiqueta}</td>
-                      </tr>
-                    ) : null}
-                    <tr>
-                      <td className="border border-black/60 px-1 font-semibold">Monto Contrato USD:</td>
-                      <td className="border border-black/60 px-1">
-                        {formatearUsdCronograma(e.montoContratoUsd)}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td className="border border-black/60 px-1 font-semibold">N° de Contrato:</td>
-                      <td className="border border-black/60 px-1">{e.numeroContrato}</td>
-                    </tr>
-                    <tr>
-                      <td className="border border-black/60 px-1 font-semibold">Fecha inicio:</td>
-                      <td className="border border-black/60 px-1">
-                        {formatearFechaContrato(e.fechaInicioContrato)}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td className="border border-black/60 px-1 font-semibold">Fecha fin:</td>
-                      <td className="border border-black/60 px-1">
-                        {formatearFechaContrato(e.fechaFinContrato)}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+              <Image
+                src={LOGO_CONSORCIO_STH_MANABI_PUBLIC_PATH}
+                alt={e.contratista}
+                width={56}
+                height={56}
+                className="h-12 w-12 object-contain"
+              />
+            </div>
+
+            <div className="mt-1 flex flex-wrap items-start justify-between gap-2 text-[8px] print:text-[7px]">
+              <div className="min-w-[200px] space-y-0.5">
+                <p>
+                  <span className="font-semibold">CONTRATISTA:</span> {e.contratista}
+                </p>
+                <p>
+                  <span className="font-semibold">FISCALIZADOR:</span> {e.fiscalizador}
+                </p>
+                <p>
+                  <span className="font-semibold">ADMINISTRADOR:</span> {e.administrador}
+                </p>
+                {e.planillaEtiqueta ? (
+                  <p>
+                    <span className="font-semibold">PLANILLA N°:</span> {e.planillaEtiqueta}
+                  </p>
+                ) : null}
               </div>
+              <table className="w-[200px] shrink-0 border-collapse">
+                <tbody>
+                  <tr>
+                    <td className="border border-black/80 px-1 font-semibold">Monto Contrato USD:</td>
+                    <td className="border border-black/80 px-1">
+                      {formatearUsdCronograma(e.montoContratoUsd)}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="border border-black/80 px-1 font-semibold">N° de Contrato:</td>
+                    <td className="border border-black/80 px-1">{e.numeroContrato}</td>
+                  </tr>
+                  <tr>
+                    <td className="border border-black/80 px-1 font-semibold">Fecha de Inicio:</td>
+                    <td className="border border-black/80 px-1">
+                      {formatearFechaContrato(e.fechaInicioContrato)}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="border border-black/80 px-1 font-semibold">Fecha de Finalización:</td>
+                    <td className="border border-black/80 px-1">
+                      {formatearFechaContrato(e.fechaFinContrato)}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
 
             <div className="mt-1 overflow-x-auto">

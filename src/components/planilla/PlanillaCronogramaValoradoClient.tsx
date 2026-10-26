@@ -90,7 +90,7 @@ export function PlanillaCronogramaValoradoClient({
     <div className="mx-auto max-w-[1200px] space-y-6 p-4 print:max-w-none print:space-y-0 print:p-0 sm:p-6">
       <style>{`
         @media print {
-          @page { size: A4 landscape; margin: 8mm; }
+          @page { size: A4 landscape; margin: 6mm; }
           body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
           .cronograma-epa-hoja:last-of-type { break-after: auto; }
         }
