@@ -11,11 +11,10 @@ export function LibroObraAyudaGuardarPdf({ variant = "evidencias" }: LibroObraAy
     return (
       <p className="rounded-lg border border-muted bg-muted/40 px-3 py-2 text-xs leading-relaxed text-muted-foreground print:hidden">
         <Smartphone className="mr-1 inline size-3.5 align-text-bottom" aria-hidden />
-        <span className="font-medium text-foreground">1. Generar PDF</span> arma el documento.
-        Luego <span className="font-medium text-foreground">2. Abrir PDF</span> lo muestra en
-        Safari (como archivo PDF, no como adjunto). En el visor: icono{" "}
-        <span className="font-medium text-foreground">Compartir</span> →{" "}
-        <span className="font-medium text-foreground">Guardar en Archivos</span>.
+        El PDF se arma en la app (sin capturar la pantalla).{" "}
+        <span className="font-medium text-foreground">1. Generar PDF</span>, luego{" "}
+        <span className="font-medium text-foreground">2. Abrir PDF</span> y en Safari: Compartir →
+        Guardar en Archivos.
       </p>
     )
   }
