@@ -8,15 +8,15 @@ export function LibroObraAyudaGuardarPdf() {
   const esApple = useEsDispositivoApple()
 
   return (
-    <div
-      className="rounded-lg border border-amber-200/80 bg-amber-50/90 px-3 py-2.5 text-xs leading-relaxed text-amber-950 print:hidden"
-      role="note"
+    <details
+      className="rounded-lg border border-amber-200/80 bg-amber-50/90 px-3 py-2 text-xs leading-relaxed text-amber-950 print:hidden"
       aria-label="Cómo guardar PDF sin URL en el pie"
     >
-      <p className="flex items-center gap-1.5 font-semibold">
+      <summary className="flex cursor-pointer list-none items-center gap-1.5 font-semibold marker:content-none [&::-webkit-details-marker]:hidden">
         <Smartphone className="size-3.5 shrink-0" aria-hidden />
         Guardar PDF sin URL ni fecha en el pie
-      </p>
+      </summary>
+      <div className="mt-2 border-t border-amber-200/60 pt-2">
       {esApple ? (
         <ol className="mt-2 list-decimal space-y-1.5 pl-4">
           <li>
@@ -56,6 +56,7 @@ export function LibroObraAyudaGuardarPdf() {
         El navegador añade URL y fecha solo si esa opción sigue activa; la app no puede quitarlas por
         código en iPhone.
       </p>
-    </div>
+      </div>
+    </details>
   )
 }
