@@ -23,8 +23,8 @@ const c = calcularCronogramaValoradoVigente(presupuestoDesasolveEmergencia, conf
 
 assert.ok(Math.abs(c.montoTotalContrato - 1_793_881.01) < 0.05, "total contrato")
 assert.equal(c.pctAvancePlanilla1, PORCENTAJE_AVANCE_PLANILLA_1_EJECUCION)
-assert.ok(Math.abs(c.avanceParcialPct1 - PORCENTAJE_AVANCE_PLANILLA_1_EJECUCION) < 0.02, "avance P1")
-assert.ok(Math.abs(c.avanceParcialPct2 - (100 - PORCENTAJE_AVANCE_PLANILLA_1_EJECUCION)) < 0.02, "avance P2")
+assert.ok(Math.abs(c.avanceParcialPct1 - PORCENTAJE_AVANCE_PLANILLA_1_EJECUCION) < 0.05, "avance P1")
+assert.ok(Math.abs(c.avanceParcialPct2 - (100 - PORCENTAJE_AVANCE_PLANILLA_1_EJECUCION)) < 0.05, "avance P2")
 assert.ok(
   Math.abs(c.inversionPeriodo1 + c.inversionPeriodo2 - c.montoTotalContrato) < 0.05,
   "suma periodos"

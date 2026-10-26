@@ -60,9 +60,9 @@ export const DOCUMENTOS_PLANILLA_CATALOGO: DocumentoPlanillaCatalogo[] = [
   },
   {
     id: "cronograma_valorado_vigente",
-    titulo: "Cronogramas programado y ejecutado (EPA)",
+    titulo: "Cronograma ejecutado (vigente)",
     descripcion:
-      "Dos hojas formato EPA: cronograma valorado programado y cronograma ejecutado (columnas DIAS 30/60, firmas). PDF de 2 páginas.",
+      "Archivo Excel oficial del cronograma ejecutado (avance planilla 1 al 51,63 %). Descarga y visor integrado.",
     estado: "disponible",
     rutaGenerador: "planillas/documentos/cronograma-valorado-vigente",
   },

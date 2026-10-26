@@ -3,7 +3,7 @@
 **Resolución:** EPA-EPA-2026-00134-RES · **Proyecto:** desasolve-canales
 **Inicio plazo:** 2026-10-26 · **Fin plazo:** 2026-12-24 (60 días)
 **Anticipo:** 35 % (2026-10-23) · **Oferta ref.:** USD 1,793,881.01 sin IVA
-**Planilla 1:** 2026-10-26 → 2026-11-24 (meta **60.13 %** acumulado)
+**Planilla 1:** 2026-10-26 → 2026-11-24 (meta **51.63 %** acumulado)
 **Planilla 2:** 2026-11-25 → 2026-12-24 (meta **100 %** acumulado)
 
 ---
