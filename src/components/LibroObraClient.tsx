@@ -97,10 +97,13 @@ export function LibroObraClient({
       const blob = await generarBlobPdfLibroObra(elemento, setProgresoPdf)
       setPdfListo(blob)
     } catch (err) {
+      const crudo = err instanceof Error ? err.message : String(err)
       setErrorPdf(
-        err instanceof Error
-          ? err.message
-          : "No se pudo generar el PDF. Pruebe acortar el rango de fechas e intente de nuevo."
+        /unsupported color function|lab|oklch/i.test(crudo)
+          ? "Error al capturar colores de la página. Recargue e intente de nuevo; si persiste, acorte el rango de fechas."
+          : err instanceof Error
+            ? err.message
+            : "No se pudo generar el PDF. Pruebe acortar el rango de fechas e intente de nuevo."
       )
     } finally {
       setGenerandoPdf(false)
