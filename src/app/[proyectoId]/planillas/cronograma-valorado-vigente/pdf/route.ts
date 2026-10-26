@@ -1,11 +1,19 @@
 import { presupuestoRubrosPorProyecto } from "@/src/data/planilla/presupuesto-por-proyecto"
-import { proyectoTieneModulo } from "@/src/data/proyectos/catalog"
-import { cargarPlanillaConfigProyecto } from "@/src/lib/cargar-planilla-config"
-import { calcularCronogramaValoradoVigente } from "@/src/lib/planilla-cronograma-valorado-vigente"
 import {
-  nombreArchivoCronogramaValoradoPdf,
-  renderCronogramaValoradoPdfBuffer,
-} from "@/lib/planilla/render-cronograma-valorado-pdf"
+  lineaFirmaPersonal,
+  superintendenteObra,
+} from "@/src/data/planilla/personal-tecnico-contratista"
+import { getProyecto, proyectoTieneModulo } from "@/src/data/proyectos/catalog"
+import { cargarMedicionesRubrosPlanilla } from "@/src/lib/cargar-planilla-medicion-rubros"
+import { cargarPlanillaConfigProyecto } from "@/src/lib/cargar-planilla-config"
+import {
+  calcularCronogramaEjecutadoEpa,
+  calcularCronogramaValoradoProgramadoEpa,
+} from "@/src/lib/planilla-cronograma-epa"
+import {
+  nombreArchivoCronogramasEpaPdf,
+  renderCronogramasEpaPdfBuffer,
+} from "@/lib/planilla/render-cronograma-epa-pdf"
 import { createClient } from "@/src/lib/supabase/server"
 
 export const dynamic = "force-dynamic"
@@ -29,13 +37,30 @@ export async function GET(_request: Request, context: RouteContext) {
     }
 
     const rubros = presupuestoRubrosPorProyecto(proyectoId)
-    const cronograma = calcularCronogramaValoradoVigente(rubros, config)
-    const buffer = await renderCronogramaValoradoPdfBuffer(cronograma)
+    const proyecto = getProyecto(proyectoId)
+    const med1 = await cargarMedicionesRubrosPlanilla(supabase, proyectoId, 1)
+    const programado = calcularCronogramaValoradoProgramadoEpa(
+      rubros,
+      config,
+      proyecto.numeroContrato
+    )
+    const ejecutado = calcularCronogramaEjecutadoEpa(
+      rubros,
+      config,
+      proyecto.numeroContrato,
+      1,
+      med1.length > 0 ? med1 : undefined
+    )
+    const superintendente = superintendenteObra(proyectoId)
+    const firmaContratista = superintendente
+      ? lineaFirmaPersonal(superintendente, "Superintendente de Obra")
+      : undefined
+    const buffer = await renderCronogramasEpaPdfBuffer(programado, ejecutado, firmaContratista)
 
     return new Response(new Uint8Array(buffer), {
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="${nombreArchivoCronogramaValoradoPdf()}"`,
+        "Content-Disposition": `attachment; filename="${nombreArchivoCronogramasEpaPdf(1)}"`,
       },
     })
   } catch (err) {
