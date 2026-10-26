@@ -1,8 +1,5 @@
 import { EvidenciaBloque } from "@/src/components/LibroObraDocumentoEvidencia"
-import {
-  LibroObraEpaCabecera,
-  LibroObraEpaTablaFecha,
-} from "@/src/components/LibroObraEpaCabecera"
+import { LibroObraEpaCabecera } from "@/src/components/LibroObraEpaCabecera"
 import { PROVINCIA_LIBRO_OBRA_EPA } from "@/src/data/libro-obra-formato-epa"
 import { OBJETO_CONTRATO } from "@/src/data/contrato-emergencia-severino-trasvase"
 import type { ProyectoConfig } from "@/src/data/proyectos/catalog"
@@ -74,12 +71,14 @@ export function LibroObraHojaEpa({ entrada, proyecto, numeroEntrada }: LibroObra
 
   return (
     <section className="libro-obra-dia libro-obra-hoja-epa mb-8 break-after-page bg-white print:mb-0">
+      <div className="libro-obra-epa-cabecera-fija" aria-hidden>
+        <LibroObraEpaCabecera {...cabeceraProps} />
+      </div>
+      <div className="libro-obra-epa-mascara-pie" aria-hidden />
+
       <div className="libro-obra-epa-cuerpo">
-        <div className="libro-obra-epa-cabecera-pantalla mb-0.5 print:hidden">
+        <div className="libro-obra-epa-cabecera-flujo mb-0.5">
           <LibroObraEpaCabecera {...cabeceraProps} />
-        </div>
-        <div className="libro-obra-epa-fecha-dia mb-0.5 hidden justify-center print:flex">
-          <LibroObraEpaTablaFecha {...cabeceraProps} />
         </div>
 
       <p className="mb-0 text-[7px] font-bold uppercase text-neutral-900 print:text-[6.5px]">
