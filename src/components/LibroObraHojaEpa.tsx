@@ -59,7 +59,7 @@ function CeldaEncabezado({
 function AreaLineada({ children, minHeightClass }: { children: React.ReactNode; minHeightClass: string }) {
   return (
     <div
-      className={`libro-obra-epa-lineado whitespace-pre-wrap border border-neutral-900 px-1.5 py-0.5 text-[9px] leading-[1.3] print:px-1 print:py-0 print:text-[7.5px] print:leading-[1.2] ${minHeightClass}`}
+      className={`whitespace-pre-wrap border border-neutral-900 bg-white px-1.5 py-0.5 text-[9px] leading-[1.35] print:px-1 print:py-0 print:text-[7.5px] print:leading-[1.3] ${minHeightClass}`}
     >
       {children}
     </div>
@@ -291,13 +291,13 @@ export function LibroObraHojaEpa({ entrada, proyecto, numeroEntrada }: LibroObra
         </p>
       )}
 
-      <div className="libro-obra-epa-firmas mt-2 grid grid-cols-2 gap-4 border-t border-neutral-900 pt-3 text-center text-[9px] font-bold uppercase print:mt-1 print:gap-3 print:pt-2 print:text-[7.5px]">
-        <div>
-          <div className="mb-6 border-b border-neutral-900 print:mb-4" />
+      <div className="libro-obra-epa-firmas mt-4 grid grid-cols-2 gap-6 border-t border-neutral-900 pt-4 text-center text-[9px] font-bold uppercase print:mt-6 print:gap-8 print:pt-5 print:text-[7.5px]">
+        <div className="flex min-h-[22mm] flex-col justify-end print:min-h-[26mm]">
+          <div className="mb-2 min-h-[14mm] border-b border-neutral-900 print:min-h-[18mm]" />
           Contratista
         </div>
-        <div>
-          <div className="mb-6 border-b border-neutral-900 print:mb-4" />
+        <div className="flex min-h-[22mm] flex-col justify-end print:min-h-[26mm]">
+          <div className="mb-2 min-h-[14mm] border-b border-neutral-900 print:min-h-[18mm]" />
           Fiscalizador
         </div>
       </div>

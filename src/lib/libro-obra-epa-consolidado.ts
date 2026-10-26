@@ -19,7 +19,17 @@ function mergeFilasCantidad(base: FilaCantidadEpa[], extra: FilaCantidadEpa[]): 
   return base.map((f) => {
     const o = extra.find((x) => x.etiqueta === f.etiqueta)
     if (!o) return f
-    if (f.etiqueta === "RTK" || f.etiqueta === "TOPÓGRAFOS") {
+    const maxPorEtiqueta = new Set([
+      "RTK",
+      "TRACTOR",
+      "MOTO NIVELADORA",
+      "COMPACTADOR",
+      "CAMA BAJA / PLATAFORMA",
+      "CAMIONETA",
+      "GENERADOR",
+      "TOPÓGRAFOS",
+    ])
+    if (maxPorEtiqueta.has(f.etiqueta)) {
       const m = Math.max(f.cantidad ?? 0, o.cantidad ?? 0)
       return { etiqueta: f.etiqueta, cantidad: m > 0 ? m : null }
     }
