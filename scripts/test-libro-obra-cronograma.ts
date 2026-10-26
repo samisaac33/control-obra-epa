@@ -14,6 +14,7 @@ import {
   volquetasFlotaParaM3Desalojo,
 } from "../src/lib/libro-obra-cronograma-frente"
 import { consolidarLibroObraPeriodoPlanillaConsolidado } from "../src/lib/libro-obra-sintetico"
+import { hitosSeverinoPorFechaPlanilla } from "../src/lib/libro-obra-cronograma-severino"
 
 assert.equal(TRAMOS_DESAZOLVE_VAE.length, 25)
 assert.ok(!TRAMOS_DESAZOLVE_VAE.some((t) => t.nombre.toLowerCase() === "san antonio" && t.volumenM3 === 0))
@@ -112,6 +113,16 @@ assert.notEqual(Math.round(m3_27), Math.round(m3_30), "m³ trasvase distintos en
 const t27 = e27.formatoEpa!.bloquesFrente!.find((b) => b.id === "trasvase")!.trabajosRealizados
 assert.ok(t27.includes("producción del día"), "texto programático")
 assert.ok(t27.includes("PK "), "referencia PK")
+
+const hitos = hitosSeverinoPorFechaPlanilla(periodo, 1)
+assert.ok(hitos.size >= 7 && hitos.size <= 12, "Severino en hitos, no diario")
+const diasConSeverino = entradas.filter((e) => e.formatoEpa?.bloqueSeverino)
+assert.equal(diasConSeverino.length, hitos.size)
+assert.ok(!entradas.every((e) => e.formatoEpa?.bloqueSeverino), "Severino no en todos los días")
+assert.ok(
+  diasConSeverino.some((e) => e.formatoEpa?.bloqueSeverino?.trabajosRealizados.includes("Rub. 9")),
+  "hito con rub. 9"
+)
 
 console.log("test-libro-obra-cronograma: OK", {
   hojasConsolidadas: entradas.length,
