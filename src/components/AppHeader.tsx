@@ -173,7 +173,7 @@ export function AppHeader() {
     <header
       ref={headerRef}
       className={cn(
-        "z-30 border-b border-border/80 bg-card/95 shadow-sm ring-1 ring-foreground/5 backdrop-blur-md supports-backdrop-filter:bg-card/80",
+        "z-30 border-b border-border/80 bg-card/95 shadow-sm ring-1 ring-foreground/5 backdrop-blur-md supports-backdrop-filter:bg-card/80 print:hidden",
         "transition-transform duration-300 ease-out motion-reduce:transition-none",
         modoMapaMovil ? "fixed top-0 left-0 right-0 md:left-64" : "sticky top-0",
         ocultarEnMapaMovil && "-translate-y-full"
