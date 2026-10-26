@@ -136,7 +136,7 @@
 
 @page cronograma-epa-landscape {
   size: A4 landscape;
-  margin: 0;
+  margin: 10mm;
 }
 
 @media print {
@@ -154,7 +154,15 @@
   body.cronograma-epa-modo-impresion #cronograma-epa-documento {
     page: cronograma-epa-landscape;
     box-sizing: border-box;
-    padding: 5mm 6mm !important;
+    padding: 0 !important;
+    width: 100%;
+  }
+
+  body.cronograma-epa-modo-impresion .cronograma-epa-hoja {
+    width: 100% !important;
+    max-width: none !important;
+    min-height: 190mm;
+    box-shadow: none !important;
   }
 
   body.cronograma-epa-modo-impresion header,

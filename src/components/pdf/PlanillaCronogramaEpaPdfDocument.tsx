@@ -55,11 +55,12 @@ function CronogramaEpaPdfPage({
 
   return (
     <Page size="A4" orientation="landscape" style={styles.page}>
-      <View style={styles.main}>
-        <CronogramaEpaEncabezadoPdf encabezado={e} logos={logos} />
+      <View style={styles.pageInner}>
+        <View style={styles.topBlock}>
+          <CronogramaEpaEncabezadoPdf encabezado={e} logos={logos} />
 
-        <View style={styles.table}>
-            <View style={[styles.row, { alignItems: "stretch", minHeight: 18 }]}>
+          <View style={styles.table}>
+            <View style={[styles.row, { alignItems: "stretch", minHeight: 20 }]}>
               <Cell flex={W.rubro} style={styles.cellHeadBlue}>
                 RUBRO
               </Cell>
@@ -126,10 +127,11 @@ function CronogramaEpaPdfPage({
               </View>
             </View>
 
+            <View style={styles.tableBodyFlex}>
             {datos.filas.map((fila, idx) => {
               if (fila.tipo === "seccion") {
                 return (
-                  <View key={`s-${idx}`} style={styles.row}>
+                  <View key={`s-${idx}`} style={styles.rowData}>
                     <Cell flex={W.rubro} style={styles.cellSection}>
                       {fila.rubro}
                     </Cell>
@@ -149,7 +151,7 @@ function CronogramaEpaPdfPage({
                 )
               }
               return (
-                <View key={`r-${idx}`} style={styles.row}>
+                <View key={`r-${idx}`} style={styles.rowData}>
                   <Cell flex={W.rubro} style={{ textAlign: "center" }}>
                     {fila.rubro}
                   </Cell>
@@ -175,6 +177,7 @@ function CronogramaEpaPdfPage({
                 </View>
               )
             })}
+            </View>
 
             <View style={styles.row}>
               <Cell flex={W.rubro + wDetalleSeccion} style={{ fontFamily: "Helvetica-Bold" }}>
@@ -236,8 +239,9 @@ function CronogramaEpaPdfPage({
               </Cell>
             </View>
           </View>
+        </View>
 
-          <View style={styles.firmas}>
+        <View style={styles.firmas}>
             <View style={styles.firmaCol}>
               <Text style={styles.firmaLinea}>{firmaContratista ?? e.contratista}</Text>
               <Text style={styles.firmaRol}>CONTRATISTA</Text>
