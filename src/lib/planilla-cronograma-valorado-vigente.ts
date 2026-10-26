@@ -49,6 +49,8 @@ export type ResumenCronogramaValoradoVigente = {
   avanceAcumuladoPct2: number
   /** Referencia oferta adjudicada (Formulario 1 VAE). */
   montoDeclaradoOferta: number
+  /** % avance acumulado objetivo al cierre de planilla 1 (reparto en cantidades). */
+  pctAvancePlanilla1: number
 }
 
 const ORDEN_SECCION = [
@@ -57,20 +59,16 @@ const ORDEN_SECCION = [
   "SUBESTACIÓN ELÉCTRICA SEVERINO",
 ] as const
 
-function esRubroSeverino(categoria: string): boolean {
-  return categoria.toUpperCase().includes("SEVERINO")
-}
-
 /**
- * Reparto vigente según cronograma valorado firmado (Consorcio STH, oferta VAE):
- * civil 50/50 en cantidades; rubros Severino íntegros en planilla 1.
+ * Reparto vigente: cantidades por planilla según % acumulado objetivo de planilla 1
+ * (p. ej. 60,13 % civil + Severino), alineado al avance contractual de ejecución.
  */
-export function cantidadesPorPeriodoCronogramaVigente(rubro: Rubro): [number, number] {
-  if (esRubroSeverino(rubro.categoria)) {
-    return [rubro.cantidad, 0]
-  }
-  const mitad = rubro.cantidad / 2
-  const p1 = Math.round(mitad * 100) / 100
+export function cantidadesPorPeriodoCronogramaVigente(
+  rubro: Rubro,
+  pctAvancePlanilla1: number
+): [number, number] {
+  const fraccion = Math.min(100, Math.max(0, pctAvancePlanilla1)) / 100
+  const p1 = Math.round(rubro.cantidad * fraccion * 100) / 100
   const p2 = Math.round((rubro.cantidad - p1) * 100) / 100
   return [p1, p2]
 }
@@ -94,6 +92,7 @@ export function calcularCronogramaValoradoVigente(
     return a.id - b.id
   })
 
+  const pctAvancePlanilla1 = config.porcentaje_avance_planilla_1
   const contadorSub = new Map<number, number>()
 
   for (const r of rubrosOrdenados) {
@@ -101,7 +100,7 @@ export function calcularCronogramaValoradoVigente(
     const sub = (contadorSub.get(sec) ?? 0) + 1
     contadorSub.set(sec, sub)
 
-    const [c1, c2] = cantidadesPorPeriodoCronogramaVigente(r)
+    const [c1, c2] = cantidadesPorPeriodoCronogramaVigente(r, pctAvancePlanilla1)
     const m1 = c1 * r.precioUnitario
     const m2 = c2 * r.precioUnitario
 
@@ -165,5 +164,6 @@ export function calcularCronogramaValoradoVigente(
     avanceAcumuladoPct1: pct(inversionPeriodo1),
     avanceAcumuladoPct2: 100,
     montoDeclaradoOferta: PRESUPUESTO_OFERTA_SIN_IVA_USD,
+    pctAvancePlanilla1,
   }
 }
