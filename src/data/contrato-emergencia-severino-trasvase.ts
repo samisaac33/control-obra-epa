@@ -24,8 +24,11 @@ export const FECHA_PAGO_ANTICIPO = "2026-10-23"
 
 export const PORCENTAJE_ANTICIPO_CONTRATO = 35
 
-/** Avance físico acumulado objetivo al cierre de la Planilla 1 (residente de obra). */
+/** Avance acumulado Planilla 1 (cronograma ejecutado compartido, medición y plan maestro). */
 export const PORCENTAJE_AVANCE_PLANILLA_1_EJECUCION = 51.63
+
+/** Reparto volumétrico programático del libro de obra EPA — Planilla 1. */
+export const PORCENTAJE_AVANCE_LIBRO_OBRA_PLANILLA_1 = 61.34
 
 export const CAPACIDAD_VOLQUETA_M3_DEFAULT = 8.0
 

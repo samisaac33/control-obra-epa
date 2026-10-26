@@ -1,6 +1,6 @@
 import type { Rubro } from "@/data/presupuesto"
 import type { BloqueLibroObraSeverinoEpa } from "@/src/data/libro-obra-formato-epa"
-import { PORCENTAJE_AVANCE_PLANILLA_1_EJECUCION } from "@/src/data/contrato-emergencia-severino-trasvase"
+import { PORCENTAJE_AVANCE_LIBRO_OBRA_PLANILLA_1 } from "@/src/data/contrato-emergencia-severino-trasvase"
 import {
   nombreCompletoPersonal,
   residenteObraElectrica,
@@ -68,7 +68,7 @@ const HITOS_OFFSET_PLANILLA_1: Array<{ offset: number } & HitoSeverinoLibroObra>
     rubros: [16],
     lineas: [
       "Avance de cierre y sellado del transformador (hito parcial al cierre Planilla 1).",
-      `Meta de avance acumulado cadena Severino: ${PORCENTAJE_AVANCE_PLANILLA_1_EJECUCION} %.`,
+      `Meta de avance acumulado cadena Severino: ${PORCENTAJE_AVANCE_LIBRO_OBRA_PLANILLA_1} %.`,
     ],
   },
 ]

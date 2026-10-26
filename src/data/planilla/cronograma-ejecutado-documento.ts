@@ -1,7 +1,5 @@
-import { PORCENTAJE_AVANCE_PLANILLA_1_EJECUCION } from "@/src/data/contrato-emergencia-severino-trasvase"
-
-/** Avance acumulado contractual vigente al cierre de planilla 1 (cronograma ejecutado compartido). */
-export const AVANCE_PLANILLA_1_CRONOGRAMA_EJECUTADO_PCT = PORCENTAJE_AVANCE_PLANILLA_1_EJECUCION
+/** Avance del Excel oficial de cronograma ejecutado (independiente del libro de obra). */
+export const AVANCE_PLANILLA_1_CRONOGRAMA_EJECUTADO_PCT = 51.63
 
 /** Archivo oficial de cronograma ejecutado (Excel compartido por fiscalización). */
 export const CRONOGRAMA_EJECUTADO_VIGENTE_PUBLIC_PATH =
