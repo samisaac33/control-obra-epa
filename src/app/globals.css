@@ -129,10 +129,21 @@
   }
 }
 
+@page libro-obra-epa {
+  size: A4 portrait;
+  margin: 0;
+}
+
 @media print {
   @page {
     size: A4 portrait;
     margin: 8mm 6mm;
+  }
+
+  body.libro-obra-modo-impresion #libro-obra-documento {
+    page: libro-obra-epa;
+    box-sizing: border-box;
+    padding: 8mm 6mm !important;
   }
 
   aside,
