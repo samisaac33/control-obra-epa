@@ -154,16 +154,17 @@
   #libro-obra-documento.libro-obra-documento-planilla .libro-obra-hoja-epa,
   body.libro-obra-modo-impresion .libro-obra-hoja-epa {
     page: libro-obra-epa;
-    padding: 0 0 16mm;
+    padding-left: 0;
+    padding-right: 0;
   }
 
-  .libro-obra-epa-cabecera-fija,
-  .libro-obra-epa-mascara-pie {
+  .libro-obra-epa-cabecera-print-global,
+  .libro-obra-epa-mascara-pie-global {
     display: none;
   }
 
-  #libro-obra-documento.libro-obra-documento-planilla .libro-obra-epa-cabecera-fija,
-  body.libro-obra-modo-impresion .libro-obra-epa-cabecera-fija {
+  #libro-obra-documento.libro-obra-documento-planilla .libro-obra-epa-cabecera-print-global,
+  body.libro-obra-modo-impresion .libro-obra-epa-cabecera-print-global {
     display: block;
     position: fixed;
     top: 0;
@@ -173,29 +174,27 @@
     box-sizing: border-box;
     background: #fff;
     padding: 3mm 6mm 1.5mm;
-    border-bottom: 1px solid rgb(23 23 23);
-  }
-
-  #libro-obra-documento.libro-obra-documento-planilla .libro-obra-epa-cabecera-flujo,
-  body.libro-obra-modo-impresion .libro-obra-epa-cabecera-flujo {
-    display: none !important;
   }
 
   #libro-obra-documento.libro-obra-documento-planilla .libro-obra-epa-cuerpo,
   body.libro-obra-modo-impresion .libro-obra-epa-cuerpo {
-    padding-top: 21mm;
+    padding-top: 14mm;
   }
 
-  #libro-obra-documento.libro-obra-documento-planilla .libro-obra-epa-mascara-pie,
-  body.libro-obra-modo-impresion .libro-obra-epa-mascara-pie {
+  #libro-obra-documento.libro-obra-documento-planilla .libro-obra-epa-mascara-pie-global,
+  body.libro-obra-modo-impresion .libro-obra-epa-mascara-pie-global {
     display: block;
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
-    height: 14mm;
+    height: 18mm;
     z-index: 10000;
     background: #fff;
+  }
+
+  #libro-obra-documento.libro-obra-documento-planilla .libro-obra-hoja-epa {
+    padding-bottom: 18mm;
   }
 
   aside,

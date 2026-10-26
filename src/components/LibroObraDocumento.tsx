@@ -1,5 +1,6 @@
 import { EstadoHitoBadge } from "@/src/components/EstadoHitoBadge"
 import { EvidenciaBloque } from "@/src/components/LibroObraDocumentoEvidencia"
+import { LibroObraEpaPrintChrome } from "@/src/components/LibroObraEpaPrintChrome"
 import { LibroObraHojaEpa } from "@/src/components/LibroObraHojaEpa"
 import { CONSORCIO_CONTRATISTA_RAZON } from "@/src/data/brand/logos-proyecto"
 import { ESTADOS_HITO } from "@/src/data/estados-hito"
@@ -72,6 +73,7 @@ export function LibroObraDocumento({
         id="libro-obra-documento"
         className="libro-obra-documento-planilla mx-auto max-w-[210mm] bg-white px-3 py-4 text-neutral-950 shadow-sm ring-1 ring-neutral-200 print:mx-0 print:max-w-none print:px-0 print:py-0 print:shadow-none print:ring-0"
       >
+        <LibroObraEpaPrintChrome />
         <p className="mb-4 text-center text-[10px] text-neutral-500 print:hidden">
           Período {rangoEtiqueta} — generado {fechaGeneracion}
         </p>
