@@ -17,6 +17,10 @@ import {
 import { tramosPorFrente } from "../src/data/planilla/canales-desazolve-tramos-vae"
 import { consolidarLibroObraPeriodoPlanillaConsolidado } from "../src/lib/libro-obra-sintetico"
 import { hitosSeverinoPorFechaPlanilla } from "../src/lib/libro-obra-cronograma-severino"
+import {
+  climaProgramaticoDia,
+  horasEquipoProgramaticas,
+} from "../src/lib/libro-obra-epa-enriquecimiento-dia"
 
 assert.equal(TRAMOS_DESAZOLVE_VAE.length, 25)
 assert.ok(!TRAMOS_DESAZOLVE_VAE.some((t) => t.nombre.toLowerCase() === "san antonio" && t.volumenM3 === 0))
@@ -138,6 +142,19 @@ assert.ok(!entradas.every((e) => e.formatoEpa?.bloqueSeverino), "Severino no en 
 assert.ok(
   diasConSeverino.some((e) => e.formatoEpa?.bloqueSeverino?.trabajosRealizados.includes("Rub. 9")),
   "hito con rub. 9"
+)
+
+const epa0 = dia1Entrada.formatoEpa!
+assert.ok(epa0.clima.manana.length > 0 && epa0.clima.tarde.length > 0)
+assert.ok(epa0.novedadesObservaciones.trim().length > 0)
+const h0 = epa0.horasEquipos[0]
+const h1 = epa0.horasEquipos[1]
+assert.ok(h0 && h1)
+assert.notEqual(h0.manana, h1.manana, "horas distintas por equipo")
+assert.deepEqual(climaProgramaticoDia(periodo.fecha_inicio), climaProgramaticoDia(periodo.fecha_inicio))
+assert.notEqual(
+  horasEquipoProgramaticas(periodo.fecha_inicio, "A", 0).total,
+  horasEquipoProgramaticas(periodo.fecha_inicio, "B", 1).total
 )
 
 console.log("test-libro-obra-cronograma: OK", {

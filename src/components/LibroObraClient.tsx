@@ -164,6 +164,13 @@ export function LibroObraClient({
                 {imprimiendo ? "Comprimiendo fotos…" : "Imprimir / Guardar PDF"}
               </Button>
             </div>
+            {variant === "planilla" ? (
+              <p className="text-xs text-muted-foreground print:hidden">
+                Para quitar la URL y la fecha del pie al guardar PDF, desactiva{" "}
+                <span className="font-medium">Encabezados y pies de página</span> en el diálogo de
+                impresión del navegador (especialmente en móvil).
+              </p>
+            ) : null}
 
             <dl className="grid gap-2 text-sm sm:grid-cols-3">
               <div className="rounded-lg border border-foreground/10 bg-muted/30 px-3 py-2">
