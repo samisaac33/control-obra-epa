@@ -128,7 +128,13 @@ function armarDesdeCronograma(
   const conteo = new Map<string, number>()
   if (eq.excavadoras > 0) conteo.set("EXCAVADORAS", eq.excavadoras)
   if (eq.volquetas > 0) conteo.set("VOLQUETAS", eq.volquetas)
+  if (eq.tractor > 0) conteo.set("TRACTOR", eq.tractor)
+  if (eq.motoniveladora > 0) conteo.set("MOTO NIVELADORA", eq.motoniveladora)
   if (eq.rtk > 0) conteo.set("RTK", eq.rtk)
+  if (acts.length > 0) {
+    conteo.set("CAMIONETA", 1)
+    conteo.set("GENERADOR", 1)
+  }
 
   const equiposUtilizados: FilaCantidadEpa[] = FILAS_EQUIPOS_UTILIZADOS_EPA.map((etiqueta) => ({
     etiqueta,

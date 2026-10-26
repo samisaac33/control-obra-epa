@@ -204,17 +204,6 @@
     font-family: ui-sans-serif, system-ui, sans-serif;
   }
 
-  .libro-obra-epa-lineado {
-    background-image: repeating-linear-gradient(
-      to bottom,
-      transparent,
-      transparent calc(1.25em - 1px),
-      rgb(212 212 212) calc(1.25em - 1px),
-      rgb(212 212 212) 1.25em
-    );
-    background-position: 0 0.35em;
-  }
-
   .libro-obra-dia {
     break-after: page;
     page-break-after: always;

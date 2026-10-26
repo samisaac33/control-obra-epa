@@ -66,20 +66,21 @@ export function LibroObraClient({
   function handleImprimir() {
     document.getElementById("libro-obra-documento")?.scrollIntoView({ block: "start" })
 
+    // print() debe ejecutarse en el mismo gesto del usuario (móvil bloquea print() diferido).
+    window.print()
+
     const hayImagenesInforme =
-      totalEvidencias > 0 && document.querySelectorAll(".libro-obra-imagen").length > 0
+      totalEvidencias > 0 &&
+      [...document.querySelectorAll<HTMLImageElement>(".libro-obra-imagen")].some(
+        (img) => Boolean(img.getAttribute("src"))
+      )
 
-    // iOS/Android: print() debe dispararse en el mismo gesto del usuario; un await previo lo bloquea.
-    if (!hayImagenesInforme) {
-      window.print()
-      return
+    if (hayImagenesInforme) {
+      setImprimiendo(true)
+      void esperarImagenesInformeListas()
+        .catch(() => undefined)
+        .finally(() => setImprimiendo(false))
     }
-
-    setImprimiendo(true)
-    void esperarImagenesInformeListas().then(() => {
-      setImprimiendo(false)
-      window.print()
-    })
   }
 
   return (
