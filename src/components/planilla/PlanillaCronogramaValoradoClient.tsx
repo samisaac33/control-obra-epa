@@ -4,6 +4,8 @@ import Link from "next/link"
 import { ArrowLeft, Download, FileText, Printer } from "lucide-react"
 import { useCallback, useEffect, useMemo, useState } from "react"
 
+import { entregarPdfLibroObra } from "@/src/lib/libro-obra-exportar-pdf"
+
 import { Button } from "@/components/ui/button"
 import { presupuestoRubrosPorProyecto } from "@/src/data/planilla/presupuesto-por-proyecto"
 import type { PlanillaNumero, ProyectoPlanillaConfig } from "@/src/data/planilla/types"
@@ -38,6 +40,8 @@ export function PlanillaCronogramaValoradoClient({
   const [med1, setMed1] = useState<MedicionRubroGuardada[] | undefined>()
   const [med2, setMed2] = useState<MedicionRubroGuardada[] | undefined>()
   const [errorMed, setErrorMed] = useState<string | null>(null)
+  const [generandoPdf, setGenerandoPdf] = useState(false)
+  const [errorPdf, setErrorPdf] = useState<string | null>(null)
 
   const cargarMediciones = useCallback(async () => {
     setErrorMed(null)
@@ -57,6 +61,40 @@ export function PlanillaCronogramaValoradoClient({
   useEffect(() => {
     void cargarMediciones()
   }, [cargarMediciones])
+
+  useEffect(() => {
+    const quitarModoImpresion = () => {
+      document.body.classList.remove("cronograma-epa-modo-impresion")
+    }
+    quitarModoImpresion()
+    window.addEventListener("afterprint", quitarModoImpresion)
+    return () => {
+      quitarModoImpresion()
+      window.removeEventListener("afterprint", quitarModoImpresion)
+    }
+  }, [])
+
+  function handleImprimir() {
+    document.body.classList.add("cronograma-epa-modo-impresion")
+    window.print()
+  }
+
+  async function handleGenerarPdf() {
+    setErrorPdf(null)
+    setGenerandoPdf(true)
+    try {
+      const res = await fetch(pdfHref, { credentials: "include" })
+      if (!res.ok) {
+        throw new Error(await res.text().catch(() => "No se pudo generar el PDF"))
+      }
+      const blob = await res.blob()
+      await entregarPdfLibroObra(blob, `cronogramas-epa-planilla-${planillaNumero}.pdf`)
+    } catch (err) {
+      setErrorPdf(err instanceof Error ? err.message : "Error al generar el PDF")
+    } finally {
+      setGenerandoPdf(false)
+    }
+  }
 
   const programado = useMemo(
     () => calcularCronogramaValoradoProgramadoEpa(rubros, config, proyectoActivo.numeroContrato),
@@ -90,7 +128,6 @@ export function PlanillaCronogramaValoradoClient({
     <div className="mx-auto max-w-[1200px] space-y-6 p-4 print:max-w-none print:space-y-0 print:p-0 sm:p-6">
       <style>{`
         @media print {
-          @page { size: A4 landscape; margin: 6mm; }
           body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
           .cronograma-epa-hoja:last-of-type { break-after: auto; }
         }
@@ -113,6 +150,7 @@ export function PlanillaCronogramaValoradoClient({
               Formato EPA — columnas DIAS {programado.encabezado.etiquetasDias.join(" / ")} (planillas 1
               y 2). Programado con reparto {config.porcentaje_avance_planilla_1} % en planilla 1.
             </p>
+            {errorPdf ? <p className="mt-1 text-sm text-destructive">{errorPdf}</p> : null}
             {errorMed ? (
               <p className="mt-1 text-sm text-destructive">{errorMed}</p>
             ) : (
@@ -125,15 +163,18 @@ export function PlanillaCronogramaValoradoClient({
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button type="button" variant="outline" onClick={() => window.print()}>
+          <Button type="button" variant="outline" onClick={handleImprimir}>
             <Printer className="size-4" aria-hidden />
             Imprimir (2 páginas)
           </Button>
-          <Button type="button" variant="default" asChild>
-            <a href={pdfHref} target="_blank" rel="noopener noreferrer">
-              <FileText className="size-4" aria-hidden />
-              Generar PDF
-            </a>
+          <Button
+            type="button"
+            variant="default"
+            disabled={generandoPdf}
+            onClick={() => void handleGenerarPdf()}
+          >
+            <FileText className="size-4" aria-hidden />
+            {generandoPdf ? "Generando…" : "Generar PDF"}
           </Button>
           <Button type="button" variant="secondary" asChild>
             <a href={CRONOGRAMA_VALORADO_FIRMADO_PUBLIC_PATH} download>
@@ -144,12 +185,14 @@ export function PlanillaCronogramaValoradoClient({
         </div>
       </div>
 
-      <CronogramaEpaHoja datos={programado} firmaContratista={firmaContratista} />
-      <CronogramaEpaHoja
-        datos={ejecutado}
-        firmaContratista={firmaContratista}
-        className="print:break-before-page"
-      />
+      <div id="cronograma-epa-documento">
+        <CronogramaEpaHoja datos={programado} firmaContratista={firmaContratista} />
+        <CronogramaEpaHoja
+          datos={ejecutado}
+          firmaContratista={firmaContratista}
+          className="print:break-before-page"
+        />
+      </div>
     </div>
   )
 }

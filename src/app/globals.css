@@ -134,6 +134,11 @@
   margin: 0;
 }
 
+@page cronograma-epa-landscape {
+  size: A4 landscape;
+  margin: 0;
+}
+
 @media print {
   @page {
     size: A4 portrait;
@@ -144,6 +149,18 @@
     page: libro-obra-epa;
     box-sizing: border-box;
     padding: 8mm 6mm !important;
+  }
+
+  body.cronograma-epa-modo-impresion #cronograma-epa-documento {
+    page: cronograma-epa-landscape;
+    box-sizing: border-box;
+    padding: 5mm 6mm !important;
+  }
+
+  body.cronograma-epa-modo-impresion header,
+  body.cronograma-epa-modo-impresion aside,
+  body.cronograma-epa-modo-impresion nav[aria-label="Navegación principal del proyecto"] {
+    display: none !important;
   }
 
   aside,
