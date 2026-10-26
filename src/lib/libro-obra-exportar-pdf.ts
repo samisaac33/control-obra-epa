@@ -1,6 +1,9 @@
 import { jsPDF } from "jspdf"
 
-import { prepararDocumentoClonadoParaPdf } from "@/src/lib/libro-obra-pdf-capture-styles"
+import {
+  aplicarEstilosCalculadosAlClon,
+  prepararDocumentoClonadoParaPdf,
+} from "@/src/lib/libro-obra-pdf-capture-styles"
 
 const MARGEN_MM = 6
 const ANCHO_A4_MM = 210
@@ -42,7 +45,6 @@ async function prepararHojaParaCaptura(hoja: HTMLElement): Promise<void> {
   const imagenes = [...hoja.querySelectorAll("img")]
   for (const img of imagenes) {
     img.loading = "eager"
-    if (!img.crossOrigin) img.crossOrigin = "anonymous"
     const src = img.currentSrc || img.src
     if (src && !img.complete) {
       img.src = src
@@ -54,9 +56,9 @@ async function prepararHojaParaCaptura(hoja: HTMLElement): Promise<void> {
 
 function escalaCaptura(totalHojas: number): number {
   const esMovil = typeof window !== "undefined" && window.innerWidth < 768
-  if (esMovil) return totalHojas > 8 ? 1 : 1.15
-  if (totalHojas > 20) return 1.15
-  if (totalHojas > 10) return 1.35
+  if (esMovil) return totalHojas > 8 ? 1.25 : 1.5
+  if (totalHojas > 20) return 1.35
+  if (totalHojas > 10) return 1.5
   return 2
 }
 
@@ -65,12 +67,37 @@ type Html2CanvasFn = (
   options?: Record<string, unknown>
 ) => Promise<HTMLCanvasElement>
 
+function canvasTieneContenido(canvas: HTMLCanvasElement): boolean {
+  const ctx = canvas.getContext("2d")
+  if (!ctx) return false
+
+  const puntos = [
+    [0.05, 0.08],
+    [0.5, 0.15],
+    [0.5, 0.5],
+    [0.5, 0.85],
+  ] as const
+
+  for (const [rx, ry] of puntos) {
+    const x = Math.min(canvas.width - 1, Math.floor(canvas.width * rx))
+    const y = Math.min(canvas.height - 1, Math.floor(canvas.height * ry))
+    const [r, g, b] = ctx.getImageData(x, y, 1, 1).data
+    if (r < 248 || g < 248 || b < 248) return true
+  }
+  return false
+}
+
 async function canvasDeHoja(
   html2canvas: Html2CanvasFn,
   hoja: HTMLElement,
   scale: number
 ): Promise<HTMLCanvasElement> {
-  return html2canvas(hoja, {
+  const rect = hoja.getBoundingClientRect()
+  if (rect.width < 8 || rect.height < 8) {
+    throw new Error("La hoja no es visible en pantalla. Desplácese e intente de nuevo.")
+  }
+
+  const canvas = await html2canvas(hoja, {
     scale,
     useCORS: true,
     allowTaint: false,
@@ -78,17 +105,46 @@ async function canvasDeHoja(
     backgroundColor: "#ffffff",
     foreignObjectRendering: false,
     imageTimeout: TIMEOUT_IMAGEN_MS,
+    scrollX: 0,
+    scrollY: -window.scrollY,
+    width: Math.ceil(rect.width),
+    height: Math.ceil(rect.height),
     onclone: (_doc: Document, clonedHoja: HTMLElement) => {
       prepararDocumentoClonadoParaPdf(_doc)
+      aplicarEstilosCalculadosAlClon(hoja, clonedHoja)
       clonedHoja.style.background = "#ffffff"
-      clonedHoja.style.width = "190mm"
-      clonedHoja.querySelectorAll("img").forEach((node) => {
-        const img = node as HTMLImageElement
-        img.loading = "eager"
-        if (!img.crossOrigin) img.crossOrigin = "anonymous"
-      })
+      clonedHoja.style.margin = "0"
     },
   })
+
+  if (!canvasTieneContenido(canvas)) {
+    throw new Error(
+      "La captura salió en blanco. Recargue la página, espere a ver las hojas en pantalla e intente otra vez."
+    )
+  }
+
+  return canvas
+}
+
+function medidasImagenUnaPagina(canvas: HTMLCanvasElement): {
+  anchoMm: number
+  altoMm: number
+  x: number
+  y: number
+} {
+  let anchoMm = ANCHO_UTIL_MM
+  let altoMm = (canvas.height / canvas.width) * anchoMm
+
+  if (altoMm > ALTO_UTIL_MM) {
+    const factor = ALTO_UTIL_MM / altoMm
+    altoMm = ALTO_UTIL_MM
+    anchoMm = anchoMm * factor
+  }
+
+  const x = MARGEN_MM + (ANCHO_UTIL_MM - anchoMm) / 2
+  const y = MARGEN_MM
+
+  return { anchoMm, altoMm, x, y }
 }
 
 function timeoutCaptura<T>(promesa: Promise<T>, ms: number, mensaje: string): Promise<T> {
@@ -132,10 +188,9 @@ export async function generarBlobPdfLibroObra(
       `Tiempo agotado al capturar la hoja ${i + 1}. Acorte el rango de fechas e intente de nuevo.`
     )
 
-    const imgData = canvas.toDataURL("image/jpeg", 0.88)
-    const altoMm = (canvas.height * ANCHO_UTIL_MM) / canvas.width
-    const altoFinal = Math.min(altoMm, ALTO_UTIL_MM)
-    pdf.addImage(imgData, "JPEG", MARGEN_MM, MARGEN_MM, ANCHO_UTIL_MM, altoFinal)
+    const imgData = canvas.toDataURL("image/jpeg", 0.9)
+    const { anchoMm, altoMm, x, y } = medidasImagenUnaPagina(canvas)
+    pdf.addImage(imgData, "JPEG", x, y, anchoMm, altoMm, undefined, "FAST")
 
     await new Promise<void>((resolve) => window.setTimeout(resolve, 0))
   }

@@ -107,7 +107,6 @@ export function LibroObraHojaEpa({ entrada, proyecto, numeroEntrada }: LibroObra
           height={40}
           unoptimized
           loading="eager"
-          crossOrigin="anonymous"
           className="h-8 w-auto object-contain print:h-7"
         />
         <div className="flex min-w-0 flex-1 flex-col items-center gap-0.5 px-1">
@@ -123,7 +122,6 @@ export function LibroObraHojaEpa({ entrada, proyecto, numeroEntrada }: LibroObra
           height={48}
           unoptimized
           loading="eager"
-          crossOrigin="anonymous"
           className="h-9 w-auto object-contain print:h-8"
         />
       </div>
