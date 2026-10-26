@@ -215,22 +215,6 @@
     font-family: ui-sans-serif, system-ui, sans-serif;
   }
 
-  /* Una sola barra fixed (logos EPA + consorcio) — no repetir por día */
-  .libro-obra-documento-planilla .libro-obra-epa-logos-print {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 9999;
-    box-sizing: border-box;
-    background: #fff;
-    padding: 3mm 6mm 1mm;
-  }
-
-  .libro-obra-documento-planilla .libro-obra-epa-fecha-impresion {
-    margin-top: 11mm;
-  }
-
   .libro-obra-dia {
     break-after: page;
     page-break-after: always;

@@ -95,14 +95,10 @@ export function LibroObraHojaEpa({ entrada, proyecto, numeroEntrada }: LibroObra
 
   return (
     <section className="libro-obra-dia libro-obra-hoja-epa mb-8 break-after-page bg-white print:mb-0">
-      <div className="libro-obra-epa-cabecera-pantalla mb-0.5 print:hidden">
-        <LibroObraEpaBarraLogos />
-        <div className="mt-0.5 flex justify-center border-b border-neutral-900 pb-0.5">
-          <TablaFechaCompacta dia={dia} mes={mes} anio={anio} />
-        </div>
-      </div>
-      <div className="libro-obra-epa-fecha-impresion mb-0.5 hidden justify-center print:flex">
-        <TablaFechaCompacta dia={dia} mes={mes} anio={anio} />
+      <div className="libro-obra-epa-cabecera mb-0.5 border-b border-neutral-900 pb-0.5">
+        <LibroObraEpaBarraLogos
+          centro={<TablaFechaCompacta dia={dia} mes={mes} anio={anio} />}
+        />
       </div>
 
       <p className="mb-0 text-[7px] font-bold uppercase text-neutral-900 print:text-[6.5px]">
