@@ -1,16 +1,81 @@
-/** Estilos hex para html2canvas (Tailwind v4 usa lab/oklch, no soportado). */
+/** Respaldo mínimo si falla algún estilo inline. */
 export const CSS_CAPTURA_PDF_LIBRO_OBRA = `
   * { box-sizing: border-box; }
-  body { margin: 0; background: #ffffff; color: #0a0a0a; font-family: ui-sans-serif, system-ui, sans-serif; }
-  .libro-obra-hoja-epa { background: #ffffff; color: #0a0a0a; width: 190mm; max-width: 190mm; }
-  table { border-collapse: collapse; width: 100%; }
-  th, td { border: 1px solid #171717; padding: 2px 4px; font-size: 9px; line-height: 1.2; vertical-align: middle; }
-  th { background: #f5f5f5; font-weight: 600; text-transform: uppercase; font-size: 8px; }
-  img { max-width: 100%; height: auto; object-fit: contain; display: block; }
-  h2 { font-size: 14px; font-weight: 700; text-transform: uppercase; margin: 0; color: #0a0a0a; }
-  p { margin: 0 0 2px; color: #0a0a0a; }
-  div { color: #0a0a0a; }
+  body { margin: 0; background: #ffffff; }
+  .libro-obra-hoja-epa { background: #ffffff; }
+  table { border-collapse: collapse; }
+  img { max-width: 100%; height: auto; object-fit: contain; }
 `
+
+const PROPIEDADES_CAPTURA = [
+  "display",
+  "flexDirection",
+  "flexWrap",
+  "alignItems",
+  "justifyContent",
+  "alignSelf",
+  "flex",
+  "flexShrink",
+  "flexGrow",
+  "gap",
+  "gridTemplateColumns",
+  "gridColumn",
+  "width",
+  "height",
+  "minHeight",
+  "maxWidth",
+  "margin",
+  "marginTop",
+  "marginBottom",
+  "padding",
+  "paddingTop",
+  "paddingBottom",
+  "border",
+  "borderTop",
+  "borderRight",
+  "borderBottom",
+  "borderLeft",
+  "borderCollapse",
+  "fontSize",
+  "fontWeight",
+  "fontFamily",
+  "lineHeight",
+  "textAlign",
+  "textTransform",
+  "letterSpacing",
+  "whiteSpace",
+  "verticalAlign",
+  "objectFit",
+  "overflow",
+  "position",
+  "top",
+  "left",
+  "color",
+  "backgroundColor",
+  "borderColor",
+] as const
+
+/** Copia layout/colores resueltos (rgb) al clon; evita depender de Tailwind lab/oklch en el clon. */
+export function aplicarEstilosCalculadosAlClon(origen: HTMLElement, clon: HTMLElement): void {
+  const cs = window.getComputedStyle(origen)
+
+  for (const prop of PROPIEDADES_CAPTURA) {
+    const valor = cs[prop as keyof CSSStyleDeclaration]
+    if (typeof valor === "string" && valor) {
+      clon.style.setProperty(
+        prop.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`),
+        valor
+      )
+    }
+  }
+
+  const origenHijos = [...origen.children].filter((n): n is HTMLElement => n instanceof HTMLElement)
+  const clonHijos = [...clon.children].filter((n): n is HTMLElement => n instanceof HTMLElement)
+
+  for (let i = 0; i < Math.min(origenHijos.length, clonHijos.length); i++) {
+    aplicarEstilosCalculadosAlClon(origenHijos[i], clonHijos[i])
+  }
+}
 
 export function prepararDocumentoClonadoParaPdf(doc: Document): void {
   doc.querySelectorAll('link[rel="stylesheet"]').forEach((n) => n.remove())
