@@ -66,9 +66,12 @@ export function LibroObraClient({
   }, [])
 
   function handleImprimir() {
+    const tituloAnterior = document.title
+    document.title = "Libro de obra"
     document.body.classList.add("libro-obra-modo-impresion")
     const quitarModo = () => {
       document.body.classList.remove("libro-obra-modo-impresion")
+      document.title = tituloAnterior
     }
     window.addEventListener("afterprint", quitarModo, { once: true })
     window.setTimeout(quitarModo, 3_000)
