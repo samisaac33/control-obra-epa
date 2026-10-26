@@ -3,8 +3,9 @@ import type { ReactNode } from "react"
 
 import type { LogosCronogramaEpaPdf } from "@/lib/planilla/cronograma-epa-logos-pdf"
 import {
-  formatearNumeroCronograma,
-  formatearUsdCronograma,
+  formatearCantidadCeldaCronogramaEpa,
+  formatearPctCeldaCronogramaEpa,
+  formatearUsdCeldaCronogramaEpa,
 } from "@/src/lib/planilla-cronograma-valorado-formato"
 import type { ResumenCronogramaEpa } from "@/src/lib/planilla-cronograma-epa"
 
@@ -50,8 +51,12 @@ function CronogramaEpaPdfPage({
   logos: LogosCronogramaEpaPdf
 }) {
   const e = datos.encabezado
+  const tituloVertical = e.tituloVertical
   const [d1, d2] = e.etiquetasDias
   const wDetalleSeccion = W.detalle + W.unidad + W.cant + W.punit
+  const fmtCant = (v: number) => formatearCantidadCeldaCronogramaEpa(tituloVertical, v)
+  const fmtUsd = (v: number) => formatearUsdCeldaCronogramaEpa(tituloVertical, v)
+  const fmtPct = (v: number) => formatearPctCeldaCronogramaEpa(v)
 
   return (
     <Page size="A4" orientation="landscape" style={styles.page}>
@@ -139,7 +144,7 @@ function CronogramaEpaPdfPage({
                       {fila.titulo}
                     </Cell>
                     <Cell flex={W.total} style={[styles.cellSection, { textAlign: "right" }]}>
-                      {formatearNumeroCronograma(fila.montoTotalSeccion)}
+                      {fmtUsd(fila.montoTotalSeccion)}
                     </Cell>
                     <Cell flex={W.d30} style={styles.cellSection}>
                       {""}
@@ -160,19 +165,19 @@ function CronogramaEpaPdfPage({
                     {fila.unidad}
                   </Cell>
                   <Cell flex={W.cant} style={{ textAlign: "right" }}>
-                    {formatearNumeroCronograma(fila.cantidad)}
+                    {fmtCant(fila.cantidad)}
                   </Cell>
                   <Cell flex={W.punit} style={{ textAlign: "right" }}>
-                    {formatearNumeroCronograma(fila.precioUnitario)}
+                    {fmtUsd(fila.precioUnitario)}
                   </Cell>
                   <Cell flex={W.total} style={{ textAlign: "right" }}>
-                    {formatearNumeroCronograma(fila.total)}
+                    {fmtUsd(fila.total)}
                   </Cell>
                   <Cell flex={W.d30} style={styles.cellDias}>
-                    {fila.montosPeriodo[0] > 0 ? formatearNumeroCronograma(fila.montosPeriodo[0]) : ""}
+                    {fila.montosPeriodo[0] > 0 ? fmtUsd(fila.montosPeriodo[0]) : ""}
                   </Cell>
                   <Cell flex={W.d60} style={styles.cellDias} last>
-                    {fila.montosPeriodo[1] > 0 ? formatearNumeroCronograma(fila.montosPeriodo[1]) : ""}
+                    {fila.montosPeriodo[1] > 0 ? fmtUsd(fila.montosPeriodo[1]) : ""}
                   </Cell>
                 </View>
               )
@@ -184,7 +189,7 @@ function CronogramaEpaPdfPage({
                 TOTAL
               </Cell>
               <Cell flex={W.total} style={{ textAlign: "right", fontFamily: "Helvetica-Bold" }}>
-                {formatearUsdCronograma(datos.montoTotalContrato)}
+                {fmtUsd(datos.montoTotalContrato)}
               </Cell>
               <Cell flex={W.d30 + W.d60} last>
                 {""}
@@ -196,10 +201,10 @@ function CronogramaEpaPdfPage({
               </Cell>
               <Cell flex={W.total}>{""}</Cell>
               <Cell flex={W.d30} style={{ textAlign: "right" }}>
-                {formatearNumeroCronograma(datos.inversionPeriodo[0])}
+                {fmtUsd(datos.inversionPeriodo[0])}
               </Cell>
               <Cell flex={W.d60} style={{ textAlign: "right" }} last>
-                {formatearNumeroCronograma(datos.inversionPeriodo[1])}
+                {fmtUsd(datos.inversionPeriodo[1])}
               </Cell>
             </View>
             <View style={styles.row}>
@@ -208,10 +213,10 @@ function CronogramaEpaPdfPage({
               </Cell>
               <Cell flex={W.total}>{""}</Cell>
               <Cell flex={W.d30} style={{ textAlign: "right" }}>
-                {formatearNumeroCronograma(datos.avanceParcialPct[0], 2)}
+                {fmtPct(datos.avanceParcialPct[0])}
               </Cell>
               <Cell flex={W.d60} style={{ textAlign: "right" }} last>
-                {formatearNumeroCronograma(datos.avanceParcialPct[1], 2)}
+                {fmtPct(datos.avanceParcialPct[1])}
               </Cell>
             </View>
             <View style={styles.row}>
@@ -220,10 +225,10 @@ function CronogramaEpaPdfPage({
               </Cell>
               <Cell flex={W.total}>{""}</Cell>
               <Cell flex={W.d30} style={{ textAlign: "right" }}>
-                {formatearNumeroCronograma(datos.inversionAcumulada[0])}
+                {fmtUsd(datos.inversionAcumulada[0])}
               </Cell>
               <Cell flex={W.d60} style={{ textAlign: "right" }} last>
-                {formatearNumeroCronograma(datos.inversionAcumulada[1])}
+                {fmtUsd(datos.inversionAcumulada[1])}
               </Cell>
             </View>
             <View style={styles.rowLast}>
@@ -232,10 +237,10 @@ function CronogramaEpaPdfPage({
               </Cell>
               <Cell flex={W.total}>{""}</Cell>
               <Cell flex={W.d30} style={{ textAlign: "right" }}>
-                {formatearNumeroCronograma(datos.avanceAcumuladoPct[0], 2)}
+                {fmtPct(datos.avanceAcumuladoPct[0])}
               </Cell>
               <Cell flex={W.d60} style={{ textAlign: "right" }} last>
-                {formatearNumeroCronograma(datos.avanceAcumuladoPct[1], 2)}
+                {fmtPct(datos.avanceAcumuladoPct[1])}
               </Cell>
             </View>
           </View>
