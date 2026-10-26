@@ -55,7 +55,8 @@ export function PlanillaCronogramaValoradoClient({ config }: PlanillaCronogramaV
           <div>
             <h1 className="text-xl font-semibold tracking-tight">Cronograma valorado de trabajos vigente</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Oferta adjudicada VAE — reparto por planillas 1 y 2 (sin IVA).
+              Oferta adjudicada VAE — reparto por planillas según avance objetivo planilla 1 (
+              {cronograma.pctAvancePlanilla1} % en cantidades, sin IVA).
             </p>
           </div>
         </div>
@@ -222,9 +223,11 @@ export function PlanillaCronogramaValoradoClient({ config }: PlanillaCronogramaV
             </TableBody>
           </Table>
           <p className="mt-3 text-[10px] text-muted-foreground print:text-foreground">
-            Periodo 1: {cronograma.periodos[0]?.fecha_inicio} — {cronograma.periodos[0]?.fecha_fin}. Periodo
-            2: {cronograma.periodos[1]?.fecha_inicio} — {cronograma.periodos[1]?.fecha_fin}. Monto oferta
-            referencial sin IVA: {formatearUsdCronograma(cronograma.montoDeclaradoOferta)}.
+            Periodo 1: {cronograma.periodos[0]?.fecha_inicio} — {cronograma.periodos[0]?.fecha_fin} (
+            {cronograma.pctAvancePlanilla1} % del contrato). Periodo 2:{" "}
+            {cronograma.periodos[1]?.fecha_inicio} — {cronograma.periodos[1]?.fecha_fin} (saldo). Monto
+            oferta referencial sin IVA: {formatearUsdCronograma(cronograma.montoDeclaradoOferta)}. El PDF
+            firmado de oferta (50/50) sigue disponible como referencia contractual histórica.
           </p>
         </CardContent>
       </Card>
