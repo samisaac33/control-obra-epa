@@ -21,7 +21,7 @@ type LibroObraClientProps = {
   defaultDesde?: string
   defaultHasta?: string
   tituloDocumento?: string
-  /** Planilla: una hoja EPA por día (bloques Trasvase + San Antonio; Severino si hay registro). */
+  /** Planilla: hoja diaria civil; Severino solo en fechas-hito programadas. */
   variant?: "evidencias" | "planilla"
 }
 
@@ -125,7 +125,7 @@ export function LibroObraClient({
             <CardTitle className="text-base">Generar documento</CardTitle>
             <CardDescription>
               {variant === "planilla"
-                ? "Solo días con producción VAE, registro de campo o actividad en Severino. Incluye fines de semana según cronograma."
+                ? "Civil (Trasvase/San Antonio) todos los días con producción VAE; Severino solo en hitos eléctricos del periodo."
                 : "Una entrada por cada día con evidencias fotográficas. Las fotos se comprimen automáticamente para un PDF más liviano."}
             </CardDescription>
           </CardHeader>

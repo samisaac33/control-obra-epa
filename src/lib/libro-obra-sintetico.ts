@@ -11,6 +11,10 @@ import {
   cronogramaLibroObraFrente,
   type DiaCronogramaFrente,
 } from "@/src/lib/libro-obra-cronograma-frente"
+import {
+  bloqueSeverinoProgramaticoDia,
+  hitosSeverinoPorFechaPlanilla,
+} from "@/src/lib/libro-obra-cronograma-severino"
 import type { JornadaMaquinariaProyecto } from "@/src/lib/maquinaria-desasolve-proyecto"
 import {
   detalleJornadasDia,
@@ -178,7 +182,7 @@ function consolidarFrente(
   return entradas
 }
 
-/** Una hoja EPA por día: bloques Trasvase + San Antonio (+ Severino si hay registro). */
+/** Una hoja EPA por día: bloques Trasvase + San Antonio; Severino solo en hitos programados. */
 export function consolidarLibroObraPeriodoPlanillaConsolidado(
   proyectoId: string,
   desde: string,
@@ -212,6 +216,7 @@ export function consolidarLibroObraPeriodoPlanillaConsolidado(
   }
 
   const entradas: LibroObraEntradaDia[] = []
+  const hitosSeverino = hitosSeverinoPorFechaPlanilla(periodo, planillaNumero)
 
   for (const fecha of fechasCalendarioInclusive(desde, hasta)) {
     const evidencias = porFoto.get(fecha)?.evidencias ?? []
@@ -250,6 +255,14 @@ export function consolidarLibroObraPeriodoPlanillaConsolidado(
     }
 
     const hayProduccionCivil = partesDatos.length > 0
+    const bloqueSeverino = bloqueSeverinoProgramaticoDia(
+      fecha,
+      hitosSeverino,
+      proyectoId,
+      rubros,
+      planillaNumero
+    )
+
     if (!hayProduccionCivil) {
       continue
     }
@@ -258,10 +271,13 @@ export function consolidarLibroObraPeriodoPlanillaConsolidado(
     formatoEpa = {
       ...formatoEpa,
       bloquesFrente: bloquesFrente,
-      bloqueSeverino: null,
+      bloqueSeverino,
       registroCampoDia: undefined,
-      visitaProyecto: bloquesFrente.map((b) => `${b.titulo} (${b.residente})`).join("; "),
-      trabajosRealizados: armarTrabajosConsolidadosDesdeBloques(bloquesFrente, null, ""),
+      visitaProyecto: bloquesFrente
+        .map((b) => `${b.titulo} (${b.residente})`)
+        .concat(bloqueSeverino ? [`${bloqueSeverino.titulo} (${bloqueSeverino.residente})`] : [])
+        .join("; "),
+      trabajosRealizados: armarTrabajosConsolidadosDesdeBloques(bloquesFrente, bloqueSeverino, ""),
     }
 
     if (evidencias.length === 0) {
