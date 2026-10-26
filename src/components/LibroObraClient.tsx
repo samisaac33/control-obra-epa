@@ -59,7 +59,11 @@ export function LibroObraClient({
   const [desde, setDesde] = useState(defaultDesde)
   const [hasta, setHasta] = useState(defaultHasta)
   const [generandoPdf, setGenerandoPdf] = useState(false)
-  const [progresoPdf, setProgresoPdf] = useState<{ hoja: number; total: number } | null>(null)
+  const [progresoPdf, setProgresoPdf] = useState<{
+    hoja: number
+    total: number
+    fase?: "preparando" | "capturando"
+  } | null>(null)
   const [pdfListo, setPdfListo] = useState<Blob | null>(null)
   const [errorPdf, setErrorPdf] = useState<string | null>(null)
   const entradasFiltradas = useMemo(
@@ -205,7 +209,9 @@ export function LibroObraClient({
                   >
                     <FileDown className="size-4" aria-hidden />
                     {generandoPdf && progresoPdf
-                      ? `Generando… ${progresoPdf.hoja}/${progresoPdf.total}`
+                      ? progresoPdf.fase === "preparando" || progresoPdf.hoja === 0
+                        ? "Preparando…"
+                        : `Generando… ${progresoPdf.hoja}/${progresoPdf.total}`
                       : "1. Generar PDF"}
                   </Button>
                   <Button
