@@ -99,9 +99,7 @@ function novedadesDesdeLineas(lineas: LibroObraLineaRegistro[], incidencias: num
 function armarDesdeCronograma(
   cronograma: DiaCronogramaFrente,
   frenteTitulo: string,
-  rubDesazolve: number,
   rubDesalojo: number,
-  rubTendido: number,
   lineas: LibroObraLineaRegistro[],
   evidencias: EvidenciaGrupo[],
   detalle: ReturnType<typeof detalleJornadasDia>,
@@ -115,7 +113,6 @@ function armarDesdeCronograma(
     /\(rub\. desalojo VAE\)/g,
     `(rub. ${rubDesalojo})`
   )
-  trabajos += `\n\nMediciones VAE (1:1): desazolve rub. ${rubDesazolve}; desalojo rub. ${rubDesalojo}; tendido rub. ${rubTendido}.`
 
   if (
     !soloProgramatico &&
@@ -224,9 +221,7 @@ export function armarDatosHojaLibroObraEpa(
     evidencias = [],
     cronogramaDia = null,
     frenteTitulo = "",
-    rubDesazolve = 2,
     rubDesalojo = 3,
-    rubTendido = 4,
     soloProgramatico = false,
   } = opciones
 
@@ -236,9 +231,7 @@ export function armarDatosHojaLibroObraEpa(
     return armarDesdeCronograma(
       cronogramaDia,
       frenteTitulo,
-      rubDesazolve,
       rubDesalojo,
-      rubTendido,
       lineasRegistro,
       evidencias,
       detalle,
