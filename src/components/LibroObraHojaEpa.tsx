@@ -1,7 +1,11 @@
 import Image from "next/image"
 
 import { EvidenciaBloque } from "@/src/components/LibroObraDocumentoEvidencia"
-import { LibroObraEpaBarraLogos } from "@/src/components/LibroObraEpaBarraLogos"
+import {
+  CONSORCIO_CONTRATISTA_RAZON,
+  LOGO_CONSORCIO_STH_MANABI_PUBLIC_PATH,
+  LOGO_EPA_PUBLIC_PATH,
+} from "@/src/data/brand/logos-proyecto"
 import { PROVINCIA_LIBRO_OBRA_EPA } from "@/src/data/libro-obra-formato-epa"
 import { OBJETO_CONTRATO } from "@/src/data/contrato-emergencia-severino-trasvase"
 import type { ProyectoConfig } from "@/src/data/proyectos/catalog"
@@ -95,9 +99,26 @@ export function LibroObraHojaEpa({ entrada, proyecto, numeroEntrada }: LibroObra
 
   return (
     <section className="libro-obra-dia libro-obra-hoja-epa mb-8 break-after-page bg-white print:mb-0">
-      <div className="libro-obra-epa-cabecera mb-0.5 border-b border-neutral-900 pb-0.5">
-        <LibroObraEpaBarraLogos
-          centro={<TablaFechaCompacta dia={dia} mes={mes} anio={anio} />}
+      <div className="mb-0.5 flex items-start justify-between gap-1 border-b border-neutral-900 pb-0.5 print:pb-0">
+        <Image
+          src={LOGO_EPA_PUBLIC_PATH}
+          alt="Empresa Pública del Agua"
+          width={118}
+          height={40}
+          className="h-8 w-auto object-contain print:h-7"
+        />
+        <div className="flex min-w-0 flex-1 flex-col items-center gap-0.5 px-1">
+          <h2 className="text-center text-sm font-bold uppercase tracking-wide text-neutral-950 print:text-[11px]">
+            Libro de obra
+          </h2>
+          <TablaFechaCompacta dia={dia} mes={mes} anio={anio} />
+        </div>
+        <Image
+          src={LOGO_CONSORCIO_STH_MANABI_PUBLIC_PATH}
+          alt={CONSORCIO_CONTRATISTA_RAZON}
+          width={88}
+          height={48}
+          className="h-9 w-auto object-contain print:h-8"
         />
       </div>
 
