@@ -10,9 +10,11 @@ import { PROYECTO_DESASOLVE_CANALES } from "../src/data/proyectos/catalog"
 import { periodoPorNumero } from "../src/lib/planilla-calculo"
 import {
   cronogramaLibroObraFrente,
+  excavadorasRequeridasParaM3Dia,
   viajesVolquetaPorDiaUnaUnidad,
-  volquetasFlotaParaM3Desalojo,
+  VOLQUETAS_POR_EXCAVADORA,
 } from "../src/lib/libro-obra-cronograma-frente"
+import { tramosPorFrente } from "../src/data/planilla/canales-desazolve-tramos-vae"
 import { consolidarLibroObraPeriodoPlanillaConsolidado } from "../src/lib/libro-obra-sintetico"
 import { hitosSeverinoPorFechaPlanilla } from "../src/lib/libro-obra-cronograma-severino"
 
@@ -69,11 +71,15 @@ const entradas = consolidarLibroObraPeriodoPlanillaConsolidado(
 
 const dia1 = cronograma[0]!
 const m3Dia1 = dia1.actividades.reduce((s, a) => s + a.m3Desalojo, 0)
-const flotaDia1 = volquetasFlotaParaM3Desalojo(m3Dia1)
-const sumVolquetasLineas = dia1.actividades.reduce((s, a) => s + a.volquetas, 0)
+const excDia1 = dia1.actividades.length
+const volqDia1 = excDia1 * VOLQUETAS_POR_EXCAVADORA
 assert.ok(viajesVolquetaPorDiaUnaUnidad() > 8, "más viajes/día que escenario 5 km")
-assert.ok(flotaDia1 < 30, "flota realista (no 165)")
-assert.equal(sumVolquetasLineas, flotaDia1, "no duplicar volquetas sumando tramos")
+assert.equal(
+  dia1.actividades.reduce((s, a) => s + a.volquetas, 0),
+  volqDia1,
+  "2 volquetas por excavadora"
+)
+assert.equal(excDia1, excavadorasRequeridasParaM3Dia(m3Dia1, "trasvase", tramosPorFrente("trasvase")))
 
 const cronSan = cronogramaLibroObraFrente(
   "san_antonio",
@@ -85,21 +91,31 @@ const cronSan = cronogramaLibroObraFrente(
   1,
   6
 )
-const m3SanDia1 = cronSan[0]?.actividades.reduce((s, a) => s + a.m3Desalojo, 0) ?? 0
-const flotaConsolidadaDia1 = flotaDia1 + volquetasFlotaParaM3Desalojo(m3SanDia1)
+const excSan1 = cronSan[0]?.actividades.length ?? 0
+const volqConsolidadaDia1 = volqDia1 + excSan1 * VOLQUETAS_POR_EXCAVADORA
 
 assert.ok(entradas.length > 0)
 const dia1Entrada = entradas[0]!
 assert.equal(
   dia1Entrada.formatoEpa!.equiposUtilizados.find((e) => e.etiqueta === "VOLQUETAS")?.cantidad,
-  flotaConsolidadaDia1
+  volqConsolidadaDia1
 )
+assert.equal(
+  dia1Entrada.formatoEpa!.equiposUtilizados.find((e) => e.etiqueta === "EXCAVADORAS")?.cantidad,
+  excDia1 + excSan1
+)
+assert.equal(
+  dia1Entrada.formatoEpa!.personalUtilizado.find((e) => e.etiqueta === "OPERADORES")?.cantidad,
+  excDia1 + excSan1
+)
+
 const bloques = dia1Entrada.formatoEpa!.bloquesFrente ?? []
 assert.ok(bloques.length >= 2, "trasvase + san antonio el mismo día cuando ambos tienen cronograma")
 const textoTrasvase = bloques.find((b) => b.id === "trasvase")?.trabajosRealizados ?? ""
 assert.ok(!textoTrasvase.includes("Coordinación:"), "sin plan maestro genérico")
 assert.ok(!textoTrasvase.includes("Acordar criterio"), "sin supuestos administrativos")
 assert.ok(textoTrasvase.includes("Tramo «"), "trabajos por tramo")
+assert.ok(textoTrasvase.includes("93"), "nota brazo largo/corto trasvase")
 assert.ok(bloques.some((b) => b.id === "san_antonio"))
 
 const e27 = entradas.find((e) => e.fecha === "2026-10-27")
@@ -126,7 +142,10 @@ assert.ok(
 
 console.log("test-libro-obra-cronograma: OK", {
   hojasConsolidadas: entradas.length,
-  volquetasDia1: flotaDia1,
+  excTrasvaseDia1: excDia1,
+  excSanDia1: excSan1,
+  volquetasDia1: volqConsolidadaDia1,
+  m3Dia1: Math.round(m3Dia1),
   viajesPorCamion: viajesVolquetaPorDiaUnaUnidad(),
   sumM3: Math.round(sumM3),
   objetivo: Math.round(objetivo),

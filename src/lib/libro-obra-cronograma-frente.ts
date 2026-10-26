@@ -8,6 +8,7 @@ import {
 import type { PlanillaNumero, PlanillaPeriodo, ProyectoPlanillaConfig } from "@/src/data/planilla/types"
 import { fechasCalendarioInclusive } from "@/src/lib/libro-obra"
 import { calcularRequerimientoPago } from "@/src/lib/planilla-requerimiento-pago"
+import { RENDIMIENTO_NOMINAL_M3_POR_H } from "@/src/data/contrato-emergencia-severino-trasvase"
 import { formatearNumero } from "@/src/lib/maquinaria-resumen"
 
 /** m³ por viaje (medición tickets / VAE). */
@@ -43,8 +44,16 @@ export function volquetasFlotaParaM3Desalojo(m3: number): number {
   return Math.max(1, Math.ceil(viajesNecesarios / viajesPorCamion))
 }
 
-/** Tramos en paralelo en trasvase (simultaneidad). */
-export const TRAMOS_SIMULTANEOS_TRASVASE = 4
+/** Reparto desazolve trasvase: 93 % brazo largo, 7 % brazo corto (libro programático). */
+export const FRACCION_BRAZO_LARGO_TRASVASE = 0.93
+export const FRACCION_BRAZO_CORTO_TRASVASE = 0.07
+
+/** Avance lineal contractual de referencia (m/h) — brazo largo. */
+export const AVANCE_M_H_BRAZO_LARGO_TRASVASE = 20
+export const AVANCE_M_H_BRAZO_LARGO_SAN_ANTONIO = 5
+
+export const JORNADA_EXCAVADORA_H = 9
+export const VOLQUETAS_POR_EXCAVADORA = 2
 
 export type ActividadTramoCronograma = {
   tramoId: string
@@ -127,32 +136,64 @@ function actividadDesdeM3(
   }
 }
 
-/** Reparte la flota del día entre tramos (proporcional al m³); evita sumar 165 camiones. */
+/** 2 volquetas por excavadora (1 excavadora = 1 tramo activo ese día). */
 export function asignarVolquetasFlotaEnActividades(
   actividades: ActividadTramoCronograma[]
 ): ActividadTramoCronograma[] {
   if (actividades.length === 0) return actividades
+  return actividades.map((a) => ({ ...a, volquetas: VOLQUETAS_POR_EXCAVADORA }))
+}
 
-  const m3Total = actividades.reduce((s, a) => s + a.m3Desalojo, 0)
-  const flota = volquetasFlotaParaM3Desalojo(m3Total)
-  if (flota === 0) return actividades.map((a) => ({ ...a, volquetas: 0 }))
+function tramoPromedioGeometria(tramos: TramoDesazolveVae[]): TramoDesazolveVae {
+  const frente = tramos[0]!.frente
+  let longitudM = 0
+  let volumenM3 = 0
+  for (const t of tramos) {
+    longitudM += t.longitudM
+    volumenM3 += t.volumenM3
+  }
+  return {
+    id: "promedio-geometria",
+    nombre: "promedio",
+    frente,
+    longitudM,
+    volumenM3,
+  }
+}
 
-  if (actividades.length === 1) {
-    return [{ ...actividades[0]!, volquetas: flota }]
+/** Horas-máquina excavación para cumplir m³ del día (93/7 trasvase; 100 % largo San Antonio). */
+export function horasExcavacionParaM3Dia(
+  m3: number,
+  tramo: TramoDesazolveVae,
+  frente: FrenteDesazolveVae
+): number {
+  if (m3 <= 0 || tramo.volumenM3 <= 0 || tramo.longitudM <= 0) return 0
+
+  const metrosPorM3 = tramo.longitudM / tramo.volumenM3
+
+  if (frente === "san_antonio") {
+    const metrosLineales = m3 * metrosPorM3
+    return metrosLineales / AVANCE_M_H_BRAZO_LARGO_SAN_ANTONIO
   }
 
-  let repartido = 0
-  return actividades.map((a, index) => {
-    if (index === actividades.length - 1) {
-      return { ...a, volquetas: Math.max(0, flota - repartido) }
-    }
-    const share =
-      m3Total > 0
-        ? Math.max(a.m3Desalojo > 0 ? 1 : 0, Math.round((flota * a.m3Desalojo) / m3Total))
-        : 0
-    repartido += share
-    return { ...a, volquetas: share }
-  })
+  const m3Largo = m3 * FRACCION_BRAZO_LARGO_TRASVASE
+  const m3Corto = m3 * FRACCION_BRAZO_CORTO_TRASVASE
+  const horasLargo = (m3Largo * metrosPorM3) / AVANCE_M_H_BRAZO_LARGO_TRASVASE
+  const rendCortoM3H = RENDIMIENTO_NOMINAL_M3_POR_H.excavadora_brazo_corto
+  const horasCorto = rendCortoM3H > 0 ? m3Corto / rendCortoM3H : 0
+  return horasLargo + horasCorto
+}
+
+/** Excavadoras necesarias en jornada (9 h) para el m³ objetivo del día. */
+export function excavadorasRequeridasParaM3Dia(
+  m3Objetivo: number,
+  frente: FrenteDesazolveVae,
+  tramos: TramoDesazolveVae[]
+): number {
+  if (m3Objetivo <= 0) return 0
+  const ref = tramoPromedioGeometria(tramos)
+  const horas = horasExcavacionParaM3Dia(m3Objetivo, ref, frente)
+  return Math.max(1, Math.ceil(horas / JORNADA_EXCAVADORA_H))
 }
 
 /**
@@ -189,7 +230,6 @@ export function cronogramaLibroObraFrente(
   for (const t of tramos) acumM3.set(t.id, 0)
 
   const objetivosDiarios = objetivosM3PorDiaProgramatico(dias.length, volumenPeriodo)
-  const maxSimultaneos = frente === "trasvase" ? TRAMOS_SIMULTANEOS_TRASVASE : 1
   const porFecha = new Map<string, ActividadTramoCronograma[]>()
   let pendienteGlobal = volumenPeriodo
 
@@ -207,7 +247,9 @@ export function cronogramaLibroObraFrente(
       continue
     }
 
-    const activos = colaOrdenada.slice(0, maxSimultaneos)
+    const excavadorasDia = excavadorasRequeridasParaM3Dia(objetivoDia, frente, tramos)
+    const tramosParalelos = Math.min(colaOrdenada.length, excavadorasDia)
+    const activos = colaOrdenada.slice(0, tramosParalelos)
     const pesoActivos = activos.map((t) => restante.get(t.id) ?? 0)
     const sumPeso = pesoActivos.reduce((a, b) => a + b, 0)
 
@@ -249,7 +291,7 @@ export function cronogramaLibroObraFrente(
 
     if (asignadoDia < objetivoDia - 0.01) {
       let faltante = objetivoDia - asignadoDia
-      for (const tramo of colaOrdenada) {
+      for (const tramo of activos) {
         if (faltante <= 0.01) break
         const rest = restante.get(tramo.id) ?? 0
         if (rest <= 0.001) continue
@@ -260,14 +302,10 @@ export function cronogramaLibroObraFrente(
         acumM3.set(tramo.id, acumAntes + uso)
         asignadoDia += uso
         faltante -= uso
-        const prev = acts.find((a) => a.tramoId === tramo.id)
-        if (prev) {
-          const idx = acts.indexOf(prev)
-          const acumRebuilt = acumAntes - prev.m3Desazolve
-          acts[idx] = actividadDesdeM3(tramo, prev.m3Desazolve + uso, acumRebuilt)
-        } else {
-          acts.push(actividadDesdeM3(tramo, uso, acumAntes))
-        }
+        const prev = acts.find((a) => a.tramoId === tramo.id)!
+        const idx = acts.indexOf(prev)
+        const acumRebuilt = acumAntes - prev.m3Desazolve
+        acts[idx] = actividadDesdeM3(tramo, prev.m3Desazolve + uso, acumRebuilt)
       }
     }
 
@@ -312,12 +350,17 @@ function formatoPk(m: number): string {
 }
 
 export function textoTrabajosDesdeCronograma(
-  _frenteTitulo: string,
+  frente: FrenteDesazolveVae,
   actividades: ActividadTramoCronograma[]
 ): string {
   if (actividades.length === 0) {
     return "Sin actividades programadas en este frente para la fecha (jornada de descanso o frente sin producción)."
   }
+
+  const notaBrazo =
+    frente === "trasvase"
+      ? `Distribución desazolve: ${formatearNumero(FRACCION_BRAZO_LARGO_TRASVASE * 100, 0)} % brazo largo (${AVANCE_M_H_BRAZO_LARGO_TRASVASE} m/h ref.), ${formatearNumero(FRACCION_BRAZO_CORTO_TRASVASE * 100, 0)} % brazo corto.`
+      : `Desazolve 100 % brazo largo (${AVANCE_M_H_BRAZO_LARGO_SAN_ANTONIO} m/h ref.).`
 
   const lineas = actividades.map((a) => {
     const m3 = formatearNumero(a.m3Desazolve, 1)
@@ -325,27 +368,27 @@ export function textoTrabajosDesdeCronograma(
     const pkIni = formatoPk(a.pkDesdeM)
     const pkFin = formatoPk(a.pkHastaM)
     const pkTot = formatoPk(a.longitudTramoM)
-    return `- Tramo «${a.tramoNombre}» (producción del día): desazolve y reconformación de taludes ${m3} m³; avance lineal ${mlDia} m (PK ${pkIni}–${pkFin} m de ${pkTot} m); desalojo ${m3} m³; tendido de material ${m3} m³; ${a.volquetas} volqueta(s) asignada(s) a este tramo.`
+    return `- Tramo «${a.tramoNombre}» (1 excavadora): producción del día ${m3} m³; avance lineal ${mlDia} m (PK ${pkIni}–${pkFin} m de ${pkTot} m); desalojo ${m3} m³; tendido ${m3} m³; ${a.volquetas} volquetas.`
   })
 
-  // El encabezado del bloque EPA ya muestra frente y residente; no repetir aquí.
-  return lineas.join("\n")
+  return `${notaBrazo}\n${lineas.join("\n")}`
 }
 
-export function equiposDesdeCronograma(actividades: ActividadTramoCronograma[]): {
+export function equiposDesdeCronograma(
+  actividades: ActividadTramoCronograma[]
+): {
   excavadoras: number
   volquetas: number
   tractor: number
   motoniveladora: number
   rtk: number
 } {
-  const m3Total = actividades.reduce((s, a) => s + a.m3Desazolve, 0)
-  if (m3Total <= 0) {
+  if (actividades.length === 0) {
     return { excavadoras: 0, volquetas: 0, tractor: 0, motoniveladora: 0, rtk: 0 }
   }
 
-  const volquetas = volquetasFlotaParaM3Desalojo(m3Total)
-  const excavadoras = actividades.length >= 2 ? 2 : 1
+  const excavadoras = actividades.length
+  const volquetas = excavadoras * VOLQUETAS_POR_EXCAVADORA
 
   return {
     excavadoras,
