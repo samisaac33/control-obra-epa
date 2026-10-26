@@ -15,6 +15,7 @@ import {
   bloqueSeverinoProgramaticoDia,
   hitosSeverinoPorFechaPlanilla,
 } from "@/src/lib/libro-obra-cronograma-severino"
+import { enriquecerFormatoEpaProgramatico } from "@/src/lib/libro-obra-epa-enriquecimiento-dia"
 import type { JornadaMaquinariaProyecto } from "@/src/lib/maquinaria-desasolve-proyecto"
 import {
   detalleJornadasDia,
@@ -279,6 +280,19 @@ export function consolidarLibroObraPeriodoPlanillaConsolidado(
         .join("; "),
       trabajosRealizados: armarTrabajosConsolidadosDesdeBloques(bloquesFrente, bloqueSeverino, ""),
     }
+
+    const tramosActivos = bloquesFrente.reduce((n, b) => {
+      const m = b.trabajosRealizados.match(/- Tramo «/g)
+      return n + (m?.length ?? 0)
+    }, 0)
+    formatoEpa = enriquecerFormatoEpaProgramatico(formatoEpa, {
+      fecha,
+      excavadoras:
+        formatoEpa.equiposUtilizados.find((e) => e.etiqueta === "EXCAVADORAS")?.cantidad ?? 0,
+      volquetas: formatoEpa.equiposUtilizados.find((e) => e.etiqueta === "VOLQUETAS")?.cantidad ?? 0,
+      tieneSeverino: Boolean(bloqueSeverino),
+      tramosActivos: Math.max(tramosActivos, 1),
+    })
 
     if (evidencias.length === 0) {
       lineasRegistro.push({ categoria: "actividad", texto: AVISO_FOTOS_PENDIENTES })

@@ -30,7 +30,7 @@ function Celda({
   return (
     <td
       colSpan={colSpan}
-      className={`border border-neutral-900 px-1 py-0.5 text-[9px] leading-tight align-middle print:text-[8px] print:py-0 ${className}`}
+      className={`border border-neutral-900 px-1 py-0.5 text-[9px] leading-tight align-middle print:text-[7.5px] print:py-0 print:leading-[1.15] ${className}`}
     >
       {children}
     </td>
@@ -49,7 +49,7 @@ function CeldaEncabezado({
   return (
     <th
       colSpan={colSpan}
-      className={`border border-neutral-900 bg-neutral-100 px-1 py-0.5 text-[8px] font-semibold uppercase leading-tight print:text-[7px] ${className}`}
+      className={`border border-neutral-900 bg-neutral-100 px-1 py-0.5 text-[8px] font-semibold uppercase leading-tight print:text-[7px] print:py-0 ${className}`}
     >
       {children}
     </th>
@@ -59,10 +59,34 @@ function CeldaEncabezado({
 function AreaLineada({ children, minHeightClass }: { children: React.ReactNode; minHeightClass: string }) {
   return (
     <div
-      className={`libro-obra-epa-lineado whitespace-pre-wrap border border-neutral-900 px-1.5 py-1 text-[9px] leading-[1.35] print:text-[8px] print:leading-[1.25] ${minHeightClass}`}
+      className={`libro-obra-epa-lineado whitespace-pre-wrap border border-neutral-900 px-1.5 py-0.5 text-[9px] leading-[1.3] print:px-1 print:py-0 print:text-[7.5px] print:leading-[1.2] ${minHeightClass}`}
     >
       {children}
     </div>
+  )
+}
+
+function TablaFechaCompacta({ dia, mes, anio }: { dia: string; mes: string; anio: string }) {
+  return (
+    <table className="shrink-0 border-collapse border border-neutral-900 text-center print:text-[7px]">
+      <thead>
+        <tr>
+          <CeldaEncabezado colSpan={3}>Fecha</CeldaEncabezado>
+        </tr>
+        <tr>
+          <CeldaEncabezado>Día</CeldaEncabezado>
+          <CeldaEncabezado>Mes</CeldaEncabezado>
+          <CeldaEncabezado>Año</CeldaEncabezado>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <Celda className="w-7 text-center font-semibold">{dia}</Celda>
+          <Celda className="w-7 text-center font-semibold">{mes}</Celda>
+          <Celda className="w-10 text-center font-semibold">{anio}</Celda>
+        </tr>
+      </tbody>
+    </table>
   )
 }
 
@@ -71,62 +95,46 @@ export function LibroObraHojaEpa({ entrada, proyecto, numeroEntrada }: LibroObra
   const { dia, mes, anio } = partesFechaLibroObra(entrada.fecha)
   if (!epa) return null
 
+  const comunicacionesVacias = !epa.comunicaciones?.trim()
+
   return (
     <section className="libro-obra-dia libro-obra-hoja-epa mb-8 break-after-page bg-white print:mb-0">
-      <div className="mb-1 flex items-start justify-between gap-2 border-b border-neutral-900 pb-1">
+      <div className="mb-0.5 flex items-start justify-between gap-1 border-b border-neutral-900 pb-0.5 print:pb-0">
         <Image
           src={LOGO_EPA_PUBLIC_PATH}
           alt="Empresa Pública del Agua"
           width={118}
           height={40}
-          className="h-9 w-auto object-contain print:h-8"
+          className="h-8 w-auto object-contain print:h-7"
         />
-        <h2 className="pt-1 text-center text-sm font-bold uppercase tracking-wide text-neutral-950 print:text-xs">
-          Libro de obra
-        </h2>
+        <div className="flex min-w-0 flex-1 flex-col items-center gap-0.5 px-1">
+          <h2 className="text-center text-sm font-bold uppercase tracking-wide text-neutral-950 print:text-[11px]">
+            Libro de obra
+          </h2>
+          <TablaFechaCompacta dia={dia} mes={mes} anio={anio} />
+        </div>
         <Image
           src={LOGO_CONSORCIO_STH_MANABI_PUBLIC_PATH}
           alt={CONSORCIO_CONTRATISTA_RAZON}
           width={88}
           height={48}
-          className="h-10 w-auto object-contain print:h-9"
+          className="h-9 w-auto object-contain print:h-8"
         />
       </div>
 
       <p className="mb-0 text-[7px] font-bold uppercase text-neutral-900 print:text-[6.5px]">
         Objeto contractual
       </p>
-      <p className="mb-1 border border-neutral-900 px-1 py-0.5 text-[8px] leading-snug print:text-[7.5px]">
+      <p className="mb-0.5 border border-neutral-900 px-1 py-0.5 text-[8px] leading-snug print:text-[7px] print:leading-[1.15]">
         {OBJETO_CONTRATO}
       </p>
 
-      <div className="mb-1 grid grid-cols-[1fr_auto] items-start gap-1">
-        <p className="text-[8px] print:text-[7.5px]">
-          <span className="font-bold uppercase">Provincia: </span>
-          {PROVINCIA_LIBRO_OBRA_EPA}
-        </p>
-        <table className="border-collapse border border-neutral-900 text-center">
-          <thead>
-            <tr>
-              <CeldaEncabezado colSpan={3}>Fecha</CeldaEncabezado>
-            </tr>
-            <tr>
-              <CeldaEncabezado>Día</CeldaEncabezado>
-              <CeldaEncabezado>Mes</CeldaEncabezado>
-              <CeldaEncabezado>Año</CeldaEncabezado>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <Celda className="text-center font-semibold">{dia}</Celda>
-              <Celda className="text-center font-semibold">{mes}</Celda>
-              <Celda className="text-center font-semibold">{anio}</Celda>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <p className="mb-0.5 text-[8px] print:text-[7px]">
+        <span className="font-bold uppercase">Provincia: </span>
+        {PROVINCIA_LIBRO_OBRA_EPA}
+      </p>
 
-      <table className="mb-1 w-full border-collapse border border-neutral-900">
+      <table className="mb-0.5 w-full border-collapse border border-neutral-900">
         <thead>
           <tr>
             <CeldaEncabezado colSpan={3}>Estado del tiempo</CeldaEncabezado>
@@ -146,7 +154,7 @@ export function LibroObraHojaEpa({ entrada, proyecto, numeroEntrada }: LibroObra
         </tbody>
       </table>
 
-      <div className="mb-1 grid grid-cols-2 gap-1">
+      <div className="mb-0.5 grid grid-cols-2 gap-1">
         <table className="w-full border-collapse border border-neutral-900">
           <thead>
             <tr>
@@ -182,19 +190,19 @@ export function LibroObraHojaEpa({ entrada, proyecto, numeroEntrada }: LibroObra
       </div>
 
       <p className="mb-0 text-[7px] font-bold uppercase print:text-[6.5px]">Visita al proyecto</p>
-      <AreaLineada minHeightClass="mb-1 min-h-[1.1rem]">
+      <AreaLineada minHeightClass="mb-0.5 min-h-[1rem] print:min-h-0">
         {epa.visitaProyecto || "\u00A0"}
       </AreaLineada>
 
       <p className="mb-0 text-[7px] font-bold uppercase print:text-[6.5px]">Trabajos realizados</p>
       {epa.bloquesFrente && epa.bloquesFrente.length > 0 ? (
-        <div className="mb-1 space-y-1.5">
+        <div className="mb-0.5 space-y-1 print:space-y-0.5">
           {epa.bloquesFrente.map((bloque) => (
             <div key={bloque.id}>
               <p className="text-[7px] font-bold text-neutral-800 print:text-[6.5px]">
                 {bloque.titulo} — {bloque.residente}
               </p>
-              <AreaLineada minHeightClass="min-h-[2.5rem] print:min-h-[2rem]">
+              <AreaLineada minHeightClass="min-h-[1.5rem] print:min-h-0">
                 {bloque.trabajosRealizados}
               </AreaLineada>
             </div>
@@ -204,7 +212,7 @@ export function LibroObraHojaEpa({ entrada, proyecto, numeroEntrada }: LibroObra
               <p className="text-[7px] font-bold text-neutral-800 print:text-[6.5px]">
                 {epa.bloqueSeverino.titulo} — {epa.bloqueSeverino.residente}
               </p>
-              <AreaLineada minHeightClass="min-h-[2rem] print:min-h-[1.75rem]">
+              <AreaLineada minHeightClass="min-h-[1.25rem] print:min-h-0">
                 {epa.bloqueSeverino.trabajosRealizados}
               </AreaLineada>
             </div>
@@ -214,19 +222,19 @@ export function LibroObraHojaEpa({ entrada, proyecto, numeroEntrada }: LibroObra
               <p className="text-[7px] font-bold text-neutral-800 print:text-[6.5px]">
                 Registro de campo (maquinaria / desalojo)
               </p>
-              <AreaLineada minHeightClass="min-h-[1.75rem] print:min-h-[1.5rem]">
+              <AreaLineada minHeightClass="min-h-[1rem] print:min-h-0">
                 {epa.registroCampoDia}
               </AreaLineada>
             </div>
           ) : null}
         </div>
       ) : (
-        <AreaLineada minHeightClass="mb-1 min-h-[5.5rem] print:min-h-[4.75rem]">
+        <AreaLineada minHeightClass="mb-0.5 min-h-[3rem] print:min-h-0">
           {epa.trabajosRealizados}
         </AreaLineada>
       )}
 
-      <table className="mb-1 w-full border-collapse border border-neutral-900">
+      <table className="libro-obra-epa-tabla-horas mb-0.5 w-full border-collapse border border-neutral-900">
         <thead>
           <tr>
             <CeldaEncabezado className="text-left normal-case">Equipos</CeldaEncabezado>
@@ -256,16 +264,18 @@ export function LibroObraHojaEpa({ entrada, proyecto, numeroEntrada }: LibroObra
       </table>
 
       <p className="mb-0 text-[7px] font-bold uppercase print:text-[6.5px]">Novedades y observaciones</p>
-      <AreaLineada minHeightClass="mb-1 min-h-[2rem] print:min-h-[1.75rem]">
+      <AreaLineada minHeightClass="mb-0.5 min-h-[1.25rem] print:min-h-0">
         {epa.novedadesObservaciones || "\u00A0"}
       </AreaLineada>
 
-      <p className="mb-0 text-[7px] font-bold uppercase print:text-[6.5px]">
-        Comunicaciones enviadas por el fiscalizador y/o contratista
-      </p>
-      <AreaLineada minHeightClass="mb-2 min-h-[2rem] print:min-h-[1.75rem]">
-        {epa.comunicaciones || "\u00A0"}
-      </AreaLineada>
+      <div className={comunicacionesVacias ? "print:hidden" : undefined}>
+        <p className="mb-0 text-[7px] font-bold uppercase print:text-[6.5px]">
+          Comunicaciones enviadas por el fiscalizador y/o contratista
+        </p>
+        <AreaLineada minHeightClass="mb-0.5 min-h-[1.25rem] print:min-h-0">
+          {epa.comunicaciones || "\u00A0"}
+        </AreaLineada>
+      </div>
 
       {entrada.evidencias.length > 0 ? (
         <div className="libro-obra-epa-anexo mb-2 space-y-2 border-t border-neutral-400 pt-2 print:break-before-page">
@@ -275,19 +285,19 @@ export function LibroObraHojaEpa({ entrada, proyecto, numeroEntrada }: LibroObra
           ))}
         </div>
       ) : (
-        <p className="libro-obra-epa-anexo-nota mb-2 text-[7px] italic text-neutral-600 print:hidden">
+        <p className="libro-obra-epa-anexo-nota mb-0 text-[7px] italic text-neutral-600 print:hidden">
           Anexo fotográfico: pendiente (entrada {numeroEntrada} — {proyecto.numeroContrato}). Las fotos se
           agregan solas al cargarlas en módulo Fotos.
         </p>
       )}
 
-      <div className="mt-4 grid grid-cols-2 gap-6 border-t border-neutral-900 pt-6 text-center text-[9px] font-bold uppercase print:mt-3 print:pt-4 print:text-[8px]">
+      <div className="libro-obra-epa-firmas mt-2 grid grid-cols-2 gap-4 border-t border-neutral-900 pt-3 text-center text-[9px] font-bold uppercase print:mt-1 print:gap-3 print:pt-2 print:text-[7.5px]">
         <div>
-          <div className="mb-10 border-b border-neutral-900 print:mb-8" />
+          <div className="mb-6 border-b border-neutral-900 print:mb-4" />
           Contratista
         </div>
         <div>
-          <div className="mb-10 border-b border-neutral-900 print:mb-8" />
+          <div className="mb-6 border-b border-neutral-900 print:mb-4" />
           Fiscalizador
         </div>
       </div>

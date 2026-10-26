@@ -132,7 +132,7 @@
 @media print {
   @page {
     size: A4 portrait;
-    margin: 8mm 10mm;
+    margin: 8mm 6mm;
   }
 
   aside,
@@ -188,9 +188,16 @@
   }
 
   .libro-obra-hoja-epa {
-    break-inside: avoid-page;
+    padding: 4mm 5mm 3mm;
+  }
+
+  .libro-obra-epa-firmas {
+    break-inside: avoid;
     page-break-inside: avoid;
-    padding: 6mm 8mm 5mm;
+  }
+
+  .libro-obra-epa-comunicaciones-vacio {
+    display: none !important;
   }
 
   .libro-obra-documento-planilla {
@@ -209,8 +216,13 @@
   }
 
   .libro-obra-dia {
-    break-inside: avoid-page;
-    page-break-inside: avoid;
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .libro-obra-dia:last-child {
+    break-after: auto;
+    page-break-after: auto;
   }
 
   nav[aria-label="Navegación principal del proyecto"] {
