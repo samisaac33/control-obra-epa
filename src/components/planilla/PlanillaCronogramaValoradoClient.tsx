@@ -4,20 +4,27 @@ import Link from "next/link"
 import { ArrowLeft, Download, FileText, Printer } from "lucide-react"
 import { useCallback, useEffect, useMemo, useState } from "react"
 
-import { entregarPdfLibroObra } from "@/src/lib/libro-obra-exportar-pdf"
-
 import { Button } from "@/components/ui/button"
+import { configCronogramaEjecutadoEpa } from "@/lib/planilla/config-cronograma-planilla"
+import {
+  AVANCE_PLANILLA_1_CRONOGRAMA_EJECUTADO_PCT,
+  nombreArchivoCronogramaEjecutadoEpaPdf,
+} from "@/src/data/planilla/cronograma-ejecutado-documento"
+import {
+  AVANCE_PLANILLA_1_CRONOGRAMA_PROGRAMADO_PCT,
+  CRONOGRAMA_PROGRAMADO_PDF_PUBLIC_PATH,
+  CRONOGRAMA_PROGRAMADO_XLSX_PUBLIC_PATH,
+  nombreArchivoCronogramaProgramadoPdf,
+  nombreArchivoCronogramaProgramadoXlsx,
+} from "@/src/data/planilla/cronograma-programado-documento"
 import { presupuestoRubrosPorProyecto } from "@/src/data/planilla/presupuesto-por-proyecto"
 import type { PlanillaNumero, ProyectoPlanillaConfig } from "@/src/data/planilla/types"
 import {
   lineaFirmaPersonal,
   superintendenteObra,
 } from "@/src/data/planilla/personal-tecnico-contratista"
-import {
-  calcularCronogramaEjecutadoEpa,
-  calcularCronogramaValoradoProgramadoEpa,
-} from "@/src/lib/planilla-cronograma-epa"
-import { CRONOGRAMA_VALORADO_FIRMADO_PUBLIC_PATH } from "@/src/lib/planilla-cronograma-valorado-vigente"
+import { calcularCronogramaEjecutadoEpa } from "@/src/lib/planilla-cronograma-epa"
+import { entregarPdfLibroObra } from "@/src/lib/libro-obra-exportar-pdf"
 import { cargarMedicionesRubrosPlanilla } from "@/src/lib/cargar-planilla-medicion-rubros"
 import type { MedicionRubroGuardada } from "@/src/lib/planilla-requerimiento-pago"
 import { createClient } from "@/src/lib/supabase/client"
@@ -40,8 +47,13 @@ export function PlanillaCronogramaValoradoClient({
   const [med1, setMed1] = useState<MedicionRubroGuardada[] | undefined>()
   const [med2, setMed2] = useState<MedicionRubroGuardada[] | undefined>()
   const [errorMed, setErrorMed] = useState<string | null>(null)
-  const [generandoPdf, setGenerandoPdf] = useState(false)
+  const [descargando, setDescargando] = useState<"combinado" | null>(null)
   const [errorPdf, setErrorPdf] = useState<string | null>(null)
+
+  const configEjecutado = useMemo(
+    () => configCronogramaEjecutadoEpa(config, planillaNumero),
+    [config, planillaNumero]
+  )
 
   const cargarMediciones = useCallback(async () => {
     setErrorMed(null)
@@ -74,16 +86,36 @@ export function PlanillaCronogramaValoradoClient({
     }
   }, [])
 
-  function handleImprimir() {
-    document.body.classList.add("cronograma-epa-modo-impresion")
-    window.print()
-  }
+  const ejecutado = useMemo(
+    () =>
+      calcularCronogramaEjecutadoEpa(
+        rubros,
+        configEjecutado,
+        proyectoActivo.numeroContrato,
+        planillaNumero,
+        med1,
+        med2
+      ),
+    [rubros, configEjecutado, proyectoActivo.numeroContrato, planillaNumero, med1, med2]
+  )
 
-  async function handleGenerarPdf() {
+  const superintendente = superintendenteObra(proyectoId)
+  const firmaContratista = superintendente
+    ? lineaFirmaPersonal(superintendente, "Superintendente de Obra")
+    : undefined
+
+  const pdfProgramadoHref = rutaObra(proyectoId, "planillas/cronograma-valorado-programado/pdf")
+  const pdfEjecutadoHref = rutaObra(
+    proyectoId,
+    `planillas/${planillaNumero}/cronogramas-epa/ejecutado/pdf`
+  )
+  const pdfCombinadoHref = rutaObra(proyectoId, `planillas/${planillaNumero}/cronogramas-epa/pdf`)
+
+  async function descargarPdfCombinado() {
     setErrorPdf(null)
-    setGenerandoPdf(true)
+    setDescargando("combinado")
     try {
-      const res = await fetch(pdfHref, { credentials: "include" })
+      const res = await fetch(pdfCombinadoHref, { credentials: "include" })
       if (!res.ok) {
         throw new Error(await res.text().catch(() => "No se pudo generar el PDF"))
       }
@@ -92,47 +124,17 @@ export function PlanillaCronogramaValoradoClient({
     } catch (err) {
       setErrorPdf(err instanceof Error ? err.message : "Error al generar el PDF")
     } finally {
-      setGenerandoPdf(false)
+      setDescargando(null)
     }
   }
 
-  const programado = useMemo(
-    () => calcularCronogramaValoradoProgramadoEpa(rubros, config, proyectoActivo.numeroContrato),
-    [rubros, config, proyectoActivo.numeroContrato]
-  )
-
-  const ejecutado = useMemo(
-    () =>
-      calcularCronogramaEjecutadoEpa(
-        rubros,
-        config,
-        proyectoActivo.numeroContrato,
-        planillaNumero,
-        med1,
-        med2
-      ),
-    [rubros, config, proyectoActivo.numeroContrato, planillaNumero, med1, med2]
-  )
-
-  const superintendente = superintendenteObra(proyectoId)
-  const firmaContratista = superintendente
-    ? lineaFirmaPersonal(superintendente, "Superintendente de Obra")
-    : undefined
-
-  const pdfHref = rutaObra(
-    proyectoId,
-    `planillas/${planillaNumero}/cronogramas-epa/pdf`
-  )
+  function handleImprimirEjecutado() {
+    document.body.classList.add("cronograma-epa-modo-impresion")
+    window.print()
+  }
 
   return (
-    <div className="mx-auto max-w-[1200px] space-y-6 p-4 print:max-w-none print:space-y-0 print:p-0 sm:p-6">
-      <style>{`
-        @media print {
-          body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
-          .cronograma-epa-hoja:last-of-type { break-after: auto; }
-        }
-      `}</style>
-
+    <div className="mx-auto max-w-[1200px] space-y-8 p-4 print:max-w-none print:space-y-0 print:p-0 sm:p-6">
       <div className="flex flex-col gap-3 print:hidden sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-start gap-3">
           <Link
@@ -144,55 +146,81 @@ export function PlanillaCronogramaValoradoClient({
           </Link>
           <div>
             <h1 className="text-xl font-semibold tracking-tight">
-              Cronogramas valorado programado y ejecutado
+              Cronograma valorado programado y ejecutado
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Formato EPA — columnas DIAS {programado.encabezado.etiquetasDias.join(" / ")} (planillas 1
-              y 2). Programado con reparto {config.porcentaje_avance_planilla_1} % en planilla 1.
+              Programado: PDF del Excel oficial ({AVANCE_PLANILLA_1_CRONOGRAMA_PROGRAMADO_PCT} %).
+              Ejecutado EPA: {AVANCE_PLANILLA_1_CRONOGRAMA_EJECUTADO_PCT} % en planilla 1 (libro de
+              obra alineado).
             </p>
             {errorPdf ? <p className="mt-1 text-sm text-destructive">{errorPdf}</p> : null}
             {errorMed ? (
               <p className="mt-1 text-sm text-destructive">{errorMed}</p>
             ) : (
               <p className="mt-1 text-xs text-muted-foreground">
-                Ejecutado: mediciones guardadas de requerimiento de pago
-                {med1 ? " (planilla 1)" : " (planilla 1: sugeridas)"}
-                {planillaNumero >= 2 ? (med2 ? " · planilla 2" : " · planilla 2: sugeridas") : ""}.
+                Ejecutado: mediciones de requerimiento de pago
+                {med1 ? " (planilla 1)" : " (planilla 1: reparto sugerido)"}
+                {planillaNumero >= 2 ? (med2 ? " · planilla 2" : " · planilla 2: sugerido") : ""}.
               </p>
             )}
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button type="button" variant="outline" onClick={handleImprimir}>
-            <Printer className="size-4" aria-hidden />
-            Imprimir (2 páginas)
+          <Button type="button" variant="outline" asChild>
+            <a href={pdfProgramadoHref} download={nombreArchivoCronogramaProgramadoPdf()}>
+              <Download className="size-4" aria-hidden />
+              PDF programado
+            </a>
+          </Button>
+          <Button type="button" variant="outline" asChild>
+            <a href={pdfEjecutadoHref} download={nombreArchivoCronogramaEjecutadoEpaPdf(planillaNumero)}>
+              <Download className="size-4" aria-hidden />
+              PDF ejecutado
+            </a>
           </Button>
           <Button
             type="button"
             variant="default"
-            disabled={generandoPdf}
-            onClick={() => void handleGenerarPdf()}
+            disabled={descargando === "combinado"}
+            onClick={() => void descargarPdfCombinado()}
           >
             <FileText className="size-4" aria-hidden />
-            {generandoPdf ? "Generando…" : "Generar PDF"}
+            {descargando === "combinado" ? "Generando…" : "PDF 2 páginas"}
           </Button>
           <Button type="button" variant="secondary" asChild>
-            <a href={CRONOGRAMA_VALORADO_FIRMADO_PUBLIC_PATH} download>
+            <a href={CRONOGRAMA_PROGRAMADO_XLSX_PUBLIC_PATH} download={nombreArchivoCronogramaProgramadoXlsx()}>
               <Download className="size-4" aria-hidden />
-              PDF firmado (oferta)
+              Excel programado
             </a>
           </Button>
         </div>
       </div>
 
-      <div id="cronograma-epa-documento">
-        <CronogramaEpaHoja datos={programado} firmaContratista={firmaContratista} />
-        <CronogramaEpaHoja
-          datos={ejecutado}
-          firmaContratista={firmaContratista}
-          className="print:break-before-page"
-        />
-      </div>
+      <section className="space-y-3 print:hidden">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+          Cronograma valorado programado ({AVANCE_PLANILLA_1_CRONOGRAMA_PROGRAMADO_PCT} %)
+        </h2>
+        <div className="overflow-hidden rounded-lg border border-foreground/15 bg-muted/20">
+          <iframe
+            title="Cronograma valorado programado"
+            src={CRONOGRAMA_PROGRAMADO_PDF_PUBLIC_PATH}
+            className="h-[min(70vh,640px)] w-full bg-white"
+          />
+        </div>
+      </section>
+
+      <section className="space-y-3" id="cronograma-epa-documento">
+        <div className="flex items-center justify-between gap-2 print:hidden">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            Cronograma ejecutado ({AVANCE_PLANILLA_1_CRONOGRAMA_EJECUTADO_PCT} % planilla 1)
+          </h2>
+          <Button type="button" variant="outline" size="sm" onClick={handleImprimirEjecutado}>
+            <Printer className="size-4" aria-hidden />
+            Imprimir ejecutado
+          </Button>
+        </div>
+        <CronogramaEpaHoja datos={ejecutado} firmaContratista={firmaContratista} />
+      </section>
     </div>
   )
 }
