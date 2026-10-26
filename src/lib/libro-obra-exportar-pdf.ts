@@ -1,17 +1,11 @@
-import { jsPDF } from "jspdf"
+import { pdf, type DocumentProps } from "@react-pdf/renderer"
+import { createElement, type ReactElement } from "react"
 
 import {
-  aplicarEstilosCalculadosAlClon,
-  prepararDocumentoClonadoParaPdf,
-  sanitizarColoresEnClon,
-} from "@/src/lib/libro-obra-pdf-capture-styles"
-
-const MARGEN_MM = 6
-const ANCHO_A4_MM = 210
-const ALTO_A4_MM = 297
-const ANCHO_UTIL_MM = ANCHO_A4_MM - MARGEN_MM * 2
-const ALTO_UTIL_MM = ALTO_A4_MM - MARGEN_MM * 2
-const TIMEOUT_IMAGEN_MS = 6_000
+  LibroObraPdfDocument,
+  rutasLogosLibroObra,
+} from "@/src/components/LibroObraPdfDocument"
+import type { LibroObraEntradaDia } from "@/src/lib/libro-obra"
 
 export type ProgresoPdfLibroObra = {
   hoja: number
@@ -19,192 +13,68 @@ export type ProgresoPdfLibroObra = {
   fase?: "preparando" | "capturando"
 }
 
-function esperarUnaImagen(img: HTMLImageElement, timeoutMs: number): Promise<void> {
-  return new Promise((resolve) => {
-    const terminar = () => {
-      window.clearTimeout(timer)
-      resolve()
-    }
-    const timer = window.setTimeout(terminar, timeoutMs)
+type LogosDataUrl = { epa: string; consorcio: string }
 
-    if (img.complete && img.naturalWidth > 0) {
-      terminar()
-      return
-    }
-
-    img.addEventListener("load", terminar, { once: true })
-    img.addEventListener("error", terminar, { once: true })
-  })
-}
-
-async function prepararHojaParaCaptura(hoja: HTMLElement): Promise<void> {
-  hoja.scrollIntoView({ block: "start" })
-  await new Promise<void>((resolve) => {
-    window.requestAnimationFrame(() => window.requestAnimationFrame(() => resolve()))
-  })
-
-  const imagenes = [...hoja.querySelectorAll("img")]
-  for (const img of imagenes) {
-    img.loading = "eager"
-    const src = img.currentSrc || img.src
-    if (src && !img.complete) {
-      img.src = src
-    }
+async function fetchComoDataUrl(url: string): Promise<string> {
+  const res = await fetch(url)
+  if (!res.ok) {
+    throw new Error(`No se pudo cargar el logo (${res.status}). Recargue la página.`)
   }
-
-  await Promise.all(imagenes.map((img) => esperarUnaImagen(img, TIMEOUT_IMAGEN_MS)))
-}
-
-function escalaCaptura(totalHojas: number): number {
-  const esMovil = typeof window !== "undefined" && window.innerWidth < 768
-  if (esMovil) return totalHojas > 8 ? 1.25 : 1.5
-  if (totalHojas > 20) return 1.35
-  if (totalHojas > 10) return 1.5
-  return 2
-}
-
-type Html2CanvasFn = (
-  element: HTMLElement,
-  options?: Record<string, unknown>
-) => Promise<HTMLCanvasElement>
-
-function canvasTieneContenido(canvas: HTMLCanvasElement): boolean {
-  const ctx = canvas.getContext("2d")
-  if (!ctx) return false
-
-  const puntos = [
-    [0.05, 0.08],
-    [0.5, 0.15],
-    [0.5, 0.5],
-    [0.5, 0.85],
-  ] as const
-
-  for (const [rx, ry] of puntos) {
-    const x = Math.min(canvas.width - 1, Math.floor(canvas.width * rx))
-    const y = Math.min(canvas.height - 1, Math.floor(canvas.height * ry))
-    const [r, g, b] = ctx.getImageData(x, y, 1, 1).data
-    if (r < 248 || g < 248 || b < 248) return true
-  }
-  return false
-}
-
-async function canvasDeHoja(
-  html2canvas: Html2CanvasFn,
-  hoja: HTMLElement,
-  scale: number
-): Promise<HTMLCanvasElement> {
-  const rect = hoja.getBoundingClientRect()
-  if (rect.width < 8 || rect.height < 8) {
-    throw new Error("La hoja no es visible en pantalla. Desplácese e intente de nuevo.")
-  }
-
-  const canvas = await html2canvas(hoja, {
-    scale,
-    useCORS: true,
-    allowTaint: false,
-    logging: false,
-    backgroundColor: "#ffffff",
-    foreignObjectRendering: false,
-    imageTimeout: TIMEOUT_IMAGEN_MS,
-    scrollX: 0,
-    scrollY: -window.scrollY,
-    width: Math.ceil(rect.width),
-    height: Math.ceil(rect.height),
-    onclone: (_doc: Document, clonedHoja: HTMLElement) => {
-      prepararDocumentoClonadoParaPdf(_doc)
-      aplicarEstilosCalculadosAlClon(hoja, clonedHoja)
-      sanitizarColoresEnClon(clonedHoja)
-      clonedHoja.style.backgroundColor = "#ffffff"
-      clonedHoja.style.color = "#0a0a0a"
-      clonedHoja.style.margin = "0"
-    },
-  })
-
-  if (!canvasTieneContenido(canvas)) {
-    throw new Error(
-      "La captura salió en blanco. Recargue la página, espere a ver las hojas en pantalla e intente otra vez."
-    )
-  }
-
-  return canvas
-}
-
-function medidasImagenUnaPagina(canvas: HTMLCanvasElement): {
-  anchoMm: number
-  altoMm: number
-  x: number
-  y: number
-} {
-  let anchoMm = ANCHO_UTIL_MM
-  let altoMm = (canvas.height / canvas.width) * anchoMm
-
-  if (altoMm > ALTO_UTIL_MM) {
-    const factor = ALTO_UTIL_MM / altoMm
-    altoMm = ALTO_UTIL_MM
-    anchoMm = anchoMm * factor
-  }
-
-  const x = MARGEN_MM + (ANCHO_UTIL_MM - anchoMm) / 2
-  const y = MARGEN_MM
-
-  return { anchoMm, altoMm, x, y }
-}
-
-function timeoutCaptura<T>(promesa: Promise<T>, ms: number, mensaje: string): Promise<T> {
+  const blob = await res.blob()
   return new Promise((resolve, reject) => {
-    const timer = window.setTimeout(() => reject(new Error(mensaje)), ms)
-    promesa
-      .then((valor) => {
-        window.clearTimeout(timer)
-        resolve(valor)
-      })
-      .catch((err) => {
-        window.clearTimeout(timer)
-        reject(err)
-      })
+    const reader = new FileReader()
+    reader.onload = () => resolve(String(reader.result))
+    reader.onerror = () => reject(new Error("No se pudieron leer los logos para el PDF."))
+    reader.readAsDataURL(blob)
   })
 }
 
-export async function generarBlobPdfLibroObra(
-  elemento: HTMLElement,
-  onProgreso?: (p: ProgresoPdfLibroObra) => void
-): Promise<Blob> {
-  const hojas = [...elemento.querySelectorAll<HTMLElement>(".libro-obra-hoja-epa")]
-  const targets = hojas.length > 0 ? hojas : [elemento]
-  const scale = escalaCaptura(targets.length)
-
-  onProgreso?.({ hoja: 0, total: targets.length, fase: "preparando" })
-  const html2canvas = (await import("html2canvas")).default as Html2CanvasFn
-
-  const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" })
-
-  for (let i = 0; i < targets.length; i++) {
-    onProgreso?.({ hoja: i + 1, total: targets.length, fase: "capturando" })
-
-    await prepararHojaParaCaptura(targets[i])
-
-    if (i > 0) pdf.addPage()
-
-    const canvas = await timeoutCaptura(
-      canvasDeHoja(html2canvas, targets[i], scale),
-      90_000,
-      `Tiempo agotado al capturar la hoja ${i + 1}. Acorte el rango de fechas e intente de nuevo.`
-    )
-
-    const imgData = canvas.toDataURL("image/jpeg", 0.9)
-    const { anchoMm, altoMm, x, y } = medidasImagenUnaPagina(canvas)
-    pdf.addImage(imgData, "JPEG", x, y, anchoMm, altoMm, undefined, "FAST")
-
-    await new Promise<void>((resolve) => window.setTimeout(resolve, 0))
-  }
-
-  return pdf.output("blob")
+async function cargarLogosPdf(): Promise<LogosDataUrl> {
+  const origen =
+    typeof window !== "undefined" ? window.location.origin : "http://localhost:3000"
+  const rutas = rutasLogosLibroObra(origen)
+  const [epa, consorcio] = await Promise.all([
+    fetchComoDataUrl(rutas.epa),
+    fetchComoDataUrl(rutas.consorcio),
+  ])
+  return { epa, consorcio }
 }
 
 /**
- * Entrega el PDF como documento (visor nativo), no como adjunto del menú Compartir.
- * En iPhone Safari abre el PDF; el usuario usa Compartir → Guardar en Archivos.
- * En escritorio intenta descarga directa.
+ * PDF nativo con @react-pdf/renderer (sin html2canvas).
+ * Evita el error lab/oklch de Tailwind en Safari / iPhone.
+ */
+export async function generarBlobPdfLibroObra(
+  entradas: LibroObraEntradaDia[],
+  onProgreso?: (p: ProgresoPdfLibroObra) => void
+): Promise<Blob> {
+  const conEpa = entradas.filter((e) => e.formatoEpa)
+  if (conEpa.length === 0) {
+    throw new Error("No hay hojas EPA en el rango seleccionado.")
+  }
+
+  onProgreso?.({ hoja: 0, total: conEpa.length, fase: "preparando" })
+  const logos = await cargarLogosPdf()
+
+  onProgreso?.({ hoja: 0, total: conEpa.length, fase: "capturando" })
+
+  // Ceder el hilo para que la UI muestre “Generando…”
+  await new Promise<void>((resolve) => window.setTimeout(resolve, 0))
+
+  const documento = createElement(LibroObraPdfDocument, {
+    entradas: conEpa,
+    logos,
+  }) as ReactElement<DocumentProps>
+
+  const blob = await pdf(documento).toBlob()
+
+  onProgreso?.({ hoja: conEpa.length, total: conEpa.length, fase: "capturando" })
+  return blob
+}
+
+/**
+ * Abre el PDF en el visor nativo (iPhone) o descarga (escritorio).
+ * No usa navigator.share (evita presentarlo como “adjunto”).
  */
 export async function entregarPdfLibroObra(blob: Blob, nombreArchivo: string): Promise<void> {
   const url = URL.createObjectURL(blob)
@@ -215,7 +85,6 @@ export async function entregarPdfLibroObra(blob: Blob, nombreArchivo: string): P
   if (esMovil) {
     const abierta = window.open(url, "_blank")
     if (!abierta) {
-      // Safari a veces bloquea popups: navegar en la misma pestaña
       window.location.assign(url)
     } else {
       window.setTimeout(() => URL.revokeObjectURL(url), 120_000)

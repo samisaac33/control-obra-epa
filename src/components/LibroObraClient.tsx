@@ -85,25 +85,21 @@ export function LibroObraClient({
   }, [desde, hasta, entradasFiltradas.length])
 
   async function handleGenerarPdfPlanilla() {
-    const elemento = document.getElementById("libro-obra-documento")
-    if (!elemento || generandoPdf || entradasFiltradas.length === 0) return
+    if (generandoPdf || entradasFiltradas.length === 0) return
 
     setErrorPdf(null)
     setPdfListo(null)
     setGenerandoPdf(true)
-    setProgresoPdf({ hoja: 0, total: entradasFiltradas.length })
+    setProgresoPdf({ hoja: 0, total: entradasFiltradas.length, fase: "preparando" })
 
     try {
-      const blob = await generarBlobPdfLibroObra(elemento, setProgresoPdf)
+      const blob = await generarBlobPdfLibroObra(entradasFiltradas, setProgresoPdf)
       setPdfListo(blob)
     } catch (err) {
-      const crudo = err instanceof Error ? err.message : String(err)
       setErrorPdf(
-        /unsupported color function|lab|oklch/i.test(crudo)
-          ? "Error al capturar colores de la página. Recargue e intente de nuevo; si persiste, acorte el rango de fechas."
-          : err instanceof Error
-            ? err.message
-            : "No se pudo generar el PDF. Pruebe acortar el rango de fechas e intente de nuevo."
+        err instanceof Error
+          ? err.message
+          : "No se pudo generar el PDF. Pruebe acortar el rango de fechas e intente de nuevo."
       )
     } finally {
       setGenerandoPdf(false)
@@ -212,9 +208,9 @@ export function LibroObraClient({
                   >
                     <FileDown className="size-4" aria-hidden />
                     {generandoPdf && progresoPdf
-                      ? progresoPdf.fase === "preparando" || progresoPdf.hoja === 0
-                        ? "Preparando…"
-                        : `Generando… ${progresoPdf.hoja}/${progresoPdf.total}`
+                      ? progresoPdf.fase === "preparando"
+                        ? "Preparando logos…"
+                        : `Generando PDF (${progresoPdf.total} hojas)…`
                       : "1. Generar PDF"}
                   </Button>
                   <Button
