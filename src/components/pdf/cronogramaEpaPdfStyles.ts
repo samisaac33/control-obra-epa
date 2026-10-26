@@ -12,13 +12,31 @@ export const CRONOGRAMA_EPA_COLORS = {
   white: "#ffffff",
 } as const
 
+/** Márgenes A4 apaisado (~10 mm horizontal, ~8 mm vertical). */
+export const CRONOGRAMA_EPA_PAGE_PADDING = {
+  horizontal: 28,
+  vertical: 22,
+} as const
+
 export const cronogramaEpaPdfStyles = StyleSheet.create({
   page: {
     fontFamily: "Helvetica",
-    fontSize: 6,
+    fontSize: 6.5,
     color: "#000000",
-    padding: 8,
+    paddingHorizontal: CRONOGRAMA_EPA_PAGE_PADDING.horizontal,
+    paddingVertical: CRONOGRAMA_EPA_PAGE_PADDING.vertical,
     backgroundColor: "#ffffff",
+  },
+  pageInner: {
+    flex: 1,
+    flexDirection: "column",
+    justifyContent: "space-between",
+    minHeight: "100%",
+  },
+  topBlock: {
+    flex: 1,
+    flexDirection: "column",
+    minHeight: 0,
   },
   main: {
     flex: 1,
@@ -99,12 +117,28 @@ export const cronogramaEpaPdfStyles = StyleSheet.create({
   },
   table: {
     width: "100%",
+    flex: 1,
+    flexDirection: "column",
     borderWidth: 0.5,
     borderColor: CRONOGRAMA_EPA_COLORS.border,
     borderTopWidth: 0,
+    minHeight: 0,
+  },
+  tableBodyFlex: {
+    flex: 1,
+    flexDirection: "column",
+    minHeight: 0,
   },
   row: {
     flexDirection: "row",
+    borderBottomWidth: 0.5,
+    borderBottomColor: CRONOGRAMA_EPA_COLORS.border,
+  },
+  rowData: {
+    flexDirection: "row",
+    flex: 1,
+    minHeight: 11,
+    alignItems: "stretch",
     borderBottomWidth: 0.5,
     borderBottomColor: CRONOGRAMA_EPA_COLORS.border,
   },
@@ -112,16 +146,18 @@ export const cronogramaEpaPdfStyles = StyleSheet.create({
     flexDirection: "row",
   },
   cell: {
-    paddingVertical: 1,
+    paddingVertical: 1.5,
     paddingHorizontal: 1.5,
-    fontSize: 5,
+    fontSize: 5.5,
+    justifyContent: "center",
     borderRightWidth: 0.5,
     borderRightColor: CRONOGRAMA_EPA_COLORS.border,
   },
   cellLast: {
-    paddingVertical: 1,
+    paddingVertical: 1.5,
     paddingHorizontal: 1.5,
-    fontSize: 5,
+    fontSize: 5.5,
+    justifyContent: "center",
   },
   cellHeadBlue: {
     backgroundColor: CRONOGRAMA_EPA_COLORS.headBlue,
@@ -148,8 +184,9 @@ export const cronogramaEpaPdfStyles = StyleSheet.create({
   firmas: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 8,
-    paddingHorizontal: 8,
+    marginTop: 6,
+    paddingHorizontal: 4,
+    flexShrink: 0,
   },
   firmaCol: {
     width: "30%",
@@ -159,8 +196,8 @@ export const cronogramaEpaPdfStyles = StyleSheet.create({
     borderTopWidth: 0.5,
     borderTopColor: CRONOGRAMA_EPA_COLORS.border,
     paddingTop: 2,
-    marginBottom: 10,
-    minHeight: 28,
+    marginBottom: 6,
+    minHeight: 22,
     width: "100%",
     textAlign: "center",
     fontSize: 5,

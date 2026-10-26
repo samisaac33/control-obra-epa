@@ -209,7 +209,7 @@ export function PlanillaCronogramaValoradoClient({
         </div>
       </section>
 
-      <section className="space-y-3" id="cronograma-epa-documento">
+      <section className="space-y-3 print:space-y-0" id="cronograma-epa-documento">
         <div className="flex items-center justify-between gap-2 print:hidden">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
             Cronograma ejecutado ({AVANCE_PLANILLA_1_CRONOGRAMA_EJECUTADO_PCT} % planilla 1)
