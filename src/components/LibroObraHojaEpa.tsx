@@ -1,8 +1,11 @@
+import Image from "next/image"
+
 import { EvidenciaBloque } from "@/src/components/LibroObraDocumentoEvidencia"
 import {
-  LibroObraEpaCabecera,
-  LibroObraEpaTablaFecha,
-} from "@/src/components/LibroObraEpaCabecera"
+  CONSORCIO_CONTRATISTA_RAZON,
+  LOGO_CONSORCIO_STH_MANABI_PUBLIC_PATH,
+  LOGO_EPA_PUBLIC_PATH,
+} from "@/src/data/brand/logos-proyecto"
 import { PROVINCIA_LIBRO_OBRA_EPA } from "@/src/data/libro-obra-formato-epa"
 import { OBJETO_CONTRATO } from "@/src/data/contrato-emergencia-severino-trasvase"
 import type { ProyectoConfig } from "@/src/data/proyectos/catalog"
@@ -63,6 +66,30 @@ function AreaLineada({ children, minHeightClass }: { children: React.ReactNode; 
   )
 }
 
+function TablaFechaCompacta({ dia, mes, anio }: { dia: string; mes: string; anio: string }) {
+  return (
+    <table className="shrink-0 border-collapse border border-neutral-900 text-center print:text-[7px]">
+      <thead>
+        <tr>
+          <CeldaEncabezado colSpan={3}>Fecha</CeldaEncabezado>
+        </tr>
+        <tr>
+          <CeldaEncabezado>Día</CeldaEncabezado>
+          <CeldaEncabezado>Mes</CeldaEncabezado>
+          <CeldaEncabezado>Año</CeldaEncabezado>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <Celda className="w-7 text-center font-semibold">{dia}</Celda>
+          <Celda className="w-7 text-center font-semibold">{mes}</Celda>
+          <Celda className="w-10 text-center font-semibold">{anio}</Celda>
+        </tr>
+      </tbody>
+    </table>
+  )
+}
+
 export function LibroObraHojaEpa({ entrada, proyecto, numeroEntrada }: LibroObraHojaEpaProps) {
   const epa = entrada.formatoEpa
   const { dia, mes, anio } = partesFechaLibroObra(entrada.fecha)
@@ -70,17 +97,30 @@ export function LibroObraHojaEpa({ entrada, proyecto, numeroEntrada }: LibroObra
 
   const comunicacionesVacias = !epa.comunicaciones?.trim()
 
-  const cabeceraProps = { dia, mes, anio }
-
   return (
     <section className="libro-obra-dia libro-obra-hoja-epa mb-8 break-after-page bg-white print:mb-0">
-      <div className="libro-obra-epa-cuerpo">
-        <div className="libro-obra-epa-cabecera-pantalla mb-0.5 print:hidden">
-          <LibroObraEpaCabecera {...cabeceraProps} />
+      <div className="mb-0.5 flex items-start justify-between gap-1 border-b border-neutral-900 pb-0.5 print:pb-0">
+        <Image
+          src={LOGO_EPA_PUBLIC_PATH}
+          alt="Empresa Pública del Agua"
+          width={118}
+          height={40}
+          className="h-8 w-auto object-contain print:h-7"
+        />
+        <div className="flex min-w-0 flex-1 flex-col items-center gap-0.5 px-1">
+          <h2 className="text-center text-sm font-bold uppercase tracking-wide text-neutral-950 print:text-[11px]">
+            Libro de obra
+          </h2>
+          <TablaFechaCompacta dia={dia} mes={mes} anio={anio} />
         </div>
-        <div className="libro-obra-epa-fecha-dia mb-0.5 hidden justify-center print:flex">
-          <LibroObraEpaTablaFecha {...cabeceraProps} />
-        </div>
+        <Image
+          src={LOGO_CONSORCIO_STH_MANABI_PUBLIC_PATH}
+          alt={CONSORCIO_CONTRATISTA_RAZON}
+          width={88}
+          height={48}
+          className="h-9 w-auto object-contain print:h-8"
+        />
+      </div>
 
       <p className="mb-0 text-[7px] font-bold uppercase text-neutral-900 print:text-[6.5px]">
         Objeto contractual
@@ -260,7 +300,6 @@ export function LibroObraHojaEpa({ entrada, proyecto, numeroEntrada }: LibroObra
           <div className="mb-2 min-h-[14mm] border-b border-neutral-900 print:min-h-[18mm]" />
           Fiscalizador
         </div>
-      </div>
       </div>
     </section>
   )
