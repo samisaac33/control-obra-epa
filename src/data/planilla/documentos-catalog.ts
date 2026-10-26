@@ -58,6 +58,14 @@ export const DOCUMENTOS_PLANILLA_CATALOGO: DocumentoPlanillaCatalogo[] = [
     estado: "disponible",
     rutaGenerador: "planillas/documentos/requerimiento-pago",
   },
+  {
+    id: "cronograma_valorado_vigente",
+    titulo: "Cronograma valorado de trabajos vigente",
+    descripcion:
+      "Oferta adjudicada VAE: rubros, precios, totales e inversión por planilla 1 y 2. Incluye PDF firmado contractual.",
+    estado: "disponible",
+    rutaGenerador: "planillas/documentos/cronograma-valorado-vigente",
+  },
 ]
 
 export function documentoPlanillaPorId(id: TipoDocumentoPlanilla): DocumentoPlanillaCatalogo | undefined {

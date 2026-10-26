@@ -6,6 +6,7 @@ import { PlanillaInformeAvanceClient } from "@/src/components/planilla/PlanillaI
 import { PlanillaMemorandoDocument } from "@/src/components/planilla/PlanillaMemorandoDocument"
 import { PlanillaReportesDiariosClient } from "@/src/components/planilla/PlanillaReportesDiariosClient"
 import { PlanillaMaquinariaConsolidadoClient } from "@/src/components/planilla/PlanillaMaquinariaConsolidadoClient"
+import { PlanillaCronogramaValoradoClient } from "@/src/components/planilla/PlanillaCronogramaValoradoClient"
 import { PlanillaRequerimientoPagoClient } from "@/src/components/planilla/PlanillaRequerimientoPagoClient"
 import { documentoPlanillaPorId } from "@/src/data/planilla/documentos-catalog"
 import { cargarLibroObraPeriodoPlanilla } from "@/src/lib/cargar-libro-obra-planilla"
@@ -81,6 +82,8 @@ export default async function PlanillaDocumentoPage({ params }: PageProps) {
           planillaNumero={planillaNumero}
         />
       )
+    case "cronograma_valorado_vigente":
+      return <PlanillaCronogramaValoradoClient config={config} />
     default:
       notFound()
   }
