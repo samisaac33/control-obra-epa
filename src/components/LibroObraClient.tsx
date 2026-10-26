@@ -5,6 +5,7 @@ import { useMemo, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { LibroObraAyudaGuardarPdf } from "@/src/components/LibroObraAyudaGuardarPdf"
 import { LibroObraDocumento } from "@/src/components/LibroObraDocumento"
 import { useProyecto } from "@/src/contexts/ProyectoContext"
 import {
@@ -62,6 +63,11 @@ export function LibroObraClient({
 
   function handleImprimir() {
     // No hacer scroll al documento: en móvil solo bajaba la vista y parecía que el botón fallaba.
+    document.body.classList.add("libro-obra-modo-impresion")
+    const quitarModo = () => {
+      document.body.classList.remove("libro-obra-modo-impresion")
+    }
+    window.addEventListener("afterprint", quitarModo, { once: true })
     window.print()
   }
 
@@ -151,13 +157,7 @@ export function LibroObraClient({
                 Imprimir / Guardar PDF
               </Button>
             </div>
-            {variant === "planilla" ? (
-              <p className="text-xs text-muted-foreground print:hidden">
-                Para quitar la URL y la fecha del pie al guardar PDF, desactiva{" "}
-                <span className="font-medium">Encabezados y pies de página</span> en el diálogo de
-                impresión del navegador (especialmente en móvil).
-              </p>
-            ) : null}
+            <LibroObraAyudaGuardarPdf />
 
             <dl className="grid gap-2 text-sm sm:grid-cols-3">
               <div className="rounded-lg border border-foreground/10 bg-muted/30 px-3 py-2">
