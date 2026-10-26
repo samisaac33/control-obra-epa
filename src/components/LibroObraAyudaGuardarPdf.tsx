@@ -2,10 +2,22 @@
 
 import { Smartphone } from "lucide-react"
 
-import { useEsDispositivoApple } from "@/src/hooks/useEsDispositivoApple"
+type LibroObraAyudaGuardarPdfProps = {
+  variant?: "evidencias" | "planilla"
+}
 
-export function LibroObraAyudaGuardarPdf() {
-  const esApple = useEsDispositivoApple()
+export function LibroObraAyudaGuardarPdf({ variant = "evidencias" }: LibroObraAyudaGuardarPdfProps) {
+  if (variant === "planilla") {
+    return (
+      <p className="rounded-lg border border-muted bg-muted/40 px-3 py-2 text-xs leading-relaxed text-muted-foreground print:hidden">
+        <Smartphone className="mr-1 inline size-3.5 align-text-bottom" aria-hidden />
+        <span className="font-medium text-foreground">1. Generar PDF</span> crea el archivo en el
+        teléfono (puede tardar un poco con muchas hojas). Luego{" "}
+        <span className="font-medium text-foreground">2. Guardar en Archivos</span> abre el menú de
+        iOS para guardarlo, sin pasar por Imprimir de Safari.
+      </p>
+    )
+  }
 
   return (
     <details
@@ -17,45 +29,10 @@ export function LibroObraAyudaGuardarPdf() {
         Guardar PDF sin URL ni fecha en el pie
       </summary>
       <div className="mt-2 border-t border-amber-200/60 pt-2">
-      {esApple ? (
-        <ol className="mt-2 list-decimal space-y-1.5 pl-4">
-          <li>
-            Pulsa <span className="font-medium">Imprimir / Guardar PDF</span> (se abre la vista previa
-            de impresión de Safari).
-          </li>
-          <li>
-            Toca <span className="font-medium">Opciones</span> arriba a la derecha (o el ícono de
-            ajustes en la hoja de impresión).
-          </li>
-          <li>
-            Desactiva <span className="font-medium">Encabezados y pies de página</span> (así desaparecen
-            la URL <code className="rounded bg-amber-100/80 px-0.5">obra-epa.vercel.app</code> y la
-            fecha/hora del margen).
-          </li>
-          <li>
-            Usa <span className="font-medium">Compartir</span> →{" "}
-            <span className="font-medium">Guardar en Archivos</span> o imprimir a PDF.
-          </li>
-        </ol>
-      ) : (
-        <ol className="mt-2 list-decimal space-y-1.5 pl-4">
-          <li>
-            Pulsa <span className="font-medium">Imprimir / Guardar PDF</span> y abre{" "}
-            <span className="font-medium">Más ajustes</span> o <span className="font-medium">Opciones</span>.
-          </li>
-          <li>
-            Desmarca <span className="font-medium">Encabezados y pies de página</span> /{" "}
-            <span className="font-medium">Headers and footers</span>.
-          </li>
-          <li>
-            Elige destino <span className="font-medium">Guardar como PDF</span> o imprimir.
-          </li>
-        </ol>
-      )}
-      <p className="mt-2 text-[11px] text-amber-900/85">
-        El navegador añade URL y fecha solo si esa opción sigue activa; la app no puede quitarlas por
-        código en iPhone.
-      </p>
+        <p className="text-[11px] text-amber-900/85">
+          En el diálogo de impresión desactive encabezados y pies de página para quitar URL y fecha del
+          margen.
+        </p>
       </div>
     </details>
   )

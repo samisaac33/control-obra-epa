@@ -1,6 +1,6 @@
 "use client"
 
-import { BookOpen, Printer } from "lucide-react"
+import { BookOpen, FileDown, Printer, Save } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 
 import { Button } from "@/components/ui/button"
@@ -8,6 +8,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { LibroObraAyudaGuardarPdf } from "@/src/components/LibroObraAyudaGuardarPdf"
 import { LibroObraDocumento } from "@/src/components/LibroObraDocumento"
 import { useProyecto } from "@/src/contexts/ProyectoContext"
+import {
+  entregarPdfLibroObra,
+  generarBlobPdfLibroObra,
+  nombreArchivoLibroObra,
+} from "@/src/lib/libro-obra-exportar-pdf"
 import {
   filtrarEntradasLibroObra,
   formatearFechaLibroObra,
@@ -53,6 +58,10 @@ export function LibroObraClient({
   const { proyectoActivo } = useProyecto()
   const [desde, setDesde] = useState(defaultDesde)
   const [hasta, setHasta] = useState(defaultHasta)
+  const [generandoPdf, setGenerandoPdf] = useState(false)
+  const [progresoPdf, setProgresoPdf] = useState<{ hoja: number; total: number } | null>(null)
+  const [pdfListo, setPdfListo] = useState<Blob | null>(null)
+  const [errorPdf, setErrorPdf] = useState<string | null>(null)
   const entradasFiltradas = useMemo(
     () => filtrarEntradasLibroObra(entradasProp, desde || undefined, hasta || undefined),
     [entradasProp, desde, hasta]
@@ -65,13 +74,47 @@ export function LibroObraClient({
     document.body.classList.remove("libro-obra-modo-impresion")
   }, [])
 
-  function handleImprimir() {
-    document.body.classList.add("libro-obra-modo-impresion")
-    const quitarModo = () => {
-      document.body.classList.remove("libro-obra-modo-impresion")
+  useEffect(() => {
+    setPdfListo(null)
+    setErrorPdf(null)
+    setProgresoPdf(null)
+  }, [desde, hasta, entradasFiltradas.length])
+
+  async function handleGenerarPdfPlanilla() {
+    const elemento = document.getElementById("libro-obra-documento")
+    if (!elemento || generandoPdf || entradasFiltradas.length === 0) return
+
+    setErrorPdf(null)
+    setPdfListo(null)
+    setGenerandoPdf(true)
+    setProgresoPdf({ hoja: 0, total: entradasFiltradas.length })
+
+    try {
+      const blob = await generarBlobPdfLibroObra(elemento, setProgresoPdf)
+      setPdfListo(blob)
+    } catch (err) {
+      setErrorPdf(
+        err instanceof Error
+          ? err.message
+          : "No se pudo generar el PDF. Pruebe acortar el rango de fechas e intente de nuevo."
+      )
+    } finally {
+      setGenerandoPdf(false)
     }
-    window.addEventListener("afterprint", quitarModo, { once: true })
-    window.setTimeout(quitarModo, 3_000)
+  }
+
+  function handleGuardarPdfPlanilla() {
+    if (!pdfListo) return
+    setErrorPdf(null)
+    void entregarPdfLibroObra(pdfListo, nombreArchivoLibroObra(desde, hasta)).catch((err) => {
+      if (err instanceof DOMException && err.name === "AbortError") return
+      setErrorPdf(
+        err instanceof Error ? err.message : "No se pudo abrir el menú para guardar el PDF."
+      )
+    })
+  }
+
+  function handleImprimirEvidencias() {
     window.print()
   }
 
@@ -152,16 +195,54 @@ export function LibroObraClient({
               >
                 Limpiar filtros
               </Button>
-              <Button
-                type="button"
-                className="w-full shrink-0 sm:w-auto"
-                onClick={handleImprimir}
-              >
-                <Printer className="size-4" aria-hidden />
-                Imprimir / Guardar PDF
-              </Button>
+              {variant === "planilla" ? (
+                <>
+                  <Button
+                    type="button"
+                    className="w-full shrink-0 sm:w-auto"
+                    onClick={() => void handleGenerarPdfPlanilla()}
+                    disabled={generandoPdf || entradasFiltradas.length === 0}
+                  >
+                    <FileDown className="size-4" aria-hidden />
+                    {generandoPdf && progresoPdf
+                      ? `Generando… ${progresoPdf.hoja}/${progresoPdf.total}`
+                      : "1. Generar PDF"}
+                  </Button>
+                  <Button
+                    type="button"
+                    className="w-full shrink-0 sm:w-auto"
+                    variant={pdfListo ? "default" : "secondary"}
+                    onClick={handleGuardarPdfPlanilla}
+                    disabled={!pdfListo || generandoPdf}
+                  >
+                    <Save className="size-4" aria-hidden />
+                    2. Guardar en Archivos
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  type="button"
+                  className="w-full shrink-0 sm:w-auto"
+                  onClick={handleImprimirEvidencias}
+                >
+                  <Printer className="size-4" aria-hidden />
+                  Imprimir / Guardar PDF
+                </Button>
+              )}
             </div>
-            <LibroObraAyudaGuardarPdf />
+            {errorPdf ? (
+              <p className="text-sm text-destructive" role="alert">
+                {errorPdf}
+              </p>
+            ) : null}
+            {pdfListo && variant === "planilla" ? (
+              <p className="text-sm font-medium text-emerald-800" role="status">
+                PDF listo ({entradasFiltradas.length}{" "}
+                {entradasFiltradas.length === 1 ? "hoja" : "hojas"}). Pulse{" "}
+                <span className="font-semibold">Guardar en Archivos</span>.
+              </p>
+            ) : null}
+            <LibroObraAyudaGuardarPdf variant={variant} />
 
             <dl className="grid gap-2 text-sm sm:grid-cols-3">
               <div className="rounded-lg border border-foreground/10 bg-muted/30 px-3 py-2">
