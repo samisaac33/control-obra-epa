@@ -1,7 +1,7 @@
 import { PORCENTAJE_CRONOGRAMA_EJECUTADO_PLANILLA_1 } from "@/src/data/contrato-emergencia-severino-trasvase"
 import type { PlanillaNumero, ProyectoPlanillaConfig } from "@/src/data/planilla/types"
 
-/** Config con % de avance para cronograma ejecutado EPA (planilla 1 → 61,34 %). */
+/** Config con % de avance para cronograma ejecutado EPA (planilla 1 → 61,33 %). */
 export function configCronogramaEjecutadoEpa(
   config: ProyectoPlanillaConfig,
   planillaNumero: PlanillaNumero

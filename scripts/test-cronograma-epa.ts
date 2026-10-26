@@ -52,7 +52,12 @@ assert.ok(rubrosProg.every((f) => f.tipo === "rubro" && f.montosPeriodo[0] >= 0)
 
 assert.ok(Math.abs(ejecutado.inversionPeriodo[0] - programado.inversionPeriodo[0]) < 1, "P1 sugerida = programada")
 
+const avanceMostrado2Dec = Math.round(ejecutado.avanceParcialPct[0] * 100) / 100
+assert.equal(avanceMostrado2Dec, 61.33, "avance parcial P1 mostrado (2 dec.) = 61,33 %")
+assert.equal(Math.round(ejecutado.avanceAcumuladoPct[0] * 100) / 100, 61.33)
+
 console.log("test-cronograma-epa: OK", {
   pctP1: programado.avanceParcialPct[0],
+  pctEjecutado: ejecutado.avanceParcialPct[0],
   invP1: programado.inversionPeriodo[0],
 })

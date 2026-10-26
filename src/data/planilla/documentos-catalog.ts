@@ -62,7 +62,7 @@ export const DOCUMENTOS_PLANILLA_CATALOGO: DocumentoPlanillaCatalogo[] = [
     id: "cronograma_valorado_vigente",
     titulo: "Cronogramas valorado (programado y ejecutado)",
     descripcion:
-      "Programado: PDF del Excel al 51,63 %. Ejecutado EPA al 61,34 % (PDF, vista previa y paquete de 2 páginas).",
+      "Programado: PDF del Excel al 51,63 %. Ejecutado EPA al 61,33 % (PDF, vista previa y paquete de 2 páginas).",
     estado: "disponible",
     rutaGenerador: "planillas/documentos/cronograma-valorado-vigente",
   },

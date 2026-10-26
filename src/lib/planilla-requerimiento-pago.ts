@@ -2,6 +2,7 @@ import type { Rubro } from "@/data/presupuesto"
 import { montoTotalContrato, subtotalRubro } from "@/data/presupuesto"
 import type { PlanillaNumero, PlanillaPeriodo } from "@/src/data/planilla/types"
 import type { ProyectoPlanillaConfig } from "@/src/data/planilla/types"
+import { cantidadesPorPeriodoCronogramaVigente } from "@/src/lib/planilla-cronograma-valorado-vigente"
 
 export type LineaRequerimientoPago = {
   rubroId: number
@@ -61,14 +62,14 @@ export function sugerirCantidadesPeriodo(
   config: ProyectoPlanillaConfig,
   planillaNumero: PlanillaNumero
 ): Map<number, { cantidadPeriodo: number; cantidadAcumuladaAnterior: number }> {
-  const pctAcum = pctAcumuladoObjetivo(config, planillaNumero)
-  const pctAnt = pctAnteriorAcumulado(config, planillaNumero)
   const map = new Map<number, { cantidadPeriodo: number; cantidadAcumuladaAnterior: number }>()
 
+  const pctParticion = config.porcentaje_avance_planilla_1
+
   for (const r of rubros) {
-    const cantidadAcumuladaAnterior = r.cantidad * (pctAnt / 100)
-    const cantidadAcumuladaObjetivo = r.cantidad * (pctAcum / 100)
-    const cantidadPeriodo = Math.max(0, cantidadAcumuladaObjetivo - cantidadAcumuladaAnterior)
+    const [cantP1, cantP2] = cantidadesPorPeriodoCronogramaVigente(r, pctParticion)
+    const cantidadAcumuladaAnterior = planillaNumero === 1 ? 0 : cantP1
+    const cantidadPeriodo = planillaNumero === 1 ? cantP1 : cantP2
 
     map.set(r.id, {
       cantidadPeriodo,

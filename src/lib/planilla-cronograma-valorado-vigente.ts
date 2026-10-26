@@ -73,6 +73,39 @@ export function cantidadesPorPeriodoCronogramaVigente(
   return [p1, p2]
 }
 
+/** Ajusta montos P1 para que el avance parcial (2 dec.) coincida con el % objetivo. */
+export function normalizarMontosPlanilla1AlAvanceObjetivo(
+  secciones: SeccionCronogramaValorado[],
+  montoTotalContrato: number,
+  pctAvancePlanilla1: number
+): void {
+  const filas = secciones.flatMap((s) => s.filas)
+  if (filas.length === 0 || montoTotalContrato <= 0) return
+
+  const targetM1 =
+    Math.round(montoTotalContrato * (pctAvancePlanilla1 / 100) * 100) / 100
+  const sumM1 = filas.reduce((s, f) => s + f.montoPeriodo1, 0)
+  if (sumM1 <= 0) return
+
+  const factor = targetM1 / sumM1
+  let acumM1 = 0
+  for (let i = 0; i < filas.length; i++) {
+    const f = filas[i]!
+    if (i === filas.length - 1) {
+      f.montoPeriodo1 = Math.round((targetM1 - acumM1) * 100) / 100
+    } else {
+      f.montoPeriodo1 = Math.round(f.montoPeriodo1 * factor * 100) / 100
+      acumM1 += f.montoPeriodo1
+    }
+    f.montoPeriodo2 = Math.round((f.montoTotalRubro - f.montoPeriodo1) * 100) / 100
+    f.cantidadPeriodo1 =
+      f.precioUnitario > 0
+        ? Math.round((f.montoPeriodo1 / f.precioUnitario) * 100) / 100
+        : 0
+    f.cantidadPeriodo2 = Math.round((f.cantidadContrato - f.cantidadPeriodo1) * 100) / 100
+  }
+}
+
 function indiceSeccion(categoria: string): number {
   const i = ORDEN_SECCION.findIndex((s) => s === categoria)
   return i >= 0 ? i + 1 : 99
@@ -136,6 +169,9 @@ export function calcularCronogramaValoradoVigente(
     }
   }).filter((s) => s.filas.length > 0)
 
+  const totalContrato = montoTotalContrato(rubros)
+  normalizarMontosPlanilla1AlAvanceObjetivo(secciones, totalContrato, pctAvancePlanilla1)
+
   const inversionPeriodo1 = secciones.reduce(
     (s, sec) => s + sec.filas.reduce((a, f) => a + f.montoPeriodo1, 0),
     0
@@ -145,7 +181,6 @@ export function calcularCronogramaValoradoVigente(
     0
   )
 
-  const totalContrato = montoTotalContrato(rubros)
   const pct = (m: number) => (totalContrato > 0 ? (m / totalContrato) * 100 : 0)
 
   return {

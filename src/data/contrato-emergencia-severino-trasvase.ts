@@ -28,7 +28,7 @@ export const PORCENTAJE_ANTICIPO_CONTRATO = 35
 export const PORCENTAJE_CRONOGRAMA_PROGRAMADO_PLANILLA_1 = 51.63
 
 /** Cronograma ejecutado EPA y reparto valorado vigente calculado. */
-export const PORCENTAJE_CRONOGRAMA_EJECUTADO_PLANILLA_1 = 61.34
+export const PORCENTAJE_CRONOGRAMA_EJECUTADO_PLANILLA_1 = 61.33
 
 /** Avance acumulado Planilla 1 (medición, plan maestro, defaults). */
 export const PORCENTAJE_AVANCE_PLANILLA_1_EJECUCION = PORCENTAJE_CRONOGRAMA_EJECUTADO_PLANILLA_1
