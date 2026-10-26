@@ -3,6 +3,7 @@
  */
 import assert from "node:assert/strict"
 
+import { PORCENTAJE_AVANCE_LIBRO_OBRA_PLANILLA_1 } from "../src/data/contrato-emergencia-severino-trasvase"
 import { presupuestoDesasolveEmergencia } from "../src/data/planilla/presupuesto-desasolve-emergencia"
 import { valoresPorDefectoPlanilla } from "../src/data/planilla/planilla-defaults-ejecucion"
 import { TRAMOS_DESAZOLVE_VAE, VOLUMEN_TOTAL_TRASVASE_M3 } from "../src/data/planilla/canales-desazolve-tramos-vae"
@@ -30,6 +31,7 @@ const now = new Date().toISOString()
 const config = {
   proyecto_id: PROYECTO_DESASOLVE_CANALES,
   ...defs,
+  porcentaje_avance_planilla_1: PORCENTAJE_AVANCE_LIBRO_OBRA_PLANILLA_1,
   registrado_por: null,
   created_at: now,
   updated_at: now,
@@ -55,7 +57,8 @@ const sumM3 = cronograma.reduce(
   (s, d) => s + d.actividades.reduce((t, a) => t + a.m3Desazolve, 0),
   0
 )
-const objetivo = presupuestoDesasolveEmergencia.find((r) => r.id === 2)!.cantidad * (defs.porcentaje_avance_planilla_1 / 100)
+const objetivo =
+  presupuestoDesasolveEmergencia.find((r) => r.id === 2)!.cantidad * (config.porcentaje_avance_planilla_1 / 100)
 assert.ok(Math.abs(sumM3 - objetivo) < objetivo * 0.02, "suma m³ periodo ≈ objetivo planilla 1")
 
 const entradas = consolidarLibroObraPeriodoPlanillaConsolidado(

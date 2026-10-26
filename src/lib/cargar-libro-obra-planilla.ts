@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
 
 import { presupuestoRubrosPorProyecto } from "@/src/data/planilla/presupuesto-por-proyecto"
+import { PORCENTAJE_AVANCE_LIBRO_OBRA_PLANILLA_1 } from "@/src/data/contrato-emergencia-severino-trasvase"
 import { valoresPorDefectoPlanilla } from "@/src/data/planilla/planilla-defaults-ejecucion"
 import type { PlanillaNumero, PlanillaPeriodo, ProyectoPlanillaConfig } from "@/src/data/planilla/types"
 import { cargarEvidenciasLibroObra } from "@/src/lib/cargar-evidencias-libro-obra"
@@ -51,8 +52,16 @@ export async function cargarLibroObraPeriodoPlanilla(
     cargarPlanillaConfigProyecto(supabase, proyectoId),
   ])
 
-  const config = configPlanillaLibroObra(proyectoId, configDb)
-  if (!config) return []
+  const configBase = configPlanillaLibroObra(proyectoId, configDb)
+  if (!configBase) return []
+
+  const config =
+    planillaNumero === 1
+      ? {
+          ...configBase,
+          porcentaje_avance_planilla_1: PORCENTAJE_AVANCE_LIBRO_OBRA_PLANILLA_1,
+        }
+      : configBase
 
   const rubros = presupuestoRubrosPorProyecto(proyectoId)
 
