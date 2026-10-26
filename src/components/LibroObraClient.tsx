@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { LibroObraDocumento } from "@/src/components/LibroObraDocumento"
 import { useProyecto } from "@/src/contexts/ProyectoContext"
-import { esperarImagenesInformeListas } from "@/src/lib/compress-image-informe"
 import {
   filtrarEntradasLibroObra,
   formatearFechaLibroObra,
@@ -53,8 +52,6 @@ export function LibroObraClient({
   const { proyectoActivo } = useProyecto()
   const [desde, setDesde] = useState(defaultDesde)
   const [hasta, setHasta] = useState(defaultHasta)
-  const [imprimiendo, setImprimiendo] = useState(false)
-
   const entradasFiltradas = useMemo(
     () => filtrarEntradasLibroObra(entradasProp, desde || undefined, hasta || undefined),
     [entradasProp, desde, hasta]
@@ -64,23 +61,8 @@ export function LibroObraClient({
   const totalEvidencias = useMemo(() => contarEvidencias(entradasFiltradas), [entradasFiltradas])
 
   function handleImprimir() {
-    document.getElementById("libro-obra-documento")?.scrollIntoView({ block: "start" })
-
-    // print() debe ejecutarse en el mismo gesto del usuario (móvil bloquea print() diferido).
+    // No hacer scroll al documento: en móvil solo bajaba la vista y parecía que el botón fallaba.
     window.print()
-
-    const hayImagenesInforme =
-      totalEvidencias > 0 &&
-      [...document.querySelectorAll<HTMLImageElement>(".libro-obra-imagen")].some(
-        (img) => Boolean(img.getAttribute("src"))
-      )
-
-    if (hayImagenesInforme) {
-      setImprimiendo(true)
-      void esperarImagenesInformeListas()
-        .catch(() => undefined)
-        .finally(() => setImprimiendo(false))
-    }
   }
 
   return (
@@ -121,7 +103,7 @@ export function LibroObraClient({
           </Card>
         ) : null}
 
-        <Card className="libro-obra-toolbar border-foreground/10 print:hidden">
+        <Card className="libro-obra-toolbar sticky top-0 z-20 border-foreground/10 bg-card shadow-sm print:hidden">
           <CardHeader className="pb-3">
             <CardTitle className="text-base">Generar documento</CardTitle>
             <CardDescription>
@@ -160,9 +142,13 @@ export function LibroObraClient({
               >
                 Limpiar filtros
               </Button>
-              <Button type="button" onClick={handleImprimir} disabled={imprimiendo}>
+              <Button
+                type="button"
+                className="w-full shrink-0 sm:w-auto"
+                onClick={handleImprimir}
+              >
                 <Printer className="size-4" aria-hidden />
-                {imprimiendo ? "Comprimiendo fotos…" : "Imprimir / Guardar PDF"}
+                Imprimir / Guardar PDF
               </Button>
             </div>
             {variant === "planilla" ? (
