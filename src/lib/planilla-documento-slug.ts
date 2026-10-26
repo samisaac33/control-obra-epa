@@ -8,6 +8,7 @@ const SLUG_TO_ID: Record<string, TipoDocumentoPlanilla> = {
   auditoria: "auditoria_volumetrica",
   "requerimiento-pago": "requerimiento_pago",
   "maquinaria-consolidado": "maquinaria_consolidado",
+  "cronograma-valorado-vigente": "cronograma_valorado_vigente",
 }
 
 export function tipoDocumentoDesdeSlug(slug: string): TipoDocumentoPlanilla | null {

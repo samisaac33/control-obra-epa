@@ -39,6 +39,7 @@ export type TipoDocumentoPlanilla =
   | "maquinaria_consolidado"
   | "anexo_fotografico"
   | "requerimiento_pago"
+  | "cronograma_valorado_vigente"
 
 export type EstadoGeneradorDocumento = "disponible" | "proximamente"
 
