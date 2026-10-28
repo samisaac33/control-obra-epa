@@ -42,3 +42,7 @@ next-env.d.ts
 
 .vercel
 .env*.local
+
+# python (scripts de PDF)
+__pycache__/
+*.py[cod]
