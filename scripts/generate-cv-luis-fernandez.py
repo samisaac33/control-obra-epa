@@ -175,7 +175,7 @@ def build_pages_1_2(photo: Path) -> bytes:
             [Paragraph("<b>Contacto</b>", st["bodyBold"])],
             [Paragraph("Urbanización Los Álamos · Portoviejo, Manabí", st["contact"])],
             [Paragraph("Tel. 0983582044", st["contact"])],
-            [Paragraph("bletty95@gmail.com", st["contact"])],
+            [Paragraph("contacto@vextu.app", st["contact"])],
         ],
         colWidths=[doc.width],
     )
