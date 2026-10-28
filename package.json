@@ -7,6 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "generate:cv-pdf": "python3 scripts/generate-cv-luis-fernandez.py",
+    "merge:facturas-jbs-2026": "python3 scripts/merge-facturas-jbs-2026.py",
     "generate:infimas-pdf": "tsx scripts/generate-infimas-pdf.ts",
     "replace-pdf-last-page": "tsx scripts/replace-pdf-last-page.ts",
     "extract-pdf-page": "tsx scripts/extract-pdf-page.ts",
