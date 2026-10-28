@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { FileArchive } from "lucide-react"
 
+import { InfimasHubNav } from "@/src/components/infimas/InfimasHubNav"
 import { InfimasModulosHub } from "@/src/components/infimas/InfimasModulosHub"
 
 export const metadata: Metadata = {
@@ -34,6 +35,7 @@ export default function InfimasPage() {
       </header>
 
       <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col space-y-6 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+        <InfimasHubNav />
         <InfimasModulosHub />
       </main>
     </div>
