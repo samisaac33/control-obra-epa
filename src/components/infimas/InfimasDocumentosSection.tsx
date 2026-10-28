@@ -1,6 +1,6 @@
 "use client"
 
-import { Download, FileText } from "lucide-react"
+import { Download, ExternalLink, FileText } from "lucide-react"
 import { useState } from "react"
 
 import { Button } from "@/components/ui/button"
@@ -49,10 +49,16 @@ export function InfimasDocumentosSection({ documentos }: InfimasDocumentosSectio
                 >
                   {activoId === doc.id ? "Viendo en pantalla" : "Ver en pantalla"}
                 </Button>
+                <Button asChild variant="outline" size="sm">
+                  <a href={doc.archivoPdf} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="size-4" aria-hidden />
+                    Abrir PDF
+                  </a>
+                </Button>
                 <Button asChild size="sm">
-                  <a href={doc.archivoPdf} download>
+                  <a href={doc.archivoPdf.split("?")[0]} download>
                     <Download className="size-4" aria-hidden />
-                    Descargar PDF
+                    Descargar
                   </a>
                 </Button>
               </div>
@@ -65,9 +71,10 @@ export function InfimasDocumentosSection({ documentos }: InfimasDocumentosSectio
         <h2 className="text-sm font-semibold text-muted-foreground">Vista del documento</h2>
         <div className="overflow-hidden rounded-lg border border-foreground/10 bg-neutral-100">
           <iframe
+            key={activo.id}
             title={activo.titulo}
-            src={`${activo.archivoPdf}#view=FitH`}
-            className="h-[min(80vh,920px)] w-full bg-white"
+            src={`${activo.archivoPdf}#view=FitH&toolbar=1`}
+            className="min-h-[70vh] w-full bg-white sm:min-h-[80vh]"
           />
         </div>
         <p className="text-xs text-muted-foreground">

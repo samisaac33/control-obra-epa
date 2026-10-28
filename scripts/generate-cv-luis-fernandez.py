@@ -25,11 +25,13 @@ from reportlab.platypus import (
     TableStyle,
 )
 
-SRC = Path("/home/ubuntu/.cursor/projects/workspace/uploads/CV_LUIS_FERNANDEZ_8002.pdf")
-TITULO_SENESCYT = Path("/home/ubuntu/.cursor/projects/workspace/uploads/Titulo_1312746603_7c4b.pdf")
-OUT = Path("/workspace/CV_LUIS_FERNANDEZ_8002_actualizado.pdf")
-PUBLIC_OUT = Path("/workspace/public/infimas/documentos/cv-luis-fernandez-guadamud.pdf")
-PHOTO_CACHE = Path("/tmp/cv_foto_luis.jpg")
+ROOT = Path(__file__).resolve().parents[1]
+FUENTES_CV = ROOT / "public" / "infimas" / "fuentes" / "cv"
+SRC = FUENTES_CV / "original-certificados.pdf"
+TITULO_SENESCYT = FUENTES_CV / "titulo-senescyt.pdf"
+OUT = ROOT / "CV_LUIS_FERNANDEZ_8002_actualizado.pdf"
+PUBLIC_OUT = ROOT / "public" / "infimas" / "documentos" / "cv-luis-fernandez-guadamud.pdf"
+PHOTO_CACHE = ROOT / "public" / "infimas" / "fuentes" / "cv" / "foto.jpg"
 
 FONT_REG = "DejaVuSans"
 FONT_BOLD = "DejaVuSans-Bold"
