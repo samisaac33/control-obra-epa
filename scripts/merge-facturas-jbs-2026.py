@@ -6,12 +6,14 @@ from pathlib import Path
 
 import pymupdf as fitz
 
+ROOT = Path(__file__).resolve().parents[1]
+FUENTES = ROOT / "public" / "infimas" / "fuentes" / "facturas-jbs-2026"
 SOURCES = [
-    Path("/home/ubuntu/.cursor/projects/workspace/uploads/Factura_Julio_JBS_42e7.pdf"),
-    Path("/home/ubuntu/.cursor/projects/workspace/uploads/Factura_agosto_JBS_36dc.pdf"),
-    Path("/home/ubuntu/.cursor/projects/workspace/uploads/Factura_septiembre_JBS_ee41.pdf"),
+    FUENTES / "julio.pdf",
+    FUENTES / "agosto.pdf",
+    FUENTES / "septiembre.pdf",
 ]
-OUT = Path("/workspace/public/infimas/documentos/facturas-jbs-julio-agosto-septiembre-2026.pdf")
+OUT = ROOT / "public" / "infimas" / "documentos" / "facturas-jbs-julio-agosto-septiembre-2026.pdf"
 
 
 def main() -> None:
