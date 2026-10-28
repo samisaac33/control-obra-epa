@@ -29,6 +29,13 @@ export async function proxy(request: NextRequest) {
   const { response, user } = await updateSession(request)
   const pathname = request.nextUrl.pathname
 
+  if (pathname === "/infima" || pathname.startsWith("/infima/")) {
+    const url = request.nextUrl.clone()
+    url.pathname =
+      pathname === "/infima" ? "/infimas" : `/infimas${pathname.slice("/infima".length)}`
+    return NextResponse.redirect(url)
+  }
+
   const residenteEmail = process.env.NEXT_PUBLIC_RESIDENTE_EMAIL?.trim().toLowerCase()
   const isResident = Boolean(
     residenteEmail && user?.email?.toLowerCase() === residenteEmail
@@ -61,12 +68,6 @@ export async function proxy(request: NextRequest) {
     const homeUrl = request.nextUrl.clone()
     homeUrl.pathname = "/"
     return NextResponse.redirect(homeUrl)
-  }
-
-  if (pathname === "/infima") {
-    const url = request.nextUrl.clone()
-    url.pathname = "/infimas"
-    return NextResponse.redirect(url)
   }
 
   if (pathname === "/mapa") {
