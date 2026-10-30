@@ -49,7 +49,8 @@ import {
 } from "@/src/components/mapa/UbicacionUsuarioEnMapa"
 import { htmlMarcadorPuntoAvance } from "@/src/lib/mapa-punto-marker"
 import { CanalAbscisasLayer } from "@/src/components/mapa/CanalAbscisasLayer"
-import type { CanalAbscisa } from "@/src/data/auditoria/types"
+import { EscombrerasLayer } from "@/src/components/mapa/EscombrerasLayer"
+import type { CanalAbscisa, ProyectoBotadero } from "@/src/data/auditoria/types"
 
 import "leaflet/dist/leaflet.css"
 
@@ -91,6 +92,8 @@ type MapaTramosLeafletProps = {
   mostrarAbscisas?: boolean
   abscisaSeleccionadaId?: string | null
   onAbscisaClick?: (abscisa: CanalAbscisa) => void
+  escombreras?: ProyectoBotadero[]
+  mostrarEscombreras?: boolean
 }
 
 type HoverVisitanteMapa = {
@@ -419,6 +422,8 @@ export function MapaTramosLeaflet({
   mostrarAbscisas = false,
   abscisaSeleccionadaId = null,
   onAbscisaClick,
+  escombreras = [],
+  mostrarEscombreras = false,
 }: MapaTramosLeafletProps) {
   const idsParpadeoFrente = puntoIdsParpadeoFrente ?? new Set<string>()
   const jornadasMapa = jornadaPorPuntoFin ?? new Map<string, JornadaMinitramoMapa>()
@@ -617,6 +622,9 @@ export function MapaTramosLeaflet({
             abscisaSeleccionadaId={abscisaSeleccionadaId}
             onAbscisaClick={onAbscisaClick}
           />
+        ) : null}
+        {mostrarEscombreras && escombreras.length > 0 ? (
+          <EscombrerasLayer escombreras={escombreras} />
         ) : null}
         <InvalidarTamanoMapa pantallaCompleta={pantallaCompleta} />
         <MapaEtiquetasTramoPorZoom

@@ -84,8 +84,9 @@ import {
 } from "@/src/lib/tramo-maquinaria-historial"
 import { rutaObra } from "@/src/lib/rutas-proyecto"
 import { proyectoTieneModulo } from "@/src/data/proyectos/catalog"
-import type { CanalAbscisa } from "@/src/data/auditoria/types"
+import type { CanalAbscisa, ProyectoBotadero } from "@/src/data/auditoria/types"
 import { cargarCanalAbscisasProyecto } from "@/src/lib/cargar-canal-abscisas"
+import { cargarProyectoBotaderos } from "@/src/lib/cargar-proyecto-botaderos"
 import { AbscisaDetalleSheet } from "@/src/components/mapa/AbscisaDetalleSheet"
 import { tramosMapaDesasolveSinExcluidos } from "@/src/data/tramos/tramos-excluidos"
 import {
@@ -182,8 +183,11 @@ export function MapaTramosClient() {
   const [ocultarMinitramosTerminados, setOcultarMinitramosTerminados] = useState(false)
   const [mapaConsolidado, setMapaConsolidado] = useState(true)
   const blindajeMapa = proyectoTieneModulo(proyectoId, "auditoriaAntiglosa")
+  const capaEscombreras = proyectoTieneModulo(proyectoId, "desalojo")
   const [mostrarAbscisas, setMostrarAbscisas] = useState(false)
+  const [mostrarEscombreras, setMostrarEscombreras] = useState(true)
   const [abscisas, setAbscisas] = useState<CanalAbscisa[]>([])
+  const [escombreras, setEscombreras] = useState<ProyectoBotadero[]>([])
   const [abscisaSheet, setAbscisaSheet] = useState<CanalAbscisa | null>(null)
   const [abscisaSheetAbierta, setAbscisaSheetAbierta] = useState(false)
   const [ubicacionResidente, setUbicacionResidente] = useState<UbicacionUsuario | null>(null)
@@ -209,6 +213,16 @@ export function MapaTramosClient() {
     }
   }, [blindajeMapa, proyectoId, supabase])
 
+  const cargarEscombreras = useCallback(async () => {
+    if (!capaEscombreras) return
+    try {
+      const rows = await cargarProyectoBotaderos(supabase, proyectoId, true)
+      setEscombreras(rows.filter((b) => b.geom_geojson != null))
+    } catch {
+      setEscombreras([])
+    }
+  }, [capaEscombreras, proyectoId, supabase])
+
   const cargarDatos = useCallback(async () => {
     setLoading(true)
     setError(null)
@@ -220,6 +234,7 @@ export function MapaTramosClient() {
       setTramos(tramosNormalizados)
       setPuntosAvance(puntos)
       await cargarAbscisas()
+      await cargarEscombreras()
       setPuntosRefreshKey((k) => k + 1)
       setTramoSeleccionado((prev) => {
         if (!prev) return prev
@@ -233,7 +248,7 @@ export function MapaTramosClient() {
     } finally {
       setLoading(false)
     }
-  }, [cargarAbscisas, proyectoId, supabase])
+  }, [cargarAbscisas, cargarEscombreras, proyectoId, supabase])
 
   useEffect(() => {
     void cargarDatos()
@@ -849,6 +864,12 @@ export function MapaTramosClient() {
           mapaConsolidado,
           onMapaConsolidadoChange: setMapaConsolidado,
           idPrefix: "visitante-movil",
+          habilitarCapaAbscisas: blindajeMapa,
+          mostrarAbscisas,
+          onMostrarAbscisasChange: setMostrarAbscisas,
+          habilitarCapaEscombreras: capaEscombreras,
+          mostrarEscombreras,
+          onMostrarEscombrerasChange: setMostrarEscombreras,
         }}
       />
     ) : null
@@ -907,6 +928,8 @@ export function MapaTramosClient() {
         setAbscisaSheet(a)
         setAbscisaSheetAbierta(true)
       }}
+      escombreras={escombreras}
+      mostrarEscombreras={capaEscombreras && mostrarEscombreras}
     />
   )
 
@@ -994,6 +1017,9 @@ export function MapaTramosClient() {
                       habilitarCapaAbscisas={blindajeMapa}
                       mostrarAbscisas={mostrarAbscisas}
                       onMostrarAbscisasChange={setMostrarAbscisas}
+                      habilitarCapaEscombreras={capaEscombreras}
+                      mostrarEscombreras={mostrarEscombreras}
+                      onMostrarEscombrerasChange={setMostrarEscombreras}
                     />
                     </div>
                   )}
@@ -1030,6 +1056,9 @@ export function MapaTramosClient() {
                       habilitarCapaAbscisas={blindajeMapa}
                       mostrarAbscisas={mostrarAbscisas}
                       onMostrarAbscisasChange={setMostrarAbscisas}
+                      habilitarCapaEscombreras={capaEscombreras}
+                      mostrarEscombreras={mostrarEscombreras}
+                      onMostrarEscombrerasChange={setMostrarEscombreras}
                     />
                     <MapaUbicacionResidentePanel />
                     <MapaBuscarCoordenadasResidente />
@@ -1092,6 +1121,12 @@ export function MapaTramosClient() {
                         mapaConsolidado,
                         onMapaConsolidadoChange: setMapaConsolidado,
                         idPrefix: "residente-movil",
+                        habilitarCapaAbscisas: blindajeMapa,
+                        mostrarAbscisas,
+                        onMostrarAbscisasChange: setMostrarAbscisas,
+                        habilitarCapaEscombreras: capaEscombreras,
+                        mostrarEscombreras,
+                        onMostrarEscombrerasChange: setMostrarEscombreras,
                       }}
                     />
                   </div>
