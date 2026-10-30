@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Map, Printer, Trash2, Truck } from "lucide-react"
+import { Map as MapIcon, Printer, Trash2, Truck } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 
 import { Badge } from "@/components/ui/badge"
@@ -15,10 +15,12 @@ import {
 } from "@/components/ui/accordion"
 import { KpiCard } from "@/src/components/KpiCard"
 import { MaquinariaCatalogoEquipos } from "@/src/components/MaquinariaCatalogoEquipos"
+import { MaquinariaCamaBajaSection } from "@/src/components/MaquinariaCamaBajaSection"
 import { useProyecto } from "@/src/contexts/ProyectoContext"
 import { useEquiposMaquinariaProyecto } from "@/src/hooks/use-equipos-maquinaria-proyecto"
 import { useEsViewportMovil } from "@/src/hooks/useEsViewportMovil"
 import { useJornadasMaquinariaProyecto } from "@/src/hooks/use-jornadas-maquinaria-proyecto"
+import { useMovimientosCamaBaja } from "@/src/hooks/use-movimientos-cama-baja"
 import {
   agruparJornadasPorFecha,
   formatearMetrosDesasolveResumen,
@@ -27,6 +29,12 @@ import {
   resumenPorTramoDesasolveAlineadoMapa,
   resumenPorTramoEquipoDesasolve,
 } from "@/src/lib/maquinaria-desasolve-resumen"
+import {
+  combinarResumenPorEquipoDesasolve,
+  esClaveResumenCamaBaja,
+  kpisMaquinariaDesasolveConCamaBaja,
+  movimientosCamaBajaEnFecha,
+} from "@/src/lib/maquinaria-desasolve-cama-baja-reporte"
 import { formatearNumero } from "@/src/lib/maquinaria-resumen"
 import { rutaObra } from "@/src/lib/rutas-proyecto"
 import {
@@ -59,6 +67,7 @@ export function MaquinariaDesasolvePageClient() {
   const [errorEliminar, setErrorEliminar] = useState<string | null>(null)
   const { jornadas, tramosMapa, periodo, loading, error, recargar } =
     useJornadasMaquinariaProyecto()
+  const { movimientos: movimientosCamaBaja } = useMovimientosCamaBaja()
   const { equipos } = useEquiposMaquinariaProyecto()
 
   useEffect(() => {
@@ -107,13 +116,36 @@ export function MaquinariaDesasolvePageClient() {
 
   const kpis = useMemo(() => {
     const base = kpisMaquinariaDesasolve(jornadas)
-    if (!porTramoTotalesMapa) return base
+    const conCamaBaja = kpisMaquinariaDesasolveConCamaBaja(
+      base,
+      movimientosCamaBaja,
+      jornadas.map((j) => j.fecha)
+    )
+    if (!porTramoTotalesMapa) return conCamaBaja
     const totalMetros = porTramoTotalesMapa.reduce((sum, fila) => sum + fila.metros, 0)
-    return { ...base, totalMetros }
-  }, [jornadas, porTramoTotalesMapa])
+    return { ...conCamaBaja, totalMetros }
+  }, [jornadas, porTramoTotalesMapa, movimientosCamaBaja])
 
-  const porEquipo = useMemo(() => resumenPorEquipoDesasolve(jornadas, equipos), [jornadas, equipos])
+  const porEquipo = useMemo(
+    () =>
+      combinarResumenPorEquipoDesasolve(
+        resumenPorEquipoDesasolve(jornadas, equipos),
+        movimientosCamaBaja
+      ),
+    [jornadas, equipos, movimientosCamaBaja]
+  )
   const porFecha = useMemo(() => agruparJornadasPorFecha(jornadas), [jornadas])
+  const fechasDetalle = useMemo(() => {
+    const fechas = new Set<string>()
+    for (const { fecha } of porFecha) fechas.add(fecha)
+    for (const m of movimientosCamaBaja) fechas.add(m.fecha)
+    return [...fechas].sort((a, b) => b.localeCompare(a))
+  }, [porFecha, movimientosCamaBaja])
+  const jornadasPorFechaMap = useMemo(() => {
+    const map = new Map<string, typeof jornadas>()
+    for (const { fecha, jornadas: delDia } of porFecha) map.set(fecha, delDia)
+    return map
+  }, [porFecha])
   const equiposPorId = useMemo(() => mapaEquiposPorId(equipos), [equipos])
   const generadoEn = useMemo(() => new Date().toISOString(), [])
 
@@ -164,7 +196,7 @@ export function MaquinariaDesasolvePageClient() {
           <CardContent className="pt-0">
             <Button variant="outline" size="sm" asChild className="gap-2">
               <Link href={rutaObra(proyectoId, "mapa")}>
-                <Map className="size-4" aria-hidden />
+                <MapIcon className="size-4" aria-hidden />
                 Ir al mapa de avance
               </Link>
             </Button>
@@ -174,6 +206,8 @@ export function MaquinariaDesasolvePageClient() {
         <div className="print:hidden">
           <MaquinariaCatalogoEquipos />
         </div>
+
+        <MaquinariaCamaBajaSection isResident={isResident} />
 
         <section aria-labelledby="imprimir-maquinaria-title" className="print:hidden">
           <Card className="border-foreground/10">
@@ -247,7 +281,7 @@ export function MaquinariaDesasolvePageClient() {
                   <KpiCard
                     label="Horas registradas"
                     valor={formatearNumero(kpis.totalHoras, 1)}
-                    detalle="Solo jornadas en minitramos terminados (misma regla que el avance en mapa)"
+                    detalle="Jornadas en mapa + horas de movimientos con cama baja registrados aquí"
                     compact={kpiCompact}
                   />
                   <KpiCard
@@ -293,10 +327,46 @@ export function MaquinariaDesasolvePageClient() {
                           <td className="py-2.5 pr-3 font-medium">{fila.nombreEquipo}</td>
                           <td className="py-2.5 pr-3 text-right tabular-nums">{fila.jornadas}</td>
                           <td className="py-2.5 pr-3 text-right font-mono tabular-nums">
-                            {formatearMetrosDesasolveResumen(fila.metros)}
+                            {esClaveResumenCamaBaja(fila.clave) ? "—" : formatearMetrosDesasolveResumen(fila.metros)}
                           </td>
                           <td className="py-2.5 text-right font-mono tabular-nums">
                             {fila.horas > 0 ? formatearNumero(fila.horas, 1) : "—"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </CardContent>
+              </Card>
+            </section>
+          ) : null}
+
+          {!loading && movimientosCamaBaja.length > 0 ? (
+            <section aria-labelledby="detalle-cama-baja-reporte-title">
+              <SeccionTitulo etiqueta="Transporte" titulo="Movimientos con cama baja" />
+              <Card className="border-foreground/10">
+                <CardContent className="overflow-x-auto pt-4">
+                  <table className="w-full min-w-[28rem] text-sm">
+                    <thead>
+                      <tr className="border-b border-foreground/10 text-left text-xs uppercase tracking-wider text-muted-foreground">
+                        <th className="pb-2 pr-3 font-medium">Fecha</th>
+                        <th className="pb-2 pr-3 font-medium">Cama baja</th>
+                        <th className="pb-2 pr-3 font-medium">Máquina</th>
+                        <th className="pb-2 pr-3 font-medium">Ruta</th>
+                        <th className="pb-2 font-medium text-right">Horas</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {movimientosCamaBaja.map((m) => (
+                        <tr key={m.id} className="border-b border-foreground/5 last:border-0">
+                          <td className="py-2.5 pr-3 whitespace-nowrap">{formatearFechaRegistro(m.fecha)}</td>
+                          <td className="py-2.5 pr-3 font-medium">{m.cama_baja}</td>
+                          <td className="py-2.5 pr-3">{m.maquina_transportada}</td>
+                          <td className="py-2.5 pr-3 text-muted-foreground">
+                            {[m.origen, m.destino].filter(Boolean).join(" → ") || "—"}
+                          </td>
+                          <td className="py-2.5 text-right font-mono tabular-nums">
+                            {m.duracion_horas != null ? formatearNumero(m.duracion_horas, 1) : "—"}
                           </td>
                         </tr>
                       ))}
@@ -351,11 +421,15 @@ export function MaquinariaDesasolvePageClient() {
             </section>
           ) : null}
 
-          {!loading && porFecha.length > 0 ? (
+          {!loading && fechasDetalle.length > 0 ? (
             <section aria-labelledby="detalle-jornadas-title">
               <SeccionTitulo etiqueta="Detalle" titulo="Jornadas registradas" />
-              <Accordion type="multiple" className="space-y-2" defaultValue={[porFecha[0]?.fecha ?? ""]}>
-                {porFecha.map(({ fecha, jornadas: delDia }) => (
+              <Accordion type="multiple" className="space-y-2" defaultValue={[fechasDetalle[0] ?? ""]}>
+                {fechasDetalle.map((fecha) => {
+                  const delDia = jornadasPorFechaMap.get(fecha) ?? []
+                  const camaBajaDelDia = movimientosCamaBajaEnFecha(movimientosCamaBaja, fecha)
+                  const totalRegistrosDia = delDia.length + camaBajaDelDia.length
+                  return (
                   <AccordionItem
                     key={fecha}
                     value={fecha}
@@ -365,11 +439,40 @@ export function MaquinariaDesasolvePageClient() {
                       <span className="flex flex-1 items-center justify-between gap-2 pr-2">
                         <span className="font-semibold">{formatearFechaRegistro(fecha)}</span>
                         <span className="text-xs font-normal text-muted-foreground">
-                          {delDia.length} registro{delDia.length === 1 ? "" : "s"}
+                          {totalRegistrosDia} registro{totalRegistrosDia === 1 ? "" : "s"}
                         </span>
                       </span>
                     </AccordionTrigger>
                     <AccordionContent className="space-y-2 pb-3">
+                      {camaBajaDelDia.map((m) => (
+                        <article
+                          key={m.id}
+                          className="rounded-lg border border-sky-500/20 bg-sky-500/5 px-3 py-2.5 text-sm"
+                        >
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Badge variant="outline" className="border-sky-600/40 text-sky-950 dark:text-sky-100">
+                              Cama baja
+                            </Badge>
+                            <p className="font-medium">{m.cama_baja}</p>
+                          </div>
+                          <p className="mt-1 text-foreground">
+                            Transporte: {m.maquina_transportada}
+                          </p>
+                          {m.origen || m.destino ? (
+                            <p className="text-xs text-muted-foreground">
+                              {[m.origen, m.destino].filter(Boolean).join(" → ")}
+                            </p>
+                          ) : null}
+                          {m.duracion_horas != null ? (
+                            <p className="mt-1 font-mono text-xs tabular-nums text-muted-foreground">
+                              {formatearNumero(m.duracion_horas, 1)} h
+                            </p>
+                          ) : null}
+                          {m.observaciones ? (
+                            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{m.observaciones}</p>
+                          ) : null}
+                        </article>
+                      ))}
                       {delDia.map((j) => {
                         const esIncidencia = j.es_incidencia
                         return (
@@ -462,7 +565,8 @@ export function MaquinariaDesasolvePageClient() {
                       })}
                     </AccordionContent>
                   </AccordionItem>
-                ))}
+                  )
+                })}
               </Accordion>
             </section>
           ) : null}
