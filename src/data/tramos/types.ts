@@ -10,6 +10,11 @@ export type GeoJsonLineString = {
   coordinates: [number, number][]
 }
 
+export type GeoJsonPolygon = {
+  type: "Polygon"
+  coordinates: [number, number][][]
+}
+
 export type OrigenExtremoTramo = "geometria_inicio" | "geometria_fin"
 
 export type CanalTramo = {

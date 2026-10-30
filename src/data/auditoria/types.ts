@@ -1,4 +1,5 @@
-import type { GeoJsonLineString } from "@/src/data/tramos/types"
+import type { GeoJsonLineString, GeoJsonPolygon } from "@/src/data/tramos/types"
+import { esGeoJsonPolygon } from "@/src/lib/geojson-poligono"
 
 export type EstadoAbscisaCanal =
   | "pendiente"
@@ -92,6 +93,8 @@ export type ProyectoBotadero = {
   nombre: string
   lat: number
   lng: number
+  geom_geojson: GeoJsonPolygon | null
+  area_m2: number | null
   activo: boolean
 }
 
@@ -223,12 +226,15 @@ export function normalizarRegistroMaquinariaJornada(
 }
 
 export function normalizarProyectoBotadero(row: Record<string, unknown>): ProyectoBotadero {
+  const geom = row.geom_geojson
   return {
     id: String(row.id),
     proyecto_id: String(row.proyecto_id),
     nombre: String(row.nombre),
     lat: Number(row.lat),
     lng: Number(row.lng),
+    geom_geojson: esGeoJsonPolygon(geom) ? geom : null,
+    area_m2: row.area_m2 != null && row.area_m2 !== "" ? Number(row.area_m2) : null,
     activo: Boolean(row.activo),
   }
 }

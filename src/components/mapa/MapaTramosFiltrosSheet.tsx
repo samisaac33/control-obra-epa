@@ -32,6 +32,12 @@ type CapasMapaProps = {
   mapaConsolidado: boolean
   onMapaConsolidadoChange: (value: boolean) => void
   idPrefix: string
+  habilitarCapaAbscisas?: boolean
+  mostrarAbscisas?: boolean
+  onMostrarAbscisasChange?: (value: boolean) => void
+  habilitarCapaEscombreras?: boolean
+  mostrarEscombreras?: boolean
+  onMostrarEscombrerasChange?: (value: boolean) => void
 }
 
 type MapaTramosFiltrosSheetProps = {
@@ -64,7 +70,9 @@ function capasActivas(capas: CapasMapaProps | undefined): boolean {
     capas.mostrarNumerosTramo ||
     capas.mostrarPuntosAvance ||
     capas.ocultarMinitramosTerminados ||
-    !capas.mapaConsolidado
+    !capas.mapaConsolidado ||
+    capas.mostrarAbscisas === true ||
+    capas.mostrarEscombreras === false
   )
 }
 
@@ -168,6 +176,12 @@ export function MapaTramosFiltrosSheet({
                   onMapaConsolidadoChange={capas.onMapaConsolidadoChange}
                   idPrefix={capas.idPrefix}
                   perfil="visitante"
+                  habilitarCapaAbscisas={capas.habilitarCapaAbscisas}
+                  mostrarAbscisas={capas.mostrarAbscisas}
+                  onMostrarAbscisasChange={capas.onMostrarAbscisasChange}
+                  habilitarCapaEscombreras={capas.habilitarCapaEscombreras}
+                  mostrarEscombreras={capas.mostrarEscombreras}
+                  onMostrarEscombrerasChange={capas.onMostrarEscombrerasChange}
                 />
               ) : null}
               {anclajeMapa ? <MapaTramosLeyenda compact /> : null}
@@ -194,6 +208,12 @@ export function MapaTramosFiltrosSheet({
                   mapaConsolidado={capas.mapaConsolidado}
                   onMapaConsolidadoChange={capas.onMapaConsolidadoChange}
                   idPrefix={capas.idPrefix}
+                  habilitarCapaAbscisas={capas.habilitarCapaAbscisas}
+                  mostrarAbscisas={capas.mostrarAbscisas}
+                  onMostrarAbscisasChange={capas.onMostrarAbscisasChange}
+                  habilitarCapaEscombreras={capas.habilitarCapaEscombreras}
+                  mostrarEscombreras={capas.mostrarEscombreras}
+                  onMostrarEscombrerasChange={capas.onMostrarEscombrerasChange}
                 />
               ) : null}
               <MapaTramosLeyenda compact={leyendaCompact} />

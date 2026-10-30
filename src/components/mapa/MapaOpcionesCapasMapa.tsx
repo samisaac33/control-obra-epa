@@ -21,6 +21,9 @@ type MapaOpcionesCapasMapaProps = {
   mostrarAbscisas?: boolean
   onMostrarAbscisasChange?: (value: boolean) => void
   habilitarCapaAbscisas?: boolean
+  mostrarEscombreras?: boolean
+  onMostrarEscombrerasChange?: (value: boolean) => void
+  habilitarCapaEscombreras?: boolean
 }
 
 type OpcionCheckboxProps = {
@@ -66,6 +69,9 @@ export function MapaOpcionesCapasMapa({
   mostrarAbscisas = false,
   onMostrarAbscisasChange,
   habilitarCapaAbscisas = false,
+  mostrarEscombreras = false,
+  onMostrarEscombrerasChange,
+  habilitarCapaEscombreras = false,
 }: MapaOpcionesCapasMapaProps) {
   const esVisitante = perfil === "visitante"
 
@@ -125,6 +131,15 @@ export function MapaOpcionesCapasMapa({
           onChange={onMostrarAbscisasChange}
           titulo="Abscisas 20 m (antiglosa)"
           ariaLabel="Mostrar segmentos de abscisa cada veinte metros"
+        />
+      ) : null}
+      {habilitarCapaEscombreras && onMostrarEscombrerasChange ? (
+        <OpcionCheckbox
+          id={`${idPrefix}-escombreras`}
+          checked={mostrarEscombreras}
+          onChange={onMostrarEscombrerasChange}
+          titulo="Escombreras (desalojo)"
+          ariaLabel="Mostrar polígonos de áreas de desalojo en el mapa"
         />
       ) : null}
     </div>
