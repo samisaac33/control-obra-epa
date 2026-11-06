@@ -1,8 +1,8 @@
 import type { Metadata } from "next"
-import { notFound } from "next/navigation"
+import { notFound, redirect } from "next/navigation"
 
-import { TrabajosComplementariosPageClient } from "@/src/components/TrabajosComplementariosPageClient"
 import { PROYECTO_DESASOLVE_CANALES } from "@/src/data/proyectos/catalog"
+import { rutaObra } from "@/src/lib/rutas-proyecto"
 
 type PageProps = {
   params: Promise<{ proyectoId: string }>
@@ -19,5 +19,5 @@ export default async function TrabajosComplementariosPage({ params }: PageProps)
     notFound()
   }
 
-  return <TrabajosComplementariosPageClient />
+  redirect(`${rutaObra(proyectoId, "maquinaria")}#trabajos-complementarios`)
 }

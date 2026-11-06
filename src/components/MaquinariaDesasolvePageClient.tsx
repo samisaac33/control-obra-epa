@@ -16,10 +16,12 @@ import {
 import { KpiCard } from "@/src/components/KpiCard"
 import { MaquinariaCatalogoEquipos } from "@/src/components/MaquinariaCatalogoEquipos"
 import { MaquinariaCamaBajaSection } from "@/src/components/MaquinariaCamaBajaSection"
+import { MaquinariaComplementariaSection } from "@/src/components/MaquinariaComplementariaSection"
 import { useProyecto } from "@/src/contexts/ProyectoContext"
 import { useEquiposMaquinariaProyecto } from "@/src/hooks/use-equipos-maquinaria-proyecto"
 import { useEsViewportMovil } from "@/src/hooks/useEsViewportMovil"
 import { useJornadasMaquinariaProyecto } from "@/src/hooks/use-jornadas-maquinaria-proyecto"
+import { useMaquinariaComplementaria } from "@/src/hooks/use-maquinaria-complementaria"
 import { useMovimientosCamaBaja } from "@/src/hooks/use-movimientos-cama-baja"
 import {
   agruparJornadasPorFecha,
@@ -35,6 +37,12 @@ import {
   kpisMaquinariaDesasolveConCamaBaja,
   movimientosCamaBajaEnFecha,
 } from "@/src/lib/maquinaria-desasolve-cama-baja-reporte"
+import {
+  combinarResumenPorEquipoConComplementaria,
+  esClaveResumenComplementaria,
+  kpisMaquinariaDesasolveConComplementaria,
+  registrosComplementariosEnFecha,
+} from "@/src/lib/maquinaria-desasolve-complementaria-reporte"
 import { formatearNumero } from "@/src/lib/maquinaria-resumen"
 import { rutaObra } from "@/src/lib/rutas-proyecto"
 import {
@@ -68,6 +76,7 @@ export function MaquinariaDesasolvePageClient() {
   const { jornadas, tramosMapa, periodo, loading, error, recargar } =
     useJornadasMaquinariaProyecto()
   const { movimientos: movimientosCamaBaja } = useMovimientosCamaBaja()
+  const { registros: registrosComplementaria } = useMaquinariaComplementaria()
   const { equipos } = useEquiposMaquinariaProyecto()
 
   useEffect(() => {
@@ -116,31 +125,42 @@ export function MaquinariaDesasolvePageClient() {
 
   const kpis = useMemo(() => {
     const base = kpisMaquinariaDesasolve(jornadas)
+    const fechasJornadas = jornadas.map((j) => j.fecha)
     const conCamaBaja = kpisMaquinariaDesasolveConCamaBaja(
       base,
       movimientosCamaBaja,
-      jornadas.map((j) => j.fecha)
+      fechasJornadas
     )
-    if (!porTramoTotalesMapa) return conCamaBaja
+    const fechasActividad = [...fechasJornadas, ...movimientosCamaBaja.map((m) => m.fecha)]
+    const conComplementaria = kpisMaquinariaDesasolveConComplementaria(
+      conCamaBaja,
+      registrosComplementaria,
+      fechasActividad
+    )
+    if (!porTramoTotalesMapa) return conComplementaria
     const totalMetros = porTramoTotalesMapa.reduce((sum, fila) => sum + fila.metros, 0)
-    return { ...conCamaBaja, totalMetros }
-  }, [jornadas, porTramoTotalesMapa, movimientosCamaBaja])
+    return { ...conComplementaria, totalMetros }
+  }, [jornadas, porTramoTotalesMapa, movimientosCamaBaja, registrosComplementaria])
 
   const porEquipo = useMemo(
     () =>
-      combinarResumenPorEquipoDesasolve(
-        resumenPorEquipoDesasolve(jornadas, equipos),
-        movimientosCamaBaja
+      combinarResumenPorEquipoConComplementaria(
+        combinarResumenPorEquipoDesasolve(
+          resumenPorEquipoDesasolve(jornadas, equipos),
+          movimientosCamaBaja
+        ),
+        registrosComplementaria
       ),
-    [jornadas, equipos, movimientosCamaBaja]
+    [jornadas, equipos, movimientosCamaBaja, registrosComplementaria]
   )
   const porFecha = useMemo(() => agruparJornadasPorFecha(jornadas), [jornadas])
   const fechasDetalle = useMemo(() => {
     const fechas = new Set<string>()
     for (const { fecha } of porFecha) fechas.add(fecha)
     for (const m of movimientosCamaBaja) fechas.add(m.fecha)
+    for (const r of registrosComplementaria) fechas.add(r.fecha)
     return [...fechas].sort((a, b) => b.localeCompare(a))
-  }, [porFecha, movimientosCamaBaja])
+  }, [porFecha, movimientosCamaBaja, registrosComplementaria])
   const jornadasPorFechaMap = useMemo(() => {
     const map = new Map<string, typeof jornadas>()
     for (const { fecha, jornadas: delDia } of porFecha) map.set(fecha, delDia)
@@ -183,7 +203,8 @@ export function MaquinariaDesasolvePageClient() {
               </Link>{" "}
               al confirmar minitramos GPS o en el historial de maquinaria de cada tramo. Las
               incidencias (hechos extraordinarios) se reportan desde el detalle del tramo en el
-              mapa. Esta página consolida y detalla esos registros.
+              mapa. Los trabajos complementarios y los movimientos con cama baja se registran en
+              las secciones de esta página. Esta vista consolida y detalla esos registros.
               {isResident ? (
                 <>
                   {" "}
@@ -206,6 +227,8 @@ export function MaquinariaDesasolvePageClient() {
         <div className="print:hidden">
           <MaquinariaCatalogoEquipos />
         </div>
+
+        <MaquinariaComplementariaSection isResident={isResident} />
 
         <MaquinariaCamaBajaSection isResident={isResident} />
 
@@ -281,7 +304,7 @@ export function MaquinariaDesasolvePageClient() {
                   <KpiCard
                     label="Horas registradas"
                     valor={formatearNumero(kpis.totalHoras, 1)}
-                    detalle="Jornadas en mapa + horas de movimientos con cama baja registrados aquí"
+                    detalle="Mapa + cama baja + trabajos complementarios registrados aquí"
                     compact={kpiCompact}
                   />
                   <KpiCard
@@ -327,13 +350,55 @@ export function MaquinariaDesasolvePageClient() {
                           <td className="py-2.5 pr-3 font-medium">{fila.nombreEquipo}</td>
                           <td className="py-2.5 pr-3 text-right tabular-nums">{fila.jornadas}</td>
                           <td className="py-2.5 pr-3 text-right font-mono tabular-nums">
-                            {esClaveResumenCamaBaja(fila.clave) ? "—" : formatearMetrosDesasolveResumen(fila.metros)}
+                            {esClaveResumenCamaBaja(fila.clave) || esClaveResumenComplementaria(fila.clave)
+                              ? "—"
+                              : formatearMetrosDesasolveResumen(fila.metros)}
                           </td>
                           <td className="py-2.5 text-right font-mono tabular-nums">
                             {fila.horas > 0 ? formatearNumero(fila.horas, 1) : "—"}
                           </td>
                         </tr>
                       ))}
+                    </tbody>
+                  </table>
+                </CardContent>
+              </Card>
+            </section>
+          ) : null}
+
+          {!loading && registrosComplementaria.length > 0 ? (
+            <section aria-labelledby="detalle-complementaria-reporte-title">
+              <SeccionTitulo etiqueta="Fuera de contrato" titulo="Trabajos complementarios" />
+              <Card className="border-foreground/10">
+                <CardContent className="overflow-x-auto pt-4">
+                  <table className="w-full min-w-[28rem] text-sm">
+                    <thead>
+                      <tr className="border-b border-foreground/10 text-left text-xs uppercase tracking-wider text-muted-foreground">
+                        <th className="pb-2 pr-3 font-medium">Fecha</th>
+                        <th className="pb-2 pr-3 font-medium">Ubicación</th>
+                        <th className="pb-2 pr-3 font-medium">Equipo</th>
+                        <th className="pb-2 pr-3 font-medium">Descripción</th>
+                        <th className="pb-2 font-medium text-right">Horas</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[...registrosComplementaria]
+                        .sort((a, b) => b.fecha.localeCompare(a.fecha) || b.created_at.localeCompare(a.created_at))
+                        .map((r) => (
+                          <tr key={r.id} className="border-b border-foreground/5 last:border-0">
+                            <td className="py-2.5 pr-3 whitespace-nowrap">
+                              {formatearFechaRegistro(r.fecha)}
+                            </td>
+                            <td className="py-2.5 pr-3">{r.ubicacion_referencia ?? "—"}</td>
+                            <td className="py-2.5 pr-3 font-medium">
+                              {nombreEquipoParaMostrar(r, equiposPorId)}
+                            </td>
+                            <td className="py-2.5 pr-3">{r.descripcion_trabajo}</td>
+                            <td className="py-2.5 text-right font-mono tabular-nums">
+                              {r.duracion_horas != null ? formatearNumero(r.duracion_horas, 1) : "—"}
+                            </td>
+                          </tr>
+                        ))}
                     </tbody>
                   </table>
                 </CardContent>
@@ -428,7 +493,12 @@ export function MaquinariaDesasolvePageClient() {
                 {fechasDetalle.map((fecha) => {
                   const delDia = jornadasPorFechaMap.get(fecha) ?? []
                   const camaBajaDelDia = movimientosCamaBajaEnFecha(movimientosCamaBaja, fecha)
-                  const totalRegistrosDia = delDia.length + camaBajaDelDia.length
+                  const complementariaDelDia = registrosComplementariosEnFecha(
+                    registrosComplementaria,
+                    fecha
+                  )
+                  const totalRegistrosDia =
+                    delDia.length + camaBajaDelDia.length + complementariaDelDia.length
                   return (
                   <AccordionItem
                     key={fecha}
@@ -444,6 +514,38 @@ export function MaquinariaDesasolvePageClient() {
                       </span>
                     </AccordionTrigger>
                     <AccordionContent className="space-y-2 pb-3">
+                      {complementariaDelDia.map((r) => (
+                        <article
+                          key={r.id}
+                          className="rounded-lg border border-violet-500/20 bg-violet-500/5 px-3 py-2.5 text-sm"
+                        >
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Badge
+                              variant="outline"
+                              className="border-violet-600/40 text-violet-950 dark:text-violet-100"
+                            >
+                              Complementario
+                            </Badge>
+                            <p className="font-medium">{nombreEquipoParaMostrar(r, equiposPorId)}</p>
+                          </div>
+                          {r.ubicacion_referencia ? (
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              {r.ubicacion_referencia}
+                            </p>
+                          ) : null}
+                          <p className="mt-1 text-foreground">{r.descripcion_trabajo}</p>
+                          {r.duracion_horas != null ? (
+                            <p className="mt-1 font-mono text-xs tabular-nums text-muted-foreground">
+                              {formatearNumero(r.duracion_horas, 1)} h
+                            </p>
+                          ) : null}
+                          {r.observaciones ? (
+                            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                              {r.observaciones}
+                            </p>
+                          ) : null}
+                        </article>
+                      ))}
                       {camaBajaDelDia.map((m) => (
                         <article
                           key={m.id}
