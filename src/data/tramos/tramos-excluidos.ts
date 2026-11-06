@@ -2,7 +2,7 @@ import type { CanalTramo } from "@/src/data/tramos/types"
 import { numeroTramoDesdeCodigo } from "@/src/lib/mapa-tramo-etiqueta"
 
 /** Tramos ocultos en la vista general del mapa/KPIs (proyecto desasolve-canales). Siguen en BD y en «Primer levantamiento» (1–24). El tramo 21 se muestra también en la red operativa. */
-export const NUMEROS_TRAMO_EXCLUIDOS_DESASOLVE = [4] as const
+export const NUMEROS_TRAMO_EXCLUIDOS_DESASOLVE = [4, 16] as const
 
 export function esTramoExcluidoDesasolve(codigo: string): boolean {
   const n = numeroTramoDesdeCodigo(codigo)
