@@ -25,6 +25,7 @@
     "delete:tramos:dry-run": "tsx scripts/delete-tramos.ts --proyecto desasolve-canales --codigos 4,21 --dry-run",
     "test:utm": "tsx scripts/test-utm-conversion.ts",
     "test:mapa-asistente-contexto": "tsx scripts/test-mapa-asistente-contexto.ts",
+    "test:maquinaria-complementaria-reporte": "tsx scripts/test-maquinaria-complementaria-reporte.ts",
     "test:maquinaria-consolidado": "tsx scripts/test-maquinaria-informe-consolidado.ts",
     "test:maquinaria-jimmy-equipos": "tsx scripts/test-maquinaria-informe-jimmy-equipos.ts",
     "test:auditoria-volumetrica": "tsx scripts/test-auditoria-volumetrica.ts",
