@@ -11,6 +11,7 @@ import {
   type JornadaMaquinariaProyecto,
 } from "@/src/lib/maquinaria-desasolve-proyecto"
 import { formatearMetrosDesasolveResumen } from "@/src/lib/maquinaria-desasolve-resumen"
+import { nombreCanalDesasolvePorCodigoTramo } from "@/src/lib/maquinaria/nombre-canal-desasolve-por-tramo"
 import {
   etiquetaSemanaCalendario,
   lunesSemanaCalendario,
@@ -124,7 +125,7 @@ function construirSemanasDesasolve(
       fecha: j.fecha,
       tramoReferencia: j.tramo_codigo,
       tipo: esIncidencia ? "Incidencia" : "Desasolve",
-      canalUbicacion: j.tramo_canal,
+      canalUbicacion: nombreCanalDesasolvePorCodigoTramo(j.tramo_codigo, j.tramo_canal),
       equipo: esIncidencia ? "—" : nombreEquipoParaMostrar(j, equiposPorId),
       metros: esIncidencia ? null : j.metros_desasolados,
       horas: j.duracion_horas,
