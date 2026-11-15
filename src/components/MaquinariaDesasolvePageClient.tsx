@@ -1,9 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import { useSearchParams } from "next/navigation"
-import { Map as MapIcon, Printer, Trash2, Truck } from "lucide-react"
-import { useEffect, useMemo, useRef, useState } from "react"
+import { Map as MapIcon, Trash2, Truck } from "lucide-react"
+import { useEffect, useMemo, useState } from "react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -67,10 +66,6 @@ function SeccionTitulo({ etiqueta, titulo }: { etiqueta: string; titulo: string 
 }
 
 export function MaquinariaDesasolvePageClient() {
-  const searchParams = useSearchParams()
-  const informeCompletoSolicitado =
-    searchParams.get("informe") === "completo" || searchParams.get("imprimir") === "consolidado"
-  const informeCompletoHechoRef = useRef(false)
   const { proyectoActivo, proyectoId } = useProyecto()
   const esViewportMovil = useEsViewportMovil()
   const kpiCompact = esViewportMovil
@@ -94,15 +89,6 @@ export function MaquinariaDesasolvePageClient() {
     }
     void checkResident()
   }, [supabase, residentEmail])
-
-  useEffect(() => {
-    if (!informeCompletoSolicitado || informeCompletoHechoRef.current || loading) return
-    informeCompletoHechoRef.current = true
-    const bloque = document.getElementById("maquinaria-desasolve-reporte")
-    bloque?.scrollIntoView({ block: "start" })
-    const timeoutId = window.setTimeout(() => window.print(), 400)
-    return () => window.clearTimeout(timeoutId)
-  }, [informeCompletoSolicitado, loading])
 
   async function handleEliminarJornada(id: string) {
     if (!isResident) return
@@ -254,22 +240,13 @@ export function MaquinariaDesasolvePageClient() {
                 Generar informe
               </CardTitle>
               <CardDescription>
-                Mismo criterio que en emergencia: el informe completo usa la vista imprimible con detalle
-                de jornadas ({periodo.etiqueta}); el consolidado se descarga en PDF.
+                El informe completo descarga un PDF con detalle por semana (desasolve y complementarios;
+                cama baja aparte). Período con datos: {periodo.etiqueta}. El consolidado resume totales por
+                equipo.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent>
               <MaquinariaDesasolveInformesAcciones />
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-8 px-0 text-muted-foreground"
-                onClick={() => window.print()}
-              >
-                <Printer className="size-3.5" aria-hidden />
-                Imprimir informe completo (desde esta página)
-              </Button>
             </CardContent>
           </Card>
         </section>
