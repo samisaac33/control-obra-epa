@@ -31,6 +31,8 @@ type RegistrarMaquinariaComplementariaFieldsProps = {
   onChange: (patch: Partial<RegistrarComplementariaFormState>) => void
   disabled?: boolean
   selectContentZIndexClass?: string
+  /** Si se pasa, evita recargar el catálogo y mantiene el equipo del registro en edición. */
+  equiposCatalogo?: ProyectoEquipoMaquinaria[]
 }
 
 export function RegistrarMaquinariaComplementariaFields({
@@ -40,32 +42,34 @@ export function RegistrarMaquinariaComplementariaFields({
   onChange,
   disabled = false,
   selectContentZIndexClass = "z-[100]",
+  equiposCatalogo: equiposCatalogoProp,
 }: RegistrarMaquinariaComplementariaFieldsProps) {
   const supabase = useMemo(() => createClient(), [])
   const esViewportMovil = useEsViewportMovil()
   const usarSelectNativoEquipo = esViewportMovil
 
-  const [equiposCatalogo, setEquiposCatalogo] = useState<ProyectoEquipoMaquinaria[]>([])
-  const [cargandoEquipos, setCargandoEquipos] = useState(false)
+  const [equiposCatalogoLocal, setEquiposCatalogoLocal] = useState<ProyectoEquipoMaquinaria[] | null>(
+    null
+  )
+
+  const equiposCatalogo = equiposCatalogoProp ?? equiposCatalogoLocal ?? []
+  const cargandoEquipos =
+    equiposCatalogoProp == null && equiposCatalogoLocal === null && Boolean(proyectoId)
 
   useEffect(() => {
-    if (!proyectoId) return
+    if (equiposCatalogoProp != null || !proyectoId) return
     let cancelado = false
-    setCargandoEquipos(true)
     void cargarEquiposMaquinariaProyecto(supabase, proyectoId, { soloActivos: true })
       .then((data) => {
-        if (!cancelado) setEquiposCatalogo(data)
+        if (!cancelado) setEquiposCatalogoLocal(data)
       })
       .catch(() => {
-        if (!cancelado) setEquiposCatalogo([])
-      })
-      .finally(() => {
-        if (!cancelado) setCargandoEquipos(false)
+        if (!cancelado) setEquiposCatalogoLocal([])
       })
     return () => {
       cancelado = true
     }
-  }, [proyectoId, supabase])
+  }, [equiposCatalogoProp, proyectoId, supabase])
 
   const mostrarEquipoOtro = values.equipoSeleccionId === EQUIPO_OTRO_VALUE
   const camposDeshabilitados = disabled || cargandoEquipos
