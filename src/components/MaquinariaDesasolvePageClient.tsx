@@ -1,8 +1,9 @@
 "use client"
 
 import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 import { Map as MapIcon, Printer, Trash2, Truck } from "lucide-react"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -65,6 +66,9 @@ function SeccionTitulo({ etiqueta, titulo }: { etiqueta: string; titulo: string 
 }
 
 export function MaquinariaDesasolvePageClient() {
+  const searchParams = useSearchParams()
+  const imprimirConsolidadoSolicitado = searchParams.get("imprimir") === "consolidado"
+  const imprimirConsolidadoHechoRef = useRef(false)
   const { proyectoActivo, proyectoId } = useProyecto()
   const esViewportMovil = useEsViewportMovil()
   const kpiCompact = esViewportMovil
@@ -88,6 +92,15 @@ export function MaquinariaDesasolvePageClient() {
     }
     void checkResident()
   }, [supabase, residentEmail])
+
+  useEffect(() => {
+    if (!imprimirConsolidadoSolicitado || imprimirConsolidadoHechoRef.current || loading) return
+    imprimirConsolidadoHechoRef.current = true
+    const bloque = document.getElementById("maquinaria-desasolve-reporte")
+    bloque?.scrollIntoView({ block: "start" })
+    const timeoutId = window.setTimeout(() => window.print(), 400)
+    return () => window.clearTimeout(timeoutId)
+  }, [imprimirConsolidadoSolicitado, loading])
 
   async function handleEliminarJornada(id: string) {
     if (!isResident) return

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState, type ReactNode } from "react"
 
 import { Z_MAPA_BARRA_CONTROLES } from "@/src/lib/mapa-capas-z"
 import { cn } from "@/lib/utils"
@@ -15,6 +15,7 @@ type MapaTramosKpisBarProps = {
   chipsLayout?: "scroll" | "grid"
   compact?: boolean
   className?: string
+  accionesSuperiores?: ReactNode
 }
 
 function KpiChip({
@@ -207,12 +208,14 @@ function KpisHero({
   mostrarChips,
   chipsCarrusel,
   chipsLayout = "scroll",
+  accionesSuperiores,
 }: {
   kpis: KpisTramos
   compact?: boolean
   mostrarChips?: boolean
   chipsCarrusel?: boolean
   chipsLayout?: "scroll" | "grid"
+  accionesSuperiores?: ReactNode
 }) {
   const pct = Math.min(100, Math.max(0, kpis.avanceGlobalPct))
   return (
@@ -222,6 +225,7 @@ function KpisHero({
         compact ? "px-3 py-2.5" : "p-4"
       )}
     >
+      {accionesSuperiores ? <div className="mb-3">{accionesSuperiores}</div> : null}
       <div className="flex items-end justify-between gap-3">
         <div>
           <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
@@ -277,6 +281,7 @@ export function MapaTramosKpisBar({
   chipsLayout = "scroll",
   compact = false,
   className,
+  accionesSuperiores,
 }: MapaTramosKpisBarProps) {
   if (modo === "overlay") {
     return (
@@ -294,6 +299,7 @@ export function MapaTramosKpisBar({
             mostrarChips
             chipsCarrusel={chipsCarrusel}
             chipsLayout={chipsLayout}
+            accionesSuperiores={accionesSuperiores}
           />
         </div>
       </div>
@@ -308,6 +314,7 @@ export function MapaTramosKpisBar({
         mostrarChips
         chipsCarrusel={chipsCarrusel}
         chipsLayout={chipsLayout}
+        accionesSuperiores={accionesSuperiores}
       />
     </div>
   )

@@ -46,6 +46,8 @@ import {
 import type { TramoFormValues } from "@/src/components/mapa/TramoEditorForm"
 import { ProyectoModuloGuard } from "@/src/components/ProyectoModuloGuard"
 import { useProyecto } from "@/src/contexts/ProyectoContext"
+import { PROYECTO_DESASOLVE_CANALES } from "@/src/data/proyectos/catalog"
+import { MapaMaquinariaReportesAcciones } from "@/src/components/mapa/MapaMaquinariaReportesAcciones"
 import type { CanalTramo, EstadoTramo, OrigenExtremoTramo } from "@/src/data/tramos/types"
 import { cargarTramosMapaProyecto } from "@/src/lib/cargar-tramos-mapa-proyecto"
 import {
@@ -805,6 +807,8 @@ export function MapaTramosClient() {
 
   const visitante = !isResident
   const visitanteMovil = visitante && esViewportMovil
+  const accionesReportesMaquinaria =
+    proyectoId === PROYECTO_DESASOLVE_CANALES ? <MapaMaquinariaReportesAcciones /> : undefined
   const previewTramoMovilVisible =
     esViewportMovil && tramoSeleccionado !== null && !panelAbierto
   const atenuarTramosNoSeleccionadosEnMapa =
@@ -939,13 +943,13 @@ export function MapaTramosClient() {
         <div className="mx-auto max-w-6xl space-y-4 sm:space-y-6">
           <Card className="border-foreground/10">
             {isResident ? (
-              <CardHeader className="max-md:pb-2">
+              <CardHeader className="max-md:hidden pb-2">
                 <div className="flex items-start gap-3">
                   <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg border border-foreground/10 bg-muted/80">
                     <MapIcon className="size-4" aria-hidden />
                   </div>
                   <div>
-                    <CardTitle className="max-md:text-base">Mapa interactivo</CardTitle>
+                    <CardTitle>Mapa interactivo</CardTitle>
                     <CardDescription className="hidden md:block">
                       Haga clic en un tramo para ver detalle y registrar avance (residente). Los
                       colores indican el estado de desasolve.
@@ -956,7 +960,7 @@ export function MapaTramosClient() {
             ) : null}
             <CardContent
               className={cn(
-                isResident ? "max-md:space-y-3 max-md:pt-0 space-y-4" : "space-y-4",
+                isResident ? "max-md:space-y-3 max-md:pt-3 space-y-4" : "space-y-4",
                 visitante && "pt-4"
               )}
             >
@@ -972,6 +976,7 @@ export function MapaTramosClient() {
                     kpis={kpis}
                     modo="stack"
                     chipsCarrusel={visitanteMovil}
+                    accionesSuperiores={accionesReportesMaquinaria}
                   />
                   {visitanteMovil ? null : (
                     <p className="text-sm text-muted-foreground">
@@ -1038,7 +1043,13 @@ export function MapaTramosClient() {
               ) : (
                 <MapaUbicacionResidenteProvider {...ubicacionResidenteProps}>
                   <div className="md:hidden">
-                    <MapaTramosKpisBar kpis={kpis} modo="stack" chipsCarrusel compact />
+                    <MapaTramosKpisBar
+                      kpis={kpis}
+                      modo="stack"
+                      chipsCarrusel
+                      compact
+                      accionesSuperiores={accionesReportesMaquinaria}
+                    />
                   </div>
                   <div className="hidden space-y-4 md:block">
                     <MapaOpcionesCapasMapa
