@@ -125,7 +125,7 @@ function construirSemanasDesasolve(
       fecha: j.fecha,
       tramoReferencia: j.tramo_codigo,
       tipo: esIncidencia ? "Incidencia" : "Desasolve",
-      canalUbicacion: nombreCanalDesasolvePorCodigoTramo(j.tramo_codigo, j.tramo_canal),
+      canalUbicacion: nombreCanalDesasolvePorCodigoTramo(j.tramo_codigo),
       equipo: esIncidencia ? "—" : nombreEquipoParaMostrar(j, equiposPorId),
       metros: esIncidencia ? null : j.metros_desasolados,
       horas: j.duracion_horas,
