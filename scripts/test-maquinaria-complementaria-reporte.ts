@@ -1,6 +1,8 @@
 import assert from "node:assert/strict"
 
+import { complementariaFormDesdeRegistro } from "@/src/components/maquinaria-complementaria/registrar-maquinaria-complementaria-utils"
 import type { RegistroMaquinariaComplementaria } from "@/src/lib/maquinaria-complementaria"
+import type { ProyectoEquipoMaquinaria } from "@/src/lib/proyecto-equipos-maquinaria"
 import {
   combinarResumenPorEquipoConComplementaria,
   esClaveResumenComplementaria,
@@ -47,5 +49,23 @@ assert.equal(merged.diasConActividad, 3)
 
 const porEquipo = combinarResumenPorEquipoConComplementaria([], registros)
 assert.equal(porEquipo.length, 2)
+
+const equiposCatalogo: ProyectoEquipoMaquinaria[] = [
+  {
+    id: "eq-largo",
+    proyecto_id: "desasolve-canales",
+    nombre: "Excavadora brazo largo",
+    activo: true,
+    created_at: "2026-01-01T00:00:00Z",
+    updated_at: "2026-01-01T00:00:00Z",
+  },
+]
+
+const formEdicion = complementariaFormDesdeRegistro(
+  registroBase({ equipo: "Excavadora brazo largo", duracion_horas: 2, fecha: "2026-11-04" }),
+  equiposCatalogo
+)
+assert.equal(formEdicion.equipoSeleccionId, "eq-largo")
+assert.equal(formEdicion.horas, "2")
 
 console.log("test-maquinaria-complementaria-reporte: ok")
