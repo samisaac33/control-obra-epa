@@ -12,6 +12,10 @@ assert.equal(
 )
 assert.equal(nombreCanalDesasolvePorCodigoTramo("tramo 30", "Puntos levantados"), "Tramo 30")
 assert.equal(
+  nombreCanalDesasolvePorCodigoTramo("tramo 40", "Puntos levantados"),
+  "San Antonio - Chone"
+)
+assert.equal(
   nombreCanalDesasolvePorCodigoTramo("tramo 99", "Canal guayaba"),
   "Canal guayaba"
 )

@@ -16,6 +16,10 @@ export function nombreCanalDesasolvePorCodigoTramo(
     return TRAMOS_DESAZOLVE_VAE[numero - 1]!.nombre
   }
 
+  if (numero === 40) {
+    return "San Antonio - Chone"
+  }
+
   const canalBd = canalEnBaseDeDatos?.trim()
   if (canalBd && canalBd.toLowerCase() !== ETIQUETA_CANAL_PUNTOS_LEVANTADOS) {
     return canalBd
