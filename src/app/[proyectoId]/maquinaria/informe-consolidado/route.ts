@@ -3,10 +3,20 @@ import {
   renderInformeConsolidadoMaquinariaPdfBuffer,
 } from "@/lib/maquinaria/render-informe-consolidado-pdf"
 import {
+  nombreArchivoInformeDesasolveConsolidado,
+  renderInformeDesasolveConsolidadoPdfBuffer,
+} from "@/lib/maquinaria/render-informe-desasolve-consolidado-pdf"
+import {
   getPeriodoMaquinaria,
   getRegistroMaquinaria,
 } from "@/src/data/registro-maquinaria"
-import { PROYECTO_EMERGENCIA_MANABI, getProyecto } from "@/src/data/proyectos/catalog"
+import {
+  PROYECTO_DESASOLVE_CANALES,
+  PROYECTO_EMERGENCIA_MANABI,
+  getProyecto,
+} from "@/src/data/proyectos/catalog"
+import { cargarInformeDesasolveConsolidado } from "@/src/lib/maquinaria/cargar-informe-desasolve-consolidado"
+import { createClient } from "@/src/lib/supabase/server"
 import {
   filtrarRegistroMaquinaria,
   rangoMaquinariaInvalido,
@@ -31,8 +41,31 @@ type RouteContext = {
 export async function GET(request: Request, context: RouteContext) {
   const { proyectoId } = await context.params
 
-  if (proyectoId !== PROYECTO_EMERGENCIA_MANABI) {
+  if (proyectoId !== PROYECTO_EMERGENCIA_MANABI && proyectoId !== PROYECTO_DESASOLVE_CANALES) {
     return new Response("No encontrado", { status: 404 })
+  }
+
+  if (proyectoId === PROYECTO_DESASOLVE_CANALES) {
+    try {
+      const supabase = await createClient()
+      const payload = await cargarInformeDesasolveConsolidado(supabase, proyectoId)
+      const buffer = await renderInformeDesasolveConsolidadoPdfBuffer(payload)
+      const filename = nombreArchivoInformeDesasolveConsolidado(proyectoId)
+
+      return new Response(new Uint8Array(buffer), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/pdf",
+          "Content-Disposition": `attachment; filename="${filename}"`,
+          "Cache-Control": "no-store",
+        },
+      })
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : "Error al generar el PDF"
+      console.error("Error al generar informe consolidado desasolve:", error)
+      const status = msg.includes("No hay registros") ? 404 : 500
+      return new Response(msg, { status })
+    }
   }
 
   const url = new URL(request.url)
