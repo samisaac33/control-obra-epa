@@ -18,6 +18,7 @@ import { KpiCard } from "@/src/components/KpiCard"
 import { MaquinariaCatalogoEquipos } from "@/src/components/MaquinariaCatalogoEquipos"
 import { MaquinariaCamaBajaSection } from "@/src/components/MaquinariaCamaBajaSection"
 import { MaquinariaComplementariaSection } from "@/src/components/MaquinariaComplementariaSection"
+import { MaquinariaDesasolveInformesAcciones } from "@/src/components/maquinaria/MaquinariaDesasolveInformesAcciones"
 import { useProyecto } from "@/src/contexts/ProyectoContext"
 import { useEquiposMaquinariaProyecto } from "@/src/hooks/use-equipos-maquinaria-proyecto"
 import { useEsViewportMovil } from "@/src/hooks/useEsViewportMovil"
@@ -67,8 +68,9 @@ function SeccionTitulo({ etiqueta, titulo }: { etiqueta: string; titulo: string 
 
 export function MaquinariaDesasolvePageClient() {
   const searchParams = useSearchParams()
-  const imprimirConsolidadoSolicitado = searchParams.get("imprimir") === "consolidado"
-  const imprimirConsolidadoHechoRef = useRef(false)
+  const informeCompletoSolicitado =
+    searchParams.get("informe") === "completo" || searchParams.get("imprimir") === "consolidado"
+  const informeCompletoHechoRef = useRef(false)
   const { proyectoActivo, proyectoId } = useProyecto()
   const esViewportMovil = useEsViewportMovil()
   const kpiCompact = esViewportMovil
@@ -94,13 +96,13 @@ export function MaquinariaDesasolvePageClient() {
   }, [supabase, residentEmail])
 
   useEffect(() => {
-    if (!imprimirConsolidadoSolicitado || imprimirConsolidadoHechoRef.current || loading) return
-    imprimirConsolidadoHechoRef.current = true
+    if (!informeCompletoSolicitado || informeCompletoHechoRef.current || loading) return
+    informeCompletoHechoRef.current = true
     const bloque = document.getElementById("maquinaria-desasolve-reporte")
     bloque?.scrollIntoView({ block: "start" })
     const timeoutId = window.setTimeout(() => window.print(), 400)
     return () => window.clearTimeout(timeoutId)
-  }, [imprimirConsolidadoSolicitado, loading])
+  }, [informeCompletoSolicitado, loading])
 
   async function handleEliminarJornada(id: string) {
     if (!isResident) return
@@ -245,20 +247,28 @@ export function MaquinariaDesasolvePageClient() {
 
         <MaquinariaCamaBajaSection isResident={isResident} />
 
-        <section aria-labelledby="imprimir-maquinaria-title" className="print:hidden">
+        <section aria-labelledby="generar-informe-maquinaria-title" className="print:hidden">
           <Card className="border-foreground/10">
             <CardHeader>
-              <CardTitle id="imprimir-maquinaria-title" className="text-base sm:text-lg">
-                Reporte consolidado
+              <CardTitle id="generar-informe-maquinaria-title" className="text-base sm:text-lg">
+                Generar informe
               </CardTitle>
               <CardDescription>
-                Imprima o guarde como PDF el consolidado por equipo y el detalle de jornadas ({periodo.etiqueta}).
+                Mismo criterio que en emergencia: el informe completo usa la vista imprimible con detalle
+                de jornadas ({periodo.etiqueta}); el consolidado se descarga en PDF.
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <Button type="button" variant="outline" className="gap-2" onClick={() => window.print()}>
-                <Printer className="size-4" aria-hidden />
-                Imprimir / guardar PDF
+            <CardContent className="space-y-3">
+              <MaquinariaDesasolveInformesAcciones />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-8 px-0 text-muted-foreground"
+                onClick={() => window.print()}
+              >
+                <Printer className="size-3.5" aria-hidden />
+                Imprimir informe completo (desde esta página)
               </Button>
             </CardContent>
           </Card>
