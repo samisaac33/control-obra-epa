@@ -1,6 +1,7 @@
 import { Document, Page, StyleSheet, Text, View } from "@react-pdf/renderer"
 
 import type { InformeDesasolveCompletoPayload } from "@/src/lib/maquinaria/cargar-informe-desasolve-completo"
+import { fondoFilaPorEquipoInformePdf } from "@/src/lib/maquinaria/colores-equipo-informe-pdf"
 import { formatearNumero } from "@/src/lib/maquinaria-resumen"
 import { formatearFechaRegistro, formatearMetrosDesasolados } from "@/src/lib/tramo-maquinaria-historial"
 
@@ -122,9 +123,10 @@ function FilaDetalle(props: {
   metros: string
   horas: string
   detalle: string
+  fondoFila?: string
 }) {
   return (
-    <View style={styles.tableRow}>
+    <View style={[styles.tableRow, props.fondoFila ? { backgroundColor: props.fondoFila } : {}]}>
       <Text style={styles.cFecha}>{formatearFechaRegistro(props.fecha)}</Text>
       <Text style={styles.cRef}>{props.referencia}</Text>
       <Text style={styles.cTipo}>{props.tipo}</Text>
@@ -177,6 +179,7 @@ export function MaquinariaInformeDesasolveCompletoPdfDocument({ data }: Props) {
                   }
                   horas={fmtHoras(fila.horas)}
                   detalle={fila.textoDetalle ?? "—"}
+                  fondoFila={fondoFilaPorEquipoInformePdf(fila.equipo)}
                 />
               ))
             )}
@@ -197,6 +200,7 @@ export function MaquinariaInformeDesasolveCompletoPdfDocument({ data }: Props) {
                   metros="—"
                   horas={fmtHoras(fila.horas)}
                   detalle={fila.textoDetalle ?? "—"}
+                  fondoFila={fondoFilaPorEquipoInformePdf(fila.equipo)}
                 />
               ))
             )}
@@ -220,7 +224,15 @@ export function MaquinariaInformeDesasolveCompletoPdfDocument({ data }: Props) {
                   <Text style={styles.cCbObs}>Observaciones</Text>
                 </View>
                 {sem.filas.map((fila, i) => (
-                  <View key={`cb-row-${sem.lunes}-${i}`} style={styles.tableRow}>
+                  <View
+                    key={`cb-row-${sem.lunes}-${i}`}
+                    style={[
+                      styles.tableRow,
+                      {
+                        backgroundColor: fondoFilaPorEquipoInformePdf(fila.maquinaTransportada),
+                      },
+                    ]}
+                  >
                     <Text style={styles.cCbFecha}>{formatearFechaRegistro(fila.fecha)}</Text>
                     <Text style={styles.cCbUnidad}>{fila.camaBaja}</Text>
                     <Text style={styles.cCbMaq}>{fila.maquinaTransportada}</Text>
