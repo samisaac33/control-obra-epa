@@ -12,6 +12,11 @@ const TABS = [
     label: "Documentos",
     match: (path: string) => path.startsWith("/infimas/documentos"),
   },
+  {
+    href: "/infimas/cumple-samu",
+    label: "Cumple Samu",
+    match: (path: string) => path.startsWith("/infimas/cumple-samu"),
+  },
 ] as const
 
 export function InfimasHubNav() {
