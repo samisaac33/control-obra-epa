@@ -16,3 +16,8 @@ export const CUMPLE_SAMU_PAGINAS = [
 ] as const
 
 export const CUMPLE_SAMU_TOTAL_PAGINAS = CUMPLE_SAMU_PAGINAS.length
+
+/** Hojas físicas A4 horizontal (dos láminas por cara, imposición tipo libro). */
+export const CUMPLE_SAMU_HOJAS_IMPRESION = CUMPLE_SAMU_TOTAL_PAGINAS / 2
+
+export const CUMPLE_SAMU_PDF_VERSION = "2"
