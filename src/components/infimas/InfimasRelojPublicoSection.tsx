@@ -219,7 +219,11 @@ export function InfimasRelojPublicoSection() {
       </Card>
 
       <div className="grid gap-4">
-        {documentos.map((doc) => (
+        {documentos.map((doc) => {
+          const tipoEmision: RelojPdfConFecha | null =
+            doc.tipo === "entrega" || doc.tipo === "informe" ? doc.tipo : null
+
+          return (
           <Card key={doc.id}>
             <CardHeader className="pb-3">
               <div className="flex items-start gap-3">
@@ -237,7 +241,7 @@ export function InfimasRelojPublicoSection() {
                 {CONTRATO_RELOJ_PUBLICO_PORTOVIEJO.codigo} · {fechaEmisionVisible(doc)}
               </p>
               <div className="flex flex-wrap items-end gap-2">
-                {doc.tipo === "entrega" || doc.tipo === "informe" ? (
+                {tipoEmision ? (
                   <div className="flex w-full min-w-0 flex-col gap-1 sm:w-auto">
                     <label
                       htmlFor={`fecha-emision-${doc.slug}`}
@@ -249,14 +253,14 @@ export function InfimasRelojPublicoSection() {
                       id={`fecha-emision-${doc.slug}`}
                       type="date"
                       className="w-full sm:w-[11.5rem]"
-                      value={fechaEmisionIso(doc.tipo)}
-                      onChange={(event) => establecerFechaEmision(doc.tipo, event.target.value)}
+                      value={fechaEmisionIso(tipoEmision)}
+                      onChange={(event) => establecerFechaEmision(tipoEmision, event.target.value)}
                     />
                   </div>
                 ) : null}
                 <div className="flex flex-wrap gap-2 sm:ml-auto">
-                  {doc.tipo === "entrega" || doc.tipo === "informe" ? (
-                    <Button type="button" variant="secondary" size="sm" onClick={() => aplicarFechaHoy(doc.tipo)}>
+                  {tipoEmision ? (
+                    <Button type="button" variant="secondary" size="sm" onClick={() => aplicarFechaHoy(tipoEmision)}>
                       <CalendarClock className="size-4" aria-hidden />
                       Usar fecha de hoy
                     </Button>
@@ -269,7 +273,7 @@ export function InfimasRelojPublicoSection() {
                   >
                     {vistaSlug === doc.slug ? "Ocultar vista previa" : "Vista previa"}
                   </Button>
-                  {doc.tipo === "entrega" || doc.tipo === "informe" ? (
+                  {tipoEmision ? (
                     <Button
                       type="button"
                       size="sm"
@@ -277,7 +281,7 @@ export function InfimasRelojPublicoSection() {
                       onClick={async () => {
                         setDescargandoSlug(doc.slug)
                         try {
-                          await descargarPdfDinamico(periodo.id, doc.tipo, fechaEmisionIso(doc.tipo))
+                          await descargarPdfDinamico(periodo.id, tipoEmision, fechaEmisionIso(tipoEmision))
                         } finally {
                           setDescargandoSlug(null)
                         }
@@ -298,7 +302,8 @@ export function InfimasRelojPublicoSection() {
               </div>
             </CardContent>
           </Card>
-        ))}
+          )
+        })}
       </div>
 
       {documentoVista ? (
