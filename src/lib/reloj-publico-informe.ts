@@ -242,7 +242,7 @@ export function generarInformePeriodo(
   const semCarretes = elegirSemanaCarretes(semanas, inicio, fin)
   const diasCarretes = semCarretes ? tresDiasCarretes(semCarretes.lunes, semCarretes.domingo, inicio, fin) : []
 
-  const filas: RelojPublicoInformeFila[] = semanas.map(({ lunes, domingo }) => {
+  const filas: RelojPublicoInformeFila[] = semanas.map(({ lunes, domingo }, index) => {
     const aceites = aceitadaEnSemana(lunes, domingo, inicio, fin)
     const engrasadasSem = fechasEnSemana(engrasadas, lunes, domingo)
     const partes: string[] = []
@@ -263,8 +263,10 @@ export function generarInformePeriodo(
       partes.push(`${TEXTO_CARRETES} ${formatearListaDias(diasCarretes)}.`)
     }
 
+    const finRangoSemana = index === semanas.length - 1 ? fin : domingo
+
     return {
-      semanaLabel: etiquetaSemana(lunes, domingo),
+      semanaLabel: etiquetaSemana(lunes, finRangoSemana),
       anio: lunes.getFullYear(),
       actividad: ACTIVIDAD_BASE,
       observacion: partes.join("\n"),
