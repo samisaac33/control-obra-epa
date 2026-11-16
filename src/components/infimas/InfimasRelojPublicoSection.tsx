@@ -5,6 +5,7 @@ import { useMemo, useState } from "react"
 
 import { resolverFechaCartaEmision } from "@/lib/infimas/reloj-publico-pdf/render-reloj-publico-pdf"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Select,
@@ -31,6 +32,12 @@ import {
   construirCartaData,
   isoFechaLocalHoy,
 } from "@/src/components/infimas/reloj-publico/relojPublicoPreviewData"
+
+type RelojPdfConFecha = Extract<RelojPublicoDocumento["tipo"], "entrega" | "informe">
+
+function claveFechaEmision(periodoId: string, tipo: RelojPdfConFecha): string {
+  return `${periodoId}:${tipo}`
+}
 
 async function descargarPdfDinamico(
   periodoId: string,
@@ -84,8 +91,6 @@ export function InfimasRelojPublicoSection() {
   const [fechaEmisionOverride, setFechaEmisionOverride] = useState<Record<string, string>>({})
   const [descargandoSlug, setDescargandoSlug] = useState<string | null>(null)
 
-  const fechaEmisionPeriodo = fechaEmisionOverride[periodoId] ?? null
-
   const bundleActual = useMemo(
     () => bundles.find((b) => b.periodo.id === periodoId) ?? bundles[0],
     [bundles, periodoId]
@@ -97,19 +102,27 @@ export function InfimasRelojPublicoSection() {
 
   const { periodo, documentos } = bundleActual
 
+  const documentoVista = vistaSlug ? documentos.find((d) => d.slug === vistaSlug) : undefined
+
+  function fechaEmisionIso(tipo: RelojPdfConFecha): string {
+    return fechaEmisionOverride[claveFechaEmision(periodo.id, tipo)] ?? periodo.fechas.entregaInforme
+  }
+
   function fechaEmisionVisible(doc: RelojPublicoDocumento): string {
     if (doc.tipo === "entrega" || doc.tipo === "informe") {
-      if (fechaEmisionPeriodo) {
-        return (
-          resolverFechaCartaEmision(doc.tipo, periodo.id, fechaEmisionPeriodo) ?? doc.fecha
-        )
-      }
+      return (
+        resolverFechaCartaEmision(doc.tipo, periodo.id, fechaEmisionIso(doc.tipo)) ?? doc.fecha
+      )
     }
     return doc.fecha
   }
 
-  function aplicarFechaHoy() {
-    setFechaEmisionOverride((prev) => ({ ...prev, [periodoId]: isoFechaLocalHoy() }))
+  function establecerFechaEmision(tipo: RelojPdfConFecha, iso: string) {
+    setFechaEmisionOverride((prev) => ({ ...prev, [claveFechaEmision(periodo.id, tipo)]: iso }))
+  }
+
+  function aplicarFechaHoy(tipo: RelojPdfConFecha) {
+    establecerFechaEmision(tipo, isoFechaLocalHoy())
   }
 
   return (
@@ -219,67 +232,86 @@ export function InfimasRelojPublicoSection() {
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="flex flex-wrap items-center gap-3 pt-0">
+            <CardContent className="space-y-3 pt-0">
               <p className="text-sm text-muted-foreground">
                 {CONTRATO_RELOJ_PUBLICO_PORTOVIEJO.codigo} · {fechaEmisionVisible(doc)}
               </p>
-              <div className="ml-auto flex flex-wrap gap-2">
+              <div className="flex flex-wrap items-end gap-2">
                 {doc.tipo === "entrega" || doc.tipo === "informe" ? (
-                  <Button type="button" variant="secondary" size="sm" onClick={aplicarFechaHoy}>
-                    <CalendarClock className="size-4" aria-hidden />
-                    Usar fecha de hoy
-                  </Button>
+                  <div className="flex w-full min-w-0 flex-col gap-1 sm:w-auto">
+                    <label
+                      htmlFor={`fecha-emision-${doc.slug}`}
+                      className="text-xs font-medium text-muted-foreground"
+                    >
+                      Fecha de emisión
+                    </label>
+                    <Input
+                      id={`fecha-emision-${doc.slug}`}
+                      type="date"
+                      className="w-full sm:w-[11.5rem]"
+                      value={fechaEmisionIso(doc.tipo)}
+                      onChange={(event) => establecerFechaEmision(doc.tipo, event.target.value)}
+                    />
+                  </div>
                 ) : null}
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setVistaSlug(vistaSlug === doc.slug ? null : doc.slug)}
-                >
-                  {vistaSlug === doc.slug ? "Ocultar vista previa" : "Vista previa"}
-                </Button>
-                {doc.tipo === "entrega" || doc.tipo === "informe" ? (
+                <div className="flex flex-wrap gap-2 sm:ml-auto">
+                  {doc.tipo === "entrega" || doc.tipo === "informe" ? (
+                    <Button type="button" variant="secondary" size="sm" onClick={() => aplicarFechaHoy(doc.tipo)}>
+                      <CalendarClock className="size-4" aria-hidden />
+                      Usar fecha de hoy
+                    </Button>
+                  ) : null}
                   <Button
                     type="button"
+                    variant="outline"
                     size="sm"
-                    disabled={descargandoSlug === doc.slug}
-                    onClick={async () => {
-                      setDescargandoSlug(doc.slug)
-                      try {
-                        await descargarPdfDinamico(periodo.id, doc.tipo as "entrega" | "informe", fechaEmisionPeriodo)
-                      } finally {
-                        setDescargandoSlug(null)
-                      }
-                    }}
+                    onClick={() => setVistaSlug(vistaSlug === doc.slug ? null : doc.slug)}
                   >
-                    <Download className="size-4" aria-hidden />
-                    {descargandoSlug === doc.slug ? "Generando…" : "Descargar PDF"}
+                    {vistaSlug === doc.slug ? "Ocultar vista previa" : "Vista previa"}
                   </Button>
-                ) : (
-                  <Button asChild size="sm">
-                    <a href={doc.archivoPdf} download>
+                  {doc.tipo === "entrega" || doc.tipo === "informe" ? (
+                    <Button
+                      type="button"
+                      size="sm"
+                      disabled={descargandoSlug === doc.slug}
+                      onClick={async () => {
+                        setDescargandoSlug(doc.slug)
+                        try {
+                          await descargarPdfDinamico(periodo.id, doc.tipo, fechaEmisionIso(doc.tipo))
+                        } finally {
+                          setDescargandoSlug(null)
+                        }
+                      }}
+                    >
                       <Download className="size-4" aria-hidden />
-                      Descargar PDF
-                    </a>
-                  </Button>
-                )}
+                      {descargandoSlug === doc.slug ? "Generando…" : "Descargar PDF"}
+                    </Button>
+                  ) : (
+                    <Button asChild size="sm">
+                      <a href={doc.archivoPdf} download>
+                        <Download className="size-4" aria-hidden />
+                        Descargar PDF
+                      </a>
+                    </Button>
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      {vistaSlug ? (
+      {documentoVista ? (
         <section className="space-y-3">
           <h3 className="text-sm font-semibold text-muted-foreground">Vista previa — {periodo.etiqueta}</h3>
           <div className="overflow-x-auto rounded-lg border border-foreground/10 bg-neutral-100 p-4 sm:p-6">
             <VistaDocumento
-              documento={documentos.find((d) => d.slug === vistaSlug)!}
+              documento={documentoVista}
               periodoId={periodo.id}
               fechaEmisionIso={
-                documentos.find((d) => d.slug === vistaSlug)?.tipo === "notificacion"
-                  ? null
-                  : fechaEmisionPeriodo
+                documentoVista.tipo === "entrega" || documentoVista.tipo === "informe"
+                  ? fechaEmisionIso(documentoVista.tipo)
+                  : null
               }
             />
           </div>
