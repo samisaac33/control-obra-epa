@@ -26,6 +26,10 @@ import {
   viajesVolquetaPorDiaUnaUnidad,
 } from "../src/lib/libro-obra-cronograma-frente"
 import { consolidarLibroObraPeriodoPlanillaConsolidado } from "../src/lib/libro-obra-sintetico"
+import {
+  FECHAS_SAN_ANTONIO_UNA_EXCAVADORA,
+  TRAMOS_TRASVASE_PARALELOS_POR_DIA,
+} from "../src/lib/libro-obra-cronograma-resumen-canal-p1"
 import { hitosSeverinoPorFechaPlanilla } from "../src/lib/libro-obra-cronograma-severino"
 import {
   climaProgramaticoDia,
@@ -153,6 +157,26 @@ assert.equal(
   0,
   "SA sin desalojo P1"
 )
+
+const diasSanConActividad = cronSan.filter((d) => d.actividades.length > 0)
+let sanDiasDosExc = 0
+let sanDiasUnaExc = 0
+for (const d of diasSanConActividad) {
+  const exc = d.actividades[0]?.excavadorasEnFrente ?? 1
+  if (exc === 2) sanDiasDosExc++
+  else if (exc === 1) sanDiasUnaExc++
+  assert.ok(
+    exc === (FECHAS_SAN_ANTONIO_UNA_EXCAVADORA.has(d.fecha) ? 1 : 2),
+    `excavadoras SA ${d.fecha}`
+  )
+}
+assert.equal(sanDiasUnaExc, FECHAS_SAN_ANTONIO_UNA_EXCAVADORA.size, "solo 3 días SA con 1 excavadora")
+assert.equal(sanDiasDosExc, diasSanConActividad.length - sanDiasUnaExc, "resto días SA con 2 excavadoras")
+
+const trasvaseActsPorDia = diasConActividad.map((d) => d.actividades.length)
+assert.ok(Math.min(...trasvaseActsPorDia) >= TRAMOS_TRASVASE_PARALELOS_POR_DIA - 1)
+assert.ok(Math.max(...trasvaseActsPorDia) <= TRAMOS_TRASVASE_PARALELOS_POR_DIA)
+
 const excSanDia1 =
   cronSan[0]?.actividades.reduce((s, a) => s + (a.excavadorasEnFrente ?? 1), 0) ?? 0
 const volqSanDia1 = cronSan[0]?.actividades.reduce((s, a) => s + a.volquetas, 0) ?? 0
@@ -186,6 +210,17 @@ const textoSan = bloques.find((b) => b.id === "san_antonio")?.trabajosRealizados
 assert.ok(!textoSan.includes("Desazolve 100 % brazo largo"), "sin nota brazo san antonio")
 assert.ok(!textoSan.includes("Mediciones VAE"), "sin pie de rubros VAE san antonio")
 assert.ok(bloques.some((b) => b.id === "san_antonio"))
+
+function contarLineasTramoConsolidada(entrada: (typeof entradas)[0]): number {
+  return (entrada.formatoEpa?.bloquesFrente ?? []).reduce(
+    (n, b) => n + (b.trabajosRealizados.match(/- Tramo «/g)?.length ?? 0),
+    0
+  )
+}
+for (const entrada of entradas) {
+  const nTramos = contarLineasTramoConsolidada(entrada)
+  assert.ok(nTramos >= 4 && nTramos <= 6, `4–6 tramos/día consolidado (${entrada.fecha}: ${nTramos})`)
+}
 
 const e27 = entradas.find((e) => e.fecha === "2026-10-27")
 const e30 = entradas.find((e) => e.fecha === "2026-10-30")
