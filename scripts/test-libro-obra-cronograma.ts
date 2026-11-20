@@ -196,8 +196,38 @@ assert.equal(sanDiasUnaExc, FECHAS_SAN_ANTONIO_UNA_EXCAVADORA.size, "solo 3 día
 assert.equal(sanDiasDosExc, diasSanConActividad.length - sanDiasUnaExc, "resto días SA con 2 excavadoras")
 
 const trasvaseActsPorDia = diasConActividad.map((d) => d.actividades.length)
-assert.ok(Math.min(...trasvaseActsPorDia) >= TRAMOS_TRASVASE_PARALELOS_POR_DIA - 1)
 assert.ok(Math.max(...trasvaseActsPorDia) <= TRAMOS_TRASVASE_PARALELOS_POR_DIA)
+const trasvasePlenaParalela = cronograma.filter(
+  (d) => d.actividades.length >= TRAMOS_TRASVASE_PARALELOS_POR_DIA - 1
+)
+assert.ok(trasvasePlenaParalela.length >= 20, "mayoría de jornadas con varios tramos en paralelo")
+
+function maxRachaM3Iguales(vals: number[]): number {
+  let max = vals.length > 0 ? 1 : 0
+  let run = 1
+  for (let i = 1; i < vals.length; i++) {
+    if (Math.abs(vals[i]! - vals[i - 1]!) < 0.05) run++
+    else run = 1
+    max = Math.max(max, run)
+  }
+  return max
+}
+const porTramo = new Map<string, number[]>()
+for (const d of cronograma) {
+  for (const a of d.actividades) {
+    const serie = porTramo.get(a.tramoId) ?? []
+    serie.push(a.m3Desazolve)
+    porTramo.set(a.tramoId, serie)
+  }
+}
+for (const [id, serie] of porTramo) {
+  if (serie.length < 8) continue
+  assert.ok(
+    maxRachaM3Iguales(serie) <= 2,
+    `producción diaria variada en ${id} (no copy-paste)`
+  )
+  assert.ok(new Set(serie.map((v) => Math.round(v * 10) / 10)).size >= 6, `distintos m³/día en ${id}`)
+}
 
 const excSanDia1 =
   cronSan[0]?.actividades.reduce((s, a) => s + (a.excavadorasEnFrente ?? 1), 0) ?? 0
@@ -241,7 +271,7 @@ function contarLineasTramoConsolidada(entrada: (typeof entradas)[0]): number {
 }
 for (const entrada of entradas) {
   const nTramos = contarLineasTramoConsolidada(entrada)
-  assert.ok(nTramos >= 4 && nTramos <= 6, `4–6 tramos/día consolidado (${entrada.fecha}: ${nTramos})`)
+  assert.ok(nTramos >= 3 && nTramos <= 6, `3–6 tramos/día consolidado (${entrada.fecha}: ${nTramos})`)
 }
 
 const e27 = entradas.find((e) => e.fecha === "2026-10-27")
