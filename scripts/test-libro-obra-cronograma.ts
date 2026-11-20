@@ -11,6 +11,7 @@ import {
   DESALOJO_M3_PLANILLA_1_TRASVASE,
   INTERVENCIONES_TRASVASE_PLANILLA_1,
   INTERVENCION_SAN_ANTONIO_PLANILLA_1,
+  nombreTramoResumenCanal,
   VOLUMEN_DESAZOLVE_SAN_ANTONIO_PLANILLA_1,
   VOLUMEN_DESAZOLVE_TRASVASE_PLANILLA_1,
 } from "../src/data/planilla/libro-obra-resumen-canal-planilla-1"
@@ -80,6 +81,21 @@ const sumDesalojo = cronograma.reduce(
   0
 )
 assert.ok(Math.abs(sumDesalojo - DESALOJO_M3_PLANILLA_1_TRASVASE) < 0.1, "desalojo trasvase P1 = 40.000 m³")
+
+const m3PorTramoCronograma = new Map<string, number>()
+for (const d of cronograma) {
+  for (const a of d.actividades) {
+    m3PorTramoCronograma.set(a.tramoId, (m3PorTramoCronograma.get(a.tramoId) ?? 0) + a.m3Desazolve)
+  }
+}
+for (const intervencion of INTERVENCIONES_TRASVASE_PLANILLA_1) {
+  const id = `resumen-canal-map-${intervencion.mapa}`
+  const producido = m3PorTramoCronograma.get(id) ?? 0
+  assert.ok(
+    Math.abs(producido - intervencion.volumenM3) < 0.15,
+    `Σ m³ tramo ${nombreTramoResumenCanal(intervencion)} = columna I Excel (${producido} ≈ ${intervencion.volumenM3})`
+  )
+}
 
 const intervencionPorId = new Map(
   [...INTERVENCIONES_TRASVASE_PLANILLA_1, INTERVENCION_SAN_ANTONIO_PLANILLA_1].map((i) => [
