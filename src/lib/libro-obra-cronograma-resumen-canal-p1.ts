@@ -14,7 +14,6 @@ import {
   JORNADA_OBRA_NOMINAL_H,
   m3MaximoUnaExcavadoraJornada,
   asignarVolquetasDesalojoPorLinea,
-  volquetasNecesariasParaM3Desalojo,
 } from "@/src/lib/libro-obra-capacidad-maquinaria"
 import {
   type ActividadTramoCronograma,
