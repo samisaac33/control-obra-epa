@@ -17,11 +17,13 @@ import {
 import {
   JORNADA_OBRA_MAX_H,
   m3MaximoUnaExcavadoraJornada,
+  m3MaximoUnaVolquetaJornada,
 } from "../src/lib/libro-obra-capacidad-maquinaria"
 import { PROYECTO_DESASOLVE_CANALES } from "../src/data/proyectos/catalog"
 import { periodoPorNumero } from "../src/lib/planilla-calculo"
 import {
   cronogramaLibroObraFrente,
+  volquetasFlotaDesalojoTrasvaseDia,
   volquetasFlotaParaM3Desalojo,
   viajesVolquetaPorDiaUnaUnidad,
 } from "../src/lib/libro-obra-cronograma-frente"
@@ -86,13 +88,22 @@ const intervencionPorId = new Map(
   ])
 )
 
+const capM3Volqueta = m3MaximoUnaVolquetaJornada()
+assert.ok(capM3Volqueta >= 80 && capM3Volqueta <= 200, "capacidad volqueta jornada creíble (botadero 5 km)")
+
 for (const d of cronograma) {
   const desDia = d.actividades.reduce((s, a) => s + a.m3Desalojo, 0)
   const volqDia = d.actividades.reduce((s, a) => s + a.volquetas, 0)
+  const excDia = d.actividades.reduce((s, a) => s + (a.excavadorasEnFrente ?? 1), 0)
   if (desDia > 0) {
+    assert.ok(volqDia >= excDia, `≥1 volqueta por excavadora ${d.fecha}`)
     assert.ok(
       volqDia >= volquetasFlotaParaM3Desalojo(desDia),
-      `volquetas día ${d.fecha} ≥ flota desalojo`
+      `volquetas día ${d.fecha} ≥ flota desalojo por m³`
+    )
+    assert.ok(
+      volqDia >= volquetasFlotaDesalojoTrasvaseDia(desDia, excDia),
+      `flota día ${d.fecha} ≥ max(m³, excavadoras)`
     )
   }
   for (const a of d.actividades) {
@@ -106,6 +117,13 @@ for (const d of cronograma) {
     )
     if (a.m3Desazolve > capUnaExc + 50) {
       assert.ok(exc > 1, `más de 1 excavadora si m³ alto en ${d.fecha}`)
+    }
+    if (a.m3Desalojo > 0) {
+      assert.ok(a.volquetas >= exc, `volquetas ≥ excavadoras en línea ${d.fecha} ${a.tramoId}`)
+      assert.ok(
+        a.m3Desalojo <= a.volquetas * capM3Volqueta + 1,
+        `m³ desalojo ≤ capacidad volquetas línea ${d.fecha}`
+      )
     }
   }
 }
@@ -129,9 +147,13 @@ const dia1 = cronograma[0]!
 const m3Dia1 = dia1.actividades.reduce((s, a) => s + a.m3Desalojo, 0)
 const excTrasvaseDia1 = dia1.actividades.reduce((s, a) => s + (a.excavadorasEnFrente ?? 1), 0)
 const volqTrasvaseDia1 = dia1.actividades.reduce((s, a) => s + a.volquetas, 0)
-assert.ok(viajesVolquetaPorDiaUnaUnidad() > 8, "más viajes/día que escenario 5 km")
+const viajesVol = viajesVolquetaPorDiaUnaUnidad()
+assert.ok(viajesVol >= 10 && viajesVol <= 25, "viajes/volqueta coherentes con ida–vuelta 10 km")
 assert.ok(excTrasvaseDia1 >= 1, "al menos una excavadora trasvase día 1")
-assert.ok(volqTrasvaseDia1 >= volquetasFlotaParaM3Desalojo(m3Dia1), "volquetas por m³ desalojo día 1")
+assert.ok(
+  volqTrasvaseDia1 >= volquetasFlotaDesalojoTrasvaseDia(m3Dia1, excTrasvaseDia1),
+  "volquetas día 1 ≥ max(m³ agregado, excavadoras)"
+)
 assert.ok(
   (dia1.actividades[0]?.tramoNombre ?? "").includes("EL MANGO"),
   "día 1 = primera intervención resumen canal"

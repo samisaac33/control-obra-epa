@@ -13,7 +13,7 @@ import {
   JORNADA_OBRA_MAX_H,
   JORNADA_OBRA_NOMINAL_H,
   m3MaximoUnaExcavadoraJornada,
-  repartirVolquetasDesalojoEnActividades,
+  asignarVolquetasDesalojoPorLinea,
   volquetasNecesariasParaM3Desalojo,
 } from "@/src/lib/libro-obra-capacidad-maquinaria"
 import {
@@ -256,8 +256,7 @@ export function aplicarDesalojoTendidoTrasvaseCap(
       asignadoT += t
       return { ...a, m3Desalojo: d, m3Tendido: t }
     })
-    const volquetasDia = volquetasNecesariasParaM3Desalojo(m3DesDia)
-    dia.actividades = repartirVolquetasDesalojoEnActividades(acts, volquetasDia)
+    dia.actividades = asignarVolquetasDesalojoPorLinea(acts)
   }
 }
 
