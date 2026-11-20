@@ -9,7 +9,10 @@ import type { PlanillaNumero, PlanillaPeriodo, ProyectoPlanillaConfig } from "@/
 import { cronogramaLibroObraResumenCanalPlanilla1 } from "@/src/lib/libro-obra-cronograma-resumen-canal-p1"
 import { fechasCalendarioInclusive } from "@/src/lib/libro-obra"
 import { calcularRequerimientoPago } from "@/src/lib/planilla-requerimiento-pago"
-import { RENDIMIENTO_NOMINAL_M3_POR_H } from "@/src/data/contrato-emergencia-severino-trasvase"
+import {
+  RADIO_DESALOJO_MAX_KM,
+  RENDIMIENTO_NOMINAL_M3_POR_H,
+} from "@/src/data/contrato-emergencia-severino-trasvase"
 import { formatearNumero } from "@/src/lib/maquinaria-resumen"
 
 /** m³ por viaje (medición tickets / VAE). */
@@ -22,19 +25,24 @@ const MINUTOS_FIJO_CICLO_VOLQUETA = 4
 const VELOCIDAD_PROMEDIO_VOLQUETA_KMH = 20
 
 /**
- * Distancia frente–botadero usada solo para dimensionar flota (no se imprime en libro).
- * En campo el botadero contractual puede estar más lejos; aquí se usa ~20 m de recorrido
- * efectivo para no sobredimensionar volquetas como si todo fuera ida/vuelta de 5 km.
+ * Recorrido ida–vuelta frente–botadero para dimensionar flota (no se imprime en libro).
+ * Usa el radio contractual máximo (5 km) para un rendimiento de transporte creíble.
  */
-const DISTANCIA_DESALOJO_CALCULO_M = 20
+const DISTANCIA_IDA_VUELTA_DESALOJO_KM = 2 * RADIO_DESALOJO_MAX_KM
 
 /** Viajes que puede hacer una volqueta en la jornada según distancia de cálculo. */
-export function viajesVolquetaPorDiaUnaUnidad(): number {
-  const dKm = DISTANCIA_DESALOJO_CALCULO_M / 1000
-  const minDesplazamiento = ((2 * dKm) / VELOCIDAD_PROMEDIO_VOLQUETA_KMH) * 60
+export function viajesVolquetaPorDiaUnaUnidad(
+  distanciaIdaVueltaKm: number = DISTANCIA_IDA_VUELTA_DESALOJO_KM
+): number {
+  const minDesplazamiento = (distanciaIdaVueltaKm / VELOCIDAD_PROMEDIO_VOLQUETA_KMH) * 60
   const cicloMin = MINUTOS_FIJO_CICLO_VOLQUETA + minDesplazamiento
   const minutosUtiles = JORNADA_TRANSPORTE_H * 60
   return Math.max(1, Math.floor(minutosUtiles / cicloMin))
+}
+
+/** Techo de m³ evacuables por volqueta en jornada nominal (viajes × 8 m³/ticket). */
+export function m3MaximoUnaVolquetaJornada(): number {
+  return viajesVolquetaPorDiaUnaUnidad() * M3_POR_VIAJE_VOLQUETA
 }
 
 /** Flota del día (unidades), no suma por tramo. */
@@ -43,6 +51,14 @@ export function volquetasFlotaParaM3Desalojo(m3: number): number {
   const viajesNecesarios = Math.ceil(m3 / M3_POR_VIAJE_VOLQUETA)
   const viajesPorCamion = viajesVolquetaPorDiaUnaUnidad()
   return Math.max(1, Math.ceil(viajesNecesarios / viajesPorCamion))
+}
+
+/** Al menos 1 volqueta por excavadora en frente; si el m³ del día exige más, sube la flota. */
+export function volquetasFlotaDesalojoTrasvaseDia(m3Desalojo: number, excavadorasDia: number): number {
+  if (m3Desalojo <= 0) return 0
+  const porM3 = volquetasFlotaParaM3Desalojo(m3Desalojo)
+  const porExc = Math.max(0, excavadorasDia)
+  return Math.max(porM3, porExc, 1)
 }
 
 /** Reparto desazolve trasvase: 93 % brazo largo, 7 % brazo corto (libro programático). */

@@ -2,6 +2,8 @@ import type { FrenteDesazolveVae, TramoDesazolveVae } from "@/src/data/planilla/
 import type { IntervencionResumenCanalPlanilla1 } from "@/src/data/planilla/libro-obra-resumen-canal-planilla-1"
 import {
   horasExcavacionParaM3Dia,
+  m3MaximoUnaVolquetaJornada,
+  volquetasFlotaDesalojoTrasvaseDia,
   volquetasFlotaParaM3Desalojo,
 } from "@/src/lib/libro-obra-cronograma-frente"
 
@@ -53,34 +55,58 @@ export function excavadorasNecesariasParaM3(
   return Math.max(1, Math.ceil(horas / horasJornada))
 }
 
-export function volquetasNecesariasParaM3Desalojo(m3Desalojo: number): number {
+export function volquetasNecesariasParaM3Desalojo(m3Desalojo: number, excavadorasDia = 0): number {
+  if (excavadorasDia > 0) {
+    return volquetasFlotaDesalojoTrasvaseDia(m3Desalojo, excavadorasDia)
+  }
   return volquetasFlotaParaM3Desalojo(m3Desalojo)
 }
 
-/** Reparte volquetas del día entre actividades según m³ desalojo por línea. */
-export function repartirVolquetasDesalojoEnActividades<
-  T extends { m3Desalojo: number; volquetas: number },
->(actividades: T[], volquetasDia: number): T[] {
-  if (actividades.length === 0 || volquetasDia <= 0) {
-    return actividades.map((a) => ({ ...a, volquetas: 0 }))
-  }
-  const totalDes = actividades.reduce((s, a) => s + a.m3Desalojo, 0)
-  if (totalDes <= 0) {
-    return actividades.map((a) => ({ ...a, volquetas: 0 }))
-  }
-  let asignado = 0
-  const out = actividades.map((a, idx) => {
-    const isLast = idx === actividades.length - 1
-    const n = isLast
-      ? Math.max(0, volquetasDia - asignado)
-      : Math.round((a.m3Desalojo / totalDes) * volquetasDia)
-    asignado += n
-    return { ...a, volquetas: n }
+export { m3MaximoUnaVolquetaJornada }
+
+type LineaDesalojoVolquetas = {
+  m3Desalojo: number
+  volquetas: number
+  excavadorasEnFrente?: number
+}
+
+/** Volquetas por línea: ≥1 por excavadora y m³ ≤ capacidad de transporte jornal. */
+export function asignarVolquetasDesalojoPorLinea<T extends LineaDesalojoVolquetas>(actividades: T[]): T[] {
+  const cap = m3MaximoUnaVolquetaJornada()
+  return actividades.map((a) => {
+    if (a.m3Desalojo <= 0) return { ...a, volquetas: 0 }
+    const minExc = Math.max(1, a.excavadorasEnFrente ?? 1)
+    const porM3 = Math.max(1, Math.ceil(a.m3Desalojo / cap))
+    return { ...a, volquetas: Math.max(minExc, porM3) }
   })
-  const drift = volquetasDia - out.reduce((s, a) => s + a.volquetas, 0)
-  if (drift !== 0 && out.length > 0) {
-    const last = out[out.length - 1]!
-    out[out.length - 1] = { ...last, volquetas: last.volquetas + drift }
+}
+
+/** Suma de volquetas asignadas por línea (flota del día en libro). */
+export function volquetasTotalesDesdeLineas<T extends LineaDesalojoVolquetas>(actividades: T[]): number {
+  return asignarVolquetasDesalojoPorLinea(actividades).reduce((s, a) => s + a.volquetas, 0)
+}
+
+/** Reparte volquetas del día entre actividades (mín. 1 volqueta por excavadora con desalojo). */
+export function repartirVolquetasDesalojoEnActividades<
+  T extends LineaDesalojoVolquetas,
+>(actividades: T[], volquetasDia: number): T[] {
+  const porLinea = asignarVolquetasDesalojoPorLinea(actividades)
+  const sumLinea = porLinea.reduce((s, a) => s + a.volquetas, 0)
+  if (volquetasDia <= 0 || actividades.every((a) => a.m3Desalojo <= 0)) {
+    return actividades.map((a) => ({ ...a, volquetas: 0 }))
+  }
+  if (sumLinea >= volquetasDia) return porLinea
+  const idxConDes = actividades
+    .map((a, i) => (a.m3Desalojo > 0 ? i : -1))
+    .filter((i) => i >= 0)
+  let rest = volquetasDia - sumLinea
+  const out = porLinea.map((a) => ({ ...a }))
+  let k = 0
+  while (rest > 0 && idxConDes.length > 0) {
+    const i = idxConDes[k % idxConDes.length]!
+    out[i] = { ...out[i]!, volquetas: out[i]!.volquetas + 1 }
+    rest--
+    k++
   }
   return out
 }
