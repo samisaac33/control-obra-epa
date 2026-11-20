@@ -16,6 +16,7 @@ import {
   asignarVolquetasDesalojoPorLinea,
 } from "@/src/lib/libro-obra-capacidad-maquinaria"
 import {
+  objetivosM3PorDiaProgramatico,
   type ActividadTramoCronograma,
   type DiaCronogramaFrente,
 } from "@/src/lib/libro-obra-cronograma-frente"
@@ -83,6 +84,12 @@ function capM3DiaIntervencion(
   return Math.round(porExc * excavadoras * 100) / 100
 }
 
+function pesoVariacionDiariaIntervencion(dayIdx: number, mapa: number, restanteM3: number): number {
+  const onda = 0.42 + 0.58 * Math.sin((dayIdx + mapa * 0.61) * 1.19)
+  const pulso = 0.12 * Math.cos(dayIdx * 2.07 + mapa)
+  return Math.max(0.08, restanteM3 * Math.max(0.35, onda + pulso))
+}
+
 function redondearReparto(pesos: number[], total: number): number[] {
   if (pesos.length === 0) return []
   const sum = pesos.reduce((a, b) => a + b, 0)
@@ -108,6 +115,9 @@ function construirCronogramaTrasvase(dias: string[]): Map<string, ActividadTramo
     acumuladoM3: 0,
   }))
 
+  const volumenTotal = estados.reduce((s, e) => s + e.intervencion.volumenM3, 0)
+  const curvaProduccionDiaria = objetivosM3PorDiaProgramatico(dias.length, volumenTotal)
+
   for (let dayIdx = 0; dayIdx < dias.length; dayIdx++) {
     const fecha = dias[dayIdx]!
     const pendientes = estados.filter((e) => e.restanteM3 > 0.01)
@@ -115,11 +125,13 @@ function construirCronogramaTrasvase(dias: string[]): Map<string, ActividadTramo
 
     const nLineas = Math.min(TRAMOS_TRASVASE_PARALELOS_POR_DIA, pendientes.length)
     const activas = pendientes.slice(0, nLineas)
-    const diasRestantes = dias.length - dayIdx
     const totalPendiente = pendientes.reduce((s, e) => s + e.restanteM3, 0)
-    const objetivoDia = totalPendiente / diasRestantes
+    let objetivoDia = curvaProduccionDiaria[dayIdx] ?? totalPendiente / Math.max(1, dias.length - dayIdx)
+    objetivoDia = Math.min(objetivoDia, totalPendiente)
 
-    const pesos = activas.map((e) => e.restanteM3)
+    const pesos = activas.map((e) =>
+      pesoVariacionDiariaIntervencion(dayIdx, e.intervencion.mapa, e.restanteM3)
+    )
     const cuotas = redondearReparto(pesos, objetivoDia)
 
     for (let i = 0; i < activas.length; i++) {
@@ -127,23 +139,17 @@ function construirCronogramaTrasvase(dias: string[]): Map<string, ActividadTramo
       let m3 = Math.min(est.restanteM3, cuotas[i] ?? 0)
       if (m3 <= 0.001) continue
 
-      const exc = excavadorasNecesariasParaM3(m3, est.intervencion, JORNADA_OBRA_NOMINAL_H)
-      const cap = capM3DiaIntervencion(est.intervencion, exc, JORNADA_OBRA_MAX_H)
-      if (m3 > cap && cap > 0) m3 = Math.min(m3, cap)
-
-      if (i === activas.length - 1) {
-        const ya = porFecha.get(fecha)!.reduce((s, a) => s + a.m3Desazolve, 0)
-        const ajuste = Math.min(
-          est.restanteM3,
-          Math.max(0, objetivoDia - ya)
-        )
-        if (ajuste > m3) m3 = ajuste
+      let exc = excavadorasNecesariasParaM3(m3, est.intervencion, JORNADA_OBRA_NOMINAL_H)
+      let cap = capM3DiaIntervencion(est.intervencion, exc, JORNADA_OBRA_MAX_H)
+      if (m3 > cap && cap > 0) {
+        m3 = Math.min(m3, cap)
+        exc = excavadorasNecesariasParaM3(m3, est.intervencion, JORNADA_OBRA_NOMINAL_H)
       }
 
       m3 = Math.round(m3 * 100) / 100
       if (m3 <= 0) continue
 
-      const act = actividadDesdeIntervencion(est.intervencion, m3, est.acumuladoM3, 0, 0)
+      const act = actividadDesdeIntervencion(est.intervencion, m3, est.acumuladoM3, 0, 0, exc)
       est.restanteM3 = Math.round((est.restanteM3 - m3) * 100) / 100
       est.acumuladoM3 += m3
       porFecha.get(fecha)!.push(act)
@@ -184,7 +190,7 @@ function excavadorasSanAntonioEnFecha(fecha: string): number {
 function construirCronogramaSanAntonio(dias: string[]): Map<string, ActividadTramoCronograma[]> {
   const porFecha = new Map<string, ActividadTramoCronograma[]>()
   const intervencion = INTERVENCION_SAN_ANTONIO_PLANILLA_1
-  const objetivosBase = intervencion.volumenM3 / dias.length
+  const curvaSa = objetivosM3PorDiaProgramatico(dias.length, intervencion.volumenM3)
   let acum = 0
   let drift = intervencion.volumenM3
 
@@ -195,7 +201,7 @@ function construirCronogramaSanAntonio(dias: string[]): Map<string, ActividadTra
     let m3 =
       dayIdx === dias.length - 1
         ? Math.round(drift * 100) / 100
-        : Math.min(capDia, objetivosBase, drift)
+        : Math.min(capDia, curvaSa[dayIdx] ?? 0, drift)
     m3 = Math.round(m3 * 100) / 100
 
     const acts: ActividadTramoCronograma[] = []
