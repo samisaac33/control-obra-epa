@@ -9,15 +9,21 @@ import { valoresPorDefectoPlanilla } from "../src/data/planilla/planilla-default
 import { TRAMOS_DESAZOLVE_VAE, VOLUMEN_TOTAL_TRASVASE_M3 } from "../src/data/planilla/canales-desazolve-tramos-vae"
 import {
   DESALOJO_M3_PLANILLA_1_TRASVASE,
+  INTERVENCIONES_TRASVASE_PLANILLA_1,
+  INTERVENCION_SAN_ANTONIO_PLANILLA_1,
   VOLUMEN_DESAZOLVE_SAN_ANTONIO_PLANILLA_1,
   VOLUMEN_DESAZOLVE_TRASVASE_PLANILLA_1,
 } from "../src/data/planilla/libro-obra-resumen-canal-planilla-1"
+import {
+  JORNADA_OBRA_MAX_H,
+  m3MaximoUnaExcavadoraJornada,
+} from "../src/lib/libro-obra-capacidad-maquinaria"
 import { PROYECTO_DESASOLVE_CANALES } from "../src/data/proyectos/catalog"
 import { periodoPorNumero } from "../src/lib/planilla-calculo"
 import {
   cronogramaLibroObraFrente,
+  volquetasFlotaParaM3Desalojo,
   viajesVolquetaPorDiaUnaUnidad,
-  VOLQUETAS_POR_EXCAVADORA,
 } from "../src/lib/libro-obra-cronograma-frente"
 import { consolidarLibroObraPeriodoPlanillaConsolidado } from "../src/lib/libro-obra-sintetico"
 import { hitosSeverinoPorFechaPlanilla } from "../src/lib/libro-obra-cronograma-severino"
@@ -69,6 +75,37 @@ const sumDesalojo = cronograma.reduce(
 )
 assert.ok(Math.abs(sumDesalojo - DESALOJO_M3_PLANILLA_1_TRASVASE) < 0.1, "desalojo trasvase P1 = 40.000 m³")
 
+const intervencionPorId = new Map(
+  [...INTERVENCIONES_TRASVASE_PLANILLA_1, INTERVENCION_SAN_ANTONIO_PLANILLA_1].map((i) => [
+    `resumen-canal-map-${i.mapa}`,
+    i,
+  ])
+)
+
+for (const d of cronograma) {
+  const desDia = d.actividades.reduce((s, a) => s + a.m3Desalojo, 0)
+  const volqDia = d.actividades.reduce((s, a) => s + a.volquetas, 0)
+  if (desDia > 0) {
+    assert.ok(
+      volqDia >= volquetasFlotaParaM3Desalojo(desDia),
+      `volquetas día ${d.fecha} ≥ flota desalojo`
+    )
+  }
+  for (const a of d.actividades) {
+    const inter = intervencionPorId.get(a.tramoId)
+    assert.ok(inter, `intervención ${a.tramoId}`)
+    const capUnaExc = m3MaximoUnaExcavadoraJornada(inter!, JORNADA_OBRA_MAX_H)
+    const exc = a.excavadorasEnFrente ?? 1
+    assert.ok(
+      a.m3Desazolve <= exc * capUnaExc + 0.2,
+      `m³ credibles ${d.fecha} (${a.m3Desazolve} ≤ ${exc}×${capUnaExc})`
+    )
+    if (a.m3Desazolve > capUnaExc + 50) {
+      assert.ok(exc > 1, `más de 1 excavadora si m³ alto en ${d.fecha}`)
+    }
+  }
+}
+
 const entradas = consolidarLibroObraPeriodoPlanillaConsolidado(
   PROYECTO_DESASOLVE_CANALES,
   periodo.fecha_inicio,
@@ -86,15 +123,11 @@ const entradas = consolidarLibroObraPeriodoPlanillaConsolidado(
 
 const dia1 = cronograma[0]!
 const m3Dia1 = dia1.actividades.reduce((s, a) => s + a.m3Desalojo, 0)
-const excDia1 = dia1.actividades.length
-const volqDia1 = excDia1 * VOLQUETAS_POR_EXCAVADORA
+const excTrasvaseDia1 = dia1.actividades.reduce((s, a) => s + (a.excavadorasEnFrente ?? 1), 0)
+const volqTrasvaseDia1 = dia1.actividades.reduce((s, a) => s + a.volquetas, 0)
 assert.ok(viajesVolquetaPorDiaUnaUnidad() > 8, "más viajes/día que escenario 5 km")
-assert.equal(
-  dia1.actividades.reduce((s, a) => s + a.volquetas, 0),
-  volqDia1,
-  "2 volquetas por excavadora"
-)
-assert.ok(excDia1 >= 1, "al menos una intervención trasvase día 1")
+assert.ok(excTrasvaseDia1 >= 1, "al menos una excavadora trasvase día 1")
+assert.ok(volqTrasvaseDia1 >= volquetasFlotaParaM3Desalojo(m3Dia1), "volquetas por m³ desalojo día 1")
 assert.ok(
   (dia1.actividades[0]?.tramoNombre ?? "").includes("EL MANGO"),
   "día 1 = primera intervención resumen canal"
@@ -120,8 +153,10 @@ assert.equal(
   0,
   "SA sin desalojo P1"
 )
-const excSan1 = cronSan[0]?.actividades.length ?? 0
-const volqConsolidadaDia1 = volqDia1 + excSan1 * VOLQUETAS_POR_EXCAVADORA
+const excSanDia1 =
+  cronSan[0]?.actividades.reduce((s, a) => s + (a.excavadorasEnFrente ?? 1), 0) ?? 0
+const volqSanDia1 = cronSan[0]?.actividades.reduce((s, a) => s + a.volquetas, 0) ?? 0
+const volqConsolidadaDia1 = volqTrasvaseDia1 + volqSanDia1
 
 assert.ok(entradas.length > 0)
 const dia1Entrada = entradas[0]!
@@ -131,11 +166,11 @@ assert.equal(
 )
 assert.equal(
   dia1Entrada.formatoEpa!.equiposUtilizados.find((e) => e.etiqueta === "EXCAVADORAS")?.cantidad,
-  excDia1 + excSan1
+  excTrasvaseDia1 + excSanDia1
 )
 assert.equal(
   dia1Entrada.formatoEpa!.personalUtilizado.find((e) => e.etiqueta === "OPERADORES")?.cantidad,
-  excDia1 + excSan1
+  excTrasvaseDia1 + excSanDia1
 )
 
 const bloques = dia1Entrada.formatoEpa!.bloquesFrente ?? []
@@ -144,6 +179,7 @@ const textoTrasvase = bloques.find((b) => b.id === "trasvase")?.trabajosRealizad
 assert.ok(!textoTrasvase.includes("Coordinación:"), "sin plan maestro genérico")
 assert.ok(!textoTrasvase.includes("Acordar criterio"), "sin supuestos administrativos")
 assert.ok(textoTrasvase.includes("Tramo «"), "trabajos por tramo")
+assert.ok(!/\(1 excavadora\):.*\d{4,}/.test(textoTrasvase), "sin 1 excavadora con miles m³")
 assert.ok(!textoTrasvase.includes("Distribución desazolve"), "sin nota brazo largo/corto")
 assert.ok(!textoTrasvase.includes("Mediciones VAE"), "sin pie de rubros VAE")
 const textoSan = bloques.find((b) => b.id === "san_antonio")?.trabajosRealizados ?? ""
@@ -154,11 +190,14 @@ assert.ok(bloques.some((b) => b.id === "san_antonio"))
 const e27 = entradas.find((e) => e.fecha === "2026-10-27")
 const e30 = entradas.find((e) => e.fecha === "2026-10-30")
 assert.ok(e27 && e30, "entradas 27 y 30 oct")
-const m3_27 =
-  cronograma.find((d) => d.fecha === "2026-10-27")?.actividades.reduce((s, a) => s + a.m3Desazolve, 0) ?? 0
-const m3_30 =
-  cronograma.find((d) => d.fecha === "2026-10-30")?.actividades.reduce((s, a) => s + a.m3Desazolve, 0) ?? 0
-assert.notEqual(Math.round(m3_27), Math.round(m3_30), "m³ trasvase distintos entre 27 y 30 oct")
+const volumenesDia = cronograma.map((d) =>
+  Math.round(d.actividades.reduce((s, a) => s + a.m3Desazolve, 0))
+)
+assert.ok(new Set(volumenesDia.filter((v) => v > 0)).size >= 1, "producción trasvase por día")
+const excDistintas = new Set(
+  cronograma.flatMap((d) => d.actividades.map((a) => a.excavadorasEnFrente ?? 1))
+)
+assert.ok(excDistintas.size >= 2, "variedad de flota excavadoras en el período")
 const t27 = e27.formatoEpa!.bloquesFrente!.find((b) => b.id === "trasvase")!.trabajosRealizados
 assert.ok(t27.includes("producción del día"), "texto programático")
 assert.ok(t27.includes("PK "), "referencia PK")
@@ -188,8 +227,8 @@ assert.notEqual(
 
 console.log("test-libro-obra-cronograma: OK", {
   hojasConsolidadas: entradas.length,
-  excTrasvaseDia1: excDia1,
-  excSanDia1: excSan1,
+  excTrasvaseDia1: excTrasvaseDia1,
+  excSanDia1: excSanDia1,
   volquetasDia1: volqConsolidadaDia1,
   m3Dia1: Math.round(m3Dia1),
   viajesPorCamion: viajesVolquetaPorDiaUnaUnidad(),

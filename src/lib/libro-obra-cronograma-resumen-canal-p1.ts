@@ -9,10 +9,15 @@ import {
 import type { FrenteDesazolveVae } from "@/src/data/planilla/canales-desazolve-tramos-vae"
 import { fechasCalendarioInclusive } from "@/src/lib/libro-obra"
 import {
-  asignarVolquetasFlotaEnActividades,
+  excavadorasNecesariasParaM3,
+  JORNADA_OBRA_NOMINAL_H,
+  m3MaximoUnaExcavadoraJornada,
+  repartirVolquetasDesalojoEnActividades,
+  volquetasNecesariasParaM3Desalojo,
+} from "@/src/lib/libro-obra-capacidad-maquinaria"
+import {
   type ActividadTramoCronograma,
   type DiaCronogramaFrente,
-  objetivosM3PorDiaProgramatico,
 } from "@/src/lib/libro-obra-cronograma-frente"
 
 function metrosDesdeM3Intervencion(intervencion: IntervencionResumenCanalPlanilla1, m3: number): number {
@@ -22,6 +27,16 @@ function metrosDesdeM3Intervencion(intervencion: IntervencionResumenCanalPlanill
 
 function idIntervencion(i: IntervencionResumenCanalPlanilla1): string {
   return `resumen-canal-map-${i.mapa}`
+}
+
+function objetivosM3Uniformes(nDias: number, volumenTotal: number): number[] {
+  if (nDias <= 0) return []
+  if (nDias === 1) return [Math.round(volumenTotal * 100) / 100]
+  const base = volumenTotal / nDias
+  const redondeados = Array.from({ length: nDias }, () => Math.round(base * 100) / 100)
+  const drift = volumenTotal - redondeados.reduce((a, b) => a + b, 0)
+  redondeados[redondeados.length - 1]! += Math.round(drift * 100) / 100
+  return redondeados
 }
 
 function actividadDesdeIntervencion(
@@ -34,6 +49,7 @@ function actividadDesdeIntervencion(
   const m3r = Math.round(m3DelDia * 100) / 100
   const pkDesde = metrosDesdeM3Intervencion(intervencion, acumM3Antes)
   const pkHasta = metrosDesdeM3Intervencion(intervencion, acumM3Antes + m3r)
+  const excavadoras = excavadorasNecesariasParaM3(m3r, intervencion, JORNADA_OBRA_NOMINAL_H)
   return {
     tramoId: idIntervencion(intervencion),
     tramoNombre: nombreTramoResumenCanal(intervencion),
@@ -45,6 +61,7 @@ function actividadDesdeIntervencion(
     pkHastaM: Math.round(pkHasta * 10) / 10,
     longitudTramoM: intervencion.longitudM,
     volquetas: 0,
+    excavadorasEnFrente: excavadoras,
   }
 }
 
@@ -73,6 +90,10 @@ export function repartirDiasEntreBloques(nDias: number, pesos: number[]): number
   return out
 }
 
+/**
+ * Programación trasvase: bloques MAP en el calendario; dentro de cada bloque reparto uniforme
+ * (evita picos de campana) y flota según rendimiento contractual.
+ */
 function construirCronogramaTrasvase(dias: string[]): Map<string, ActividadTramoCronograma[]> {
   const porFecha = new Map<string, ActividadTramoCronograma[]>()
   for (const f of dias) porFecha.set(f, [])
@@ -89,7 +110,7 @@ function construirCronogramaTrasvase(dias: string[]): Map<string, ActividadTramo
     const nDias = diasPorBloque[b] ?? 0
     if (nDias <= 0) continue
 
-    const objetivos = objetivosM3PorDiaProgramatico(nDias, intervencion.volumenM3)
+    const objetivos = objetivosM3Uniformes(nDias, intervencion.volumenM3)
     let acum = 0
     for (let d = 0; d < nDias && diaIndex < dias.length; d++, diaIndex++) {
       const fecha = dias[diaIndex]!
@@ -107,7 +128,7 @@ function construirCronogramaTrasvase(dias: string[]): Map<string, ActividadTramo
 function construirCronogramaSanAntonio(dias: string[]): Map<string, ActividadTramoCronograma[]> {
   const porFecha = new Map<string, ActividadTramoCronograma[]>()
   const intervencion = INTERVENCION_SAN_ANTONIO_PLANILLA_1
-  const objetivos = objetivosM3PorDiaProgramatico(dias.length, intervencion.volumenM3)
+  const objetivos = objetivosM3Uniformes(dias.length, intervencion.volumenM3)
   let acum = 0
   for (let i = 0; i < dias.length; i++) {
     const fecha = dias[i]!
@@ -167,9 +188,12 @@ export function aplicarDesalojoTendidoTrasvaseCap(
       asignadoT += t
       return { ...a, m3Desalojo: d, m3Tendido: t }
     })
-    dia.actividades = asignarVolquetasFlotaEnActividades(acts)
+    const volquetasDia = volquetasNecesariasParaM3Desalojo(m3DesDia)
+    dia.actividades = repartirVolquetasDesalojoEnActividades(acts, volquetasDia)
   }
 }
+
+export { m3MaximoUnaExcavadoraJornada }
 
 export function cronogramaLibroObraResumenCanalPlanilla1(
   frente: FrenteDesazolveVae,
@@ -199,7 +223,7 @@ export function cronogramaLibroObraResumenCanalPlanilla1(
     return dias.map((fecha) => ({
       fecha,
       frente,
-      actividades: asignarVolquetasFlotaEnActividades(porFecha.get(fecha) ?? []),
+      actividades: porFecha.get(fecha) ?? [],
     }))
   }
 

@@ -69,6 +69,8 @@ export type ActividadTramoCronograma = {
   pkHastaM: number
   longitudTramoM: number
   volquetas: number
+  /** Unidades de excavadora asignadas a esta línea de producción (libro programático). */
+  excavadorasEnFrente?: number
 }
 
 export type DiaCronogramaFrente = {
@@ -364,11 +366,16 @@ export function textoTrabajosDesdeCronograma(
 
   const lineas = actividades.map((a) => {
     const m3 = formatearNumero(a.m3Desazolve, 1)
+    const m3Des = formatearNumero(a.m3Desalojo, 1)
+    const m3Ten = formatearNumero(a.m3Tendido, 1)
     const mlDia = formatearNumero(a.metrosLineales, 0)
     const pkIni = formatoPk(a.pkDesdeM)
     const pkFin = formatoPk(a.pkHastaM)
     const pkTot = formatoPk(a.longitudTramoM)
-    return `- Tramo «${a.tramoNombre}» (1 excavadora): producción del día ${m3} m³; avance lineal ${mlDia} m (PK ${pkIni}–${pkFin} m de ${pkTot} m); desalojo ${m3} m³; tendido ${m3} m³; ${a.volquetas} volquetas.`
+    const exc = a.excavadorasEnFrente ?? 1
+    const excTxt = exc === 1 ? "1 excavadora" : `${exc} excavadoras`
+    const volqTxt = a.volquetas === 1 ? "1 volqueta" : `${a.volquetas} volquetas`
+    return `- Tramo «${a.tramoNombre}» (${excTxt}): producción del día ${m3} m³; avance lineal ${mlDia} m (PK ${pkIni}–${pkFin} m de ${pkTot} m); desalojo ${m3Des} m³; tendido ${m3Ten} m³; ${volqTxt}.`
   })
 
   return lineas.join("\n")
@@ -387,8 +394,17 @@ export function equiposDesdeCronograma(
     return { excavadoras: 0, volquetas: 0, tractor: 0, motoniveladora: 0, rtk: 0 }
   }
 
-  const excavadoras = actividades.length
-  const volquetas = excavadoras * VOLQUETAS_POR_EXCAVADORA
+  const excavadoras = actividades.reduce((s, a) => s + (a.excavadorasEnFrente ?? 1), 0)
+  const volquetasDesdeLineas = actividades.reduce((s, a) => s + a.volquetas, 0)
+  const m3DesalojoDia = actividades.reduce((s, a) => s + a.m3Desalojo, 0)
+  const usaFlotaResumenCanal = actividades.some((a) => a.excavadorasEnFrente != null)
+
+  let volquetas = volquetasDesdeLineas
+  if (volquetas <= 0 && m3DesalojoDia > 0) {
+    volquetas = volquetasFlotaParaM3Desalojo(m3DesalojoDia)
+  } else if (volquetas <= 0 && !usaFlotaResumenCanal) {
+    volquetas = Math.max(0, excavadoras * VOLQUETAS_POR_EXCAVADORA)
+  }
 
   return {
     excavadoras,
