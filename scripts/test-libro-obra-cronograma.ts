@@ -229,6 +229,32 @@ for (const [id, serie] of porTramo) {
   assert.ok(new Set(serie.map((v) => Math.round(v * 10) / 10)).size >= 6, `distintos m³/día en ${id}`)
 }
 
+const excPorTramo = new Map<string, number[]>()
+for (const d of cronograma) {
+  for (const a of d.actividades) {
+    const serie = excPorTramo.get(a.tramoId) ?? []
+    serie.push(a.excavadorasEnFrente ?? 1)
+    excPorTramo.set(a.tramoId, serie)
+  }
+}
+for (const [id, excs] of excPorTramo) {
+  if (excs.length < 3) continue
+  for (let i = 1; i < excs.length; i++) {
+    assert.ok(
+      Math.abs(excs[i]! - excs[i - 1]!) <= 1,
+      `excavadoras ±1 máx/día en ${id} (${excs[i - 1]}→${excs[i]})`
+    )
+  }
+  assert.ok(excs[0] === excs[1] || Math.abs(excs[0]! - excs[1]!) === 1, `arranque estable ${id}`)
+}
+
+const diaCambioSa = entradas.find((e) => e.fecha === "2026-11-23")
+assert.ok(diaCambioSa, "entrada 23 nov")
+const camaBaja =
+  diaCambioSa!.formatoEpa!.equiposUtilizados.find((f) => f.etiqueta === "CAMA BAJA / PLATAFORMA")
+    ?.cantidad ?? 0
+assert.ok(camaBaja >= 1, "cama baja al pasar SA de 2 a 1 excavadora")
+
 const excSanDia1 =
   cronSan[0]?.actividades.reduce((s, a) => s + (a.excavadorasEnFrente ?? 1), 0) ?? 0
 const volqSanDia1 = cronSan[0]?.actividades.reduce((s, a) => s + a.volquetas, 0) ?? 0

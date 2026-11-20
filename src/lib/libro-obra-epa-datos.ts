@@ -132,6 +132,9 @@ function armarDesdeCronograma(
     conteo.set("CAMIONETA", 1)
     conteo.set("GENERADOR", 1)
   }
+  if (eq.camaBaja) {
+    conteo.set("CAMA BAJA / PLATAFORMA", 1)
+  }
 
   const equiposUtilizados: FilaCantidadEpa[] = FILAS_EQUIPOS_UTILIZADOS_EPA.map((etiqueta) => ({
     etiqueta,

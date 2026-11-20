@@ -87,6 +87,8 @@ export type ActividadTramoCronograma = {
   volquetas: number
   /** Unidades de excavadora asignadas a esta línea de producción (libro programático). */
   excavadorasEnFrente?: number
+  /** True si este día la flota del tramo sube o baja en 1 (cama baja en equipos). */
+  cambioFlotaExcavadoras?: boolean
 }
 
 export type DiaCronogramaFrente = {
@@ -405,9 +407,10 @@ export function equiposDesdeCronograma(
   tractor: number
   motoniveladora: number
   rtk: number
+  camaBaja: boolean
 } {
   if (actividades.length === 0) {
-    return { excavadoras: 0, volquetas: 0, tractor: 0, motoniveladora: 0, rtk: 0 }
+    return { excavadoras: 0, volquetas: 0, tractor: 0, motoniveladora: 0, rtk: 0, camaBaja: false }
   }
 
   const excavadoras = actividades.reduce((s, a) => s + (a.excavadorasEnFrente ?? 1), 0)
@@ -428,5 +431,6 @@ export function equiposDesdeCronograma(
     tractor: 1,
     motoniveladora: 1,
     rtk: 1,
+    camaBaja: actividades.some((a) => a.cambioFlotaExcavadoras),
   }
 }
