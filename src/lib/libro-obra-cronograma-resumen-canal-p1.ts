@@ -35,6 +35,8 @@ type EstadoIntervencion = {
   intervencion: IntervencionResumenCanalPlanilla1
   restanteM3: number
   acumuladoM3: number
+  /** Flota decidida el primer día con producción en el tramo. */
+  excavadorasFijas: number | null
 }
 
 function metrosDesdeM3Intervencion(intervencion: IntervencionResumenCanalPlanilla1, m3: number): number {
@@ -52,7 +54,8 @@ function actividadDesdeIntervencion(
   acumM3Antes: number,
   m3Desalojo: number,
   m3Tendido: number,
-  excavadorasOverride?: number
+  excavadorasOverride?: number,
+  cambioFlotaExcavadoras = false
 ): ActividadTramoCronograma {
   const m3r = Math.round(m3DelDia * 100) / 100
   const pkDesde = metrosDesdeM3Intervencion(intervencion, acumM3Antes)
@@ -72,7 +75,49 @@ function actividadDesdeIntervencion(
     longitudTramoM: intervencion.longitudM,
     volquetas: 0,
     excavadorasEnFrente: excavadoras,
+    cambioFlotaExcavadoras: cambioFlotaExcavadoras || undefined,
   }
+}
+
+function resolverExcavadorasFijasTramo(
+  est: EstadoIntervencion,
+  m3Propuesto: number
+): { excavadoras: number; m3: number; cambioFlota: boolean } {
+  const inter = est.intervencion
+  let m3 = m3Propuesto
+  let cambio = false
+  let exc = est.excavadorasFijas
+
+  if (exc == null) {
+    exc = excavadorasNecesariasParaM3(m3, inter, JORNADA_OBRA_NOMINAL_H)
+    est.excavadorasFijas = exc
+    const cap = capM3DiaIntervencion(inter, exc, JORNADA_OBRA_MAX_H)
+    if (m3 > cap) m3 = cap
+    return { excavadoras: exc, m3: Math.round(m3 * 100) / 100, cambioFlota: false }
+  }
+
+  let cap = capM3DiaIntervencion(inter, exc, JORNADA_OBRA_MAX_H)
+  if (m3 > cap + 0.2) {
+    const necesarias = excavadorasNecesariasParaM3(m3, inter, JORNADA_OBRA_MAX_H)
+    if (necesarias > exc && necesarias <= exc + 1) {
+      exc += 1
+      est.excavadorasFijas = exc
+      cambio = true
+      cap = capM3DiaIntervencion(inter, exc, JORNADA_OBRA_MAX_H)
+    }
+    if (m3 > cap) m3 = cap
+  }
+
+  const necesariasNom = excavadorasNecesariasParaM3(m3, inter, JORNADA_OBRA_NOMINAL_H)
+  if (necesariasNom <= exc - 2 && exc > 1 && m3 < cap * 0.42) {
+    exc -= 1
+    est.excavadorasFijas = exc
+    cambio = true
+    cap = capM3DiaIntervencion(inter, exc, JORNADA_OBRA_MAX_H)
+    if (m3 > cap) m3 = cap
+  }
+
+  return { excavadoras: exc, m3: Math.round(m3 * 100) / 100, cambioFlota: cambio }
 }
 
 function capM3DiaIntervencion(
@@ -113,6 +158,7 @@ function construirCronogramaTrasvase(dias: string[]): Map<string, ActividadTramo
     intervencion,
     restanteM3: intervencion.volumenM3,
     acumuladoM3: 0,
+    excavadorasFijas: null,
   }))
 
   const volumenTotal = estados.reduce((s, e) => s + e.intervencion.volumenM3, 0)
@@ -139,17 +185,19 @@ function construirCronogramaTrasvase(dias: string[]): Map<string, ActividadTramo
       let m3 = Math.min(est.restanteM3, cuotas[i] ?? 0)
       if (m3 <= 0.001) continue
 
-      let exc = excavadorasNecesariasParaM3(m3, est.intervencion, JORNADA_OBRA_NOMINAL_H)
-      let cap = capM3DiaIntervencion(est.intervencion, exc, JORNADA_OBRA_MAX_H)
-      if (m3 > cap && cap > 0) {
-        m3 = Math.min(m3, cap)
-        exc = excavadorasNecesariasParaM3(m3, est.intervencion, JORNADA_OBRA_NOMINAL_H)
-      }
-
-      m3 = Math.round(m3 * 100) / 100
+      const res = resolverExcavadorasFijasTramo(est, m3)
+      m3 = res.m3
       if (m3 <= 0) continue
 
-      const act = actividadDesdeIntervencion(est.intervencion, m3, est.acumuladoM3, 0, 0, exc)
+      const act = actividadDesdeIntervencion(
+        est.intervencion,
+        m3,
+        est.acumuladoM3,
+        0,
+        0,
+        res.excavadoras,
+        res.cambioFlota
+      )
       est.restanteM3 = Math.round((est.restanteM3 - m3) * 100) / 100
       est.acumuladoM3 += m3
       porFecha.get(fecha)!.push(act)
@@ -157,27 +205,39 @@ function construirCronogramaTrasvase(dias: string[]): Map<string, ActividadTramo
   }
 
   for (const est of estados) {
-    if (est.restanteM3 <= 0.5) continue
-    const ultima = dias[dias.length - 1]!
-    const m3 = est.restanteM3
-    const acts = porFecha.get(ultima) ?? []
-    const prev = acts.find((a) => a.tramoId === idIntervencion(est.intervencion))
-    if (prev) {
-      const acumAntes = est.acumuladoM3 - prev.m3Desazolve
-      const idx = acts.indexOf(prev)
-      acts[idx] = actividadDesdeIntervencion(
-        est.intervencion,
-        prev.m3Desazolve + m3,
-        acumAntes,
-        prev.m3Desalojo,
-        prev.m3Tendido
-      )
-    } else {
-      acts.push(actividadDesdeIntervencion(est.intervencion, m3, est.acumuladoM3, 0, 0))
-      porFecha.set(ultima, acts)
+    let rest = est.restanteM3
+    if (rest <= 0.5) continue
+    for (let d = dias.length - 1; d >= 0 && rest > 0.5; d--) {
+      const fecha = dias[d]!
+      const acts = porFecha.get(fecha) ?? []
+      const prev = acts.find((a) => a.tramoId === idIntervencion(est.intervencion))
+      const baseDia = prev?.m3Desazolve ?? 0
+      const res = resolverExcavadorasFijasTramo(est, baseDia + rest)
+      const capDia = res.m3 - baseDia
+      if (capDia <= 0.01) continue
+      const m3Add = Math.min(rest, capDia)
+      const acumAntes = est.acumuladoM3 - (prev?.m3Desazolve ?? 0)
+      if (prev) {
+        const idx = acts.indexOf(prev)
+        acts[idx] = actividadDesdeIntervencion(
+          est.intervencion,
+          prev.m3Desazolve + m3Add,
+          acumAntes,
+          prev.m3Desalojo,
+          prev.m3Tendido,
+          res.excavadoras,
+          res.cambioFlota || Boolean(prev.cambioFlotaExcavadoras)
+        )
+      } else {
+        acts.push(
+          actividadDesdeIntervencion(est.intervencion, m3Add, est.acumuladoM3, 0, 0, res.excavadoras, res.cambioFlota)
+        )
+        porFecha.set(fecha, acts)
+      }
+      est.restanteM3 = Math.round((est.restanteM3 - m3Add) * 100) / 100
+      est.acumuladoM3 += m3Add
+      rest = est.restanteM3
     }
-    est.restanteM3 = 0
-    est.acumuladoM3 += m3
   }
 
   return porFecha
@@ -193,10 +253,21 @@ function construirCronogramaSanAntonio(dias: string[]): Map<string, ActividadTra
   const curvaSa = objetivosM3PorDiaProgramatico(dias.length, intervencion.volumenM3)
   let acum = 0
   let drift = intervencion.volumenM3
+  let excavadorasFijasSa: number | null = null
 
   for (let dayIdx = 0; dayIdx < dias.length; dayIdx++) {
     const fecha = dias[dayIdx]!
-    const excavadoras = excavadorasSanAntonioEnFecha(fecha)
+    const excavadorasObjetivo = excavadorasSanAntonioEnFecha(fecha)
+    if (excavadorasFijasSa == null) excavadorasFijasSa = excavadorasObjetivo
+    let cambioFlota = false
+    if (
+      excavadorasObjetivo !== excavadorasFijasSa &&
+      Math.abs(excavadorasObjetivo - excavadorasFijasSa) === 1
+    ) {
+      cambioFlota = true
+      excavadorasFijasSa = excavadorasObjetivo
+    }
+    const excavadoras = excavadorasFijasSa
     const capDia = capM3DiaIntervencion(intervencion, excavadoras, JORNADA_OBRA_MAX_H)
     let m3 =
       dayIdx === dias.length - 1
@@ -206,7 +277,7 @@ function construirCronogramaSanAntonio(dias: string[]): Map<string, ActividadTra
 
     const acts: ActividadTramoCronograma[] = []
     if (m3 > 0) {
-      acts.push(actividadDesdeIntervencion(intervencion, m3, acum, 0, 0, excavadoras))
+      acts.push(actividadDesdeIntervencion(intervencion, m3, acum, 0, 0, excavadoras, cambioFlota))
       acum += m3
       drift -= m3
     }
