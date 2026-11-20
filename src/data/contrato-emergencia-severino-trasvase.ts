@@ -17,7 +17,7 @@ export const RADIO_DESALOJO_MAX_KM = 5.0
 export const PLAZO_CALENDARIO_DIAS = 60
 
 /** Inicio del plazo contractual (autorización de obra). */
-export const FECHA_INICIO_PLAZO_EJECUCION = "2026-10-26"
+export const FECHA_INICIO_PLAZO_EJECUCION = "2026-10-27"
 
 /** Anticipo del 35 % devengado antes del inicio de obra. */
 export const FECHA_PAGO_ANTICIPO = "2026-10-23"

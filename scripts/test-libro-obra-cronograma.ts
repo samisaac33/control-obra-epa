@@ -7,15 +7,18 @@ import { PORCENTAJE_AVANCE_LIBRO_OBRA_PLANILLA_1 } from "../src/data/contrato-em
 import { presupuestoDesasolveEmergencia } from "../src/data/planilla/presupuesto-desasolve-emergencia"
 import { valoresPorDefectoPlanilla } from "../src/data/planilla/planilla-defaults-ejecucion"
 import { TRAMOS_DESAZOLVE_VAE, VOLUMEN_TOTAL_TRASVASE_M3 } from "../src/data/planilla/canales-desazolve-tramos-vae"
+import {
+  DESALOJO_M3_PLANILLA_1_TRASVASE,
+  VOLUMEN_DESAZOLVE_SAN_ANTONIO_PLANILLA_1,
+  VOLUMEN_DESAZOLVE_TRASVASE_PLANILLA_1,
+} from "../src/data/planilla/libro-obra-resumen-canal-planilla-1"
 import { PROYECTO_DESASOLVE_CANALES } from "../src/data/proyectos/catalog"
 import { periodoPorNumero } from "../src/lib/planilla-calculo"
 import {
   cronogramaLibroObraFrente,
-  excavadorasRequeridasParaM3Dia,
   viajesVolquetaPorDiaUnaUnidad,
   VOLQUETAS_POR_EXCAVADORA,
 } from "../src/lib/libro-obra-cronograma-frente"
-import { tramosPorFrente } from "../src/data/planilla/canales-desazolve-tramos-vae"
 import { consolidarLibroObraPeriodoPlanillaConsolidado } from "../src/lib/libro-obra-sintetico"
 import { hitosSeverinoPorFechaPlanilla } from "../src/lib/libro-obra-cronograma-severino"
 import {
@@ -57,9 +60,14 @@ const sumM3 = cronograma.reduce(
   (s, d) => s + d.actividades.reduce((t, a) => t + a.m3Desazolve, 0),
   0
 )
-const objetivo =
-  presupuestoDesasolveEmergencia.find((r) => r.id === 2)!.cantidad * (config.porcentaje_avance_planilla_1 / 100)
-assert.ok(Math.abs(sumM3 - objetivo) < objetivo * 0.02, "suma m³ periodo ≈ objetivo planilla 1")
+const objetivo = VOLUMEN_DESAZOLVE_TRASVASE_PLANILLA_1
+assert.ok(Math.abs(sumM3 - objetivo) < 0.1, "suma m³ trasvase = resumen canal (2) P1")
+
+const sumDesalojo = cronograma.reduce(
+  (s, d) => s + d.actividades.reduce((t, a) => t + a.m3Desalojo, 0),
+  0
+)
+assert.ok(Math.abs(sumDesalojo - DESALOJO_M3_PLANILLA_1_TRASVASE) < 0.1, "desalojo trasvase P1 = 40.000 m³")
 
 const entradas = consolidarLibroObraPeriodoPlanillaConsolidado(
   PROYECTO_DESASOLVE_CANALES,
@@ -86,7 +94,11 @@ assert.equal(
   volqDia1,
   "2 volquetas por excavadora"
 )
-assert.equal(excDia1, excavadorasRequeridasParaM3Dia(m3Dia1, "trasvase", tramosPorFrente("trasvase")))
+assert.ok(excDia1 >= 1, "al menos una intervención trasvase día 1")
+assert.ok(
+  (dia1.actividades[0]?.tramoNombre ?? "").includes("EL MANGO"),
+  "día 1 = primera intervención resumen canal"
+)
 
 const cronSan = cronogramaLibroObraFrente(
   "san_antonio",
@@ -97,6 +109,16 @@ const cronSan = cronogramaLibroObraFrente(
   periodo,
   1,
   6
+)
+const sumSan = cronSan.reduce(
+  (s, d) => s + d.actividades.reduce((t, a) => t + a.m3Desazolve, 0),
+  0
+)
+assert.ok(Math.abs(sumSan - VOLUMEN_DESAZOLVE_SAN_ANTONIO_PLANILLA_1) < 0.1, "desazolve SA = resumen canal")
+assert.equal(
+  cronSan.reduce((s, d) => s + d.actividades.reduce((t, a) => t + a.m3Desalojo, 0), 0),
+  0,
+  "SA sin desalojo P1"
 )
 const excSan1 = cronSan[0]?.actividades.length ?? 0
 const volqConsolidadaDia1 = volqDia1 + excSan1 * VOLQUETAS_POR_EXCAVADORA

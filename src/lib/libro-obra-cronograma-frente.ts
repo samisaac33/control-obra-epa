@@ -6,6 +6,7 @@ import {
   type TramoDesazolveVae,
 } from "@/src/data/planilla/canales-desazolve-tramos-vae"
 import type { PlanillaNumero, PlanillaPeriodo, ProyectoPlanillaConfig } from "@/src/data/planilla/types"
+import { cronogramaLibroObraResumenCanalPlanilla1 } from "@/src/lib/libro-obra-cronograma-resumen-canal-p1"
 import { fechasCalendarioInclusive } from "@/src/lib/libro-obra"
 import { calcularRequerimientoPago } from "@/src/lib/planilla-requerimiento-pago"
 import { RENDIMIENTO_NOMINAL_M3_POR_H } from "@/src/data/contrato-emergencia-severino-trasvase"
@@ -212,6 +213,10 @@ export function cronogramaLibroObraFrente(
 ): DiaCronogramaFrente[] {
   const dias = fechasCalendarioInclusive(desde, hasta)
   if (dias.length === 0) return []
+
+  if (planillaNumero === 1 && (frente === "trasvase" || frente === "san_antonio")) {
+    return cronogramaLibroObraResumenCanalPlanilla1(frente, desde, hasta)
+  }
 
   const volumenPeriodo = cantidadPeriodoRubro(rubros, config, periodo, planillaNumero, rubDesazolveId)
   if (volumenPeriodo <= 0) {
