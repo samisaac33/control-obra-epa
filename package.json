@@ -10,6 +10,8 @@
     "generate:cv-pdf": "python3 scripts/generate-cv-luis-fernandez.py",
     "merge:facturas-jbs-2026": "python3 scripts/merge-facturas-jbs-2026.py",
     "generate:infimas-pdf": "tsx scripts/generate-infimas-pdf.ts",
+    "generate:crucita-sri-productos-xls": "python3 scripts/generate-crucita-sri-productos-xls.py",
+    "import:crucita-proforma-sri": "python3 scripts/import-crucita-productos-from-proforma-xlsx.py && npm run generate:crucita-sri-productos-xls",
     "generate:cumple-samu-pdf": "tsx scripts/generate-cumple-samu-pdf.ts",
     "replace-pdf-last-page": "tsx scripts/replace-pdf-last-page.ts",
     "extract-pdf-page": "tsx scripts/extract-pdf-page.ts",

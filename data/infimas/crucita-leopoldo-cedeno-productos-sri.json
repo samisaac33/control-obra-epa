@@ -1,0 +1,145 @@
+[
+  {
+    "codigoPrincipal": "EP052-001",
+    "codigoAuxiliar": "448320011",
+    "descripcion": "PLANCHA DE ACERO ESTRUCTURAL ASTM A36 (ESPESOR: 3 MM) Fy: 250 MPa",
+    "informacionAdicional": "Unidad · Cant. 7.00 · O/C IC-EPA EP-052-2026",
+    "precioUnitario": 72.0,
+    "tarifaIva": 4,
+    "gravaIce": "NO",
+    "codigoIce": 3000,
+    "turismo": "No"
+  },
+  {
+    "codigoPrincipal": "EP052-002",
+    "codigoAuxiliar": "448320011",
+    "descripcion": "PERFIL ESTRUCTURAL DE ACERO CANAL U (80 X 50 X 6 MM) A36",
+    "informacionAdicional": "Unidad · Cant. 9.00 · O/C IC-EPA EP-052-2026",
+    "precioUnitario": 92.0,
+    "tarifaIva": 4,
+    "gravaIce": "NO",
+    "codigoIce": 3000,
+    "turismo": "No"
+  },
+  {
+    "codigoPrincipal": "EP052-003",
+    "codigoAuxiliar": "448320011",
+    "descripcion": "PERFIL ANGULAR DE ACERO (2 X 2 X 1/4) ASTM A36",
+    "informacionAdicional": "Unidad · Cant. 2.00 · O/C IC-EPA EP-052-2026",
+    "precioUnitario": 65.0,
+    "tarifaIva": 4,
+    "gravaIce": "NO",
+    "codigoIce": 3000,
+    "turismo": "No"
+  },
+  {
+    "codigoPrincipal": "EP052-004",
+    "codigoAuxiliar": "448320011",
+    "descripcion": "PLATINA DE ACERO LISA ASTM A36 (ESPESOR: 6 MM)",
+    "informacionAdicional": "Unidad · Cant. 4.00 · O/C IC-EPA EP-052-2026",
+    "precioUnitario": 82.0,
+    "tarifaIva": 4,
+    "gravaIce": "NO",
+    "codigoIce": 3000,
+    "turismo": "No"
+  },
+  {
+    "codigoPrincipal": "EP052-005",
+    "codigoAuxiliar": "448320011",
+    "descripcion": "EJE SINFIN ROSCADO DE ACERO 1045 (3.20M X 4.5CM) ROSCA ACME",
+    "informacionAdicional": "Unidad · Cant. 4.00 · O/C IC-EPA EP-052-2026",
+    "precioUnitario": 320.0,
+    "tarifaIva": 4,
+    "gravaIce": "NO",
+    "codigoIce": 3000,
+    "turismo": "No"
+  },
+  {
+    "codigoPrincipal": "EP052-006",
+    "codigoAuxiliar": "4299923214",
+    "descripcion": "TUERCA DE IZAJE DE BRONCE DE ALTA FRICCION (SAE 65 O 660)",
+    "informacionAdicional": "Unidad · Cant. 4.00 · O/C IC-EPA EP-052-2026",
+    "precioUnitario": 115.0,
+    "tarifaIva": 4,
+    "gravaIce": "NO",
+    "codigoIce": 3000,
+    "turismo": "No"
+  },
+  {
+    "codigoPrincipal": "EP052-007",
+    "codigoAuxiliar": "448320011",
+    "descripcion": "VOLANTE DE MANIOBRA MANUAL PARA SISTEMA DE IZAJE (HIERRO)",
+    "informacionAdicional": "Unidad · Cant. 4.00 · O/C IC-EPA EP-052-2026",
+    "precioUnitario": 72.0,
+    "tarifaIva": 4,
+    "gravaIce": "NO",
+    "codigoIce": 3000,
+    "turismo": "No"
+  },
+  {
+    "codigoPrincipal": "EP052-008",
+    "codigoAuxiliar": "449290111",
+    "descripcion": "SELLO ELASTOMERICO TIPO P DE EPDM (60-70 SHORE A)",
+    "informacionAdicional": "Unidad · Cant. 25.00 · O/C IC-EPA EP-052-2026",
+    "precioUnitario": 13.0,
+    "tarifaIva": 4,
+    "gravaIce": "NO",
+    "codigoIce": 3000,
+    "turismo": "No"
+  },
+  {
+    "codigoPrincipal": "EP052-009",
+    "codigoAuxiliar": "532410011",
+    "descripcion": "TUBERIA CORRUGADA DE HDPE - DN 400 MM (PARED DOBLE)",
+    "informacionAdicional": "Unidad · Cant. 12.00 · O/C IC-EPA EP-052-2026",
+    "precioUnitario": 42.0,
+    "tarifaIva": 4,
+    "gravaIce": "NO",
+    "codigoIce": 3000,
+    "turismo": "No"
+  },
+  {
+    "codigoPrincipal": "EP052-010",
+    "codigoAuxiliar": "431210014",
+    "descripcion": "SERVICIO DE BOMBEO CON MOTOBOMBAS DE 4 PULG (BYPASS)",
+    "informacionAdicional": "Unidad · Cant. 1.00 · O/C IC-EPA EP-052-2026",
+    "precioUnitario": 900.0,
+    "tarifaIva": 4,
+    "gravaIce": "NO",
+    "codigoIce": 3000,
+    "turismo": "No"
+  },
+  {
+    "codigoPrincipal": "EP052-011",
+    "codigoAuxiliar": "731290016",
+    "descripcion": "ALQUILER DE GENERADOR ELECTRICO Y HERRAMIENTAS",
+    "informacionAdicional": "Unidad · Cant. 1.00 · O/C IC-EPA EP-052-2026",
+    "precioUnitario": 450.0,
+    "tarifaIva": 4,
+    "gravaIce": "NO",
+    "codigoIce": 3000,
+    "turismo": "No"
+  },
+  {
+    "codigoPrincipal": "EP052-012",
+    "codigoAuxiliar": "351100212",
+    "descripcion": "PINTURA EPOXICA ESPECIAL (PROTECCION HIDRICA)",
+    "informacionAdicional": "Unidad · Cant. 1.00 · O/C IC-EPA EP-052-2026",
+    "precioUnitario": 340.0,
+    "tarifaIva": 4,
+    "gravaIce": "NO",
+    "codigoIce": 3000,
+    "turismo": "No"
+  },
+  {
+    "codigoPrincipal": "EP052-013",
+    "codigoAuxiliar": "544000211",
+    "descripcion": "MANO DE OBRA (SOLDADURA MONTAJE E INCLUYE OBRA CIVIL)",
+    "informacionAdicional": "Unidad · Cant. 1.00 · O/C IC-EPA EP-052-2026",
+    "precioUnitario": 3515.0,
+    "tarifaIva": 4,
+    "gravaIce": "NO",
+    "codigoIce": 3000,
+    "turismo": "No"
+  }
+]

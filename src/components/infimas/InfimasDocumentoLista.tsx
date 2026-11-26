@@ -6,6 +6,9 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { InfimaInformeVista } from "@/src/components/infimas/InfimaInformeVista"
+import {
+  RUTA_PUBLICA_CARGA_MASIVA_PRODUCTOS_SRI_CRUCITA,
+} from "@/src/data/infimas/crucita-leopoldo-cedeno-productos-facturacion-sri"
 import type { InfimaDocumento } from "@/src/data/infimas/catalog"
 
 type InfimasDocumentoListaProps = {
@@ -52,6 +55,14 @@ export function InfimasDocumentoLista({ documentos }: InfimasDocumentoListaProps
                     Descargar PDF
                   </a>
                 </Button>
+                {doc.id === "crucita-leopoldo-cedeno" ? (
+                  <Button asChild size="sm" variant="secondary">
+                    <a href={RUTA_PUBLICA_CARGA_MASIVA_PRODUCTOS_SRI_CRUCITA} download>
+                      <Download className="size-4" aria-hidden />
+                      Carga masiva SRI (.xls)
+                    </a>
+                  </Button>
+                ) : null}
               </div>
             </CardContent>
           </Card>
